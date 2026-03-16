@@ -31,6 +31,18 @@ dist-ssr
 *.zip
 *.pdf
 
+# Allow images in source and public folders
+!src/**/*.png
+!src/**/*.jpg
+!src/**/*.jpeg
+!src/**/*.webp
+!src/**/*.svg
+!public/**/*.png
+!public/**/*.jpg
+!public/**/*.jpeg
+!public/**/*.webp
+!public/**/*.svg
+
 # Auxiliary Project Folders
 DOCUMENTOS PARA PROMPT ANTIGRAVITY/
 IDEAS PARA ESTILO GRAFICO/
