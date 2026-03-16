@@ -1,0 +1,71 @@
+@layer base {
+  :root {
+    /* Brand Colors */
+    --pana-yellow: #FFCC00;
+    --pana-blue: #1A1A3A;
+    --pana-blue-light: #2A2A5A;
+    --pana-red: #D90429;
+    
+    /* Neumorphic Base - Soft Neutral Background */
+    --pana-bg: #E0E5EC;
+    --pana-surface: #E0E5EC;
+    
+    /* Neumorphic Shadow Tokens (Light Source: Top-Left) */
+    /* Formula: 
+       Dark Shadow = darken(bg, 10-15%)
+       Light Shadow = lighten(bg, 100% or white)
+    */
+    --nm-shadow-dark: #b8bec9;
+    --nm-shadow-light: #ffffff;
+    
+    --nm-flat: 6px 6px 12px var(--nm-shadow-dark), 
+              -6px -6px 12px var(--nm-shadow-light);
+              
+    --nm-concave: inset 6px 6px 12px var(--nm-shadow-dark), 
+                 inset -6px -6px 12px var(--nm-shadow-light);
+                 
+    --nm-pressed: inset 4px 4px 8px var(--nm-shadow-dark), 
+                 inset -4px -4px 8px var(--nm-shadow-light);
+
+    /* Claymorphism Tokens */
+    --clay-bg: rgba(255, 255, 255, 0.7);
+    --clay-border: rgba(255, 255, 255, 0.4);
+    --clay-shadow: 20px 20px 40px rgba(0, 0, 0, 0.1);
+    --clay-inner-light: inset 8px 8px 16px 0 rgba(255, 255, 255, 0.82);
+    --clay-inner-dark: inset -8px -8px 16px 0 rgba(163, 177, 198, 0.35);
+    
+    --clay-card: var(--clay-shadow), var(--clay-inner-light), var(--clay-inner-dark);
+    
+    /* Global Transitions */
+    --pana-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+/* Custom Utilities for easier application */
+@layer utilities {
+  .nm-flat {
+    background: var(--pana-surface);
+    box-shadow: var(--nm-flat);
+    border-radius: 20px;
+  }
+  
+  .nm-concave {
+    background: var(--pana-surface);
+    box-shadow: var(--nm-concave);
+    border-radius: 20px;
+  }
+  
+  .nm-pressed {
+    background: var(--pana-surface);
+    box-shadow: var(--nm-pressed);
+    border-radius: 20px;
+  }
+  
+  .clay-card {
+    background: var(--clay-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--clay-border);
+    box-shadow: var(--clay-card);
+    border-radius: 30px;
+  }
+}
