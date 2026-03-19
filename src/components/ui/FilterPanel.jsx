@@ -98,14 +98,16 @@ export default function FilterPanel() {
             className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[999]"
           />
           
-          {/* Panel */}
-          <motion.div
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-x-0 bottom-0 bg-[#E0E5EC] z-[1000] shadow-2xl h-[100dvh] flex flex-col"
-          >
+          {/* Panel Wrapper */}
+          <div className="fixed inset-0 z-[1000] flex items-end md:items-center justify-center pointer-events-none">
+            {/* Panel */}
+            <motion.div
+              initial={{ y: '100%', opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: '100%', opacity: 0 }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              className="bg-[#E0E5EC] shadow-2xl w-full md:w-[500px] h-[95dvh] md:h-auto md:max-h-[85vh] rounded-t-[3rem] md:rounded-[3rem] flex flex-col pointer-events-auto overflow-hidden"
+            >
             {/* Header - Sticky */}
             <div className="flex justify-between items-center p-8 pb-6 bg-[#E0E5EC] z-10">
               <div className="flex items-center gap-3">
@@ -253,8 +255,9 @@ export default function FilterPanel() {
               </button>
             </div>
           </motion.div>
-        </>
-      )}
+        </div>
+      </>
+    )}
     </AnimatePresence>
   );
 }

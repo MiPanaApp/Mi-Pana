@@ -2,6 +2,7 @@ import { Search } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion';
 import { useState, useRef, useEffect } from 'react';
 import { FiCoffee, FiPackage, FiSmile, FiMonitor, FiTool, FiShoppingBag, FiBriefcase, FiHeart } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
 import logoTexto from '../../assets/solotexto.png';
 
@@ -17,6 +18,7 @@ const CATEGORIES = [
 ];
 
 export default function Header() {
+  const navigate = useNavigate();
   const { 
     activeCategory, 
     setActiveCategory, 
@@ -72,7 +74,8 @@ export default function Header() {
                 src={logoTexto} 
                 alt="miPana" 
                 style={{ height: '40px', objectFit: 'contain' }} 
-                className="header-logo"
+                className="header-logo cursor-pointer active:scale-95 transition-transform"
+                onClick={() => navigate('/')}
               />
               
               <div className="flex items-center gap-1.5 mt-1">
@@ -157,9 +160,9 @@ export default function Header() {
               <input 
                 type="text" 
                 placeholder="¿Qué necesitas, pana?" 
-                className="w-full h-11 pl-11 pr-4 bg-[#FFCC00] rounded-xl text-sm text-[#003366] font-bold placeholder:text-[#003366]/60 shadow-[inset_4px_4px_8px_rgba(204,163,0,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] focus:outline-none focus:ring-2 focus:ring-[#0056B3]/40 transition-all"
+                className="w-full h-11 pl-11 pr-4 bg-[#FFCC00] rounded-xl text-sm text-[#1A1A3A] font-bold placeholder:text-[#1A1A3A]/70 shadow-[inset_4px_4px_8px_rgba(204,163,0,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] focus:outline-none focus:ring-2 focus:ring-[#0056B3]/40 transition-all"
               />
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#003366]/70 w-5 h-5" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#1A1A3A]/80 w-5 h-5" />
             </div>
           </div>
         </div>
@@ -176,7 +179,7 @@ export default function Header() {
             className="overflow-hidden bg-[#E0E5EC]/95 backdrop-blur-md"
           >
             <div className="max-w-7xl mx-auto py-2">
-              <div className="flex items-center gap-3 overflow-x-auto px-6 py-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div className="flex items-center md:justify-center gap-3 overflow-x-auto px-6 py-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {CATEGORIES.map((cat, index) => {
                   const isActive = activeCategory === cat.id;
                   

@@ -1,9 +1,12 @@
 import { Heart, MapPin } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { useStore } from '../store/useStore';
 
 export default function ProductCard({ product }) {
   const navigate = useNavigate();
+  const { favorites, toggleFavorite } = useStore();
+  const isFavorite = favorites.includes(product.id);
 
   return (
     <motion.div 
@@ -26,11 +29,14 @@ export default function ProductCard({ product }) {
         <button 
           onClick={(e) => {
             e.stopPropagation();
-            // Lógica de like
+            toggleFavorite(product.id);
           }}
-          className="absolute top-3 right-3 p-2 bg-[#E0E5EC]/90 backdrop-blur-sm rounded-full text-gray-400 hover:text-[#D90429] shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.8)] active:shadow-[inset_3px_3px_6px_rgba(163,177,198,0.6),inset_-3px_-3px_6px_rgba(255,255,255,0.8)] transition-all z-10"
+          className={`absolute top-2.5 right-2.5 p-1.5 backdrop-blur-sm rounded-full transition-all z-10 
+            ${isFavorite 
+              ? 'bg-[#D90429]/10 text-[#D90429] shadow-[inset_2px_2px_4px_rgba(217,4,41,0.2)] opacity-100' 
+              : 'bg-[#E0E5EC]/70 text-gray-400/80 hover:text-[#D90429] shadow-[3px_3px_6px_rgba(163,177,198,0.5),-3px_-3px_6px_rgba(255,255,255,0.8)] opacity-80'}`}
         >
-          <Heart className="w-5 h-5 flex-shrink-0" />
+          <Heart className={`w-4 h-4 flex-shrink-0 ${isFavorite ? 'fill-[#D90429]' : ''}`} />
         </button>
 
         {/* Badge "NUEVO" o "TOP" */}

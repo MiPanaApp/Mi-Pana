@@ -15,6 +15,7 @@ export const useStore = create(
         onlyVerified: false,
         location: { level1: '', level2: '', level3: '' },
       },
+      favorites: [],
       
       setCountry: (country) => set({ selectedCountry: country }),
       setRegion: (region) => set({ selectedRegion: region }),
@@ -24,6 +25,11 @@ export const useStore = create(
       setSortBy: (sort) => set({ sortBy: sort }),
       setFilters: (newFilters) => set((state) => ({ 
         filters: { ...state.filters, ...newFilters } 
+      })),
+      toggleFavorite: (productId) => set((state) => ({
+        favorites: state.favorites.includes(productId)
+          ? state.favorites.filter(id => id !== productId)
+          : [...state.favorites, productId]
       })),
       
       clearLocation: () => set({ selectedCountry: 'ES', selectedRegion: '' }),

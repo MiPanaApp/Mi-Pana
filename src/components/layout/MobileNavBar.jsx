@@ -52,7 +52,7 @@ export default function MobileNavBar() {
   const location = useLocation();
 
   return (
-    <nav className="fixed bottom-0 left-0 w-full z-50 md:hidden bg-[#E0E5EC]/80 backdrop-blur-md border-t border-white/20 shadow-[0_-5px_20px_rgba(163,177,198,0.4)]">
+    <nav className="fixed bottom-0 left-0 w-full z-50 md:hidden bg-[#E0E5EC]/80 backdrop-blur-md shadow-[0_-5px_20px_rgba(163,177,198,0.4)]">
       {/* Línea tricolor Venezuela */}
       <div className="flex w-full h-[3px]">
         <div className="flex-1 bg-[#FFCC00]"></div>
@@ -77,10 +77,10 @@ export default function MobileNavBar() {
                 whileTap={{ scale: 0.92 }}
                 className="flex flex-col items-center gap-0.5 -mt-6"
               >
-                <div className="w-16 h-16 rounded-full bg-[#0056B3] flex items-center justify-center shadow-[6px_6px_12px_rgba(0,0,0,0.2),-2px_-2px_8px_rgba(255,255,255,0.3),inset_0_2px_4px_rgba(255,255,255,0.3)] active:shadow-[inset_4px_4px_8px_rgba(0,0,0,0.3)]">
-                  <Icon size={32} className="text-white" />
+                <div className="w-[58px] h-[58px] rounded-full bg-[#1A1A3A] flex items-center justify-center shadow-[6px_6px_12px_rgba(0,0,0,0.2),-2px_-2px_8px_rgba(255,255,255,0.3),inset_0_2px_4px_rgba(255,255,255,0.3)] active:shadow-[inset_4px_4px_8px_rgba(0,0,0,0.3)]">
+                  <Icon size={28} className="text-white" />
                 </div>
-                <span className="text-[10px] font-black text-[#0056B3] tracking-tight mt-0.5">
+                <span className="text-[10px] font-black text-[#1A1A3A] tracking-tight mt-0.5">
                   {item.label}
                 </span>
               </motion.button>
