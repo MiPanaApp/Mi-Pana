@@ -1,6 +1,6 @@
 import { Search } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { FiCoffee, FiPackage, FiSmile, FiMonitor, FiTool, FiShoppingBag, FiBriefcase, FiHeart } from 'react-icons/fi';
 import { useStore } from '../../store/useStore';
 import logoTexto from '../../assets/solotexto.png';
@@ -24,10 +24,33 @@ export default function Header() {
     isSortOpen, 
     setIsSortOpen,
     sortBy,
-    setSortBy
+    setSortBy,
+    selectedCountry,
+    selectedRegion,
+    setCountry,
+    filters,
+    setFilters
   } = useStore();
+  
   const [hidden, setHidden] = useState(false);
+  const [isCountryOpen, setIsCountryOpen] = useState(false);
+  const countryRef = useRef(null);
   const { scrollY } = useScroll();
+
+  // Close country dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (countryRef.current && !countryRef.current.contains(event.target)) {
+        setIsCountryOpen(false);
+      }
+    };
+    if (isCountryOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isCountryOpen]);
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     const previous = scrollY.getPrevious();
@@ -46,21 +69,78 @@ export default function Header() {
           <div className="flex items-center gap-4">
             
             {/* Logo y Ubicación */}
-            <div className="flex flex-col items-center flex-shrink-0">
+            <div className="flex flex-col items-center flex-shrink-0 relative">
               <img 
                 src={logoTexto} 
                 alt="miPana" 
                 style={{ height: '40px', objectFit: 'contain' }} 
                 className="header-logo"
               />
-              <div className="flex items-center gap-1 mt-1 cursor-pointer active:scale-95 transition-transform opacity-90">
-                <span className="text-[10px] font-black text-[#003366] tracking-widest">Madrid</span>
-                {/* Bandera España */}
-                <div className="w-3.5 h-3.5 rounded-full overflow-hidden flex flex-col border-[0.5px] border-[#003366]/20 shadow-[2px_2px_4px_rgba(163,177,198,0.5),-2px_-2px_4px_rgba(255,255,255,0.8)]">
-                  <div className="h-[30%] bg-[#AD1519]"></div>
-                  <div className="h-[40%] bg-[#FABD00]"></div>
-                  <div className="h-[30%] bg-[#AD1519]"></div>
+              
+              <div className="flex items-center gap-1.5 mt-1">
+                {/* 1. Botón Bandera (Selector de País) */}
+                <div className="relative" ref={countryRef}>
+                  <button 
+                    onClick={() => setIsCountryOpen(!isCountryOpen)}
+                    className="flex items-center justify-center cursor-pointer active:scale-95 transition-transform opacity-90"
+                  >
+                    {selectedCountry === 'ES' ? (
+                      <div className="w-4 h-4 rounded-full overflow-hidden flex flex-col border-[0.5px] border-[#003366]/20 shadow-[2px_2px_4px_rgba(163,177,198,0.5),-2px_-2px_4px_rgba(255,255,255,0.8)]">
+                        <div className="h-[30%] bg-[#AD1519]"></div>
+                        <div className="h-[40%] bg-[#FABD00]"></div>
+                        <div className="h-[30%] bg-[#AD1519]"></div>
+                      </div>
+                    ) : (
+                      <div className="w-4 h-4 rounded-full overflow-hidden flex flex-col border-[0.5px] border-[#003366]/20 shadow-[2px_2px_4px_rgba(163,177,198,0.5),-2px_-2px_4px_rgba(255,255,255,0.8)]">
+                        <div className="h-[50%] bg-[#FCD116]"></div>
+                        <div className="h-[25%] bg-[#003893]"></div>
+                        <div className="h-[25%] bg-[#CE1126]"></div>
+                      </div>
+                    )}
+                  </button>
+
+                  <AnimatePresence>
+                    {isCountryOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 5, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 5, scale: 0.95 }}
+                        className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-32 bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/40 p-2 z-[1001]"
+                      >
+                        <button
+                          onClick={() => {
+                            setCountry('ES');
+                            setFilters({ location: { level1: '', level2: '', level3: '' } });
+                            setIsCountryOpen(false);
+                          }}
+                          className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all ${selectedCountry === 'ES' ? 'bg-[#1A1A3A] text-white' : 'text-[#1A1A3A] hover:bg-black/5'}`}
+                        >
+                          España
+                        </button>
+                        <button
+                          onClick={() => {
+                            setCountry('CO');
+                            setFilters({ location: { level1: '', level2: '', level3: '' } });
+                            setIsCountryOpen(false);
+                          }}
+                          className={`w-full flex items-center justify-center gap-2 px-3 py-2 mt-1 rounded-xl text-xs font-bold transition-all ${selectedCountry === 'CO' ? 'bg-[#1A1A3A] text-white' : 'text-[#1A1A3A] hover:bg-black/5'}`}
+                        >
+                          Colombia
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
+
+                {/* 2. Botón Región / Municipio (Abre Modal Filtros de Ubicación) */}
+                <button 
+                  onClick={() => setIsFilterOpen(true)}
+                  className="cursor-pointer active:scale-95 transition-transform opacity-90 max-w-[80px]"
+                >
+                  <span className="text-[10px] sm:text-[11px] font-black text-[#003366] tracking-widest uppercase truncate block">
+                    {filters?.location?.level2 || filters?.location?.level1 || selectedRegion || 'Ubicación'}
+                  </span>
+                </button>
               </div>
             </div>
 
