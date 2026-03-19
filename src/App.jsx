@@ -9,6 +9,11 @@ import OfferForm from './pages/OfferForm';
 import Chat from './pages/Chat';
 import ChatList from './pages/ChatList';
 import AdminDashboard from './pages/admin/AdminDashboard';
+// New Pages
+import Favorites from './pages/Favorites';
+import CreateListing from './pages/CreateListing';
+import Messages from './pages/Messages';
+import Profile from './pages/Profile';
 
 function App() {
   return (
@@ -25,6 +30,11 @@ function App() {
           <Route path="/selector-pais" element={<div className="p-8">Selector de País (Coming Soon)</div>} />
           <Route path="/perfil-producto" element={<ProductDetail />} />
           <Route path="/chats" element={<ChatList />} />
+          {/* New Routes */}
+          <Route path="/favoritos" element={<Favorites />} />
+          <Route path="/anunciar" element={<CreateListing />} />
+          <Route path="/mensajes" element={<Messages />} />
+          <Route path="/perfil" element={<Profile />} />
         </Route>
         
         {/* Fullscreen Chat Route (No Layout Wrapper) */}
