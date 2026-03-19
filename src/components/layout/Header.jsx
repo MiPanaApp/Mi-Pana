@@ -67,18 +67,17 @@ export default function Header() {
       <div className="bg-[#E0E5EC] pt-safe safe-area-pt shadow-[0_5px_15px_rgba(163,177,198,0.3)]">
         <div className="max-w-7xl mx-auto px-4 pt-3 pb-3">
           <div className="flex items-center gap-4">
-            
-            {/* Logo y Ubicación */}
-            <div className="flex flex-col items-center flex-shrink-0 relative">
+                        {/* Logo y Ubicación */}
+            <div className="flex flex-col items-center md:items-start flex-shrink-0 relative md:min-w-[180px]">
               <img 
                 src={logoTexto} 
                 alt="miPana" 
-                style={{ height: '40px', objectFit: 'contain' }} 
-                className="header-logo cursor-pointer active:scale-95 transition-transform"
+                style={{ objectFit: 'contain' }} 
+                className="h-10 md:h-[72px] header-logo cursor-pointer active:scale-95 transition-transform"
                 onClick={() => navigate('/')}
               />
               
-              <div className="flex items-center gap-1.5 mt-1">
+              <div className="flex items-center gap-1.5 md:gap-2 mt-1 md:mt-2 md:pl-1">
                 {/* 1. Botón Bandera (Selector de País) */}
                 <div className="relative" ref={countryRef}>
                   <button 
@@ -86,13 +85,13 @@ export default function Header() {
                     className="flex items-center justify-center cursor-pointer active:scale-95 transition-transform opacity-90"
                   >
                     {selectedCountry === 'ES' ? (
-                      <div className="w-4 h-4 rounded-full overflow-hidden flex flex-col border-[0.5px] border-[#003366]/20 shadow-[2px_2px_4px_rgba(163,177,198,0.5),-2px_-2px_4px_rgba(255,255,255,0.8)]">
+                      <div className="w-4 h-4 md:w-6 md:h-6 rounded-full overflow-hidden flex flex-col border-[0.5px] border-[#003366]/20 shadow-[2px_2px_4px_rgba(163,177,198,0.5),-2px_-2px_4px_rgba(255,255,255,0.8)]">
                         <div className="h-[30%] bg-[#AD1519]"></div>
                         <div className="h-[40%] bg-[#FABD00]"></div>
                         <div className="h-[30%] bg-[#AD1519]"></div>
                       </div>
                     ) : (
-                      <div className="w-4 h-4 rounded-full overflow-hidden flex flex-col border-[0.5px] border-[#003366]/20 shadow-[2px_2px_4px_rgba(163,177,198,0.5),-2px_-2px_4px_rgba(255,255,255,0.8)]">
+                      <div className="w-4 h-4 md:w-6 md:h-6 rounded-full overflow-hidden flex flex-col border-[0.5px] border-[#003366]/20 shadow-[2px_2px_4px_rgba(163,177,198,0.5),-2px_-2px_4px_rgba(255,255,255,0.8)]">
                         <div className="h-[50%] bg-[#FCD116]"></div>
                         <div className="h-[25%] bg-[#003893]"></div>
                         <div className="h-[25%] bg-[#CE1126]"></div>
@@ -106,7 +105,7 @@ export default function Header() {
                         initial={{ opacity: 0, y: 5, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 5, scale: 0.95 }}
-                        className="absolute top-full left-1/2 -translate-x-1/2 mt-4 bg-[#E0E5EC] rounded-3xl shadow-[8px_8px_16px_rgba(163,177,198,0.7),-8px_-8px_16px_rgba(255,255,255,0.9)] border-[0.5px] border-white/60 p-2.5 z-[1001] flex flex-col gap-3"
+                        className="absolute top-full left-0 mt-4 bg-[#E0E5EC] rounded-3xl shadow-[8px_8px_16px_rgba(163,177,198,0.7),-8px_-8px_16px_rgba(255,255,255,0.9)] border-[0.5px] border-white/60 p-2.5 z-[1001] flex flex-col gap-3"
                       >
                         <button
                           onClick={() => {
@@ -115,7 +114,7 @@ export default function Header() {
                             setFilters({ location: { level1: 'Madrid', level2: 'Madrid', level3: '' } });
                             setIsCountryOpen(false);
                           }}
-                          className={`w-12 h-12 flex items-center justify-center rounded-full transition-all ${selectedCountry === 'ES' ? 'shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)]' : 'shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.8)] hover:scale-105 active:scale-95'}`}
+                          className={`w-12 h-12 flex items-center justify-center rounded-full transition-all ${selectedCountry === 'ES' ? 'shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.9)]' : 'shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.8)] hover:scale-105 active:scale-95'}`}
                         >
                           <div className="w-6 h-6 rounded-full overflow-hidden flex flex-col shadow-sm">
                             <div className="h-[30%] bg-[#AD1519]"></div>
@@ -130,7 +129,7 @@ export default function Header() {
                             setFilters({ location: { level1: 'Cundinamarca', level2: 'Bogotá', level3: '' } });
                             setIsCountryOpen(false);
                           }}
-                          className={`w-12 h-12 flex items-center justify-center rounded-full transition-all ${selectedCountry === 'CO' ? 'shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)]' : 'shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.8)] hover:scale-105 active:scale-95'}`}
+                          className={`w-12 h-12 flex items-center justify-center rounded-full transition-all ${selectedCountry === 'CO' ? 'shadow-[inset_4px_4px_8_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.9)]' : 'shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.8)] hover:scale-105 active:scale-95'}`}
                         >
                           <div className="w-6 h-6 rounded-full overflow-hidden flex flex-col shadow-sm">
                             <div className="h-[50%] bg-[#FCD116]"></div>
@@ -146,9 +145,9 @@ export default function Header() {
                 {/* 2. Botón Región / Municipio (Abre Modal Filtros de Ubicación) */}
                 <button 
                   onClick={() => setIsFilterOpen(true)}
-                  className="cursor-pointer active:scale-95 transition-transform opacity-90 max-w-[80px]"
+                  className="cursor-pointer active:scale-95 transition-transform opacity-90"
                 >
-                  <span className="text-[10px] sm:text-[11px] font-black text-[#003366] tracking-widest uppercase truncate block">
+                  <span className="text-[10px] sm:text-[11px] md:text-[15px] font-black text-[#003366] tracking-widest uppercase truncate block">
                     {filters?.location?.level2 || filters?.location?.level1 || selectedRegion || 'Ubicación'}
                   </span>
                 </button>
@@ -156,13 +155,13 @@ export default function Header() {
             </div>
 
             {/* Buscador Claymorphism Amarillo */}
-            <div className="relative flex-1">
+            <div className="relative flex-1 md:max-w-4xl self-start md:self-center mt-2 md:mt-0">
               <input 
                 type="text" 
                 placeholder="¿Qué necesitas, pana?" 
-                className="w-full h-11 pl-11 pr-4 bg-[#FFCC00] rounded-xl text-sm text-[#1A1A3A] font-bold placeholder:text-[#1A1A3A]/70 shadow-[inset_4px_4px_8px_rgba(204,163,0,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] focus:outline-none focus:ring-2 focus:ring-[#0056B3]/40 transition-all"
+                className="w-full h-11 md:h-14 pl-11 pr-4 bg-[#FFCC00] rounded-xl md:rounded-2xl text-sm md:text-lg text-[#1A1A3A] font-bold placeholder:text-[#1A1A3A]/70 shadow-[inset_4px_4px_8px_rgba(204,163,0,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] focus:outline-none focus:ring-2 focus:ring-[#0056B3]/40 transition-all"
               />
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#1A1A3A]/80 w-5 h-5" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#1A1A3A]/80 w-5 h-5 md:w-7 md:h-7" />
             </div>
           </div>
         </div>
