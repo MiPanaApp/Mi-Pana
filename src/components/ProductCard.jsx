@@ -35,7 +35,7 @@ export default function ProductCard({ product }) {
 
         {/* Badge "NUEVO" o "TOP" */}
         {(product.premium || product.id % 2 === 0) && (
-          <div className="absolute bottom-3 left-3 px-2 py-1 bg-[#0056B3] rounded-lg text-white text-[10px] font-black tracking-wide shadow-lg uppercase">
+          <div className="absolute bottom-3 left-3 px-2 py-1 bg-[#D90429] rounded-lg text-white text-[10px] font-black tracking-wide shadow-lg uppercase">
             {product.premium ? 'TOP' : 'NUEVO'}
           </div>
         )}
