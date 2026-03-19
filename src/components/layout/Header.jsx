@@ -87,8 +87,8 @@ export default function Header() {
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             className="overflow-hidden bg-[#E0E5EC]/95 backdrop-blur-md"
           >
-            <div className="max-w-7xl mx-auto px-4 py-4">
-              <div className="flex items-center gap-3 overflow-x-auto px-4 py-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="max-w-7xl mx-auto py-2">
+              <div className="flex items-center gap-3 overflow-x-auto px-6 py-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {CATEGORIES.map((cat, index) => {
                   const isActive = activeCategory === cat.id;
                   
