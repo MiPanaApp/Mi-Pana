@@ -4,145 +4,34 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ProductCard from '../components/ProductCard';
 import FilterPanel from '../components/ui/FilterPanel';
 import { useStore } from '../store/useStore';
-
-const MOCK_PRODUCTS = [
-  {
-    id: 101,
-    name: "Reparación Profesional de Laptops y PC",
-    image: "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?w=400&q=80",
-    price: "45",
-    rating: 4.9,
-    reviewCount: 124,
-    premium: true,
-    verified: true,
-    whatsapp: "34600000000",
-  },
-  {
-    id: 102,
-    name: "Tequeños Caseros (Pack 50 uds)",
-    image: "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=400&q=80",
-    price: "15",
-    rating: 4.7,
-    reviewCount: 312,
-    premium: false,
-    verified: true,
-    whatsapp: "34600000000",
-  },
-  {
-    id: 103,
-    name: "Asesoría Legal Extranjería y Asilo",
-    image: "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?w=400&q=80",
-    price: "50",
-    rating: 5.0,
-    reviewCount: 89,
-    premium: true,
-    verified: true,
-    whatsapp: "34600000000",
-  },
-  {
-    id: 104,
-    name: "Cajas a Venezuela - Envío Marítimo Seguro",
-    image: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=400&q=80",
-    price: "120",
-    rating: 4.5,
-    reviewCount: 56,
-    premium: false,
-    verified: false,
-    whatsapp: "34600000000",
-  },
-  {
-    id: 105,
-    name: "Sabor Venezolano: Hallacas y Dulces",
-    image: "https://images.unsplash.com/photo-1547514701-42782101795e?w=400&q=80",
-    price: "25",
-    rating: 4.8,
-    reviewCount: 156,
-    premium: true,
-    verified: true,
-    whatsapp: "34600000000",
-  },
-  {
-    id: 106,
-    name: "Venta de Divisas (Tasa del día)",
-    image: "https://images.unsplash.com/photo-1580519542036-c47de6196ba5?w=400&q=80",
-    price: "1",
-    rating: 4.9,
-    reviewCount: 423,
-    premium: false,
-    verified: true,
-    whatsapp: "34600000000",
-  },
-  {
-    id: 107,
-    name: "Peluquería y Estética a Domicilio",
-    image: "https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=400&q=80",
-    price: "25",
-    rating: 4.8,
-    reviewCount: 92,
-    premium: true,
-    verified: true,
-    whatsapp: "34600000000",
-  },
-  {
-    id: 108,
-    name: "Queso Llanero y Palmita Artesanal",
-    image: "https://images.unsplash.com/photo-1552767059-ce182ead6c1b?w=400&q=80",
-    price: "12",
-    rating: 4.9,
-    reviewCount: 215,
-    premium: false,
-    verified: true,
-    whatsapp: "34600000000",
-  },
-  {
-    id: 109,
-    name: "Clases de Música: Cuatro y Guitarra",
-    image: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=400&q=80",
-    price: "20",
-    rating: 4.7,
-    reviewCount: 45,
-    premium: false,
-    verified: false,
-    whatsapp: "34600000000",
-  },
-  {
-    id: 110,
-    name: "Transporte al Aeropuerto (Barajas)",
-    image: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=400&q=80",
-    price: "35",
-    rating: 5.0,
-    reviewCount: 128,
-    premium: true,
-    verified: true,
-    whatsapp: "34600000000",
-  },
-  {
-    id: 111,
-    name: "Repostería: Torta de Pan y Tres Leches",
-    image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&q=80",
-    price: "18",
-    rating: 4.9,
-    reviewCount: 88,
-    premium: false,
-    verified: true,
-    whatsapp: "34600000000",
-  },
-  {
-    id: 112,
-    name: "Servicio de Limpieza de Hogar",
-    image: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=400&q=80",
-    price: "15",
-    rating: 4.6,
-    reviewCount: 167,
-    premium: false,
-    verified: true,
-    whatsapp: "34600000000",
-  }
-];
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
 export default function Home() {
   const { activeCategory, filters, setFilters, sortBy, setSortBy, setIsFilterOpen, isSortOpen, setIsSortOpen } = useStore();
   const sortRef = useRef(null);
+
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Cargar productos de Firestore al iniciar
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'products'));
+        const productsList = querySnapshot.docs.map(doc => ({
+          ...doc.data(),
+          id: doc.id
+        }));
+        setProducts(productsList);
+      } catch (error) {
+        console.error("Error fetching products", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -160,7 +49,7 @@ export default function Home() {
   }, [isSortOpen, setIsSortOpen]);
 
   const filteredProducts = useMemo(() => {
-    let result = [...MOCK_PRODUCTS];
+    let result = [...products];
 
     // 1. Filtrar por Categoría (Desactivado por petición del usuario para mostrar todo)
     /*
@@ -270,25 +159,45 @@ export default function Home() {
         </div>
 
         {/* RESPONSIVE GRID: 2 cols mobile, 3 tablet, 4 desktop, 5 ultra-wide */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 lg:gap-10 px-1">
-          {filteredProducts.map(prod => (
-            <ProductCard key={prod.id} product={prod} />
-          ))}
+        {loading ? (
+          <div className="flex justify-center items-center py-20">
+            <div className="w-10 h-10 border-4 border-[#1A1A3A]/20 border-t-[#1A1A3A] rounded-full animate-spin"></div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 lg:gap-10 px-1">
+            {filteredProducts.map(prod => (
+              <ProductCard key={prod.id} product={prod} />
+            ))}
 
-          {filteredProducts.length === 0 && (
-            <div className="col-span-full py-20 text-center">
-              <p className="text-xl font-bold text-[#1A1A3A]/40 tracking-widest flex items-center justify-center gap-2">
-                No hay panas con estos filtros <Meh className="w-6 h-6 opacity-60" />
-              </p>
-              <button 
-                onClick={() => setFilters({ price: { min: '', max: '' }, distance: 50, sortBy: 'relevance' })}
-                className="mt-4 text-[#1A1A3A] font-black underline-none"
-              >
-                Limpiar filtros
-              </button>
-            </div>
-          )}
-        </div>
+            {/* Empty State: NO HAY PRODUCTOS EN LA BD */}
+            {products.length === 0 && (
+              <div className="col-span-full py-16 text-center bg-[#E0E5EC] rounded-[2rem] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] flex flex-col items-center justify-center p-6 mt-4">
+                <Meh className="w-12 h-12 opacity-40 mb-3 text-[#1A1A3A]" />
+                <p className="text-lg md:text-xl font-bold text-[#1A1A3A]/60 tracking-widest">
+                  Aún no hay anuncios
+                </p>
+                <p className="text-sm font-semibold text-[#1A1A3A]/40 mt-2">
+                  ¡Sé el primero en anunciar algo!
+                </p>
+              </div>
+            )}
+            
+            {/* Empty State: Filtros agresivos que no devuelven nada */}
+            {products.length > 0 && filteredProducts.length === 0 && (
+              <div className="col-span-full py-20 text-center">
+                <p className="text-xl font-bold text-[#1A1A3A]/40 tracking-widest flex items-center justify-center gap-2">
+                  No hay panas con estos filtros <Meh className="w-6 h-6 opacity-60" />
+                </p>
+                <button 
+                  onClick={() => setFilters({ price: { min: '', max: '' }, distance: 50, sortBy: 'relevance' })}
+                  className="mt-4 text-[#1A1A3A] font-black underline-none hover:text-[#D90429] transition-colors"
+                >
+                  Limpiar filtros
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <FilterPanel />
