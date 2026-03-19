@@ -21,13 +21,11 @@ export default function Header() {
     activeCategory, 
     setActiveCategory, 
     setIsFilterOpen, 
-    isSortOpen, 
-    setIsSortOpen,
-    sortBy,
     setSortBy,
     selectedCountry,
     selectedRegion,
     setCountry,
+    setRegion,
     filters,
     setFilters
   } = useStore();
@@ -64,7 +62,7 @@ export default function Header() {
   return (
     <header className="fixed top-0 left-0 w-full z-50">
       {/* 1. TOP HEADER FIJO (Logo + Buscador) - Neumorphism */}
-      <div className="bg-[#E0E5EC] pt-safe safe-area-pt shadow-[0_5px_15px_rgba(163,177,198,0.3)] border-b border-white/20">
+      <div className="bg-[#E0E5EC] pt-safe safe-area-pt shadow-[0_5px_15px_rgba(163,177,198,0.3)]">
         <div className="max-w-7xl mx-auto px-4 pt-3 pb-3">
           <div className="flex items-center gap-4">
             
@@ -105,27 +103,37 @@ export default function Header() {
                         initial={{ opacity: 0, y: 5, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 5, scale: 0.95 }}
-                        className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-32 bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/40 p-2 z-[1001]"
+                        className="absolute top-full left-1/2 -translate-x-1/2 mt-4 bg-[#E0E5EC] rounded-3xl shadow-[8px_8px_16px_rgba(163,177,198,0.7),-8px_-8px_16px_rgba(255,255,255,0.9)] border-[0.5px] border-white/60 p-2.5 z-[1001] flex flex-col gap-3"
                       >
                         <button
                           onClick={() => {
                             setCountry('ES');
-                            setFilters({ location: { level1: '', level2: '', level3: '' } });
+                            setRegion('Madrid');
+                            setFilters({ location: { level1: 'Madrid', level2: 'Madrid', level3: '' } });
                             setIsCountryOpen(false);
                           }}
-                          className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all ${selectedCountry === 'ES' ? 'bg-[#1A1A3A] text-white' : 'text-[#1A1A3A] hover:bg-black/5'}`}
+                          className={`w-12 h-12 flex items-center justify-center rounded-full transition-all ${selectedCountry === 'ES' ? 'shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)]' : 'shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.8)] hover:scale-105 active:scale-95'}`}
                         >
-                          España
+                          <div className="w-6 h-6 rounded-full overflow-hidden flex flex-col shadow-sm">
+                            <div className="h-[30%] bg-[#AD1519]"></div>
+                            <div className="h-[40%] bg-[#FABD00]"></div>
+                            <div className="h-[30%] bg-[#AD1519]"></div>
+                          </div>
                         </button>
                         <button
                           onClick={() => {
                             setCountry('CO');
-                            setFilters({ location: { level1: '', level2: '', level3: '' } });
+                            setRegion('Bogotá');
+                            setFilters({ location: { level1: 'Cundinamarca', level2: 'Bogotá', level3: '' } });
                             setIsCountryOpen(false);
                           }}
-                          className={`w-full flex items-center justify-center gap-2 px-3 py-2 mt-1 rounded-xl text-xs font-bold transition-all ${selectedCountry === 'CO' ? 'bg-[#1A1A3A] text-white' : 'text-[#1A1A3A] hover:bg-black/5'}`}
+                          className={`w-12 h-12 flex items-center justify-center rounded-full transition-all ${selectedCountry === 'CO' ? 'shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)]' : 'shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.8)] hover:scale-105 active:scale-95'}`}
                         >
-                          Colombia
+                          <div className="w-6 h-6 rounded-full overflow-hidden flex flex-col shadow-sm">
+                            <div className="h-[50%] bg-[#FCD116]"></div>
+                            <div className="h-[25%] bg-[#003893]"></div>
+                            <div className="h-[25%] bg-[#CE1126]"></div>
+                          </div>
                         </button>
                       </motion.div>
                     )}

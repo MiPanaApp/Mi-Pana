@@ -177,8 +177,8 @@ export default function FilterPanel() {
                       onClick={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
                       className={`flex flex-col items-center justify-center p-3 rounded-2xl transition-all duration-300 ${
                         activeCategory === cat.id 
-                        ? 'bg-[#1A1A3A] text-white shadow-lg' 
-                        : 'bg-[#E0E5EC] text-[#1A1A3A] shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.8)]'
+                        ? 'bg-[#D90429] text-white shadow-[inset_2px_2px_5px_rgba(0,0,0,0.2)]' 
+                        : 'bg-[#E0E5EC] text-[#1A1A3A] hover:text-[#D90429] shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.8)]'
                       }`}
                     >
                       <cat.icon size={18} />
@@ -224,7 +224,7 @@ export default function FilterPanel() {
                     <span className="font-black text-[#1A1A3A]">Solo Verificados</span>
                     <span className="text-[10px] font-bold text-[#1A1A3A]/40 uppercase tracking-widest">Panas con identidad validada</span>
                   </div>
-                  <div className={`w-12 h-6 rounded-full transition-all flex items-center px-1 ${filters.onlyVerified ? 'bg-[#003366]' : 'bg-gray-300'}`}>
+                  <div className={`w-12 h-6 rounded-full transition-all flex items-center px-1 ${filters.onlyVerified ? 'bg-[#FFCC00] shadow-[inset_1px_1px_3px_rgba(204,163,0,0.6)]' : 'bg-gray-300 shadow-inner'}`}>
                     <motion.div 
                       layout
                       className="w-4 h-4 bg-white rounded-full shadow-md flex items-center justify-center"

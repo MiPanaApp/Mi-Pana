@@ -63,7 +63,7 @@ export default function CustomSelect({ value, onChange, options, placeholder, ic
             <div className="p-2 space-y-1">
               <button
                 onClick={() => handleSelect('')}
-                className={`w-full text-left px-5 py-4 rounded-xl transition-all font-black text-base ${!value ? 'bg-[#1A1A3A] text-white shadow-md' : 'text-[#1A1A3A]/60 hover:bg-black/5'}`}
+                className={`w-full text-left px-5 py-4 rounded-xl transition-all font-black text-base ${!value ? 'bg-[#D90429] text-white shadow-md' : 'text-[#1A1A3A]/60 hover:bg-[#D90429]/10 hover:text-[#D90429]'}`}
               >
                 {placeholder}
               </button>
@@ -72,7 +72,7 @@ export default function CustomSelect({ value, onChange, options, placeholder, ic
                 <button
                   key={opt}
                   onClick={() => handleSelect(opt)}
-                  className={`w-full text-left px-5 py-4 rounded-xl transition-all font-bold text-base ${value === opt ? 'bg-[#1A1A3A] text-white shadow-md' : 'text-[#1A1A3A] hover:bg-black/5'}`}
+                  className={`w-full text-left px-5 py-4 rounded-xl transition-all font-bold text-base ${value === opt ? 'bg-[#D90429] text-white shadow-md' : 'text-[#1A1A3A] hover:bg-[#D90429]/10 hover:text-[#D90429]'}`}
                 >
                   {opt}
                 </button>
