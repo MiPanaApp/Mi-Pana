@@ -25,18 +25,18 @@ export default function ProductCard({ product }) {
           className="w-full h-full object-cover rounded-2xl transition-transform duration-500 group-hover:scale-110"
         />
         
-        {/* Botón Corazón - Claymorphism Puro */}
+        {/* Botón Corazón - Mejor Contraste */}
         <button 
           onClick={(e) => {
             e.stopPropagation();
             toggleFavorite(product.id);
           }}
-          className={`absolute top-2.5 right-2.5 p-1.5 backdrop-blur-sm rounded-full transition-all z-10 
-            ${isFavorite 
-              ? 'bg-[#D90429]/10 text-[#D90429] shadow-[inset_2px_2px_4px_rgba(217,4,41,0.2)] opacity-100' 
-              : 'bg-[#E0E5EC]/70 text-gray-400/80 hover:text-[#D90429] shadow-[3px_3px_6px_rgba(163,177,198,0.5),-3px_-3px_6px_rgba(255,255,255,0.8)] opacity-80'}`}
+          className={`absolute top-2.5 right-2.5 p-2 bg-white/85 backdrop-blur-sm rounded-full shadow-[0_4px_10px_rgba(0,0,0,0.15)] active:scale-90 transition-all z-10 
+            ${isFavorite ? 'text-[#D90429]' : 'text-gray-400 hover:text-[#D90429]'}`}
         >
-          <Heart className={`w-4 h-4 flex-shrink-0 ${isFavorite ? 'fill-[#D90429]' : ''}`} />
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill={isFavorite ? '#D90429' : 'none'} stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
         </button>
 
         {/* Badge "NUEVO" o "TOP" */}
