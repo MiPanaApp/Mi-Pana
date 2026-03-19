@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Sliders, Check, Coffee, Package, Smile, Monitor, Tool, ShoppingBag, Briefcase, Heart } from 'lucide-react';
+import { X, Sliders, Check, Coffee, Package, Smile, Monitor, Wrench, ShoppingBag, Briefcase, Heart } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 
 const MODAL_CATEGORIES = [
@@ -8,7 +8,7 @@ const MODAL_CATEGORIES = [
   { id: 2, name: "Envíos", icon: Package },
   { id: 3, name: "Belleza", icon: Smile },
   { id: 4, name: "Tecn", icon: Monitor },
-  { id: 5, name: "Servicios", icon: Tool },
+  { id: 5, name: "Servicios", icon: Wrench },
   { id: 6, name: "Ropa", icon: ShoppingBag },
   { id: 7, name: "Legal", icon: Briefcase },
   { id: 8, name: "Salud", icon: Heart },
