@@ -20,13 +20,15 @@ export default function FilterPanel() {
   const { isFilterOpen, setIsFilterOpen, filters, setFilters, activeCategory, setActiveCategory, selectedCountry } = useStore();
   const [isLocating, setIsLocating] = useState(false);
 
+  const locationOptions = filters?.location || { level1: '', level2: '', level3: '' };
+
   const countryData = LOCATION_DATA[selectedCountry] || LOCATION_DATA['ES'];
   
   // Opciones derivadas para los selectores
   const level1Options = Object.keys(countryData.data);
-  const level2Options = filters.location.level1 ? Object.keys(countryData.data[filters.location.level1] || {}) : [];
-  const level3Options = (filters.location.level1 && filters.location.level2) 
-    ? (countryData.data[filters.location.level1]?.[filters.location.level2] || []) 
+  const level2Options = locationOptions.level1 ? Object.keys(countryData.data[locationOptions.level1] || {}) : [];
+  const level3Options = (locationOptions.level1 && locationOptions.level2) 
+    ? (countryData.data[locationOptions.level1]?.[locationOptions.level2] || []) 
     : [];
 
   useEffect(() => {
@@ -139,7 +141,7 @@ export default function FilterPanel() {
                       <MapPin size={18} />
                     </div>
                     <select
-                      value={filters.location.level1}
+                      value={locationOptions.level1}
                       onChange={(e) => setFilters({ location: { level1: e.target.value, level2: '', level3: '' } })}
                       className="w-full h-14 pl-12 pr-10 bg-[#E0E5EC] rounded-2xl text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.5),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] outline-none border-none appearance-none focus:shadow-[inset_6px_6px_12px_rgba(163,177,198,0.6)] transition-all cursor-pointer"
                     >
@@ -154,9 +156,9 @@ export default function FilterPanel() {
                       <Building size={18} />
                     </div>
                     <select
-                      value={filters.location.level2}
-                      onChange={(e) => setFilters({ location: { ...filters.location, level2: e.target.value, level3: '' } })}
-                      disabled={!filters.location.level1}
+                      value={locationOptions.level2}
+                      onChange={(e) => setFilters({ location: { ...locationOptions, level2: e.target.value, level3: '' } })}
+                      disabled={!locationOptions.level1}
                       className="w-full h-14 pl-12 pr-10 bg-[#E0E5EC] rounded-2xl text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.5),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] outline-none border-none appearance-none focus:shadow-[inset_6px_6px_12px_rgba(163,177,198,0.6)] transition-all disabled:opacity-50 cursor-pointer"
                     >
                       <option value="">{countryData.labels.level2}</option>
@@ -170,9 +172,9 @@ export default function FilterPanel() {
                       <HomeIcon size={18} />
                     </div>
                     <select
-                      value={filters.location.level3}
-                      onChange={(e) => setFilters({ location: { ...filters.location, level3: e.target.value } })}
-                      disabled={!filters.location.level2}
+                      value={locationOptions.level3}
+                      onChange={(e) => setFilters({ location: { ...locationOptions, level3: e.target.value } })}
+                      disabled={!locationOptions.level2}
                       className="w-full h-14 pl-12 pr-10 bg-[#E0E5EC] rounded-2xl text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.5),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] outline-none border-none appearance-none focus:shadow-[inset_6px_6px_12px_rgba(163,177,198,0.6)] transition-all disabled:opacity-50 cursor-pointer"
                     >
                       <option value="">{countryData.labels.level3} (Opcional)</option>
