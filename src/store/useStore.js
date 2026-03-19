@@ -13,6 +13,7 @@ export const useStore = create(
       filters: {
         price: { min: '', max: '' },
         onlyVerified: false,
+        location: { level1: '', level2: '', level3: '' },
       },
       
       setCountry: (country) => set({ selectedCountry: country }),

@@ -1,7 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Sliders, Check, Coffee, Package, Smile, Monitor, Wrench, ShoppingBag, Briefcase, Heart } from 'lucide-react';
+import { X, Sliders, Check, Coffee, Package, Smile, Monitor, Wrench, ShoppingBag, Briefcase, Heart, Navigation, MapPin, Building, Home as HomeIcon } from 'lucide-react';
+import { Geolocation } from '@capacitor/geolocation';
 import { useStore } from '../../store/useStore';
+import { LOCATION_DATA } from '../../data/locations';
 
 const MODAL_CATEGORIES = [
   { id: 1, name: "Comida", icon: Coffee },
@@ -15,7 +17,17 @@ const MODAL_CATEGORIES = [
 ];
 
 export default function FilterPanel() {
-  const { isFilterOpen, setIsFilterOpen, filters, setFilters, activeCategory, setActiveCategory } = useStore();
+  const { isFilterOpen, setIsFilterOpen, filters, setFilters, activeCategory, setActiveCategory, selectedCountry } = useStore();
+  const [isLocating, setIsLocating] = useState(false);
+
+  const countryData = LOCATION_DATA[selectedCountry] || LOCATION_DATA['ES'];
+  
+  // Opciones derivadas para los selectores
+  const level1Options = Object.keys(countryData.data);
+  const level2Options = filters.location.level1 ? Object.keys(countryData.data[filters.location.level1] || {}) : [];
+  const level3Options = (filters.location.level1 && filters.location.level2) 
+    ? (countryData.data[filters.location.level1]?.[filters.location.level2] || []) 
+    : [];
 
   useEffect(() => {
     if (isFilterOpen) {
@@ -35,9 +47,39 @@ export default function FilterPanel() {
   const resetFilters = () => {
     setFilters({
       price: { min: '', max: '' },
-      onlyVerified: false
+      onlyVerified: false,
+      location: { level1: '', level2: '', level3: '' }
     });
     setActiveCategory(null);
+  };
+
+  const handleGeolocation = async () => {
+    try {
+      setIsLocating(true);
+      const permission = await Geolocation.requestPermissions();
+      if (permission.location !== 'granted') {
+        alert("Permiso de ubicación denegado.");
+        setIsLocating(false);
+        return;
+      }
+
+      await Geolocation.getCurrentPosition();
+      
+      // Simulación de Geocodificación Inversa (Mock "Madrid")
+      // En producción: fetch a API de OpenStreetMap o Google Maps con coords
+      setFilters({
+        location: {
+          level1: selectedCountry === 'ES' ? 'Madrid' : 'Bogotá', // Mock Inteligente
+          level2: selectedCountry === 'ES' ? 'Madrid' : 'Bogotá',
+          level3: '',
+        }
+      });
+    } catch (error) {
+      console.error('Error getting location', error);
+      alert("No se pudo obtener la ubicación.");
+    } finally {
+      setIsLocating(false);
+    }
   };
 
   return (
@@ -79,6 +121,67 @@ export default function FilterPanel() {
 
             {/* Scrollable Content */}
             <div className="flex-1 overflow-y-auto px-8 pb-6 space-y-10 overscroll-contain pt-4">
+              {/* UBICACIÓN INTELIGENTE */}
+              <section className="space-y-4">
+                <button 
+                  onClick={handleGeolocation}
+                  disabled={isLocating}
+                  className="w-full flex items-center justify-center gap-2 h-14 bg-[#1A1A3A] text-white rounded-2xl font-bold shadow-[0_8px_16px_rgba(26,26,58,0.2)] active:scale-95 transition-all disabled:opacity-70"
+                >
+                  <Navigation className={`w-5 h-5 ${isLocating ? 'animate-pulse' : ''}`} />
+                  {isLocating ? 'Localizando...' : 'Usar mi ubicación actual'}
+                </button>
+
+                <div className="space-y-3 pt-2">
+                  {/* Nivel 1: Provincia / Departamento */}
+                  <div className="relative">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#1A1A3A]/40 z-10">
+                      <MapPin size={18} />
+                    </div>
+                    <select
+                      value={filters.location.level1}
+                      onChange={(e) => setFilters({ location: { level1: e.target.value, level2: '', level3: '' } })}
+                      className="w-full h-14 pl-12 pr-10 bg-[#E0E5EC] rounded-2xl text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.5),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] outline-none border-none appearance-none focus:shadow-[inset_6px_6px_12px_rgba(163,177,198,0.6)] transition-all cursor-pointer"
+                    >
+                      <option value="">{countryData.labels.level1}</option>
+                      {level1Options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                    </select>
+                  </div>
+
+                  {/* Nivel 2: Municipio / Ciudad */}
+                  <div className="relative">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#1A1A3A]/40 z-10">
+                      <Building size={18} />
+                    </div>
+                    <select
+                      value={filters.location.level2}
+                      onChange={(e) => setFilters({ location: { ...filters.location, level2: e.target.value, level3: '' } })}
+                      disabled={!filters.location.level1}
+                      className="w-full h-14 pl-12 pr-10 bg-[#E0E5EC] rounded-2xl text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.5),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] outline-none border-none appearance-none focus:shadow-[inset_6px_6px_12px_rgba(163,177,198,0.6)] transition-all disabled:opacity-50 cursor-pointer"
+                    >
+                      <option value="">{countryData.labels.level2}</option>
+                      {level2Options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                    </select>
+                  </div>
+
+                  {/* Nivel 3: Barrio / Comuna */}
+                  <div className="relative">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#1A1A3A]/40 z-10">
+                      <HomeIcon size={18} />
+                    </div>
+                    <select
+                      value={filters.location.level3}
+                      onChange={(e) => setFilters({ location: { ...filters.location, level3: e.target.value } })}
+                      disabled={!filters.location.level2}
+                      className="w-full h-14 pl-12 pr-10 bg-[#E0E5EC] rounded-2xl text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.5),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] outline-none border-none appearance-none focus:shadow-[inset_6px_6px_12px_rgba(163,177,198,0.6)] transition-all disabled:opacity-50 cursor-pointer"
+                    >
+                      <option value="">{countryData.labels.level3} (Opcional)</option>
+                      {level3Options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                    </select>
+                  </div>
+                </div>
+              </section>
+
               {/* Categorías */}
               <section>
                 <h3 className="text-sm font-bold text-[#1A1A3A]/60 tracking-widest ml-1 mb-4">Categoría</h3>
