@@ -2,7 +2,7 @@ import { Search } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion';
 import { useState } from 'react';
 import { FiCoffee, FiPackage, FiSmile, FiMonitor, FiTool, FiShoppingBag, FiBriefcase, FiHeart } from 'react-icons/fi';
-import { IconPana } from '../ui/IconPana';
+import { useStore } from '../../store/useStore';
 import logoTexto from '../../assets/solotexto.png';
 
 const CATEGORIES = [
@@ -17,7 +17,15 @@ const CATEGORIES = [
 ];
 
 export default function Header() {
-  const [activeCat, setActiveCat] = useState(1);
+  const { 
+    activeCategory, 
+    setActiveCategory, 
+    setIsFilterOpen, 
+    isSortOpen, 
+    setIsSortOpen,
+    sortBy,
+    setSortBy
+  } = useStore();
   const [hidden, setHidden] = useState(false);
   const { scrollY } = useScroll();
 
@@ -46,7 +54,7 @@ export default function Header() {
                 className="header-logo"
               />
               <div className="flex items-center gap-1 mt-1 cursor-pointer active:scale-95 transition-transform opacity-90">
-                <span className="text-[10px] font-black text-[#003366] tracking-widest uppercase">Madrid</span>
+                <span className="text-[10px] font-black text-[#003366] tracking-widest">Madrid</span>
                 {/* Bandera España */}
                 <div className="w-3.5 h-3.5 rounded-full overflow-hidden flex flex-col border-[0.5px] border-[#003366]/20 shadow-[2px_2px_4px_rgba(163,177,198,0.5),-2px_-2px_4px_rgba(255,255,255,0.8)]">
                   <div className="h-[30%] bg-[#AD1519]"></div>
@@ -56,7 +64,7 @@ export default function Header() {
               </div>
             </div>
 
-            {/* Buscador Claymorphism Amarillo (Efecto Hundido/Carved) */}
+            {/* Buscador Claymorphism Amarillo */}
             <div className="relative flex-1">
               <input 
                 type="text" 
@@ -82,7 +90,7 @@ export default function Header() {
             <div className="max-w-7xl mx-auto px-4 py-4">
               <div className="flex items-center gap-3 overflow-x-auto px-4 py-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {CATEGORIES.map((cat, index) => {
-                  const isActive = activeCat === cat.id;
+                  const isActive = activeCategory === cat.id;
                   
                   // Brand Color Pattern: Blue, Yellow, Red
                   let iconColor;
@@ -93,7 +101,7 @@ export default function Header() {
                   return (
                     <motion.button
                       key={cat.id}
-                      onClick={() => setActiveCat(cat.id)}
+                      onClick={() => setActiveCategory(cat.id)}
                       whileTap={{ scale: 0.95 }}
                       className={`
                         flex items-center gap-2 px-4 py-2 rounded-full flex-shrink-0 transition-all duration-300
@@ -104,7 +112,7 @@ export default function Header() {
                       `}
                     >
                       <cat.icon size={16} style={{ color: iconColor }} />
-                      <span className="text-xs font-black uppercase tracking-tight">{cat.name}</span>
+                      <span className="text-xs font-black tracking-tight">{cat.name}</span>
                     </motion.button>
                   );
                 })}

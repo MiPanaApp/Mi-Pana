@@ -1,5 +1,9 @@
-import { Sliders } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Sliders, Meh, ArrowUpDown, Pin, Star, Clock, Euro } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import ProductCard from '../components/ProductCard';
+import FilterPanel from '../components/ui/FilterPanel';
+import { useStore } from '../store/useStore';
 
 const MOCK_PRODUCTS = [
   {
@@ -137,31 +141,137 @@ const MOCK_PRODUCTS = [
 ];
 
 export default function Home() {
+  const { activeCategory, filters, setFilters, sortBy, setSortBy, setIsFilterOpen, isSortOpen, setIsSortOpen } = useStore();
+
+  const filteredProducts = useMemo(() => {
+    let result = [...MOCK_PRODUCTS];
+
+    // 1. Filtrar por Categoría
+    if (activeCategory) {
+      result = result.filter(p => !activeCategory || (p.id % 4 === activeCategory % 4)); 
+    }
+
+    // 2. Filtrar por Precio
+    if (filters.price.min) {
+      result = result.filter(p => parseFloat(p.price) >= parseFloat(filters.price.min));
+    }
+    if (filters.price.max) {
+      result = result.filter(p => parseFloat(p.price) <= parseFloat(filters.price.max));
+    }
+
+    // 3. Filtrar por Solo Verificados
+    if (filters.onlyVerified) {
+      result = result.filter(p => p.verified);
+    }
+
+    // 4. Ordenar
+    switch (sortBy) {
+      case 'rating':
+        result.sort((a, b) => b.rating - a.rating);
+        break;
+      case 'price_asc':
+        result.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+        break;
+      case 'recent':
+        result.sort((a, b) => b.id - a.id);
+        break;
+      case 'distance':
+        result.sort((a, b) => (a.id % 45) - (b.id % 45));
+        break;
+      default:
+        result.sort((a, b) => (b.premium ? 1 : 0) - (a.premium ? 1 : 0));
+    }
+
+    return result;
+  }, [filters, activeCategory, sortBy]);
+
   return (
     <div className="max-w-7xl mx-auto pb-10 transition-all">
       {/* Product Feed Grid Section */}
       <div className="mt-8">
         <div className="flex justify-between items-center mb-6 px-2">
           <div>
-            <h2 className="text-2xl font-black text-[#003366]">
+            <h2 className="text-2xl font-black text-[#1A1A3A] drop-shadow-sm">
               Panas, para ti
-              <div className="h-1 w-12 bg-[#FFCC00] mt-1 rounded-full"></div>
+              <div className="h-1.5 w-10 bg-[#FFC200] mt-1 rounded-full"></div>
             </h2>
           </div>
-          
-          {/* Neumorphic Filter Button */}
-          <button className="p-2.5 bg-[#E0E5EC] rounded-xl shadow-[5px_5px_10px_rgba(163,177,198,0.6),-5px_-5px_10px_rgba(255,255,255,0.8)] active:shadow-[inset_3px_3px_6px_rgba(163,177,198,0.6),inset_-3px_-3px_6px_rgba(255,255,255,0.8)] text-[#003366] transition-all">
-            <Sliders className="w-5 h-5" />
-          </button>
+
+          <div className="flex items-center gap-3">
+            {/* Botón Ordenar (Nuevo sitio) */}
+            <div className="relative">
+              <button 
+                onClick={() => setIsSortOpen(!isSortOpen)}
+                className="p-3 bg-[#E0E5EC] rounded-2xl shadow-[5px_5px_10px_rgba(163,177,198,0.6),-5px_-5px_10px_rgba(255,255,255,0.8)] active:shadow-[inset_3px_3px_6px_rgba(163,177,198,0.6),inset_-3px_-3px_6px_rgba(255,255,255,0.8)] text-[#1A1A3A] transition-all"
+              >
+                <ArrowUpDown className="w-6 h-6" />
+              </button>
+
+              {/* Dropdown de Ordenar Glassmorphic */}
+              <AnimatePresence>
+                {isSortOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className="absolute top-full right-0 mt-3 w-52 bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/40 p-2 z-[1001] overflow-hidden"
+                  >
+                    {[
+                      { id: 'distance', label: 'Más cerca', icon: Pin },
+                      { id: 'rating', label: 'Mejores valorados', icon: Star },
+                      { id: 'recent', label: 'Más recientes', icon: Clock },
+                      { id: 'price_asc', label: 'Menor precio', icon: Euro },
+                    ].map((opt) => (
+                      <button
+                        key={opt.id}
+                        onClick={() => {
+                          setSortBy(opt.id);
+                          setIsSortOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-xs ${sortBy === opt.id ? 'bg-[#1A1A3A] text-white shadow-lg' : 'text-[#1A1A3A] hover:bg-black/5'}`}
+                      >
+                        <opt.icon size={14} />
+                        {opt.label}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Botón Filtros (Original restaurado) */}
+            <button 
+              onClick={() => setIsFilterOpen(true)}
+              className="p-3 bg-[#E0E5EC] rounded-2xl shadow-[5px_5px_10px_rgba(163,177,198,0.6),-5px_-5px_10px_rgba(255,255,255,0.8)] active:shadow-[inset_3px_3px_6px_rgba(163,177,198,0.6),inset_-3px_-3px_6px_rgba(255,255,255,0.8)] text-[#1A1A3A] transition-all"
+            >
+              <Sliders className="w-6 h-6" />
+            </button>
+          </div>
         </div>
-        
+
         {/* RESPONSIVE GRID: 2 cols mobile, 3 tablet, 4 desktop, 5 ultra-wide */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 lg:gap-8">
-          {MOCK_PRODUCTS.map(prod => (
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 lg:gap-10 px-1">
+          {filteredProducts.map(prod => (
             <ProductCard key={prod.id} product={prod} />
           ))}
+
+          {filteredProducts.length === 0 && (
+            <div className="col-span-full py-20 text-center">
+              <p className="text-xl font-bold text-[#1A1A3A]/40 tracking-widest flex items-center justify-center gap-2">
+                No hay panas con estos filtros <Meh className="w-6 h-6 opacity-60" />
+              </p>
+              <button 
+                onClick={() => setFilters({ price: { min: '', max: '' }, distance: 50, sortBy: 'relevance' })}
+                className="mt-4 text-[#1A1A3A] font-black underline-none"
+              >
+                Limpiar filtros
+              </button>
+            </div>
+          )}
         </div>
       </div>
+
+      <FilterPanel />
     </div>
   );
 }

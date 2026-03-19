@@ -25,12 +25,12 @@ export default function SplashScreen() {
           style={{ width: "280px", maxWidth: "80vw", animation: "bounce 2.5s ease-in-out infinite" }} 
         />
         
-        <div className="mt-6">
+        <div className="mt-2 text-center">
           <h1 
-            className="text-lg font-black tracking-tight text-center" 
+            className="text-[22px] tracking-tight leading-none" 
             style={{ color: '#000000' }}
           >
-            Juntos Somos Más
+            <span className="font-black">Juntos</span> <span className="font-semibold">Somos</span> <span className="font-black">Más</span>
           </h1>
         </div>
       </div>

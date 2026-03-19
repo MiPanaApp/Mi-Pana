@@ -20,6 +20,12 @@ export default {
         'neumorphic-soft': '10px 10px 20px #d1d1d9, -10px -10px 20px #ffffff',
         'clay-icon': 'inset 4px 4px 8px #bebebe, inset -4px -4px 8px #ffffff',
       },
+      fontFamily: {
+        sans: ['Montserrat', 'system-ui', 'sans-serif'],
+      },
+      letterSpacing: {
+        tightest: '-0.015em',
+      },
       backdropBlur: {
         xs: '2px',
       }

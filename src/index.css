@@ -4,7 +4,8 @@
 @tailwind utilities;
 
 :root {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
+  letter-spacing: -0.015em; /* Interletrado corto (~15) */
   line-height: 1.5;
   font-weight: 400;
 

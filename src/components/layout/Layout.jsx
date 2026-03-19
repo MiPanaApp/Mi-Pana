@@ -13,7 +13,7 @@ export default function Layout() {
       <Header onLocationClick={() => setShowLocation(true)} />
       
       {/* pt-36 for compact header, pb-20 for compact mobile navbar */}
-      <main className="flex-grow pt-44 pb-44 relative z-10 px-4">
+      <main className="flex-grow pt-44 pb-44 px-4 relative">
         <Outlet />
       </main>
 
