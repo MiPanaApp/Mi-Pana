@@ -146,10 +146,12 @@ export default function Home() {
   const filteredProducts = useMemo(() => {
     let result = [...MOCK_PRODUCTS];
 
-    // 1. Filtrar por Categoría
+    // 1. Filtrar por Categoría (Desactivado por petición del usuario para mostrar todo)
+    /*
     if (activeCategory) {
       result = result.filter(p => !activeCategory || (p.id % 4 === activeCategory % 4)); 
     }
+    */
 
     // 2. Filtrar por Precio
     if (filters.price.min) {
