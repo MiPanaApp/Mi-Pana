@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Sliders, Check, Coffee, Package, Smile, Monitor, Wrench, ShoppingBag, Briefcase, Heart, Navigation, MapPin, Building, Home as HomeIcon } from 'lucide-react';
 import { Geolocation } from '@capacitor/geolocation';
+import CustomSelect from './CustomSelect';
 import { useStore } from '../../store/useStore';
 import { LOCATION_DATA } from '../../data/locations';
 
@@ -136,51 +137,33 @@ export default function FilterPanel() {
 
                 <div className="space-y-3 pt-2">
                   {/* Nivel 1: Provincia / Departamento */}
-                  <div className="relative">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#1A1A3A]/40 z-10">
-                      <MapPin size={18} />
-                    </div>
-                    <select
-                      value={locationOptions.level1}
-                      onChange={(e) => setFilters({ location: { level1: e.target.value, level2: '', level3: '' } })}
-                      className="w-full h-14 pl-12 pr-10 bg-[#E0E5EC] rounded-2xl text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.5),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] outline-none border-none appearance-none focus:shadow-[inset_6px_6px_12px_rgba(163,177,198,0.6)] transition-all cursor-pointer"
-                    >
-                      <option value="">{countryData.labels.level1}</option>
-                      {level1Options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                    </select>
-                  </div>
+                  <CustomSelect
+                    icon={MapPin}
+                    placeholder={countryData.labels.level1}
+                    value={locationOptions.level1}
+                    onChange={(val) => setFilters({ location: { level1: val, level2: '', level3: '' } })}
+                    options={level1Options}
+                  />
 
                   {/* Nivel 2: Municipio / Ciudad */}
-                  <div className="relative">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#1A1A3A]/40 z-10">
-                      <Building size={18} />
-                    </div>
-                    <select
-                      value={locationOptions.level2}
-                      onChange={(e) => setFilters({ location: { ...locationOptions, level2: e.target.value, level3: '' } })}
-                      disabled={!locationOptions.level1}
-                      className="w-full h-14 pl-12 pr-10 bg-[#E0E5EC] rounded-2xl text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.5),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] outline-none border-none appearance-none focus:shadow-[inset_6px_6px_12px_rgba(163,177,198,0.6)] transition-all disabled:opacity-50 cursor-pointer"
-                    >
-                      <option value="">{countryData.labels.level2}</option>
-                      {level2Options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                    </select>
-                  </div>
+                  <CustomSelect
+                    icon={Building}
+                    placeholder={countryData.labels.level2}
+                    value={locationOptions.level2}
+                    onChange={(val) => setFilters({ location: { ...locationOptions, level2: val, level3: '' } })}
+                    options={level2Options}
+                    disabled={!locationOptions.level1}
+                  />
 
                   {/* Nivel 3: Barrio / Comuna */}
-                  <div className="relative">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#1A1A3A]/40 z-10">
-                      <HomeIcon size={18} />
-                    </div>
-                    <select
-                      value={locationOptions.level3}
-                      onChange={(e) => setFilters({ location: { ...locationOptions, level3: e.target.value } })}
-                      disabled={!locationOptions.level2}
-                      className="w-full h-14 pl-12 pr-10 bg-[#E0E5EC] rounded-2xl text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.5),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] outline-none border-none appearance-none focus:shadow-[inset_6px_6px_12px_rgba(163,177,198,0.6)] transition-all disabled:opacity-50 cursor-pointer"
-                    >
-                      <option value="">{countryData.labels.level3} (Opcional)</option>
-                      {level3Options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                    </select>
-                  </div>
+                  <CustomSelect
+                    icon={HomeIcon}
+                    placeholder={`${countryData.labels.level3} (Opcional)`}
+                    value={locationOptions.level3}
+                    onChange={(val) => setFilters({ location: { ...locationOptions, level3: val } })}
+                    options={level3Options}
+                    disabled={!locationOptions.level2}
+                  />
                 </div>
               </section>
 

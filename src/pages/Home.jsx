@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Sliders, Meh, ArrowUpDown, Pin, Star, Clock, Euro } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ProductCard from '../components/ProductCard';
@@ -142,6 +142,22 @@ const MOCK_PRODUCTS = [
 
 export default function Home() {
   const { activeCategory, filters, setFilters, sortBy, setSortBy, setIsFilterOpen, isSortOpen, setIsSortOpen } = useStore();
+  const sortRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (sortRef.current && !sortRef.current.contains(event.target)) {
+        setIsSortOpen(false);
+      }
+    };
+
+    if (isSortOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isSortOpen, setIsSortOpen]);
 
   const filteredProducts = useMemo(() => {
     let result = [...MOCK_PRODUCTS];
@@ -201,7 +217,7 @@ export default function Home() {
 
           <div className="flex items-center gap-3">
             {/* Botón Ordenar (Nuevo sitio) */}
-            <div className="relative">
+            <div className="relative" ref={sortRef}>
               <button 
                 onClick={() => setIsSortOpen(!isSortOpen)}
                 className="p-3 bg-[#E0E5EC] rounded-2xl shadow-[5px_5px_10px_rgba(163,177,198,0.6),-5px_-5px_10px_rgba(255,255,255,0.8)] active:shadow-[inset_3px_3px_6px_rgba(163,177,198,0.6),inset_-3px_-3px_6px_rgba(255,255,255,0.8)] text-[#1A1A3A] transition-all"
