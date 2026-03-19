@@ -76,23 +76,25 @@ export default function Home() {
     // 4. Ordenar
     switch (sortBy) {
       case 'rating':
-        result.sort((a, b) => b.rating - a.rating);
+        result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
         break;
       case 'price_asc':
         result.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
         break;
       case 'recent':
-        result.sort((a, b) => b.id - a.id);
+        // Fallback to originalId for mock products
+        result.sort((a, b) => (b.originalId || 0) - (a.originalId || 0));
         break;
       case 'distance':
-        result.sort((a, b) => (a.id % 45) - (b.id % 45));
+        // Safe fallback for distance mock
+        result.sort((a, b) => ((a.originalId || a.price) % 45) - ((b.originalId || b.price) % 45));
         break;
       default:
         result.sort((a, b) => (b.premium ? 1 : 0) - (a.premium ? 1 : 0));
     }
 
     return result;
-  }, [filters, activeCategory, sortBy]);
+  }, [products, filters, activeCategory, sortBy]);
 
   return (
     <div className="max-w-7xl mx-auto pb-10 transition-all">
