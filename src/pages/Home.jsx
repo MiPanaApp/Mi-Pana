@@ -170,6 +170,7 @@ export default function Home() {
     */
 
     // 2. Filtrar por Precio
+    /*
     if (filters.price.min) {
       result = result.filter(p => parseFloat(p.price) >= parseFloat(filters.price.min));
     }
@@ -181,6 +182,7 @@ export default function Home() {
     if (filters.onlyVerified) {
       result = result.filter(p => p.verified);
     }
+    */
 
     // 4. Ordenar
     switch (sortBy) {
@@ -220,9 +222,9 @@ export default function Home() {
             <div className="relative" ref={sortRef}>
               <button 
                 onClick={() => setIsSortOpen(!isSortOpen)}
-                className="p-3 bg-[#E0E5EC] rounded-2xl shadow-[5px_5px_10px_rgba(163,177,198,0.6),-5px_-5px_10px_rgba(255,255,255,0.8)] active:shadow-[inset_3px_3px_6px_rgba(163,177,198,0.6),inset_-3px_-3px_6px_rgba(255,255,255,0.8)] text-[#1A1A3A] transition-all"
+                className="p-2 sm:p-2.5 bg-[#E0E5EC] rounded-xl shadow-[4px_4px_8px_rgba(163,177,198,0.6),-4px_-4px_8px_rgba(255,255,255,0.8)] active:shadow-[inset_3px_3px_6px_rgba(163,177,198,0.6),inset_-3px_-3px_6px_rgba(255,255,255,0.8)] text-[#1A1A3A] transition-all"
               >
-                <ArrowUpDown className="w-6 h-6" />
+                <ArrowUpDown className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
 
               {/* Dropdown de Ordenar Glassmorphic */}
@@ -260,9 +262,9 @@ export default function Home() {
             {/* Botón Filtros (Original restaurado) */}
             <button 
               onClick={() => setIsFilterOpen(true)}
-              className="p-3 bg-[#E0E5EC] rounded-2xl shadow-[5px_5px_10px_rgba(163,177,198,0.6),-5px_-5px_10px_rgba(255,255,255,0.8)] active:shadow-[inset_3px_3px_6px_rgba(163,177,198,0.6),inset_-3px_-3px_6px_rgba(255,255,255,0.8)] text-[#1A1A3A] transition-all"
+              className="p-2 sm:p-2.5 bg-[#E0E5EC] rounded-xl shadow-[4px_4px_8px_rgba(163,177,198,0.6),-4px_-4px_8px_rgba(255,255,255,0.8)] active:shadow-[inset_3px_3px_6px_rgba(163,177,198,0.6),inset_-3px_-3px_6px_rgba(255,255,255,0.8)] text-[#1A1A3A] transition-all"
             >
-              <Sliders className="w-6 h-6" />
+              <Sliders className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
         </div>
