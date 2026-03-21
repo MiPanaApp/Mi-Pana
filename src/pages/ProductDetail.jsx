@@ -102,7 +102,7 @@ export default function ProductDetail() {
   return (
     <div className="bg-[#E0E5EC] min-h-screen font-sans overflow-x-hidden relative">
         {/* Capa 0: Fondo Amarillo Independiente y Sangrado (Full-Bleed) */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[100vw] h-[380px] md:h-[450px] lg:h-[500px] bg-gradient-to-br from-[#FFC200] to-[#E6B000] rounded-b-[2.5rem] md:rounded-b-[0] shadow-md z-0 transition-all duration-300"></div>
+        <div className="fixed top-0 left-0 w-screen h-[420px] md:h-[580px] lg:h-[680px] bg-gradient-to-br from-[#FFC200] to-[#E6B000] shadow-md z-0 transition-all duration-300"></div>
 
         {/* Capa 10: Contenedor de Contenido (Por encima del fondo) */}
         <div className="max-w-7xl mx-auto px-0 md:px-6 lg:px-8 relative z-10 md:grid md:grid-cols-12 md:gap-8 lg:gap-12 pt-[70px] md:pt-[100px] pb-32">
@@ -110,16 +110,16 @@ export default function ProductDetail() {
             {/* 1. Carrusel de Fotos (6+) - Left Column on Desktop */}
             <div className="relative w-full pb-2 md:col-span-7 lg:col-span-7 self-start flex flex-col items-center">
                 
-                {/* Wrapper exclusivo para Imágenes y Dots - Restaurado con bordes curvos */}
-                <div className="relative w-full rounded-3xl md:rounded-[2.5rem] overflow-hidden shadow-[0_10px_20px_rgba(163,177,198,0.4)]">
+                {/* Wrapper exclusivo para Imágenes y Dots - Sin overflow-hidden para no recortar marcos */}
+                <div className="relative w-full shadow-[0_10px_20px_rgba(163,177,198,0.4)]">
                    <div 
                       ref={carouselRef}
                       onScroll={handleScroll}
-                      className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar w-full px-4 md:px-0 gap-4 md:gap-6"
+                      className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar w-full gap-0"
                       style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }} // Hide scrollbar
                    >
                       {images.map((img, idx) => (
-                         <div key={idx} className="min-w-[calc(100%-24px)] md:min-w-full flex-shrink-0 snap-center rounded-[2rem] md:rounded-[2.5rem] overflow-hidden border-[4px] border-white/60 bg-white relative shadow-sm">
+                         <div key={idx} className="min-w-full flex-shrink-0 snap-center rounded-[2rem] md:rounded-[2.5rem] overflow-hidden border-[4px] border-white/60 bg-white relative shadow-sm">
                             <img src={img} alt={`${product.name} - foto ${idx + 1}`} className="w-full h-[320px] md:h-[450px] lg:h-[550px] object-cover" />
                          </div>
                       ))}
