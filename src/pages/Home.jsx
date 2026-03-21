@@ -204,7 +204,11 @@ export default function Home() {
                   No hay panas con estos filtros <Meh className="w-6 h-6 opacity-60" />
                 </p>
                 <button 
-                  onClick={() => setFilters({ price: { min: '', max: '' }, distance: 50, sortBy: 'relevance' })}
+                  onClick={() => {
+                    setActiveCategory(null);
+                    setFilters({ price: { min: '', max: '' }, distance: 50, searchQuery: '' });
+                    setSortBy('relevance');
+                  }}
                   className="mt-4 text-[#1A1A3A] font-black underline-none hover:text-[#D90429] transition-colors"
                 >
                   Limpiar filtros
