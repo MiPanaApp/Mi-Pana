@@ -4,7 +4,9 @@ import { useAuthStore } from './store/useAuthStore';
 
 import SplashScreen from './components/ui/SplashScreen';
 import Onboarding from './components/ui/Onboarding';
-import Auth from './pages/Auth';
+import LoginScreen from './pages/auth/LoginScreen';
+import RegisterScreen from './pages/auth/RegisterScreen';
+import CompleteProfile from './pages/auth/CompleteProfile';
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
@@ -33,11 +35,16 @@ function App() {
   return (
     <Router>
       <Routes>
+        {/* Main Auth Flow */}
+        <Route path="/login" element={<LoginScreen />} />
+        <Route path="/register" element={<RegisterScreen />} />
+        <Route path="/register/complete-profile" element={<CompleteProfile />} />
+        
         {/* Onboarding Flow */}
         <Route path="/" element={<SplashScreen />} />
         <Route path="/onboarding" element={<Onboarding />} />
-        <Route path="/auth" element={<Auth />} />
-        
+        <Route path="/auth" element={<Navigate to="/login" replace />} />
+
         {/* Main Application with Header and Footer */}
         <Route element={<Layout />}>
           {/* Rutas públicas */}

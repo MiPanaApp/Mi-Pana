@@ -204,7 +204,7 @@ export default function Header() {
                       `}
                     >
                       <cat.icon size={16} style={{ color: iconColor }} />
-                      <span className="text-xs font-black tracking-tight">{cat.name}</span>
+                      <span className="text-xs font-bold tracking-wide">{cat.name}</span>
                     </motion.button>
                   );
                 })}

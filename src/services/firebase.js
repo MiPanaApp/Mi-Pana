@@ -1,8 +1,7 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, RecaptchaVerifier, signInWithPhoneNumber, signInWithPopup, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
-// import { getAnalytics } from 'firebase/analytics'; // Requires browser environment, optional for dev
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -23,4 +22,10 @@ export const db = getFirestore(app);
 export const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();
 
-// export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
+// Bypass para testing (VITE_AUTH_BYPASS=true en .env)
+export const TEST_USER = {
+  uid: "test-001",
+  displayName: "Pana Test",
+  email: "test@mipana.app",
+  role: "admin"
+};

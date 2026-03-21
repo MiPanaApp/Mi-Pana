@@ -1,0 +1,80 @@
+/* src/styles/auth.css */
+.auth-bg {
+  background: linear-gradient(160deg, #FFC200 0%, #FFD000 40%, #F8E22A 100%);
+  min-height: 100vh;
+  overflow: hidden;
+  position: relative;
+}
+
+.clay-card-auth {
+  background: #EDEDF5;
+  border-radius: 28px;
+  padding: 26px 22px;
+  box-shadow: 6px 6px 14px rgba(180, 180, 210, 0.7), -6px -6px 14px rgba(255, 255, 255, 0.95);
+  border: 1.5px solid rgba(255, 255, 255, 0.85);
+}
+
+.clay-input-auth {
+  background: #E8E8F0;
+  border-radius: 14px;
+  border: none;
+  box-shadow: inset 4px 4px 9px rgba(180, 180, 210, 0.55), inset -4px -4px 9px rgba(255, 255, 255, 0.9);
+}
+
+.clay-btn-auth {
+  background: linear-gradient(145deg, #1A1A3A, #2D2D5E);
+  border-radius: 18px;
+  color: #fff;
+  font-weight: 900;
+  box-shadow: 5px 5px 14px rgba(20, 20, 60, 0.35), -2px -2px 8px rgba(80, 80, 160, 0.15);
+  transition: transform 0.2s;
+  border: none;
+  cursor: pointer;
+}
+.clay-btn-auth:active {
+  transform: scale(0.98);
+}
+
+.clay-btn-google {
+  background: #EDEDF5;
+  border-radius: 16px;
+  padding: 12px 16px;
+  box-shadow: 6px 6px 14px rgba(180, 180, 210, 0.7), -6px -6px 14px rgba(255, 255, 255, 0.95);
+  border: none;
+  cursor: pointer;
+}
+
+/* Bottom Sheet */
+.bs-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 26, 58, 0.55);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.bs-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.bs-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #EDEDF5;
+  border-radius: 28px 28px 0 0;
+  padding: 10px 20px 32px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: -4px -8px 24px rgba(160, 160, 200, 0.4);
+  transform: translateY(105%);
+  transition: transform 0.42s cubic-bezier(0.32, 0.72, 0, 1);
+  z-index: 201;
+}
+.bs-sheet.open {
+  transform: translateY(0);
+}
