@@ -53,9 +53,10 @@ export default function Home() {
 
     // 1. Filtrar por Categoría
     if (activeCategory) {
-      // Usamos el ID de la categoría (1: Comida, etc)
-      // Como mock, cada producto tiene una categoría o se asigna por ID
-      result = result.filter(p => !activeCategory || (p.categoryId === activeCategory || (p.id % 8) + 1 === activeCategory)); 
+      result = result.filter(p => {
+        // Mostrar si coincide con la categoría o si el producto aún no tiene categoryId asignado
+        return p.categoryId === activeCategory || !p.categoryId;
+      }); 
     }
 
     // 2. Filtrar por Precio
