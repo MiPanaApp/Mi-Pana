@@ -103,12 +103,12 @@ export default function MobileNavBar() {
                 w-11 h-11 rounded-2xl flex items-center justify-center transition-all duration-300
                 ${isActive
                   ? 'bg-[#E0E5EC] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.7),inset_-4px_-4px_8px_rgba(255,255,255,0.9)] text-[#0056B3]'
-                  : 'bg-[#E0E5EC] shadow-[4px_4px_8px_rgba(163,177,198,0.6),-4px_-4px_8px_rgba(255,255,255,0.8)] text-gray-400 hover:text-[#0056B3]'
+                  : 'bg-[#E0E5EC] shadow-[4px_4px_8px_rgba(163,177,198,0.6),-4px_-4px_8px_rgba(255,255,255,0.8)] text-[#1A1A3A]/60 hover:text-[#0056B3]'
                 }
               `}>
                 <Icon size={22} className="transition-colors duration-300" />
               </div>
-              <span className={`text-[10px] font-bold tracking-tight transition-colors duration-300 ${isActive ? 'text-[#0056B3]' : 'text-gray-400'}`}>
+              <span className={`text-[10px] font-bold tracking-tight transition-colors duration-300 ${isActive ? 'text-[#0056B3]' : 'text-[#1A1A3A]/60'}`}>
                 {item.label}
               </span>
             </motion.button>

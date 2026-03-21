@@ -3,25 +3,20 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, Share2, Heart, ShieldCheck, MessageCircle, AlertCircle, Star, MapPin } from 'lucide-react';
 import { db } from '../lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { useStore } from '../store/useStore';
 import ProductCard from '../components/ProductCard';
 import { useTimeAgo } from '../hooks/useTimeAgo';
 
-const MOCK_RELATED = [
-   { id: '101', name: "Televisor LG 55' 4K OLED", price: "850.00", image: "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=800&q=80", location: "Madrid", category: "electronics", premium: true },
-   { id: '102', name: "Sofá Modular Gris 3 Plazas", price: "420.00", image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&q=80", location: "Barcelona", category: "home" },
-   { id: '103', name: "Bicicleta de Montaña Trek", price: "640.50", image: "https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=800&q=80", location: "Valencia", category: "sports" },
-   { id: '104', name: "MacBook Pro M2 14' 512GB", price: "1850.99", image: "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=800&q=80", location: "Sevilla", category: "electronics", premium: true },
-   { id: '105', name: "Cafetera Nespresso Vertuo", price: "125.00", image: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800&q=80", location: "Bilbao", category: "appliances" },
-   { id: '106', name: "Zapatillas Nike Air Jordan 1", price: "210.00", image: "https://images.unsplash.com/photo-1552346154-21d32810aba3?w=800&q=80", location: "Malaga", category: "fashion" },
-];
+// Los productos relacionados se cargan ahora dinámicamente desde Firestore.
 
 // Mock reviews for the UI (Comunidad)
 const MOCK_REVIEWS = [
    { id: 1, user: "María G.", rating: 5, date: "Hace 2 días", text: "Excelente atención y muy rápido. Lo recomiendo 100%." },
    { id: 2, user: "José L.", rating: 4, date: "Hace 1 semana", text: "Muy buen servicio, llegó todo a tiempo." },
    { id: 3, user: "Ana C.", rating: 5, date: "Hace 2 semanas", text: "Súper confiable. El pana es muy amable." },
+   { id: 4, user: "Ricardo M.", rating: 5, date: "Hace 1 mes", text: "Me salvó la vida con la reparación de la laptop. Muy profesional." },
+   { id: 5, user: "Elena P.", rating: 4, date: "Hace 1 mes", text: "Todo perfecto, aunque tardó un poco más de lo esperado." },
 ];
 
 export default function ProductDetail() {
@@ -31,6 +26,7 @@ export default function ProductDetail() {
 
    const { favorites, toggleFavorite } = useStore();
    const [product, setProduct] = useState(null);
+   const [relatedProducts, setRelatedProducts] = useState([]);
    const [loading, setLoading] = useState(true);
    const [error, setError] = useState('');
 
@@ -108,13 +104,48 @@ export default function ProductDetail() {
          return;
       }
 
-      const fetchProduct = async () => {
+      const fetchProductAndRelated = async () => {
+         setLoading(true);
          try {
+            // 1. Fetch Producto Principal
             const docRef = doc(db, 'products', productId);
             const docSnap = await getDoc(docRef);
 
             if (docSnap.exists()) {
-               setProduct({ id: docSnap.id, ...docSnap.data() });
+               const productData = { id: docSnap.id, ...docSnap.data() };
+               setProduct(productData);
+
+               // 2. Fetch Productos Relacionados (Misama categoría, excluyendo el actual)
+               try {
+                  const q = query(
+                     collection(db, 'products'),
+                     where('category', '==', productData.category || 'otros'),
+                     limit(10)
+                  );
+                  const relatedSnap = await getDocs(q);
+                  const relatedList = relatedSnap.docs
+                     .map(doc => ({ id: doc.id, ...doc.data() }))
+                     .filter(p => p.id !== productId);
+                  
+                  // Si hay pocos de la misma categoría, traer unos genéricos
+                  if (relatedList.length < 4) {
+                     const qGeneral = query(collection(db, 'products'), limit(10));
+                     const genSnap = await getDocs(qGeneral);
+                     const genList = genSnap.docs
+                         .map(doc => ({ id: doc.id, ...doc.data() }))
+                         .filter(p => p.id !== productId);
+                     
+                     // Mezclar y eliminar duplicados por ID
+                     const merged = [...relatedList, ...genList];
+                     const unique = Array.from(new Map(merged.map(p => [p.id, p])).values());
+                     setRelatedProducts(unique.slice(0, 10));
+                  } else {
+                     setRelatedProducts(relatedList);
+                  }
+               } catch (err) {
+                  console.warn("Error fetching related products:", err);
+               }
+
             } else {
                setError('El anuncio ya no existe o fue eliminado.');
             }
@@ -126,7 +157,7 @@ export default function ProductDetail() {
          }
       };
 
-      fetchProduct();
+      fetchProductAndRelated();
    }, [productId]);
 
    const handleScroll = () => {
@@ -242,9 +273,9 @@ export default function ProductDetail() {
 
                {/* Descripción (SOLO TABLET/ORDENADOR) debajo del carrusel */}
                <div className="hidden md:block w-full relative z-10 mb-[150px] mt-14">
-                   <h3 className="text-2xl font-black text-[#1A1A3A] mb-8 inline-flex items-baseline gap-2">
-                      Descripción del Anuncio
-                      <div className="h-1.5 w-6 bg-gradient-to-r from-[#FFC200] to-[#FFAA00] rounded-full flex-shrink-0"></div>
+                   <h3 className="text-2xl font-black text-[#1A1A3A] mb-8">
+                      Descripción del Anuncio{" "}
+                      <span className="inline-block h-1.5 w-6 bg-gradient-to-r from-[#FFC200] to-[#FFAA00] rounded-full translate-y-[-4px] ml-1"></span>
                    </h3>
                   <p className="text-[#1A1A3A]/80 font-medium leading-relaxed whitespace-pre-wrap text-lg">
                      {product.description || `Se ofrece servicios informáticos tanto para mac como para Windows. En remoto o en mi casa si no es posible el remoto.
@@ -265,9 +296,9 @@ tlfno contacto: 672 593 950`}
 
                {/* Valoraciones de la Comunidad — SOLO TABLET/ESCRITORIO (Columna izquierda) */}
                <div className="hidden md:block w-full mt-[100px]">
-                   <h3 className="text-2xl font-black text-[#1A1A3A] mb-8 inline-flex items-baseline gap-2">
-                      Valoraciones de la Comunidad
-                      <div className="h-1.5 w-6 bg-gradient-to-r from-[#FFC200] to-[#FFAA00] rounded-full flex-shrink-0"></div>
+                   <h3 className="text-2xl font-black text-[#1A1A3A] mb-8">
+                      Valoraciones de la Comunidad{" "}
+                      <span className="inline-block h-1.5 w-6 bg-gradient-to-r from-[#FFC200] to-[#FFAA00] rounded-full translate-y-[-4px] ml-1"></span>
                    </h3>
 
                   {/* Tarjeta de Resumen - Ancha para ocupar el espacio horizontal */}
@@ -341,7 +372,7 @@ tlfno contacto: 672 593 950`}
                         <img src={`https://api.dicebear.com/7.x/micah/svg?seed=${product.userName || 'Pana'}&backgroundColor=E0E5EC`} className="w-full h-full object-cover" alt="Avatar" />
                      </div>
                      <div className="flex items-center gap-1.5 pt-0.5">
-                        <span className="font-black text-lg text-[#1A1A3A] truncate max-w-[200px]">{product.userName || "Pana Local"}</span>
+                        <span className="font-bold text-lg text-[#1A1A3A] truncate max-w-[140px] md:max-w-[180px] lg:max-w-[220px]">{product.userName || "Pana Local"}</span>
                         {(product.verified || true) && <ShieldCheck className="w-5 h-5 text-[#25D366] fill-[#25D366]/10" />}
                      </div>
                   </div>
@@ -381,22 +412,30 @@ tlfno contacto: 672 593 950`}
                      </p>
                   )}
 
-                  <div className="mt-4 self-start px-5 pt-3 pb-2.5 rounded-[1.2rem] bg-[#1A1A3A] text-white shadow-[inset_2px_4px_8px_rgba(255,255,255,0.25),_0_8px_16px_rgba(26,26,58,0.3)] flex items-baseline gap-0.5">
-                     <span className="text-3xl md:text-4xl font-black">
-                        {Math.floor(parseFloat(product.price) || 0)}
-                     </span>
-                     <span className="text-xl md:text-2xl font-black opacity-90">
-                        .{((parseFloat(product.price) || 0) % 1).toFixed(2).split('.')[1]}
-                     </span>
-                     <span className="text-xl md:text-2xl font-black ml-0.5 opacity-90">€</span>
+                  <div className="flex items-center gap-4 mt-2">
+                     <div className="px-5 pt-3 pb-2.5 rounded-[1.2rem] bg-[#1A1A3A] text-white shadow-[inset_2px_4px_8px_rgba(255,255,255,0.25),_0_8px_16px_rgba(26,26,58,0.3)] flex items-baseline gap-0.5">
+                        <span className="text-3xl md:text-4xl font-black">
+                           {Math.floor(parseFloat(product.price) || 0)}
+                        </span>
+                        <span className="text-xl md:text-2xl font-black opacity-90">
+                           .{((parseFloat(product.price) || 0) % 1).toFixed(2).split('.')[1]}
+                        </span>
+                        <span className="text-xl md:text-2xl font-black ml-0.5 opacity-90">€</span>
+                     </div>
+
+                     {(product.premium || product.id % 2 === 0) && (
+                        <div className={`px-4 py-2 rounded-xl text-white text-[12px] font-black tracking-wider shadow-[0_4px_12px_rgba(0,0,0,0.15)] uppercase ${product.premium ? 'bg-[#0056B3]' : 'bg-[#D90429]'}`}>
+                           {product.premium ? 'TOP' : 'NUEVO'}
+                        </div>
+                     )}
                   </div>
                </div>
 
                {/* Descripción (Sólo Móvil, en Desktop va a la izq) */}
                <div className="md:hidden mb-[150px] px-1">
-                   <h3 className="text-xl font-black text-[#1A1A3A] mb-4 inline-flex items-baseline gap-2">
-                      Descripción
-                      <div className="h-1.5 w-6 bg-gradient-to-r from-[#FFC200] to-[#FFAA00] rounded-full flex-shrink-0"></div>
+                   <h3 className="text-xl font-black text-[#1A1A3A] mb-4">
+                      Descripción{" "}
+                      <span className="inline-block h-1.5 w-6 bg-gradient-to-r from-[#FFC200] to-[#FFAA00] rounded-full translate-y-[-4px] ml-1"></span>
                    </h3>
                   <p className="text-[#1A1A3A]/80 font-medium leading-relaxed whitespace-pre-wrap">
                      {product.description || `Se ofrece servicios informáticos tanto para mac como para Windows. En remoto o en mi casa si no es posible el remoto.
@@ -417,9 +456,9 @@ tlfno contacto: 672 593 950`}
 
                {/* 3. Estadísticas de Reseñas — Solo visible en móvil */}
                <div className="md:hidden mb-6">
-                   <h3 className="text-xl md:text-2xl font-black text-[#1A1A3A] mb-6 inline-flex items-baseline gap-2">
-                      Valoraciones de la Comunidad
-                      <div className="h-1.5 w-6 bg-gradient-to-r from-[#FFC200] to-[#FFAA00] rounded-full flex-shrink-0"></div>
+                   <h3 className="text-xl md:text-2xl font-black text-[#1A1A3A] mb-6">
+                      Valoraciones de la Comunidad{" "}
+                      <span className="inline-block h-1.5 w-6 bg-gradient-to-r from-[#FFC200] to-[#FFAA00] rounded-full translate-y-[-4px] ml-1"></span>
                    </h3>
 
                   <div className="flex gap-6 items-center mb-6 bg-[#E0E5EC] rounded-[2rem] p-6 border border-white/40 shadow-[6px_6px_12px_rgba(163,177,198,0.6),-6px_-6px_12px_rgba(255,255,255,0.8)]">
@@ -440,7 +479,7 @@ tlfno contacto: 672 593 950`}
                            <div key={bar.s} className="flex items-center gap-2">
                               <div className="flex items-center gap-0.5 w-[22px] justify-end">
                                  <span className="text-[11px] font-black text-[#1A1A3A]">{bar.s}</span>
-                                 <Star className="w-2.5 h-2.5 text-[#1A1A3A] fill-[#1A1A3A]" />
+                                 <Star className="w-3 h-3 text-[#1A1A3A] fill-[#1A1A3A]" />
                               </div>
                               <div className="flex-1 h-2 bg-[#1A1A3A]/10 rounded-full overflow-hidden border border-white/20 shadow-inner">
                                  <div className="h-full bg-[#1A1A3A] rounded-full" style={{ width: `${bar.p}%` }}></div>
@@ -450,20 +489,29 @@ tlfno contacto: 672 593 950`}
                      </div>
                   </div>
 
-                  {/* Lista de Comentarios en tarjetas Glassmorphic */}
-                  <div className="flex flex-col gap-3">
-                     {MOCK_REVIEWS.map(rw => (
-                        <div key={rw.id} className="bg-[#E0E5EC] border border-white/60 rounded-[1.5rem] p-4 shadow-[4px_4px_10px_rgba(163,177,198,0.5),-4px_-4px_10px_rgba(255,255,255,0.7)] flex flex-col gap-2">
+                  {/* Lista de Comentarios Compacta con Scroll */}
+                  <div className="flex flex-col max-h-[380px] overflow-y-auto pr-2 custom-scrollbar">
+                     {MOCK_REVIEWS.map((rw, index) => (
+                        <div key={rw.id} className="py-4 flex flex-col gap-1.5 transition-all">
                            <div className="flex justify-between items-start">
                               <div>
-                                 <span className="font-black text-[#1A1A3A] text-sm">{rw.user}</span>
-                                 <div className="flex drop-shadow-sm mt-0.5">
-                                    {[...Array(5)].map((_, i) => <Star key={i} className={`w-2.5 h-2.5 ${i < rw.rating ? 'fill-[#FFC200] text-[#FFC200]' : 'fill-[#1A1A3A]/10 text-transparent'}`} />)}
+                                 <span className="font-black text-[#1A1A3A] text-[15px] leading-none mb-1">{rw.user}</span>
+                                 <div className="flex drop-shadow-sm">
+                                    {[...Array(5)].map((_, i) => <Star key={i} className={`w-3 h-3 ${i < rw.rating ? 'fill-[#FFC200] text-[#FFC200]' : 'fill-[#1A1A3A]/10 text-transparent'}`} />)}
                                  </div>
                               </div>
-                              <span className="text-[10px] text-[#1A1A3A]/40 font-bold uppercase">{rw.date}</span>
+                              <span className="text-[10px] text-[#1A1A3A]/50 font-bold uppercase tracking-wider">{rw.date}</span>
                            </div>
-                           <p className="text-[13px] text-[#1A1A3A]/80 font-semibold leading-snug">{rw.text}</p>
+                           <p className="text-[14px] text-[#1A1A3A]/80 font-semibold leading-snug pr-4">{rw.text}</p>
+                           
+                           {/* Línea tricolor divisoria */}
+                           {index < MOCK_REVIEWS.length - 1 && (
+                              <div className="flex w-full h-[2px] mt-4 opacity-20">
+                                 <div className="flex-1 bg-[#FFCC00]"></div>
+                                 <div className="flex-1 bg-[#003366]"></div>
+                                 <div className="flex-1 bg-[#D90429]"></div>
+                              </div>
+                           )}
                         </div>
                      ))}
                   </div>
@@ -473,16 +521,16 @@ tlfno contacto: 672 593 950`}
                <div className="flex gap-4 mt-10 mb-6">
                   <button
                      onClick={() => window.open(`https://wa.me/${product.whatsapp || '34600000000'}?text=Hola%20${product.userName || 'Pana'},%20vi%20tu%20anuncio`)}
-                     className="flex-1 h-[56px] px-4 bg-gradient-to-br from-[#25D366] to-[#1DA851] rounded-2xl flex items-center justify-center gap-2.5 shadow-[0_8px_16px_rgba(37,211,102,0.4),inset_2px_4px_10px_rgba(255,255,255,0.4)] hover:-translate-y-1 transition-all outline-none"
+                     className="flex-1 h-[56px] px-4 bg-gradient-to-br from-[#25D366] to-[#1DA851] rounded-2xl flex items-center justify-center gap-1.5 shadow-[0_8px_16px_rgba(37,211,102,0.4),inset_2px_4px_10px_rgba(255,255,255,0.4)] hover:-translate-y-1 transition-all outline-none"
                   >
-                     <svg width="22" height="22" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-sm flex-shrink-0">
+                     <svg width="20" height="20" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-sm flex-shrink-0">
                         <path d="M12.002 0C5.372 0 0 5.373 0 12.005C0 14.664 0.855 17.135 2.28 19.145L0.752 24.027L5.804 22.506C7.712 23.716 9.789 24.072 12.002 24.072C18.632 24.072 24 18.699 24 12.067C24 5.435 18.632 0 12.002 0ZM18.591 17.125C18.314 17.902 16.978 18.575 16.086 18.753C15.476 18.875 14.615 18.951 11.698 17.74C7.969 16.191 5.558 12.392 5.373 12.147C5.188 11.902 3.837 10.116 3.837 8.273C3.837 6.43 4.792 5.539 5.16 5.169C5.529 4.801 6.05 4.647 6.541 4.647C6.694 4.647 6.835 4.654 6.963 4.661C7.331 4.675 7.514 4.693 7.76 5.278C8.067 6.015 8.804 7.814 8.897 7.998C8.989 8.182 9.112 8.428 8.989 8.674C8.865 8.919 8.773 9.043 8.588 9.258C8.404 9.472 8.22 9.64 8.036 9.871C7.867 10.071 7.674 10.286 7.889 10.655C8.104 11.024 8.788 12.135 9.791 13.025C11.083 14.175 12.12 14.538 12.519 14.707C12.918 14.876 13.149 14.846 13.395 14.585C13.64 14.324 14.285 13.511 14.561 13.11C14.838 12.71 15.114 12.772 15.483 12.91C15.852 13.048 17.816 14.016 18.184 14.2C18.552 14.385 18.798 14.477 18.89 14.63C18.983 14.783 18.983 15.521 18.591 17.125Z" />
                      </svg>
-                     <span className="text-white font-bold tracking-wide text-[15px] whitespace-nowrap">WhatsApp</span>
+                     <span className="text-white font-bold tracking-tight text-[15px] whitespace-nowrap">WhatsApp</span>
                   </button>
-                  <button className="flex-1 h-[56px] px-4 bg-gradient-to-br from-[#2D2D4E] to-[#1A1A3A] rounded-2xl flex items-center justify-center gap-3 shadow-[inset_2px_4px_8px_rgba(255,255,255,0.25),0_8px_16px_rgba(26,26,58,0.5)] hover:-translate-y-1 transition-all outline-none border border-[#1A1A3A]">
-                     <MessageCircle className="w-[20px] h-[20px] stroke-[2.5] text-white flex-shrink-0" />
-                     <span className="text-white font-bold tracking-wide text-[15px] whitespace-nowrap">Chat Pana</span>
+                  <button className="flex-1 h-[56px] px-4 bg-gradient-to-br from-[#2D2D4E] to-[#1A1A3A] rounded-2xl flex items-center justify-center gap-2 shadow-[inset_2px_4px_8px_rgba(255,255,255,0.25),0_8px_16px_rgba(26,26,58,0.5)] hover:-translate-y-1 transition-all outline-none border border-[#1A1A3A]">
+                     <MessageCircle className="w-[18px] h-[18px] stroke-[2.5] text-white flex-shrink-0" />
+                     <span className="text-white font-bold tracking-tight text-[15px] whitespace-nowrap">Chat Pana</span>
                   </button>
                </div>
             </motion.div>
@@ -490,13 +538,13 @@ tlfno contacto: 672 593 950`}
 
          {/* 5. SECCIÓN DE RELACIONADOS (Carrusel Horizontal) */}
          <div className="max-w-7xl mx-auto px-5 md:px-8 mb-2">
-            <h3 className="text-2xl font-black text-[#1A1A3A] mb-8 inline-flex items-baseline gap-2 pt-10 border-t border-[#1A1A3A]/5">
-               Anuncios relacionados
-               <div className="h-1.5 w-6 bg-gradient-to-r from-[#FFC200] to-[#FFAA00] rounded-full flex-shrink-0"></div>
+            <h3 className="text-2xl font-black text-[#1A1A3A] mb-8 pt-10 border-t border-[#1A1A3A]/5">
+               Anuncios relacionados{" "}
+               <span className="inline-block h-1.5 w-6 bg-gradient-to-r from-[#FFC200] to-[#FFAA00] rounded-full translate-y-[-4px] ml-1"></span>
             </h3>
 
             <div className="flex overflow-x-auto gap-6 pb-4 hide-scrollbar snap-x snap-mandatory -mx-5 px-5 md:mx-0 md:px-0">
-               {MOCK_RELATED.map((relatedProd) => (
+               {relatedProducts.map((relatedProd) => (
                   <div key={relatedProd.id} className="min-w-[240px] md:min-w-[280px] snap-center">
                      <ProductCard product={relatedProd} />
                   </div>

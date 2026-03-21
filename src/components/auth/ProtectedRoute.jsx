@@ -9,8 +9,9 @@ import { useAuthStore } from '../../store/useAuthStore';
  */
 export default function ProtectedRoute({ children }) {
   const { user, loading } = useAuthStore();
+  const bypass = import.meta.env.VITE_AUTH_BYPASS === 'true';
 
-  if (loading) {
+  if (loading && !bypass) {
     return (
       <div className="min-h-screen bg-[#E0E5EC] flex items-center justify-center">
         <div className="w-12 h-12 rounded-full border-4 border-[#1A1A3A]/20 border-t-[#1A1A3A] animate-spin" />
@@ -18,7 +19,7 @@ export default function ProtectedRoute({ children }) {
     );
   }
 
-  if (!user) {
+  if (!user && !bypass) {
     return <Navigate to="/auth" replace />;
   }
 
