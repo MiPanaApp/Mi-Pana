@@ -115,7 +115,7 @@ export default function ProductDetail() {
                    <div 
                       ref={carouselRef}
                       onScroll={handleScroll}
-                      className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar w-full gap-0"
+                      className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar w-full px-5 md:px-0 gap-0"
                       style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }} // Hide scrollbar
                    >
                       {images.map((img, idx) => (
