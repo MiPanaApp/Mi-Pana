@@ -12,8 +12,8 @@ export default function Layout() {
     <div className="min-h-screen flex flex-col bg-pana-bg font-sans selection:bg-pana-yellow selection:text-pana-blue">
       <Header onLocationClick={() => setShowLocation(true)} />
       
-      {/* pt-36 for compact header, pb-20 for compact mobile navbar */}
-      <main className="flex-grow pt-44 pb-44 px-4 relative">
+      {/* pt-52 for compact header on mobile, md:pt-44 for desktop */}
+      <main className="flex-grow pt-52 md:pt-44 pb-44 px-4 relative">
         <Outlet />
       </main>
 

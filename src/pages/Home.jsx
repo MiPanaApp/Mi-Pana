@@ -123,9 +123,9 @@ export default function Home() {
 
   return (
     <div className="max-w-7xl mx-auto pb-10 transition-all">
-      {/* Product Feed Grid Section */}
-      <div className="mt-5 md:mt-14">
-        <div className="flex justify-between items-center mb-6 px-2">
+      {/* Feed de productos con margen extra para liberar el Header móvil */}
+      <div className="mt-8 md:mt-12">
+        <div className="flex justify-between items-center mb-10 px-2 sm:px-4">
           <div>
             <h2 className="text-2xl font-black text-[#1A1A3A] drop-shadow-sm">
               Panas, para ti
