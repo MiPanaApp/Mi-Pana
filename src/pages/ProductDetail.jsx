@@ -102,7 +102,7 @@ export default function ProductDetail() {
   return (
     <div className="bg-[#E0E5EC] min-h-screen font-sans overflow-x-hidden relative">
         {/* Fondo Amarillo Curvado - Ahora "Full Bleed" e Infinito (De borde a borde) */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-screen h-[380px] md:h-[450px] lg:h-[500px] bg-gradient-to-br from-[#FFC200] to-[#E6B000] rounded-b-[2.5rem] md:rounded-b-[4rem] shadow-md z-0 transition-all duration-300"></div>
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[100vw] h-[380px] md:h-[450px] lg:h-[500px] bg-gradient-to-br from-[#FFC200] to-[#E6B000] rounded-b-[2.5rem] shadow-md z-0" />
 
         {/* --- MAIN RESPONSIVE CONTAINER --- */}
         <div className="max-w-7xl mx-auto px-0 md:px-6 lg:px-8 relative z-10 md:grid md:grid-cols-12 md:gap-8 lg:gap-12 pt-[70px] md:pt-[100px] pb-32">
