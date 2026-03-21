@@ -6,6 +6,7 @@ import FilterPanel from '../components/ui/FilterPanel';
 import { useStore } from '../store/useStore';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { MOCK_PRODUCTS } from '../data/mockProducts';
 
 export default function Home() {
   const { activeCategory, filters, setFilters, sortBy, setSortBy, setIsFilterOpen, isSortOpen, setIsSortOpen } = useStore();
@@ -19,13 +20,23 @@ export default function Home() {
     const fetchProducts = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, 'products'));
-        const productsList = querySnapshot.docs.map(doc => ({
+        const firestoreProducts = querySnapshot.docs.map(doc => ({
           ...doc.data(),
           id: doc.id
         }));
-        setProducts(productsList);
+
+        // Inyectar productos mock con ubicación fija en Madrid para desarrollo
+        const madridMocks = MOCK_PRODUCTS.map(p => ({
+          ...p,
+          location: 'Madrid',
+          categoryId: p.category // Sincronizamos con el campo que usa el filtro
+        }));
+
+        setProducts([...firestoreProducts, ...madridMocks]);
       } catch (error) {
         console.error("Error fetching products", error);
+        // Si falla Firestore, al menos mostramos los mocks
+        setProducts(MOCK_PRODUCTS.map(p => ({ ...p, location: 'Madrid', categoryId: p.category })));
       } finally {
         setLoading(false);
       }
