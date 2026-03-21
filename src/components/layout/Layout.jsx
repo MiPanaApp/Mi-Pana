@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
 import Header from './Header';
 import Footer from '../Footer';
@@ -9,9 +9,17 @@ export default function Layout() {
   const [showLocation, setShowLocation] = useState(false);
   const headerRef = useRef(null);
   const [headerHeight, setHeaderHeight] = useState(0);
+  const location = useLocation();
+
+  // Rutas que tienen su propio header interno y no necesitan el buscador global
+  const NO_HEADER_ROUTES = ['/anunciar', '/perfil-producto', '/chats', '/ofertar', '/chat'];
+  const showMainHeader = !NO_HEADER_ROUTES.some(route => location.pathname.startsWith(route));
 
   useEffect(() => {
-    if (!headerRef.current) return;
+    if (!headerRef.current || !showMainHeader) {
+      if (!showMainHeader) setHeaderHeight(0);
+      return;
+    }
     const observer = new ResizeObserver(() => {
       if (headerRef.current) {
         setHeaderHeight(headerRef.current.offsetHeight);
@@ -19,15 +27,17 @@ export default function Layout() {
     });
     observer.observe(headerRef.current);
     return () => observer.disconnect();
-  }, []);
+  }, [showMainHeader]);
 
   return (
     <div className="min-h-screen flex flex-col bg-pana-bg font-sans selection:bg-pana-yellow selection:text-pana-blue overflow-x-clip">
-      <Header ref={headerRef} onLocationClick={() => setShowLocation(true)} />
+      {showMainHeader && (
+        <Header ref={headerRef} onLocationClick={() => setShowLocation(true)} />
+      )}
       
       <main 
         className="flex-grow pb-44 px-4 relative"
-        style={{ paddingTop: (headerHeight || 180) + 'px' }}
+        style={{ paddingTop: showMainHeader ? (headerHeight || 180) + 'px' : '0px' }}
       >
         <Outlet />
       </main>

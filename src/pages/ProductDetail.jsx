@@ -101,23 +101,10 @@ export default function ProductDetail() {
 
   return (
     <div className="bg-[#E0E5EC] min-h-screen font-sans overflow-x-hidden relative">
-        {/* Yellow Header Curved Block (Responsive Height) */}
-        <div className="absolute top-0 left-0 w-full h-[380px] md:h-[450px] lg:h-[500px] bg-gradient-to-br from-[#FFC200] to-[#E6B000] rounded-b-[2.5rem] md:rounded-b-[4rem] shadow-md z-0 transition-all duration-300"></div>
+        {/* Fondo Amarillo Curvado - Ahora "Full Bleed" (De borde a borde) */}
+        <div className="absolute top-0 -left-4 w-[calc(100%+2rem)] h-[380px] md:h-[450px] lg:h-[500px] bg-gradient-to-br from-[#FFC200] to-[#E6B000] rounded-b-[2.5rem] md:rounded-b-[0] shadow-md z-0 transition-all duration-300"></div>
 
-        {/* Custom Navigation Buttons (Not fixed, to avoid covering main header search bar) */}
-        <div className="absolute top-4 left-0 w-full z-20 flex justify-between items-center px-4 md:px-6 pt-safe-top transition-all duration-300 pointer-events-none">
-           <button onClick={() => navigate(-1)} className="p-2.5 bg-white/60 backdrop-blur-md rounded-2xl shadow-sm border border-white/50 text-[#1A1A3A] hover:bg-white transition-all pointer-events-auto">
-              <ChevronLeft className="w-6 h-6 md:w-7 md:h-7" />
-           </button>
-           <div className="flex gap-3 pointer-events-auto">
-             <button className="p-2.5 bg-white/60 backdrop-blur-md rounded-2xl shadow-sm border border-white/50 text-[#1A1A3A] hover:bg-white transition-all">
-                <Share2 className="w-5 h-5 md:w-6 md:h-6" />
-             </button>
-             <button onClick={() => toggleFavorite(product.id)} className="p-2.5 bg-white/60 backdrop-blur-md rounded-2xl shadow-sm border border-white/50 hover:bg-white transition-all">
-                <Heart className={`w-5 h-5 md:w-6 md:h-6 transition-colors ${isFavorite ? 'fill-[#D90429] text-[#D90429]' : 'text-[#1A1A3A]'}`} />
-             </button>
-           </div>
-        </div>
+        {/* Botones eliminados de aquí para moverlos abajo */}
 
         {/* --- MAIN RESPONSIVE CONTAINER --- */}
         <div className="max-w-7xl mx-auto px-0 md:px-6 lg:px-8 relative z-10 md:grid md:grid-cols-12 md:gap-8 lg:gap-12 pt-[70px] md:pt-[100px] pb-32">
@@ -125,8 +112,8 @@ export default function ProductDetail() {
             {/* 1. Carrusel de Fotos (6+) - Left Column on Desktop */}
             <div className="relative w-full pb-2 md:col-span-7 lg:col-span-7 self-start flex flex-col gap-8">
                 
-                {/* Wrapper exclusivo para Imágenes y Dots */}
-                <div className="relative w-full rounded-3xl md:rounded-[2.5rem] overflow-hidden">
+                {/* Wrapper exclusivo para Imágenes y Dots - Restaurado con bordes curvos */}
+                <div className="relative w-full rounded-3xl md:rounded-[2.5rem] overflow-hidden shadow-[0_10px_20px_rgba(163,177,198,0.4)]">
                    <div 
                       ref={carouselRef}
                       onScroll={handleScroll}
@@ -134,7 +121,7 @@ export default function ProductDetail() {
                       style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }} // Hide scrollbar
                    >
                       {images.map((img, idx) => (
-                         <div key={idx} className="min-w-[calc(100%-10px)] md:min-w-full max-w-full flex-shrink-0 snap-center rounded-[2rem] md:rounded-[2.5rem] overflow-hidden shadow-[0_10px_20px_rgba(163,177,198,0.5)] border-[4px] border-white/60 bg-white relative">
+                         <div key={idx} className="min-w-[calc(100%-20px)] md:min-w-full flex-shrink-0 snap-center rounded-[2rem] md:rounded-[2.5rem] overflow-hidden border-[4px] border-white/60 bg-white relative shadow-sm">
                             <img src={img} alt={`${product.name} - foto ${idx + 1}`} className="w-full h-[320px] md:h-[450px] lg:h-[550px] object-cover" />
                          </div>
                       ))}
@@ -173,6 +160,20 @@ export default function ProductDetail() {
                transition={{ delay: 0.1, duration: 0.6, ease: [0.25, 1, 0.5, 1] }}
                className="px-5 mt-4 md:mt-0 md:px-0 md:col-span-5 lg:col-span-5 sticky top-28 h-max"
             >
+               {/* NUEVA UBICACIÓN: Botones de Navegación debajo del carrusel (Distancia mínima) */}
+               <div className="flex justify-between items-center mb-4 pt-1">
+                  <button onClick={() => navigate(-1)} className="p-3 bg-[#E0E5EC] rounded-2xl shadow-[4px_4px_8px_rgba(163,177,198,0.6),-4px_-4px_8px_rgba(255,255,255,0.8)] active:shadow-[inset_2px_2px_4px_rgba(163,177,198,0.6)] text-[#1A1A3A] transition-all">
+                     <ChevronLeft className="w-6 h-6" />
+                  </button>
+                  <div className="flex gap-3">
+                    <button className="p-3 bg-[#E0E5EC] rounded-2xl shadow-[4px_4px_8px_rgba(163,177,198,0.6),-4px_-4px_8px_rgba(255,255,255,0.8)] active:shadow-[inset_2px_2px_4px_rgba(163,177,198,0.6)] text-[#1A1A3A] transition-all">
+                       <Share2 className="w-5 h-5" />
+                    </button>
+                    <button onClick={() => toggleFavorite(product.id)} className="p-3 bg-[#E0E5EC] rounded-2xl shadow-[4px_4px_8_rgba(163,177,198,0.6),-4px_-4px_8px_rgba(255,255,255,0.8)] active:shadow-[inset_2px_2px_4px_rgba(163,177,198,0.6)] transition-all">
+                       <Heart className={`w-5 h-5 transition-colors ${isFavorite ? 'fill-[#D90429] text-[#D90429]' : 'text-[#1A1A3A]'}`} />
+                    </button>
+                  </div>
+               </div>
                {/* 2. Información del Producto (Layout) - Vendedor */}
                <div className="mb-6 bg-[#E0E5EC] rounded-[2rem] p-4 shadow-[6px_6px_12px_rgba(163,177,198,0.6),-6px_-6px_12px_rgba(255,255,255,0.8)] border border-white/30 flex items-center gap-4">
                   <div className="w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden shadow-[inset_4px_4px_8px_rgba(163,177,198,0.5),inset_-4px_-4px_8px_rgba(255,255,255,0.7)] bg-white border-2 border-white flex-shrink-0">
