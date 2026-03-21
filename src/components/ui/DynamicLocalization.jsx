@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Check, ChevronDown, X } from 'lucide-react';
+import { useStore } from '../../store/useStore';
 
 const REGIONS = {
   España: ["Madrid", "Barcelona", "Valencia", "Andalucía", "Canarias"],
@@ -10,13 +11,17 @@ const REGIONS = {
 };
 
 export default function DynamicLocalization({ isOpen, onClose }) {
+  const { setCountry, setRegion, setFilters } = useStore();
   const [selectedCountry, setSelectedCountry] = useState('España');
   const [selectedRegion, setSelectedRegion] = useState('');
 
   if (!isOpen) return null;
 
   const handleSave = () => {
-    // Here we would sync with Zustand state or context
+    const countryCode = selectedCountry === 'España' ? 'ES' : 'USA'; // Simple mapping for now
+    setCountry(countryCode);
+    setRegion(selectedRegion);
+    setFilters({ location: { level1: selectedRegion, level2: selectedRegion, level3: '' } });
     onClose();
   };
 

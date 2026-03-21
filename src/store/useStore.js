@@ -14,6 +14,7 @@ export const useStore = create(
         price: { min: '', max: '' },
         onlyVerified: false,
         location: { level1: '', level2: '', level3: '' },
+        searchQuery: '',
       },
       favorites: [],
       
@@ -25,6 +26,9 @@ export const useStore = create(
       setSortBy: (sort) => set({ sortBy: sort }),
       setFilters: (newFilters) => set((state) => ({ 
         filters: { ...state.filters, ...newFilters } 
+      })),
+      setSearchQuery: (query) => set((state) => ({
+        filters: { ...state.filters, searchQuery: query }
       })),
       toggleFavorite: (productId) => set((state) => ({
         favorites: state.favorites.includes(productId)

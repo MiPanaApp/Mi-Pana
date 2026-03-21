@@ -51,19 +51,18 @@ export default function Home() {
   const filteredProducts = useMemo(() => {
     let result = [...products];
 
-    // 1. Filtrar por Categoría (Desactivado por petición del usuario para mostrar todo)
-    /*
+    // 1. Filtrar por Categoría
     if (activeCategory) {
-      result = result.filter(p => !activeCategory || (p.id % 4 === activeCategory % 4)); 
+      // Usamos el ID de la categoría (1: Comida, etc)
+      // Como mock, cada producto tiene una categoría o se asigna por ID
+      result = result.filter(p => !activeCategory || (p.categoryId === activeCategory || (p.id % 8) + 1 === activeCategory)); 
     }
-    */
 
     // 2. Filtrar por Precio
-    /*
-    if (filters.price.min) {
+    if (filters.price?.min) {
       result = result.filter(p => parseFloat(p.price) >= parseFloat(filters.price.min));
     }
-    if (filters.price.max) {
+    if (filters.price?.max) {
       result = result.filter(p => parseFloat(p.price) <= parseFloat(filters.price.max));
     }
 
@@ -71,9 +70,25 @@ export default function Home() {
     if (filters.onlyVerified) {
       result = result.filter(p => p.verified);
     }
-    */
 
-    // 4. Ordenar
+    // 4. Filtrar por Búsqueda (Search)
+    if (filters.searchQuery) {
+      const query = filters.searchQuery.toLowerCase();
+      result = result.filter(p => 
+        p.name?.toLowerCase().includes(query) || 
+        p.description?.toLowerCase().includes(query)
+      );
+    }
+
+    // 5. Filtrar por Ubicación (Si está seleccionada)
+    if (filters.location?.level1) {
+      result = result.filter(p => 
+        p.location?.toLowerCase().includes(filters.location.level1.toLowerCase()) ||
+        (!p.location && filters.location.level1 === 'Madrid') // Fallback a Madrid si no hay loc
+      );
+    }
+
+    // 6. Ordenar
     switch (sortBy) {
       case 'rating':
         result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
@@ -82,12 +97,10 @@ export default function Home() {
         result.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
         break;
       case 'recent':
-        // Fallback to originalId for mock products
-        result.sort((a, b) => (b.originalId || 0) - (a.originalId || 0));
+        result.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
         break;
       case 'distance':
-        // Safe fallback for distance mock
-        result.sort((a, b) => ((a.originalId || a.price) % 45) - ((b.originalId || b.price) % 45));
+        result.sort((a, b) => (a.distance || 0) - (b.distance || 0));
         break;
       default:
         result.sort((a, b) => (b.premium ? 1 : 0) - (a.premium ? 1 : 0));
