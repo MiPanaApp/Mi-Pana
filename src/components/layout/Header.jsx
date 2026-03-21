@@ -5,6 +5,9 @@ import { FiCoffee, FiPackage, FiSmile, FiMonitor, FiTool, FiShoppingBag, FiBrief
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
 import logoTexto from '../../assets/solotexto.png';
+import useAuthFlow from '../../hooks/useAuthFlow';
+import { db } from '../../services/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 const CATEGORIES = [
   { id: 1, name: "Comida", icon: FiCoffee },
@@ -36,6 +39,45 @@ export default function Header() {
   const [isCountryOpen, setIsCountryOpen] = useState(false);
   const countryRef = useRef(null);
   const { scrollY } = useScroll();
+
+  const { user } = useAuthFlow();
+  const [userName, setUserName] = useState('');
+
+  useEffect(() => {
+    async function fetchUserName() {
+      if (user?.uid) {
+        try {
+          // Intentamos siempre buscar en Firestore primero para ver el nombre real registrado
+          const docRef = doc(db, "users", user.uid);
+          const docSnap = await getDoc(docRef);
+          
+          if (docSnap.exists() && docSnap.data().name) {
+            setUserName(docSnap.data().name);
+            return;
+          }
+
+          // Si no hay doc en Firestore pero estamos en bypass, usamos el displayName de prueba
+          if (import.meta.env.VITE_AUTH_BYPASS === 'true') {
+            setUserName(user.displayName?.split(' ')[0] || 'Pana');
+            return;
+          }
+          
+          // Si no hay doc y no es bypass, intentamos usar el displayName de Firebase Auth
+          if (user.displayName) {
+            setUserName(user.displayName.split(' ')[0]);
+          } else {
+            setUserName('');
+          }
+        } catch (err) {
+          console.error("Error fetching user name:", err);
+          setUserName('Pana');
+        }
+      } else {
+        setUserName('');
+      }
+    }
+    fetchUserName();
+  }, [user]);
 
   // Close country dropdown on outside click
   useEffect(() => {
@@ -155,15 +197,32 @@ export default function Header() {
             </div>
 
             {/* Buscador Claymorphism Amarillo */}
-            <div className="relative flex-1 md:max-w-4xl self-start md:self-center mt-2 md:mt-0">
-              <input 
-                type="text" 
-                placeholder="¿Qué necesitas, pana?" 
-                value={filters.searchQuery || ''}
-                onChange={(e) => setFilters({ searchQuery: e.target.value })}
-                className="w-full h-11 md:h-14 pl-11 pr-4 bg-[#FFCC00] rounded-xl md:rounded-2xl text-sm md:text-lg text-[#1A1A3A] font-bold placeholder:text-[#1A1A3A]/70 shadow-[inset_4px_4px_8px_rgba(204,163,0,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] focus:outline-none focus:ring-2 focus:ring-[#0056B3]/40 transition-all"
-              />
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#1A1A3A]/80 w-5 h-5 md:w-7 md:h-7" />
+            <div className="relative flex-1 md:max-w-4xl flex flex-col self-start md:self-center">
+              <div className="relative w-full">
+                <input 
+                  type="text" 
+                  placeholder="¿Qué necesitas, pana?" 
+                  value={filters.searchQuery || ''}
+                  onChange={(e) => setFilters({ searchQuery: e.target.value })}
+                  className="w-full h-11 md:h-14 pl-11 pr-4 bg-[#FFCC00] rounded-xl md:rounded-2xl text-sm md:text-lg text-[#1A1A3A] font-bold placeholder:text-[#1A1A3A]/70 shadow-[inset_4px_4px_8px_rgba(204,163,0,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] focus:outline-none focus:ring-2 focus:ring-[#0056B3]/40 transition-all"
+                />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#1A1A3A]/80 w-5 h-5 md:w-7 md:h-7" />
+              </div>
+              
+              {userName && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-1.5 self-end mr-1"
+                >
+                  <p 
+                    onClick={() => navigate('/perfil')}
+                    className="text-[12px] md:text-[14px] font-medium text-[#1A1A3A]/80 tracking-tight cursor-pointer hover:text-[#0056B3] transition-colors"
+                  >
+                    Hola, <span className="font-bold underline underline-offset-2">{userName}</span>
+                  </p>
+                </motion.div>
+              )}
             </div>
           </div>
         </div>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "../../services/firebase";
 import { useNavigate } from "react-router-dom";
+import { Mail, Lock, Eye, EyeOff, Rocket, ArrowRight } from "lucide-react";
 import logoTexto from "../../assets/Logo_Mi_pana_solo_texto_.png";
 import "../../styles/auth.css";
 
@@ -12,12 +13,9 @@ export default function LoginScreen() {
 
   const handleGoogleSignIn = async () => {
     try {
-      // In a real app we'd check if user is new, but here we route to register profile if new or home if exists
-      // For now, assume success goes to home. If we want to simulate new user:
       const result = await signInWithPopup(auth, googleProvider);
-      // check if new user: result._tokenResponse.isNewUser
       if (result._tokenResponse?.isNewUser) {
-        navigate("/register/complete-profile"); // This route needs to exist, or just use state on register
+        navigate("/register/complete-profile");
       } else {
         navigate("/home");
       }
@@ -40,20 +38,26 @@ export default function LoginScreen() {
 
         <div className="clay-card-auth w-full max-w-sm">
           <div className="mb-4 relative">
-            <label className="text-[10px] uppercase text-[#AAAACC] font-bold block mb-[5px]">Correo electrónico</label>
             <div className="relative">
-              <span className="absolute left-[14px] top-1/2 -translate-y-1/2 text-[18px] opacity-50">✉️</span>
-              <input type="email" placeholder="tu@correo.com" className="clay-input-auth w-full py-[13px] pr-[14px] pl-[44px] text-[15px] font-bold text-[#1A1A3A] outline-none" />
+              <span className="absolute left-[14px] top-1/2 -translate-y-1/2 opacity-50 text-[#1A1A3A]">
+                <Mail size={18} />
+              </span>
+              <input type="email" placeholder="tu@correo.com" className="clay-input-auth w-full py-[13.5px] pr-[14px] pl-[44px] text-[14px] font-bold text-[#1A1A3A] outline-none" />
             </div>
           </div>
 
           <div className="mb-5 relative">
-            <label className="text-[10px] uppercase text-[#AAAACC] font-bold block mb-[5px]">Contraseña</label>
             <div className="relative">
-              <span className="absolute left-[14px] top-1/2 -translate-y-1/2 text-[18px] opacity-50">🔒</span>
-              <input type={showPassword ? "text" : "password"} placeholder="••••••••" className="clay-input-auth w-full py-[13px] pr-[44px] pl-[44px] text-[15px] font-bold text-[#1A1A3A] outline-none" />
-              <button onClick={() => setShowPassword(!showPassword)} className="absolute right-[10px] top-1/2 -translate-y-1/2 opacity-50 hover:opacity-90 outline-none">
-                {showPassword ? "👁️" : "👁️‍🗨️"}
+              <span className="absolute left-[14px] top-1/2 -translate-y-1/2 opacity-50 text-[#1A1A3A]">
+                <Lock size={18} />
+              </span>
+              <input type={showPassword ? "text" : "password"} placeholder="••••••••" className="clay-input-auth w-full py-[13.5px] pr-[44px] pl-[44px] text-[14px] font-bold text-[#1A1A3A] outline-none" />
+              <button 
+                type="button"
+                onClick={() => setShowPassword(!showPassword)} 
+                className="absolute right-[14px] top-1/2 -translate-y-1/2 opacity-50 hover:opacity-90 outline-none text-[#1A1A3A]"
+              >
+                {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
               </button>
             </div>
           </div>
@@ -90,15 +94,15 @@ export default function LoginScreen() {
             Continuar con Google
           </button>
 
-          <button onClick={() => navigate("/home")} className="clay-btn-auth w-full py-[15px] font-black text-[15px]">
-            ¡Entrar, pana! 🚀
+          <button onClick={() => navigate("/home")} className="clay-btn-auth w-full py-[15px] font-black text-[15px] flex items-center justify-center gap-2">
+            ¡Entrar, pana! <Rocket size={20} />
           </button>
         </div>
 
-        <div className="mt-8 text-center h-20">
+        <div className="mt-5 text-center h-20">
           <p className="text-[12px] font-bold text-[#1A1A3A] opacity-50 mb-3">¿Aún no tienes cuenta?</p>
-          <button onClick={() => navigate("/register")} className="bg-[#EDEDF5] rounded-[16px] px-[36px] py-[12px] text-[14px] font-black text-[#1A1A3A] shadow-[6px_6px_14px_rgba(180,180,210,0.7),-6px_-6px_14px_rgba(255,255,255,0.95)]">
-            Registrarse →
+          <button onClick={() => navigate("/register")} className="bg-[#EDEDF5] rounded-[16px] px-[36px] py-[12px] text-[14px] font-bold text-[#1A1A3A] shadow-[6px_6px_14px_rgba(180,180,210,0.7),-6px_-6px_14px_rgba(255,255,255,0.95)] flex items-center gap-2 mx-auto">
+            Registrarse <ArrowRight size={18} />
           </button>
         </div>
 
