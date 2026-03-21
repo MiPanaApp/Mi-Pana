@@ -18,11 +18,11 @@ export default function ProductCard({ product }) {
       className="bg-[#E0E5EC] rounded-[2.2rem] p-3 flex flex-col shadow-[9px_9px_16px_rgba(163,177,198,0.6),-9px_-9px_16px_rgba(255,255,255,0.5)] h-full cursor-pointer group"
     >
       {/* 1. IMAGEN Y FAVORITO (Estilo Wallapop) */}
-      <div className="relative aspect-square rounded-[1.8rem] overflow-hidden mb-3 bg-[#E0E5EC] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.5),inset_-4px_-4px_8px_rgba(255,255,255,0.7)] p-1.5">
+      <div className="relative aspect-square rounded-[2rem] overflow-hidden mb-3 bg-[#E0E5EC] shadow-[6px_6px_12px_rgba(163,177,198,0.4),-6px_-6px_12px_rgba(255,255,255,0.6)]">
         <img 
           src={product.image} 
           alt={product.name} 
-          className="w-full h-full object-cover rounded-2xl transition-transform duration-500 group-hover:scale-110"
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
         
         {/* Botón Corazón - Mejor Contraste */}
@@ -49,9 +49,11 @@ export default function ProductCard({ product }) {
       
       {/* 2. INFORMACIÓN DEL PRODUCTO (Precio y Título) */}
       <div className="px-1 flex flex-col flex-grow">
-        {/* Precio destacado */}
-        <div className="text-xl font-black text-[#003366] mb-0.5">
-          {product.price} €
+        {/* Precio destacado - Estilo Supermercado */}
+        <div className="text-xl font-black text-[#003366] mb-0.5 flex items-baseline gap-0.5">
+           <span className="text-xl">{Math.floor(parseFloat(product.price) || 0)}</span>
+           <span className="text-xs opacity-80">.{((parseFloat(product.price) || 0) % 1).toFixed(2).split('.')[1]}</span>
+           <span className="text-xs opacity-80 ml-0.5">€</span>
         </div>
         
         {/* Título conciso */}

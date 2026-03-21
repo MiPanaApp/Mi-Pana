@@ -12,7 +12,7 @@ export default defineConfig({
       manifest: {
         name: 'Mi Pana',
         short_name: 'Mi Pana',
-        description: 'Marketplace Premium para la Diáspora Venezuolana',
+        description: 'Marketplace Premium para la Diáspora Venezolana',
         theme_color: '#FFB400',
         background_color: '#EDEDF5',
         display: 'standalone',

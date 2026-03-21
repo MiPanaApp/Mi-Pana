@@ -237,6 +237,7 @@ export default function CreateListing() {
                 type="number"
                 required
                 min="0"
+                step="0.01"
                 disabled={loading}
                 value={form.price}
                 onChange={(e) => setForm({...form, price: e.target.value})}
