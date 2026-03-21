@@ -1,6 +1,6 @@
 import { Search } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, forwardRef } from 'react';
 import { FiCoffee, FiPackage, FiSmile, FiMonitor, FiTool, FiShoppingBag, FiBriefcase, FiHeart } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
@@ -20,7 +20,7 @@ const CATEGORIES = [
   { id: 8, name: "Salud", icon: FiHeart },
 ];
 
-export default function Header() {
+const Header = forwardRef((props, ref) => {
   const navigate = useNavigate();
   const { 
     activeCategory, 
@@ -104,7 +104,7 @@ export default function Header() {
   });
 
   return (
-    <header className="fixed top-0 left-0 w-full z-50">
+    <header ref={ref} className="fixed top-0 left-0 right-0 w-full z-50 overflow-visible">
       {/* 1. TOP HEADER FIJO (Logo + Buscador) - Neumorphism */}
       <div className="bg-[#E0E5EC] pt-safe safe-area-pt shadow-[0_5px_15px_rgba(163,177,198,0.3)]">
         <div className="max-w-7xl mx-auto px-4 pt-3 pb-3">
@@ -281,4 +281,6 @@ export default function Header() {
       </div>
     </header>
   );
-}
+});
+
+export default Header;

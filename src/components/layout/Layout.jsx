@@ -1,5 +1,5 @@
 import { Outlet } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Header from './Header';
 import Footer from '../Footer';
 import MobileNavBar from './MobileNavBar';
@@ -7,13 +7,28 @@ import DynamicLocalization from '../ui/DynamicLocalization';
 
 export default function Layout() {
   const [showLocation, setShowLocation] = useState(false);
+  const headerRef = useRef(null);
+  const [headerHeight, setHeaderHeight] = useState(0);
+
+  useEffect(() => {
+    if (!headerRef.current) return;
+    const observer = new ResizeObserver(() => {
+      if (headerRef.current) {
+        setHeaderHeight(headerRef.current.offsetHeight);
+      }
+    });
+    observer.observe(headerRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-pana-bg font-sans selection:bg-pana-yellow selection:text-pana-blue">
-      <Header onLocationClick={() => setShowLocation(true)} />
+    <div className="min-h-screen flex flex-col bg-pana-bg font-sans selection:bg-pana-yellow selection:text-pana-blue overflow-x-clip">
+      <Header ref={headerRef} onLocationClick={() => setShowLocation(true)} />
       
-      {/* pt-52 for compact header on mobile, md:pt-44 for desktop */}
-      <main className="flex-grow pt-52 md:pt-44 pb-44 px-4 relative">
+      <main 
+        className="flex-grow pb-44 px-4 relative"
+        style={{ paddingTop: (headerHeight || 180) + 'px' }}
+      >
         <Outlet />
       </main>
 

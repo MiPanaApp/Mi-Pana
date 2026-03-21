@@ -122,25 +122,25 @@ export default function Home() {
   }, [products, filters, activeCategory, sortBy]);
 
   return (
-    <div className="max-w-7xl mx-auto pb-10 transition-all">
-      {/* Feed de productos con margen extra para liberar el Header móvil */}
-      <div className="mt-8 md:mt-12">
-        <div className="flex justify-between items-center mb-10 px-2 sm:px-4">
-          <div>
-            <h2 className="text-2xl font-black text-[#1A1A3A] drop-shadow-sm">
-              Panas, para ti
-              <div className="h-1.5 w-10 bg-[#FFC200] mt-1 rounded-full"></div>
-            </h2>
-          </div>
+    <div className="max-w-7xl mx-auto pb-10 transition-all overflow-x-clip">
+      {/* El padding-top dinámico del Layout ya maneja el espacio inicial */}
+      <div className="mt-2 md:mt-4">
+        <div className="flex flex-row items-center justify-between w-full px-4 mb-3">
+          {/* Título: min-w-0 permite que truncate funcione en Flexbox */}
+          <h2 className="flex-1 min-w-0 font-black text-[#1A1A3A] text-base sm:text-lg truncate pr-2 drop-shadow-sm">
+            Panas, para ti
+            <div className="h-1 w-8 bg-[#FFC200] mt-0.5 rounded-full"></div>
+          </h2>
 
-          <div className="flex items-center gap-3">
-            {/* Botón Ordenar (Nuevo sitio) */}
+          {/* Grupo de botones: flex-shrink-0 para que nunca se compriman */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Botón Ordenar */}
             <div className="relative" ref={sortRef}>
               <button 
                 onClick={() => setIsSortOpen(!isSortOpen)}
-                className="p-2 sm:p-2.5 bg-[#E0E5EC] rounded-xl shadow-[4px_4px_8px_rgba(163,177,198,0.6),-4px_-4px_8px_rgba(255,255,255,0.8)] active:shadow-[inset_3px_3px_6px_rgba(163,177,198,0.6),inset_-3px_-3px_6px_rgba(255,255,255,0.8)] text-[#1A1A3A] transition-all"
+                className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#EDEDF5] flex-shrink-0 shadow-[3px_3px_7px_rgba(180,180,210,0.65),-3px_-3px_7px_rgba(255,255,255,0.85)] active:scale-95 transition-all text-[#1A1A3A]"
               >
-                <ArrowUpDown className="w-4 h-4 sm:w-5 sm:h-5" />
+                <ArrowUpDown size={15} />
               </button>
 
               {/* Dropdown de Ordenar Glassmorphic */}
@@ -175,12 +175,11 @@ export default function Home() {
               </AnimatePresence>
             </div>
 
-            {/* Botón Filtros (Original restaurado) */}
             <button 
               onClick={() => setIsFilterOpen(true)}
-              className="p-2 sm:p-2.5 bg-[#E0E5EC] rounded-xl shadow-[4px_4px_8px_rgba(163,177,198,0.6),-4px_-4px_8px_rgba(255,255,255,0.8)] active:shadow-[inset_3px_3px_6px_rgba(163,177,198,0.6),inset_-3px_-3px_6px_rgba(255,255,255,0.8)] text-[#1A1A3A] transition-all"
+              className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#EDEDF5] flex-shrink-0 shadow-[3px_3px_7px_rgba(180,180,210,0.65),-3px_-3px_7px_rgba(255,255,255,0.85)] active:scale-95 transition-all text-[#1A1A3A]"
             >
-              <Sliders className="w-4 h-4 sm:w-5 sm:h-5" />
+              <Sliders size={15} />
             </button>
           </div>
         </div>
