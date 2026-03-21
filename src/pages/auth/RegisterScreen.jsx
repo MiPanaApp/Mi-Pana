@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Loader2, Send, ArrowRight } from "lucide-react";
 import useOtpVerification from "../../hooks/useOtpVerification";
 import PhonePrefixSelect from "../../components/auth/PhonePrefixSelect";
@@ -14,6 +14,15 @@ export default function RegisterScreen() {
   const [showProfileSheet, setShowProfileSheet] = useState(false);
   const [authUser, setAuthUser] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    // Si viene de Google Login y es nuevo, abrimos el formulario de perfil directamente
+    if (location.state?.isGoogleUser && location.state?.user) {
+      setAuthUser(location.state.user);
+      setShowProfileSheet(true);
+    }
+  }, [location]);
 
   const { status, error, countdown, sendOtpSms, verifyOtp, resendOtp } = useOtpVerification();
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { signInWithPopup } from "firebase/auth";
+import { signInWithPopup, getAdditionalUserInfo } from "firebase/auth";
 import { auth, googleProvider } from "../../services/firebase";
 import { useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, Rocket, ArrowRight } from "lucide-react";
@@ -14,13 +14,20 @@ export default function LoginScreen() {
   const handleGoogleSignIn = async () => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
-      if (result._tokenResponse?.isNewUser) {
-        navigate("/register/complete-profile");
+      const additionalInfo = getAdditionalUserInfo(result);
+      
+      if (additionalInfo?.isNewUser) {
+        // Redirigir a registro si es nuevo para que complete sus datos (País, Región, etc)
+        navigate("/register", { state: { isGoogleUser: true, user: result.user } });
       } else {
         navigate("/home");
       }
     } catch (error) {
-      console.error(error);
+      console.error("Error en Google Auth:", error);
+      if (error.code === 'auth/popup-closed-by-user') {
+        return; // No mostramos error si el usuario simplemente cerró la ventana
+      }
+      alert("No se pudo iniciar sesión con Google. Por favor, intenta de nuevo.");
     }
   };
 
