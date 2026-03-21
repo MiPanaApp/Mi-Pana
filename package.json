@@ -13,6 +13,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@algolia/autocomplete-js": "^1.19.7",
+    "@algolia/autocomplete-theme-classic": "^1.19.7",
     "@capacitor/android": "^8.2.0",
     "@capacitor/camera": "^8.0.2",
     "@capacitor/cli": "^8.2.0",

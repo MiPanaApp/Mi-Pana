@@ -334,9 +334,9 @@ tlfno contacto: 672 593 950`}
                   </div>
 
                   {/* Lista de Comentarios - Organizada en 2 columnas debajo del resumen */}
-                  <div className="grid grid-cols-2 gap-6">
-                     {MOCK_REVIEWS.map(rw => (
-                        <div key={rw.id} className="bg-[#E0E5EC] border border-white/60 rounded-[2rem] p-6 shadow-[4px_4px_10px_rgba(163,177,198,0.5),-4px_-4px_10px_rgba(255,255,255,0.7)] flex flex-col gap-4 group transition-all hover:-translate-y-1">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-2">
+                     {MOCK_REVIEWS.map((rw, index) => (
+                        <div key={rw.id} className="py-6 flex flex-col gap-4 group transition-all">
                            <div className="flex justify-between items-start">
                               <div className="flex items-center gap-3">
                                  <div className="w-11 h-11 rounded-full bg-white border-2 border-white shadow-sm overflow-hidden flex-shrink-0 bg-gradient-to-br from-white to-[#E0E5EC]">
@@ -352,6 +352,13 @@ tlfno contacto: 672 593 950`}
                               <span className="text-[10px] text-[#1A1A3A]/40 font-bold uppercase tracking-widest">{rw.date}</span>
                            </div>
                            <p className="text-[14px] text-[#1A1A3A]/80 font-semibold leading-relaxed pl-1 italic">"{rw.text}"</p>
+                           
+                           {/* Línea tricolor divisoria */}
+                           <div className="flex w-full h-[2px] mt-2 opacity-20">
+                              <div className="flex-1 bg-[#FFCC00]"></div>
+                              <div className="flex-1 bg-[#003366]"></div>
+                              <div className="flex-1 bg-[#D90429]"></div>
+                           </div>
                         </div>
                      ))}
                   </div>
