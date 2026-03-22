@@ -235,57 +235,6 @@ const Header = forwardRef((props, ref) => {
                 </motion.div>
               )}
             </div>
-
-            {/* Menú Hamburguesa Escritorio */}
-            <div className="hidden md:flex relative flex-shrink-0" ref={desktopMenuRef}>
-              <button
-                onClick={() => setIsDesktopMenuOpen(!isDesktopMenuOpen)}
-                className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${
-                  isDesktopMenuOpen 
-                  ? 'bg-[#1A1A3A] text-white shadow-[inset_4px_4px_8px_rgba(26,26,58,0.8),inset_-4px_-4px_8px_rgba(40,40,80,0.5)]' 
-                  : 'bg-[#E0E5EC] text-[#1A1A3A] shadow-[6px_6px_12px_rgba(163,177,198,0.7),-6px_-6px_12px_rgba(255,255,255,0.9)] hover:bg-[#1A1A3A] hover:text-white'
-                }`}
-              >
-                {isDesktopMenuOpen ? <X size={28} /> : <Menu size={28} />}
-              </button>
-
-              <AnimatePresence>
-                {isDesktopMenuOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9, y: 10, originX: 1, originY: 0 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.9, y: 10 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                    className="absolute top-[120%] right-0 w-[240px] bg-[#E0E5EC] rounded-3xl shadow-[8px_8px_20px_rgba(163,177,198,0.7),-8px_-8px_20px_rgba(255,255,255,0.9)] border-[0.5px] border-white/60 p-3 z-50 flex flex-col gap-2"
-                  >
-                    {/* Inicio */}
-                    <button onClick={() => { setIsDesktopMenuOpen(false); navigate('/home'); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#E0E5EC] text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3),inset_-4px_-4px_8px_rgba(255,255,255,0.5)] hover:shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.7)] transition-all active:scale-95 group">
-                       <Home className="w-5 h-5 text-[#0056B3] group-hover:scale-110 transition-transform" /> Inicio
-                    </button>
-                    {/* Favoritos */}
-                    <button onClick={() => { setIsDesktopMenuOpen(false); navigate('/favoritos'); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#E0E5EC] text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3),inset_-4px_-4px_8px_rgba(255,255,255,0.5)] hover:shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.7)] transition-all active:scale-95 group">
-                       <LucideHeart className="w-5 h-5 text-[#D90429] group-hover:scale-110 transition-transform" /> Favoritos
-                    </button>
-                    {/* Anunciar Destacado */}
-                    <button onClick={() => { setIsDesktopMenuOpen(false); navigate('/anunciar'); }} className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-[#FFCC00] text-[#1A1A3A] font-black tracking-wide shadow-[4px_4px_10px_rgba(204,163,0,0.5),-4px_-4px_10px_rgba(255,255,255,0.9)] hover:scale-105 transition-all active:scale-95 group">
-                       <div className="w-7 h-7 bg-[#1A1A3A] rounded-full flex items-center justify-center shrink-0">
-                          <PlusCircle className="w-4 h-4 text-white" />
-                       </div>
-                       Anunciar
-                    </button>
-                    {/* Mensajes */}
-                    <button onClick={() => { setIsDesktopMenuOpen(false); navigate('/mensajes'); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#E0E5EC] text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3),inset_-4px_-4px_8px_rgba(255,255,255,0.5)] hover:shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.7)] transition-all active:scale-95 group">
-                       <MessageCircle className="w-5 h-5 text-[#FFB400] group-hover:scale-110 transition-transform" /> Mensajes
-                    </button>
-                    {/* Perfil */}
-                    <button onClick={() => { setIsDesktopMenuOpen(false); navigate('/perfil'); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#1A1A3A] text-white font-bold shadow-[4px_4px_10px_rgba(26,26,58,0.4)] hover:shadow-[6px_6px_12px_rgba(26,26,58,0.5)] transition-all active:scale-95 group">
-                       <LucideUser className="w-5 h-5 text-white/90 group-hover:scale-110 transition-transform" /> Mi Perfil
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-            
           </div>
         </div>
       </div>
@@ -298,10 +247,10 @@ const Header = forwardRef((props, ref) => {
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="overflow-hidden bg-[#E0E5EC]/95 backdrop-blur-md"
+            className={`bg-[#E0E5EC]/95 backdrop-blur-md ${isDesktopMenuOpen ? 'overflow-visible' : 'overflow-hidden'}`}
           >
-            <div className="max-w-7xl mx-auto py-2">
-              <div className="flex items-center md:justify-center gap-3 overflow-x-auto px-6 py-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="max-w-7xl mx-auto py-2 px-4 flex justify-between items-center gap-4">
+              <div className="flex items-center md:justify-center gap-3 overflow-x-auto py-2 flex-grow [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {CATEGORIES.map((cat, index) => {
                   const isActive = activeCategory === cat.id;
                   
@@ -330,6 +279,57 @@ const Header = forwardRef((props, ref) => {
                   );
                 })}
               </div>
+
+              {/* Menú Hamburguesa Escritorio (En línea de categorías) */}
+              <div className="hidden md:flex relative flex-shrink-0" ref={desktopMenuRef}>
+                <button
+                  onClick={() => setIsDesktopMenuOpen(!isDesktopMenuOpen)}
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                    isDesktopMenuOpen 
+                    ? 'bg-[#1A1A3A] text-white shadow-[inset_4px_4px_8px_rgba(26,26,58,0.8),inset_-4px_-4px_8px_rgba(40,40,80,0.5)]' 
+                    : 'bg-[#E0E5EC] text-[#1A1A3A] shadow-[6px_6px_12px_rgba(163,177,198,0.7),-6px_-6px_12px_rgba(255,255,255,0.9)] hover:bg-[#1A1A3A] hover:text-white'
+                  }`}
+                >
+                  {isDesktopMenuOpen ? <X size={20} /> : <Menu size={20} />}
+                </button>
+
+                <AnimatePresence>
+                  {isDesktopMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9, y: 10, originX: 1, originY: 0 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                      className="absolute top-[120%] right-0 w-[240px] bg-[#E0E5EC] rounded-3xl shadow-[8px_8px_20px_rgba(163,177,198,0.7),-8px_-8px_20px_rgba(255,255,255,0.9)] border-[0.5px] border-white/60 p-3 z-50 flex flex-col gap-2"
+                    >
+                      {/* Inicio */}
+                      <button onClick={() => { setIsDesktopMenuOpen(false); navigate('/home'); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#E0E5EC] text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3),inset_-4px_-4px_8px_rgba(255,255,255,0.5)] hover:shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.7)] transition-all active:scale-95 group">
+                         <Home className="w-5 h-5 text-[#0056B3] group-hover:scale-110 transition-transform" /> Inicio
+                      </button>
+                      {/* Favoritos */}
+                      <button onClick={() => { setIsDesktopMenuOpen(false); navigate('/favoritos'); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#E0E5EC] text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3),inset_-4px_-4px_8px_rgba(255,255,255,0.5)] hover:shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.7)] transition-all active:scale-95 group">
+                         <LucideHeart className="w-5 h-5 text-[#D90429] group-hover:scale-110 transition-transform" /> Favoritos
+                      </button>
+                      {/* Anunciar Destacado */}
+                      <button onClick={() => { setIsDesktopMenuOpen(false); navigate('/anunciar'); }} className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-[#FFCC00] text-[#1A1A3A] font-black tracking-wide shadow-[4px_4px_10px_rgba(204,163,0,0.5),-4px_-4px_10px_rgba(255,255,255,0.9)] hover:scale-105 transition-all active:scale-95 group">
+                         <div className="w-7 h-7 bg-[#1A1A3A] rounded-full flex items-center justify-center shrink-0">
+                            <PlusCircle className="w-4 h-4 text-white" />
+                         </div>
+                         Anunciar
+                      </button>
+                      {/* Mensajes */}
+                      <button onClick={() => { setIsDesktopMenuOpen(false); navigate('/mensajes'); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#E0E5EC] text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3),inset_-4px_-4px_8px_rgba(255,255,255,0.5)] hover:shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.7)] transition-all active:scale-95 group">
+                         <MessageCircle className="w-5 h-5 text-[#FFB400] group-hover:scale-110 transition-transform" /> Mensajes
+                      </button>
+                      {/* Perfil */}
+                      <button onClick={() => { setIsDesktopMenuOpen(false); navigate('/perfil'); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#1A1A3A] text-white font-bold shadow-[4px_4px_10px_rgba(26,26,58,0.4)] hover:shadow-[6px_6px_12px_rgba(26,26,58,0.5)] transition-all active:scale-95 group">
+                         <LucideUser className="w-5 h-5 text-white/90 group-hover:scale-110 transition-transform" /> Mi Perfil
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
             </div>
           </motion.div>
         )}

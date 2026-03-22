@@ -37,7 +37,7 @@ export default function Layout() {
       
       <main 
         className="flex-grow pb-44 px-4 relative"
-        style={{ paddingTop: showMainHeader ? (headerHeight || 180) + 'px' : '0px' }}
+        style={{ paddingTop: showMainHeader ? (headerHeight ? `${headerHeight + 24}px` : '180px') : '0px' }}
       >
         <Outlet />
       </main>
