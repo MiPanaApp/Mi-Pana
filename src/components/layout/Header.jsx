@@ -215,9 +215,18 @@ const Header = forwardRef((props, ref) => {
                       addRecentSearch(filters.searchQuery.trim());
                     }
                   }}
-                  className="w-full h-11 md:h-14 pl-11 pr-4 bg-[#FFCC00] rounded-xl md:rounded-2xl text-sm md:text-lg text-[#1A1A3A] font-bold placeholder:text-[#1A1A3A]/70 shadow-[inset_4px_4px_8px_rgba(204,163,0,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] focus:outline-none focus:ring-2 focus:ring-[#0056B3]/40 transition-all"
+                  className="w-full h-11 md:h-14 pl-11 pr-12 bg-[#FFCC00] rounded-xl md:rounded-2xl text-sm md:text-lg text-[#1A1A3A] font-bold placeholder:text-[#1A1A3A]/70 shadow-[inset_4px_4px_8px_rgba(204,163,0,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] focus:outline-none focus:ring-2 focus:ring-[#0056B3]/40 transition-all"
                 />
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#1A1A3A]/80 w-5 h-5 md:w-7 md:h-7" />
+                
+                {filters.searchQuery && (
+                  <button 
+                    onClick={() => setFilters({ searchQuery: '' })}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 bg-[#1A1A3A]/10 rounded-full hover:bg-[#1A1A3A]/20 transition-colors"
+                  >
+                    <X className="w-4 h-4 text-[#1A1A3A]" />
+                  </button>
+                )}
               </div>
               
               {userName && (
@@ -249,8 +258,8 @@ const Header = forwardRef((props, ref) => {
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             className={`bg-[#E0E5EC]/95 backdrop-blur-md ${isDesktopMenuOpen ? 'overflow-visible' : 'overflow-hidden'}`}
           >
-            <div className="max-w-7xl mx-auto py-2 px-4 flex justify-between items-center gap-4">
-              <div className="flex items-center md:justify-center gap-3 overflow-x-auto py-2 flex-grow [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="max-w-7xl mx-auto py-2 flex justify-between items-center gap-4">
+              <div className="flex items-center md:justify-center gap-3 overflow-x-auto py-2 px-5 flex-grow [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {CATEGORIES.map((cat, index) => {
                   const isActive = activeCategory === cat.id;
                   
