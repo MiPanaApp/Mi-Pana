@@ -7,6 +7,7 @@ import { doc, getDoc, collection, query, where, getDocs, limit, addDoc } from 'f
 import { useStore } from '../store/useStore';
 import ProductCard from '../components/ProductCard';
 import { useTimeAgo } from '../hooks/useTimeAgo';
+import panaLengua from '../assets/pana_lengua.png';
 
 // Los productos relacionados se cargan ahora dinámicamente desde Firestore.
 
@@ -231,8 +232,8 @@ export default function ProductDetail() {
    if (error || !product) {
       return (
          <div className="min-h-screen bg-[#E0E5EC] flex flex-col items-center justify-center px-6 text-center">
-            <AlertCircle size={64} className="text-[#1A1A3A]/40 mb-4" />
-            <h2 className="text-2xl font-black text-[#1A1A3A] mb-2">Ups, Pana...</h2>
+            <img src={panaLengua} alt="Ups Pana" className="w-[180px] md:w-[220px] h-auto object-contain drop-shadow-[0_15px_25px_rgba(0,0,0,0.15)] mb-6" />
+            <h2 className="text-3xl font-black text-[#1A1A3A] tracking-tighter mb-2">Ups, Pana...</h2>
             <p className="text-[#1A1A3A]/70 font-medium mb-8">{error}</p>
             <button
                onClick={() => navigate(-1)}
