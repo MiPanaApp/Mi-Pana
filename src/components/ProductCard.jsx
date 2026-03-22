@@ -62,9 +62,9 @@ export default function ProductCard({ product }) {
         </h3>
         
         {/* 3. UBICACIÓN (Lección Wallapop) */}
-        <div className="mt-auto flex items-center gap-1 text-gray-400">
+        <div className="mt-auto flex items-center gap-1 text-[#1A1A3A]/70 font-semibold">
           <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-          <span className="text-[11px] font-medium truncate">
+          <span className="text-[11px] truncate">
             {product.location || 'Madrid'} • {product.distance || `${(Math.random() * 5 + 0.5).toFixed(1)} km`}
           </span>
         </div>

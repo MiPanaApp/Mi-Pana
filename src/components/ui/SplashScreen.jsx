@@ -13,21 +13,21 @@ export default function SplashScreen() {
   }, [navigate]);
 
   return (
-    <div 
+    <div
       className="fixed inset-0 flex flex-col items-center justify-center z-50 px-6"
       style={{ background: 'linear-gradient(160deg, #FFC200 0%, #F8E22A 60%)' }}
     >
       <div className="flex-1 flex flex-col items-center justify-center relative w-full">
         {/* Logo with bounce animation defined in index.css */}
-        <img 
-          src={logoFull} 
-          alt="miPana" 
-          style={{ width: "280px", maxWidth: "80vw", animation: "bounce 2.5s ease-in-out infinite" }} 
+        <img
+          src={logoFull}
+          alt="miPana"
+          style={{ width: "280px", maxWidth: "80vw", animation: "bounce 2.5s ease-in-out infinite" }}
         />
-        
+
         <div className="mt-2 text-center">
-          <h1 
-            className="text-[22px] tracking-tight leading-none" 
+          <h1
+            className="text-[22px] tracking-tight leading-none"
             style={{ color: '#000000' }}
           >
             <span className="font-black">Juntos</span> <span className="font-semibold">Somos</span> <span className="font-black">Más</span>

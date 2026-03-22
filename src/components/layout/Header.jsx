@@ -310,20 +310,17 @@ const Header = forwardRef((props, ref) => {
                       <button onClick={() => { setIsDesktopMenuOpen(false); navigate('/favoritos'); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#E0E5EC] text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3),inset_-4px_-4px_8px_rgba(255,255,255,0.5)] hover:shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.7)] transition-all active:scale-95 group">
                          <LucideHeart className="w-5 h-5 text-[#D90429] group-hover:scale-110 transition-transform" /> Favoritos
                       </button>
-                      {/* Anunciar Destacado */}
-                      <button onClick={() => { setIsDesktopMenuOpen(false); navigate('/anunciar'); }} className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-[#FFCC00] text-[#1A1A3A] font-black tracking-wide shadow-[4px_4px_10px_rgba(204,163,0,0.5),-4px_-4px_10px_rgba(255,255,255,0.9)] hover:scale-105 transition-all active:scale-95 group">
-                         <div className="w-7 h-7 bg-[#1A1A3A] rounded-full flex items-center justify-center shrink-0">
-                            <PlusCircle className="w-4 h-4 text-white" />
-                         </div>
-                         Anunciar
+                      {/* Anunciar Destacado ahora es igual */}
+                      <button onClick={() => { setIsDesktopMenuOpen(false); navigate('/anunciar'); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#E0E5EC] text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3),inset_-4px_-4px_8px_rgba(255,255,255,0.5)] hover:shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.7)] transition-all active:scale-95 group">
+                         <PlusCircle className="w-5 h-5 text-[#1A1A3A] group-hover:scale-110 transition-transform" /> Anunciar
                       </button>
                       {/* Mensajes */}
                       <button onClick={() => { setIsDesktopMenuOpen(false); navigate('/mensajes'); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#E0E5EC] text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3),inset_-4px_-4px_8px_rgba(255,255,255,0.5)] hover:shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.7)] transition-all active:scale-95 group">
                          <MessageCircle className="w-5 h-5 text-[#FFB400] group-hover:scale-110 transition-transform" /> Mensajes
                       </button>
-                      {/* Perfil */}
-                      <button onClick={() => { setIsDesktopMenuOpen(false); navigate('/perfil'); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#1A1A3A] text-white font-bold shadow-[4px_4px_10px_rgba(26,26,58,0.4)] hover:shadow-[6px_6px_12px_rgba(26,26,58,0.5)] transition-all active:scale-95 group">
-                         <LucideUser className="w-5 h-5 text-white/90 group-hover:scale-110 transition-transform" /> Mi Perfil
+                      {/* Perfil ahora es igual */}
+                      <button onClick={() => { setIsDesktopMenuOpen(false); navigate('/perfil'); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#E0E5EC] text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3),inset_-4px_-4px_8px_rgba(255,255,255,0.5)] hover:shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.7)] transition-all active:scale-95 group">
+                         <LucideUser className="w-5 h-5 text-[#0056B3] group-hover:scale-110 transition-transform" /> Mi Perfil
                       </button>
                     </motion.div>
                   )}
