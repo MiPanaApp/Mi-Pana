@@ -476,8 +476,8 @@ tlfno contacto: 672 593 950`}
                         <span className="text-3xl md:text-4xl font-black">
                            {Math.floor(parseFloat(product.price) || 0)}
                         </span>
-                        <span className="text-xl md:text-2xl font-black opacity-90">
-                           .{((parseFloat(product.price) || 0) % 1).toFixed(2).split('.')[1]}
+                         <span className="text-xl md:text-2xl font-black opacity-90">
+                           ,{((parseFloat(product.price) || 0) % 1).toFixed(2).split('.')[1]}
                         </span>
                         <span className="text-xl md:text-2xl font-black ml-0.5 opacity-90">€</span>
                      </div>

@@ -52,7 +52,7 @@ export default function ProductCard({ product }) {
         {/* Precio destacado - Estilo Supermercado */}
         <div className="text-xl font-black text-[#003366] mb-0.5 flex items-baseline gap-0.5">
            <span className="text-xl">{Math.floor(parseFloat(product.price) || 0)}</span>
-           <span className="text-xs opacity-80">.{((parseFloat(product.price) || 0) % 1).toFixed(2).split('.')[1]}</span>
+           <span className="text-xs opacity-80">,{((parseFloat(product.price) || 0) % 1).toFixed(2).split('.')[1]}</span>
            <span className="text-xs opacity-80 ml-0.5">€</span>
         </div>
         

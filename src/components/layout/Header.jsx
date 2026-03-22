@@ -32,7 +32,8 @@ const Header = forwardRef((props, ref) => {
     setCountry,
     setRegion,
     filters,
-    setFilters
+    setFilters,
+    addRecentSearch
   } = useStore();
   
   const [hidden, setHidden] = useState(false);
@@ -204,6 +205,11 @@ const Header = forwardRef((props, ref) => {
                   placeholder="¿Qué necesitas, pana?" 
                   value={filters.searchQuery || ''}
                   onChange={(e) => setFilters({ searchQuery: e.target.value })}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && filters.searchQuery?.trim() !== '') {
+                      addRecentSearch(filters.searchQuery.trim());
+                    }
+                  }}
                   className="w-full h-11 md:h-14 pl-11 pr-4 bg-[#FFCC00] rounded-xl md:rounded-2xl text-sm md:text-lg text-[#1A1A3A] font-bold placeholder:text-[#1A1A3A]/70 shadow-[inset_4px_4px_8px_rgba(204,163,0,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] focus:outline-none focus:ring-2 focus:ring-[#0056B3]/40 transition-all"
                 />
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#1A1A3A]/80 w-5 h-5 md:w-7 md:h-7" />
