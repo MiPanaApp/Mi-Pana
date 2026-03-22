@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, Share2, Heart, ShieldCheck, MessageCircle, AlertCircle, Star, MapPin } from 'lucide-react';
+import { ChevronLeft, ChevronDown, Share2, Heart, ShieldCheck, MessageCircle, AlertCircle, Star, MapPin } from 'lucide-react';
 import { db } from '../lib/firebase';
 import { doc, getDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { useStore } from '../store/useStore';
@@ -30,35 +30,33 @@ export default function ProductDetail() {
    const [loading, setLoading] = useState(true);
    const [error, setError] = useState('');
 
-   // Carousel tracking
-   const carouselRef = useRef(null);
+   // Carousel tracking (móvil y desktop tienen refs separados para no conflictar)
+   const carouselRef = useRef(null);       // móvil
+   const carouselRefDesktop = useRef(null); // desktop
+   const [showAllReviews, setShowAllReviews] = useState(false); // valoraciones expandidas
    const [activeIndex, setActiveIndex] = useState(0);
 
    const isFavorite = (favorites || []).includes(productId);
 
    const timeAgo = useTimeAgo(product?.createdAt);
 
-   // 1. Array simulado para el carrusel para que hayan 6+ fotos (la principal del FS y las demás de relleno)
+   // Construir array de imágenes reales: imagen principal + carrusel de Firestore
    const images = product ? [
       product.image || 'https://images.unsplash.com/photo-1599566150163-29194dcaad36',
-      'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&q=80',
-      'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?w=800&q=80',
-      'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=800&q=80',
-      'https://images.unsplash.com/photo-1580519542036-c47de6196ba5?w=800&q=80',
-      'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=800&q=80',
-   ] : [];
+      ...(Array.isArray(product.carouselImages) ? product.carouselImages : []),
+   ].filter(Boolean) : [];
 
    // --- LÓGICA LIGHTBOX ---
    const [lightboxOpen, setLightboxOpen] = useState(false);
    const [lightboxIndex, setLightboxIndex] = useState(0);
    const [zoomed, setZoomed] = useState(false);
+   const [swipeDir, setSwipeDir] = useState(1); // 1 = siguiente (izq→der), -1 = anterior
 
    // Abrir lightbox en la foto tocada
    const openLightbox = (idx) => {
       setLightboxIndex(idx);
       setLightboxOpen(true);
       setZoomed(false);
-      // Bloquear scroll del body mientras el lightbox está abierto
       document.body.style.overflow = 'hidden';
    };
 
@@ -71,10 +69,14 @@ export default function ProductDetail() {
 
    // Navegar entre fotos dentro del lightbox
    const lightboxNext = () => {
+      if (zoomed) return;
+      setSwipeDir(1);
       setZoomed(false);
       setLightboxIndex(prev => (prev + 1) % images.length);
    };
    const lightboxPrev = () => {
+      if (zoomed) return;
+      setSwipeDir(-1);
       setZoomed(false);
       setLightboxIndex(prev => (prev - 1 + images.length) % images.length);
    };
@@ -160,11 +162,20 @@ export default function ProductDetail() {
       fetchProductAndRelated();
    }, [productId]);
 
-   const handleScroll = () => {
-      if (carouselRef.current) {
-         const scrollPos = carouselRef.current.scrollLeft;
-         const width = carouselRef.current.clientWidth;
+   const handleScroll = (ref) => {
+      const el = ref?.current || carouselRef.current;
+      if (el) {
+         const scrollPos = el.scrollLeft;
+         const width = el.clientWidth;
          setActiveIndex(Math.round(scrollPos / width));
+      }
+   };
+
+   const scrollToIndex = (idx) => {
+      // Intentar con el ref activo (móvil primero, luego desktop)
+      const el = carouselRef.current || carouselRefDesktop.current;
+      if (el) {
+         el.scrollTo({ left: idx * el.clientWidth, behavior: 'smooth' });
       }
    };
 
@@ -197,13 +208,13 @@ export default function ProductDetail() {
 
 
          {/* Capa 10: Contenedor de Contenido (Por encima del fondo) */}
-         <div className="max-w-7xl mx-auto px-5 md:px-8 relative z-10 md:grid md:grid-cols-12 md:gap-8 lg:gap-12 pt-5 md:pt-10 pb-10">
+         <div className="max-w-7xl mx-auto px-3 md:px-8 relative z-10 md:grid md:grid-cols-12 md:gap-8 lg:gap-12 pt-12 md:pt-14 pb-10">
 
             {/* 1. Carrusel de Fotos (6+) - Left Column on Desktop */}
             <div className="relative w-full pb-2 md:col-span-7 lg:col-span-7 self-start flex flex-col items-center">
 
                {/* Navegación superior: Volver (Global) y Controles (Solo Móvil) */}
-               <div className="flex justify-between items-center w-full px-6 md:px-0 mb-3">
+               <div className="flex justify-between items-center w-full px-1 md:px-0 mb-3">
                   <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-[#1A1A3A] hover:opacity-70 transition-all font-bold group">
                      <ChevronLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" />
                      <span className="text-[15px] tracking-wide">Volver</span>
@@ -220,47 +231,77 @@ export default function ProductDetail() {
 
 
                {/* Wrapper exclusivo para Imágenes y Dots */}
+               {/* MÓVIL: sangrado completo (edge-to-edge), sin bordes redondeados en lados */}
+               {/* DESKTOP: con padding y bordes redondeados */}
                <div className="relative w-full md:px-0">
-                  <div
-                     ref={carouselRef}
-                     onScroll={handleScroll}
-                     className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar w-full gap-0"
-                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }} // Hide scrollbar
-                  >
-                     {images.map((img, idx) => (
-                        <div key={idx} className="min-w-full flex-shrink-0 snap-center rounded-[2rem] md:rounded-[2.5rem] overflow-hidden border-[4px] border-white/60 bg-white relative shadow-sm">
-                           <img
-                              src={img}
-                              alt={`${product.name} - foto ${idx + 1}`}
-                              className="w-full h-[320px] md:h-[450px] lg:h-[550px] object-cover cursor-zoom-in active:scale-95 transition-transform duration-150"
-                              onClick={() => openLightbox(idx)}
-                           />
-                           {/* Icono de lupa sutil en esquina — indica que es expandible */}
-                           <div className="absolute bottom-3 right-3 bg-black/30 backdrop-blur-sm rounded-full p-1.5 pointer-events-none">
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                 <circle cx="11" cy="11" r="8" />
-                                 <path d="m21 21-4.35-4.35" />
-                                 <path d="M11 8v6M8 11h6" />
-                              </svg>
+                  {/* Contenedor edge-to-edge en móvil: -mx compensa el px del padre */}
+                  <div className="md:hidden -mx-3">
+                     {/* Borde blanco superior */}
+                     <div className="w-full h-[4px] bg-white/70" />
+                     <div
+                        ref={carouselRef}
+                        onScroll={() => handleScroll(carouselRef)}
+                        className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar w-full gap-0"
+                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                     >
+                        {images.map((img, idx) => (
+                           <div key={idx} className="min-w-full flex-shrink-0 snap-center overflow-hidden bg-white relative">
+                              <img
+                                 src={img}
+                                 alt={`${product.name} - foto ${idx + 1}`}
+                                 className="w-full h-[260px] object-cover cursor-zoom-in active:scale-95 transition-transform duration-150"
+                                 onClick={() => openLightbox(idx)}
+                              />
+                              {/* Icono de lupa sutil en esquina */}
+                              <div className="absolute bottom-3 right-3 bg-black/30 backdrop-blur-sm rounded-full p-1.5 pointer-events-none">
+                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="11" cy="11" r="8" />
+                                    <path d="m21 21-4.35-4.35" />
+                                    <path d="M11 8v6M8 11h6" />
+                                 </svg>
+                              </div>
                            </div>
-                        </div>
-                     ))}
+                        ))}
+                     </div>
+                     {/* Borde blanco inferior */}
+                     <div className="w-full h-[4px] bg-white/70" />
                   </div>
 
-                  {/* Indicador de posición (Dots flotantes Minimalistas) — Reducido al 50% en móvil */}
-                  <div className="absolute bottom-4 md:bottom-8 left-0 w-full flex justify-center z-20 pointer-events-none">
+                   {/* DESKTOP: carrusel con bordes redondeados y estilos normales */}
+                  <div className="hidden md:block">
+                     <div
+                        ref={carouselRefDesktop}
+                        onScroll={() => handleScroll(carouselRefDesktop)}
+                        className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar w-full gap-0"
+                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                     >
+                        {images.map((img, idx) => (
+                           <div key={idx} className="min-w-full flex-shrink-0 snap-center rounded-[2.5rem] overflow-hidden border-[4px] border-white/60 bg-white relative shadow-sm">
+                              <img
+                                 src={img}
+                                 alt={`${product.name} - foto ${idx + 1}`}
+                                 className="w-full h-[450px] lg:h-[550px] object-cover cursor-zoom-in active:scale-95 transition-transform duration-150"
+                                 onClick={() => openLightbox(idx)}
+                              />
+                              <div className="absolute bottom-3 right-3 bg-black/30 backdrop-blur-sm rounded-full p-1.5 pointer-events-none">
+                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="11" cy="11" r="8" />
+                                    <path d="m21 21-4.35-4.35" />
+                                    <path d="M11 8v6M8 11h6" />
+                                 </svg>
+                              </div>
+                           </div>
+                        ))}
+                     </div>
+                  </div>
+
+                  {/* Indicador de posición (Dots flotantes) — aplica a ambos */}
+                  <div className="absolute bottom-7 left-0 w-full flex justify-center z-20 pointer-events-none">
                      <div className="bg-white/80 backdrop-blur-xl px-2 py-1.5 md:px-4 md:py-2.5 rounded-full flex items-center gap-1.5 md:gap-2.5 shadow-[0_4px_12px_rgba(0,0,0,0.15)] border border-white/50 pointer-events-auto">
                         {images.map((_, idx) => (
                            <button
                               key={idx}
-                              onClick={() => {
-                                 if (carouselRef.current) {
-                                    carouselRef.current.scrollTo({
-                                       left: idx * carouselRef.current.clientWidth,
-                                       behavior: 'smooth'
-                                    });
-                                 }
-                              }}
+                              onClick={() => scrollToIndex(idx)}
                               className={`h-1 md:h-2 rounded-full transition-all duration-500 ease-out outline-none ${idx === activeIndex
                                  ? 'bg-[#1A1A3A] w-3 md:w-8'
                                  : 'bg-[#1A1A3A]/20 w-1 md:w-2'
@@ -370,7 +411,7 @@ tlfno contacto: 672 593 950`}
                initial={{ y: 50, opacity: 0 }}
                animate={{ y: 0, opacity: 1 }}
                transition={{ delay: 0.1, duration: 0.6, ease: [0.25, 1, 0.5, 1] }}
-               className="px-5 mt-4 md:mt-0 md:pt-[52px] md:col-span-5 lg:col-span-5 sticky top-28 h-max"
+               className="px-1 mt-4 md:mt-0 md:pt-[52px] md:col-span-5 lg:col-span-5 sticky top-28 h-max"
             >
                {/* Fila superior Desktop: Información del Vendedor + Botones Acción alineados */}
                <div className="flex items-center justify-between mb-4 pl-1">
@@ -413,8 +454,8 @@ tlfno contacto: 672 593 950`}
 
                   {/* Indicador de tiempo dinámico */}
                   {timeAgo && (
-                     <p className="text-[13px] font-bold text-[#1A1A3A]/50 flex items-center gap-1.5">
-                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#1A1A3A]/30 flex-shrink-0" />
+                     <p className="text-[13px] font-medium text-[#0056B3] flex items-center gap-1.5 opacity-80">
+                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#D90429] flex-shrink-0 shadow-[0_0_8px_rgba(217,4,41,0.4)]" />
                         {timeAgo}
                      </p>
                   )}
@@ -496,32 +537,65 @@ tlfno contacto: 672 593 950`}
                      </div>
                   </div>
 
-                  {/* Lista de Comentarios Compacta con Scroll */}
-                  <div className="flex flex-col max-h-[380px] overflow-y-auto pr-2 custom-scrollbar">
-                     {MOCK_REVIEWS.map((rw, index) => (
-                        <div key={rw.id} className="py-4 flex flex-col gap-1.5 transition-all">
-                           <div className="flex justify-between items-start">
-                              <div>
-                                 <span className="font-black text-[#1A1A3A] text-[15px] leading-none mb-1">{rw.user}</span>
-                                 <div className="flex drop-shadow-sm">
-                                    {[...Array(5)].map((_, i) => <Star key={i} className={`w-3 h-3 ${i < rw.rating ? 'fill-[#FFC200] text-[#FFC200]' : 'fill-[#1A1A3A]/10 text-transparent'}`} />)}
+                  {/* Lista de Comentarios — colapsable con fade inferior */}
+                  <div className="relative">
+                     <motion.div
+                        animate={{ maxHeight: showAllReviews ? 2000 : 310 }}
+                        transition={{ duration: 0.5, ease: [0.25, 1, 0.5, 1] }}
+                        className="flex flex-col overflow-hidden"
+                     >
+                        {MOCK_REVIEWS.map((rw, index) => (
+                           <div key={rw.id} className="py-4 flex flex-col gap-1.5 transition-all">
+                              <div className="flex justify-between items-start">
+                                 <div>
+                                    <span className="font-black text-[#1A1A3A] text-[15px] leading-none mb-1">{rw.user}</span>
+                                    <div className="flex drop-shadow-sm">
+                                       {[...Array(5)].map((_, i) => <Star key={i} className={`w-3 h-3 ${i < rw.rating ? 'fill-[#FFC200] text-[#FFC200]' : 'fill-[#1A1A3A]/10 text-transparent'}`} />)}
+                                    </div>
                                  </div>
+                                 <span className="text-[10px] text-[#1A1A3A]/50 font-bold uppercase tracking-wider">{rw.date}</span>
                               </div>
-                              <span className="text-[10px] text-[#1A1A3A]/50 font-bold uppercase tracking-wider">{rw.date}</span>
+                              <p className="text-[14px] text-[#1A1A3A]/80 font-semibold leading-snug pr-4">{rw.text}</p>
+
+                              {/* Línea tricolor divisoria */}
+                              {index < MOCK_REVIEWS.length - 1 && (
+                                 <div className="flex w-full h-[2px] mt-4 opacity-20">
+                                    <div className="flex-1 bg-[#FFCC00]"></div>
+                                    <div className="flex-1 bg-[#003366]"></div>
+                                    <div className="flex-1 bg-[#D90429]"></div>
+                                 </div>
+                              )}
                            </div>
-                           <p className="text-[14px] text-[#1A1A3A]/80 font-semibold leading-snug pr-4">{rw.text}</p>
-                           
-                           {/* Línea tricolor divisoria */}
-                           {index < MOCK_REVIEWS.length - 1 && (
-                              <div className="flex w-full h-[2px] mt-4 opacity-20">
-                                 <div className="flex-1 bg-[#FFCC00]"></div>
-                                 <div className="flex-1 bg-[#003366]"></div>
-                                 <div className="flex-1 bg-[#D90429]"></div>
-                              </div>
-                           )}
-                        </div>
-                     ))}
+                        ))}
+                     </motion.div>
+
+                     {/* Gradiente fade inferior — visible solo cuando está colapsado */}
+                     <AnimatePresence>
+                        {!showAllReviews && (
+                           <motion.div
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none"
+                              style={{
+                                 background: 'linear-gradient(to bottom, transparent, #E0E5EC)'
+                              }}
+                           />
+                        )}
+                     </AnimatePresence>
                   </div>
+
+                  {/* Botón expandir / colapsar */}
+                  <motion.button
+                     whileTap={{ scale: 0.97 }}
+                     onClick={() => setShowAllReviews(v => !v)}
+                     className="w-full mt-3 py-3 flex items-center justify-center gap-2 bg-[#E0E5EC] rounded-2xl shadow-[4px_4px_8px_rgba(163,177,198,0.6),-4px_-4px_8px_rgba(255,255,255,0.8)] text-[#1A1A3A] font-bold text-sm tracking-wide transition-all active:shadow-[inset_3px_3px_6px_rgba(163,177,198,0.6),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]"
+                  >
+                     <motion.span animate={{ rotate: showAllReviews ? 180 : 0 }} transition={{ duration: 0.3 }}>
+                        <ChevronDown className="w-4 h-4" />
+                     </motion.span>
+                     {showAllReviews ? 'Ocultar valoraciones' : `Ver las ${MOCK_REVIEWS.length} valoraciones`}
+                  </motion.button>
                </div>
 
                {/* Botones de Acción integrados al final del flujo del contenido */}
@@ -563,70 +637,117 @@ tlfno contacto: 672 593 950`}
 
 
 
-         {/* --- LIGHTBOX PANTALLA COMPLETA --- */}
+         {/* --- LIGHTBOX PANTALLA COMPLETA CON SWIPE --- */}
          <AnimatePresence>
             {lightboxOpen && (
                <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4 md:p-10 select-none"
+                  className="fixed inset-0 z-[100] bg-black flex flex-col select-none"
                >
-                  {/* Botón Cerrar */}
-                  <button
-                     onClick={closeLightbox}
-                     className="absolute top-6 right-6 z-[110] bg-white/10 hover:bg-white/20 p-3 rounded-full text-white transition-all active:scale-90"
-                  >
-                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                     </svg>
-                  </button>
+                  {/* Header: Contador + Botón cerrar */}
+                  <div className="flex items-center justify-between px-5 pt-12 pb-3 z-[110] flex-shrink-0">
+                     <span className="text-white/60 text-sm font-black tracking-widest uppercase">
+                        {lightboxIndex + 1} / {images.length}
+                     </span>
+                     <button
+                        onClick={closeLightbox}
+                        className="bg-white/10 hover:bg-white/20 p-3 rounded-full text-white transition-all active:scale-90"
+                     >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                           <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                     </button>
+                  </div>
 
-                  {/* Foto actual con Zoom y Pan */}
-                  <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
-                     <motion.img
-                        key={lightboxIndex}
-                        initial={{ opacity: 0, scale: 0.9, x: 20 }}
-                        animate={{
-                           opacity: 1,
-                           scale: zoomed ? 2 : 1,
-                           x: 0,
-                        }}
-                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                        src={images[lightboxIndex]}
-                        alt={product.name}
-                        className={`max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl transition-all duration-300 ${zoomed ? 'cursor-zoom-out' : 'cursor-zoom-in'}`}
-                        onClick={() => setZoomed(!zoomed)}
-                        drag={zoomed}
-                        dragConstraints={{ left: -300, right: 300, top: -300, bottom: 300 }}
-                     />
+                  {/* Zona central: imagen con swipe */}
+                  <div className="flex-1 relative overflow-hidden flex items-center justify-center">
+                     <AnimatePresence mode="popLayout" custom={swipeDir}>
+                        <motion.div
+                           key={lightboxIndex}
+                           custom={swipeDir}
+                           initial={{ x: swipeDir * 400, opacity: 0 }}
+                           animate={{ x: 0, opacity: 1 }}
+                           exit={{ x: swipeDir * -400, opacity: 0 }}
+                           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                           drag={images.length > 1 && !zoomed ? 'x' : false}
+                           dragConstraints={{ left: 0, right: 0 }}
+                           dragElastic={0.2}
+                           onDragEnd={(e, info) => {
+                              if (Math.abs(info.offset.x) > 50 || Math.abs(info.velocity.x) > 300) {
+                                 if (info.offset.x < 0 || info.velocity.x < -200) lightboxNext();
+                                 else lightboxPrev();
+                              }
+                           }}
+                           className="absolute inset-0 flex items-center justify-center p-4 cursor-grab active:cursor-grabbing"
+                        >
+                           <motion.img
+                              src={images[lightboxIndex]}
+                              alt={`${product.name} foto ${lightboxIndex + 1}`}
+                              animate={{ scale: zoomed ? 2.2 : 1 }}
+                              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                              drag={zoomed ? true : false}
+                              dragConstraints={{ left: -400, right: 400, top: -400, bottom: 400 }}
+                              className={`max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl touch-none ${zoomed ? 'cursor-zoom-out' : 'cursor-zoom-in'}`}
+                              onClick={() => setZoomed(z => !z)}
+                           />
+                        </motion.div>
+                     </AnimatePresence>
 
-                     {/* Controles de Navegación (Solo si no hay zoom) */}
-                     {!zoomed && (
+                     {/* Zonas tap laterales (solo móvil, cuando no hay zoom) */}
+                     {!zoomed && images.length > 1 && (
                         <>
+                           {/* Zona izquierda */}
                            <button
                               onClick={(e) => { e.stopPropagation(); lightboxPrev(); }}
-                              className="absolute left-0 top-1/2 -translate-y-1/2 p-4 md:p-8 text-white/40 hover:text-white transition-all active:scale-90 hidden md:block"
+                              className="absolute left-0 top-0 h-full w-[20%] z-20 flex items-center justify-start pl-3 md:pl-6 group"
+                              style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.25), transparent)' }}
                            >
-                              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+                              <div className="opacity-0 group-active:opacity-100 md:opacity-100 transition-opacity bg-white/10 rounded-full p-2">
+                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+                              </div>
                            </button>
+                           {/* Zona derecha */}
                            <button
                               onClick={(e) => { e.stopPropagation(); lightboxNext(); }}
-                              className="absolute right-0 top-1/2 -translate-y-1/2 p-4 md:p-8 text-white/40 hover:text-white transition-all active:scale-90 hidden md:block"
+                              className="absolute right-0 top-0 h-full w-[20%] z-20 flex items-center justify-end pr-3 md:pr-6 group"
+                              style={{ background: 'linear-gradient(to left, rgba(0,0,0,0.25), transparent)' }}
                            >
-                              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
+                              <div className="opacity-0 group-active:opacity-100 md:opacity-100 transition-opacity bg-white/10 rounded-full p-2">
+                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
+                              </div>
                            </button>
                         </>
                      )}
                   </div>
 
-                  {/* Footer del Lightbox: Contador y Gesture Help */}
-                  <div className="absolute bottom-8 left-0 w-full flex flex-col items-center gap-2">
-                     <span className="text-white/60 text-sm font-black tracking-widest uppercase">
-                        Foto {lightboxIndex + 1} de {images.length}
-                     </span>
-                     <p className="text-white/30 text-[10px] uppercase font-bold tracking-widest hidden md:block">
+                  {/* Footer: Dots indicadores + hint */}
+                  <div className="flex-shrink-0 flex flex-col items-center gap-3 pb-10 pt-4">
+                     {images.length > 1 && (
+                        <div className="flex items-center gap-2">
+                           {images.map((_, idx) => (
+                              <button
+                                 key={idx}
+                                 onClick={() => {
+                                    setSwipeDir(idx > lightboxIndex ? 1 : -1);
+                                    setLightboxIndex(idx);
+                                    setZoomed(false);
+                                 }}
+                                 className={`rounded-full transition-all duration-300 ${
+                                    idx === lightboxIndex
+                                       ? 'bg-white w-5 h-2'
+                                       : 'bg-white/30 w-2 h-2'
+                                 }`}
+                              />
+                           ))}
+                        </div>
+                     )}
+                     <p className="text-white/30 text-[10px] uppercase font-bold tracking-widest md:block hidden">
                         Esc para cerrar • Flechas para navegar • Click para zoom
+                     </p>
+                     <p className="text-white/20 text-[10px] font-bold tracking-widest md:hidden">
+                        Desliza para ver más fotos
                      </p>
                   </div>
                </motion.div>

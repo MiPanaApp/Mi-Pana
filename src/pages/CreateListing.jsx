@@ -319,8 +319,8 @@ export default function CreateListing() {
             <div
               onClick={handleMainClick}
               className={`relative overflow-hidden w-full h-56 bg-[#E0E5EC] rounded-[2rem] flex flex-col items-center justify-center cursor-pointer transition-all border-4 border-[#E0E5EC] ${imagePreview
-                  ? 'shadow-[6px_6px_12px_rgba(163,177,198,0.7),-6px_-6px_12px_rgba(255,255,255,0.9)]'
-                  : 'shadow-[inset_8px_8px_16px_rgba(163,177,198,0.6),inset_-8px_-8px_16px_rgba(255,255,255,0.8)]'
+                ? 'shadow-[6px_6px_12px_rgba(163,177,198,0.7),-6px_-6px_12px_rgba(255,255,255,0.9)]'
+                : 'shadow-[inset_8px_8px_16px_rgba(163,177,198,0.6),inset_-8px_-8px_16px_rgba(255,255,255,0.8)]'
                 }`}
             >
               <input
@@ -464,8 +464,8 @@ export default function CreateListing() {
                 <div
                   onClick={() => !loading && setIsDropdownOpen(!isDropdownOpen)}
                   className={`w-full h-14 px-5 flex items-center justify-between bg-[#E0E5EC] rounded-2xl cursor-pointer transition-all ${isDropdownOpen
-                      ? 'shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)]'
-                      : 'shadow-[6px_6px_12px_rgba(163,177,198,0.7),-6px_-6px_12px_rgba(255,255,255,0.9)]'
+                    ? 'shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)]'
+                    : 'shadow-[6px_6px_12px_rgba(163,177,198,0.7),-6px_-6px_12px_rgba(255,255,255,0.9)]'
                     }`}
                 >
                   <div className="flex items-center gap-3">
@@ -506,8 +506,8 @@ export default function CreateListing() {
                                   setIsDropdownOpen(false);
                                 }}
                                 className={`w-full px-4 py-3 rounded-xl text-left font-bold text-sm transition-all flex items-center justify-between group ${isSelected
-                                    ? 'bg-[#1A1A3A] text-white shadow-lg'
-                                    : 'text-[#1A1A3A]/70 hover:bg-white/50'
+                                  ? 'bg-[#1A1A3A] text-white shadow-lg'
+                                  : 'text-[#1A1A3A]/70 hover:bg-white/50'
                                   }`}
                               >
                                 <div className="flex items-center gap-3">
@@ -586,8 +586,8 @@ export default function CreateListing() {
                               setIsPrefixOpen(false);
                             }}
                             className={`flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-all ${selectedPrefix.name === item.name
-                                ? 'bg-[#1A1A3A] text-white'
-                                : 'text-[#1A1A3A]/70 hover:bg-white/80'
+                              ? 'bg-[#1A1A3A] text-white'
+                              : 'text-[#1A1A3A]/70 hover:bg-white/80'
                               }`}
                           >
                             <span className="text-xl">{item.flag}</span>
