@@ -43,6 +43,11 @@ export default function CreateListing() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
 
+  // Asegurar que abrimos al principio de la página
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // Fetch categories from Firestore
   useEffect(() => {
     let isMounted = true;
