@@ -432,9 +432,9 @@ export default function CreateListing() {
           <div className="flex flex-col gap-2">
             <div className="flex justify-between items-center ml-2">
               <span className="text-sm font-bold text-[#1A1A3A]/70">Descripción del Anuncio *</span>
-              <span className={`text-[10px] font-bold tracking-tight ${form.description.length >= 480 ? 'text-red-500' : 'text-[#1A1A3A]/40'}`}>
-                {500 - form.description.length} caracteres
-              </span>
+               <span className={`text-[10px] font-bold tracking-tight ${form.description.length >= 480 ? 'text-red-500' : 'text-[#1A1A3A]/40'}`}>
+                {form.description.length} / 500 caracteres
+               </span>
             </div>
             <textarea
               required

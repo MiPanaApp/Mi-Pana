@@ -333,6 +333,17 @@ Preguntar sin compromiso.
 
 tlfno contacto: 672 593 950`}
                   </p>
+
+                  {/* Keywords / Etiquetas (Desktop) */}
+                  {product.keywords && product.keywords.length > 0 && (
+                     <div className="flex flex-wrap gap-3 mt-8">
+                        {product.keywords.map((kw, i) => (
+                           <span key={i} className="px-5 py-2 rounded-xl bg-white/40 text-[#1A1A3A]/50 text-sm font-black border border-white/60 shadow-sm transition-all hover:scale-105">
+                              #{kw}
+                           </span>
+                        ))}
+                     </div>
+                  )}
                </div>
 
                {/* Valoraciones de la Comunidad — SOLO TABLET/ESCRITORIO (Columna izquierda) */}
@@ -500,6 +511,17 @@ Preguntar sin compromiso.
 
 tlfno contacto: 672 593 950`}
                   </p>
+
+                  {/* Keywords / Etiquetas (Mobile) */}
+                  {product.keywords && product.keywords.length > 0 && (
+                     <div className="flex flex-wrap gap-2 mt-6">
+                        {product.keywords.map((kw, i) => (
+                           <span key={i} className="px-3 py-1.5 rounded-full bg-white/50 text-[#1A1A3A]/60 text-[11px] font-bold border border-white/40 shadow-sm">
+                              #{kw}
+                           </span>
+                        ))}
+                     </div>
+                  )}
                </div>
 
                {/* 3. Estadísticas de Reseñas — Solo visible en móvil */}
