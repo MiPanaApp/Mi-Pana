@@ -32,7 +32,7 @@ export default function Home() {
             verified: filters.onlyVerified || null,
           });
           // Mezclar resultados de Algolia con mocks filtrados localmente
-          const mocks = MOCK_PRODUCTS.map(p => ({ ...p, categoryId: p.category }));
+          const mocks = MOCK_PRODUCTS;
           const q = filters.searchQuery.toLowerCase();
           const filteredMocks = mocks.filter(p =>
             p.name?.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q)
@@ -40,7 +40,7 @@ export default function Home() {
           setProducts([...result.hits, ...filteredMocks]);
         } catch (err) {
           console.error("Error Algolia:", err);
-          const mocks = MOCK_PRODUCTS.map(p => ({ ...p, categoryId: p.category }));
+          const mocks = MOCK_PRODUCTS;
           setProducts(mocks);
         }
       } else {
@@ -49,11 +49,11 @@ export default function Home() {
           setUsingAlgolia(false);
           const snap = await getDocs(collection(db, 'products'));
           const firestoreData = snap.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-          const mocks = MOCK_PRODUCTS.map(p => ({ ...p, categoryId: p.category }));
+          const mocks = MOCK_PRODUCTS;
           setProducts([...firestoreData, ...mocks]);
         } catch (err) {
           console.error("Error Firestore:", err);
-          const mocks = MOCK_PRODUCTS.map(p => ({ ...p, categoryId: p.category }));
+          const mocks = MOCK_PRODUCTS;
           setProducts(mocks);
         }
       }
@@ -75,7 +75,7 @@ export default function Home() {
     let result = [...products];
 
     if (!usingAlgolia) {
-      if (activeCategory) result = result.filter(p => p.categoryId === activeCategory || !p.categoryId);
+      if (activeCategory) result = result.filter(p => p.category === activeCategory);
       if (filters.onlyVerified) result = result.filter(p => p.verified);
       if (filters.searchQuery) {
         const q = filters.searchQuery.toLowerCase();

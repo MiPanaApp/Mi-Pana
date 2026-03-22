@@ -9,7 +9,7 @@ export const MOCK_PRODUCTS = [
     premium: true,
     verified: true,
     whatsapp: "34600000000",
-    category: 5, // Servicios
+    category: "Servicios", // Servicios
   },
   {
     id: 102,
@@ -21,7 +21,7 @@ export const MOCK_PRODUCTS = [
     premium: false,
     verified: true,
     whatsapp: "34600000000",
-    category: 1, // Comida
+    category: "Comida", // Comida
   },
   {
     id: 103,
@@ -33,7 +33,7 @@ export const MOCK_PRODUCTS = [
     premium: true,
     verified: true,
     whatsapp: "34600000000",
-    category: 7, // Legal
+    category: "Legal", // Legal
   },
   {
     id: 104,
@@ -45,7 +45,7 @@ export const MOCK_PRODUCTS = [
     premium: false,
     verified: false,
     whatsapp: "34600000000",
-    category: 2, // Envíos
+    category: "Envíos", // Envíos
   },
   {
     id: 105,
@@ -57,7 +57,7 @@ export const MOCK_PRODUCTS = [
     premium: true,
     verified: true,
     whatsapp: "34600000000",
-    category: 1, // Comida
+    category: "Comida", // Comida
   },
   {
     id: 106,
@@ -69,7 +69,7 @@ export const MOCK_PRODUCTS = [
     premium: false,
     verified: true,
     whatsapp: "34600000000",
-    category: 5, // Servicios (Finanzas)
+    category: "Servicios", // Servicios (Finanzas)
   },
   {
     id: 107,
@@ -81,7 +81,7 @@ export const MOCK_PRODUCTS = [
     premium: true,
     verified: true,
     whatsapp: "34600000000",
-    category: 3, // Belleza
+    category: "Belleza", // Belleza
   },
   {
     id: 108,
@@ -93,7 +93,7 @@ export const MOCK_PRODUCTS = [
     premium: false,
     verified: true,
     whatsapp: "34600000000",
-    category: 1, // Comida
+    category: "Comida", // Comida
   },
   {
     id: 109,
@@ -105,7 +105,7 @@ export const MOCK_PRODUCTS = [
     premium: false,
     verified: false,
     whatsapp: "34600000000",
-    category: 5, // Servicios
+    category: "Servicios", // Servicios
   },
   {
     id: 110,
@@ -117,7 +117,7 @@ export const MOCK_PRODUCTS = [
     premium: true,
     verified: true,
     whatsapp: "34600000000",
-    category: 5, // Servicios
+    category: "Servicios", // Servicios
   },
   {
     id: 111,
@@ -129,7 +129,7 @@ export const MOCK_PRODUCTS = [
     premium: false,
     verified: true,
     whatsapp: "34600000000",
-    category: 1, // Comida
+    category: "Comida", // Comida
   },
   {
     id: 112,
@@ -141,6 +141,6 @@ export const MOCK_PRODUCTS = [
     premium: false,
     verified: true,
     whatsapp: "34600000000",
-    category: 5, // Servicios
+    category: "Servicios", // Servicios
   }
 ];

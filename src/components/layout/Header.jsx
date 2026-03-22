@@ -10,14 +10,14 @@ import { db } from '../../services/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
 const CATEGORIES = [
-  { id: 1, name: "Comida", icon: FiCoffee },
-  { id: 2, name: "Envíos", icon: FiPackage },
-  { id: 3, name: "Belleza", icon: FiSmile },
-  { id: 4, name: "Tecn", icon: FiMonitor },
-  { id: 5, name: "Servicios", icon: FiTool },
-  { id: 6, name: "Ropa", icon: FiShoppingBag },
-  { id: 7, name: "Legal", icon: FiBriefcase },
-  { id: 8, name: "Salud", icon: FiHeart },
+  { id: "Comida", name: "Comida", icon: FiCoffee },
+  { id: "Envíos", name: "Envíos", icon: FiPackage },
+  { id: "Belleza", name: "Belleza", icon: FiSmile },
+  { id: "Tecnología", name: "Tecn", icon: FiMonitor },
+  { id: "Servicios", name: "Servicios", icon: FiTool },
+  { id: "Ropa", name: "Ropa", icon: FiShoppingBag },
+  { id: "Legal", name: "Legal", icon: FiBriefcase },
+  { id: "Salud", name: "Salud", icon: FiHeart },
 ];
 
 const Header = forwardRef((props, ref) => {
