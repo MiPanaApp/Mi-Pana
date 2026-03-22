@@ -29,8 +29,8 @@ export default function CreateListing() {
   const { user } = useAuthStore();
   const mainInputRef = useRef(null);
   const carouselInputRef = useRef(null);
-  
-  const [form, setForm] = useState({ title: '', category: '', price: '', whatsapp: '', description: '' });
+
+  const [form, setForm] = useState({ title: '', category: '', price: '', whatsapp: '', description: '', keywords: '' });
   const [categories, setCategories] = useState([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedPrefix, setSelectedPrefix] = useState(COUNTRY_CODES[0]);
@@ -50,7 +50,7 @@ export default function CreateListing() {
       try {
         const q = query(collection(db, 'categories'), orderBy('name', 'asc'));
         const querySnapshot = await getDocs(q);
-        
+
         if (!isMounted) return;
 
         let cats = querySnapshot.docs.map(doc => ({
@@ -62,10 +62,10 @@ export default function CreateListing() {
         const uniqueCats = [];
         const seenNames = new Set();
         cats.forEach(c => {
-           if (!seenNames.has(c.name)) {
-              seenNames.add(c.name);
-              uniqueCats.push(c);
-           }
+          if (!seenNames.has(c.name)) {
+            seenNames.add(c.name);
+            uniqueCats.push(c);
+          }
         });
         cats = uniqueCats;
 
@@ -73,22 +73,22 @@ export default function CreateListing() {
         if (cats.length === 0) {
           const defaultCats = ['Servicios', 'Comida', 'Envíos', 'Belleza', 'Transporte', 'Venta Garaje'];
           const newCats = [];
-          
+
           for (const name of defaultCats) {
-             // Verificamos por si otra instancia ya la creó
-             const checkQ = query(collection(db, 'categories'), where('name', '==', name));
-             const checkSnap = await getDocs(checkQ);
-             if (checkSnap.empty) {
-                const docRef = await addDoc(collection(db, 'categories'), { name });
-                newCats.push({ id: docRef.id, name });
-             }
+            // Verificamos por si otra instancia ya la creó
+            const checkQ = query(collection(db, 'categories'), where('name', '==', name));
+            const checkSnap = await getDocs(checkQ);
+            if (checkSnap.empty) {
+              const docRef = await addDoc(collection(db, 'categories'), { name });
+              newCats.push({ id: docRef.id, name });
+            }
           }
           if (newCats.length > 0) cats = newCats;
         }
 
         setCategories(cats);
         if (cats.length > 0) {
-           setForm(prev => ({ ...prev, category: cats[0].name }));
+          setForm(prev => ({ ...prev, category: cats[0].name }));
         }
       } catch (err) {
         console.error("Error fetching categories:", err);
@@ -135,12 +135,12 @@ export default function CreateListing() {
       'Venta Garaje': FiGift,
       'Otros': Tag
     };
-    
+
     // Colores de la marca: Azul, Amarillo, Rojo
     const colors = ['#0056B3', '#FFB400', '#D90429'];
     const color = colors[index % 3];
     const Icon = iconMap[name] || Tag;
-    
+
     return { Icon, color };
   };
 
@@ -165,7 +165,7 @@ export default function CreateListing() {
   const handleCarouselChange = (e) => {
     const files = Array.from(e.target.files);
     const totalCount = carouselFiles.length + files.length;
-    
+
     if (totalCount > 10) {
       setError('Puedes subir hasta un máximo de 10 fotos adicionales.');
       return;
@@ -209,7 +209,7 @@ export default function CreateListing() {
       setError('Sube al menos la foto principal para tu anuncio.');
       return;
     }
-    
+
     setLoading(true);
     setError('');
 
@@ -239,6 +239,7 @@ export default function CreateListing() {
         category: form.category,
         whatsapp: `${selectedPrefix.code}${form.whatsapp.replace(/\s+/g, '')}`,
         description: form.description,
+        keywords: form.keywords.split(',').map(k => k.trim()).filter(Boolean),
         image: mainImageURL,
         carouselImages: carouselURLs, // Array de URLs
         userId: user?.uid || 'test-user-id',
@@ -269,9 +270,9 @@ export default function CreateListing() {
     return (
       <div className="min-h-screen bg-[#E0E5EC] flex flex-col items-center justify-center px-6 pb-24 text-center">
         <motion.div
-           initial={{ scale: 0.5, opacity: 0 }}
-           animate={{ scale: 1, opacity: 1 }}
-           className="p-8 bg-[#E0E5EC] rounded-full shadow-[inset_9px_9px_18px_rgba(163,177,198,0.7),inset_-9px_-9px_18px_rgba(255,255,255,0.9)] mb-6 text-[#4CAF50]"
+          initial={{ scale: 0.5, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="p-8 bg-[#E0E5EC] rounded-full shadow-[inset_9px_9px_18px_rgba(163,177,198,0.7),inset_-9px_-9px_18px_rgba(255,255,255,0.9)] mb-6 text-[#4CAF50]"
         >
           <CheckCircle2 size={64} strokeWidth={2.5} />
         </motion.div>
@@ -285,8 +286,8 @@ export default function CreateListing() {
     <div className="bg-[#E0E5EC] min-h-screen pb-32">
       {/* Header Sticky */}
       <div className="sticky top-0 z-50 bg-[#E0E5EC]/80 backdrop-blur-xl px-4 py-4 flex items-center shadow-sm">
-        <button 
-          onClick={() => navigate(-1)} 
+        <button
+          onClick={() => navigate(-1)}
           className="p-2 bg-[#E0E5EC] rounded-xl shadow-[4px_4px_8px_rgba(163,177,198,0.6),-4px_-4px_8px_rgba(255,255,255,0.8)] active:shadow-[inset_3px_3px_6px_rgba(163,177,198,0.6),inset_-3px_-3px_6px_rgba(255,255,255,0.8)] transition-all"
         >
           <ChevronLeft className="w-6 h-6 text-[#1A1A3A]" />
@@ -295,7 +296,7 @@ export default function CreateListing() {
       </div>
 
       <div className="max-w-md mx-auto px-5 mt-6">
-        
+
         {/* Error Message */}
         <AnimatePresence>
           {error && (
@@ -311,31 +312,30 @@ export default function CreateListing() {
         </AnimatePresence>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-          
+
           {/* UPLOAD IMAGEN PRINCIPAL */}
           <div className="flex flex-col gap-2">
             <span className="text-sm font-bold text-[#1A1A3A]/70 ml-2">Foto Principal *</span>
-            <div 
+            <div
               onClick={handleMainClick}
-              className={`relative overflow-hidden w-full h-56 bg-[#E0E5EC] rounded-[2rem] flex flex-col items-center justify-center cursor-pointer transition-all border-4 border-[#E0E5EC] ${
-                imagePreview 
+              className={`relative overflow-hidden w-full h-56 bg-[#E0E5EC] rounded-[2rem] flex flex-col items-center justify-center cursor-pointer transition-all border-4 border-[#E0E5EC] ${imagePreview
                   ? 'shadow-[6px_6px_12px_rgba(163,177,198,0.7),-6px_-6px_12px_rgba(255,255,255,0.9)]'
                   : 'shadow-[inset_8px_8px_16px_rgba(163,177,198,0.6),inset_-8px_-8px_16px_rgba(255,255,255,0.8)]'
-              }`}
+                }`}
             >
-              <input 
-                type="file" 
-                ref={mainInputRef} 
-                accept="image/*" 
-                className="hidden" 
-                onChange={handleMainChange} 
+              <input
+                type="file"
+                ref={mainInputRef}
+                accept="image/*"
+                className="hidden"
+                onChange={handleMainChange}
                 disabled={loading}
               />
-              
+
               {imagePreview ? (
                 <>
                   <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                  <button 
+                  <button
                     type="button"
                     onClick={removeMainImage}
                     className="absolute top-3 right-3 p-2 bg-red-500/80 backdrop-blur-md rounded-full text-white shadow-lg z-10"
@@ -354,56 +354,56 @@ export default function CreateListing() {
 
           {/* FOTOS DEL CARRUSEL (Máx 10) */}
           <div className="flex flex-col gap-3">
-             <div className="flex justify-between items-center ml-2">
-                <span className="text-sm font-bold text-[#1A1A3A]/70">Fotos del Carrusel (Max 10)</span>
-                <span className="text-[10px] font-black text-[#1A1A3A]/40 uppercase tracking-widest">{carouselFiles.length} / 10</span>
-             </div>
-             
-             <div className="grid grid-cols-4 gap-3">
-                {/* Previews del carrusel */}
-                <AnimatePresence>
-                   {carouselPreviews.map((preview, index) => (
-                      <motion.div 
-                         key={preview}
-                         initial={{ opacity: 0, scale: 0.8 }}
-                         animate={{ opacity: 1, scale: 1 }}
-                         exit={{ opacity: 0, scale: 0.8 }}
-                         layout
-                         className="relative aspect-square rounded-2xl overflow-hidden bg-[#E0E5EC] shadow-[4px_4px_8px_rgba(163,177,198,0.6),-4px_-4px_8px_rgba(255,255,255,0.8)] group"
-                      >
-                         <img src={preview} alt={`Carousel ${index}`} className="w-full h-full object-cover" />
-                         <button 
-                            type="button"
-                            onClick={() => removeCarouselItem(index)}
-                            className="absolute top-1 right-1 p-1.5 bg-red-500/90 rounded-full text-white shadow-md z-10 md:opacity-0 group-hover:opacity-100 transition-opacity"
-                         >
-                            <X size={12} strokeWidth={3} />
-                         </button>
-                      </motion.div>
-                   ))}
-                </AnimatePresence>
+            <div className="flex justify-between items-center ml-2">
+              <span className="text-sm font-bold text-[#1A1A3A]/70">Fotos del Carrusel (Max 10)</span>
+              <span className="text-[10px] font-black text-[#1A1A3A]/40 uppercase tracking-widest">{carouselFiles.length} / 10</span>
+            </div>
 
-                {/* Botón para añadir más (Solo si < 10) */}
-                {carouselFiles.length < 10 && (
-                   <motion.div 
-                      whileTap={{ scale: 0.95 }}
-                      onClick={handleCarouselClick}
-                      className="aspect-square rounded-2xl bg-[#E0E5EC] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] flex items-center justify-center cursor-pointer text-[#1A1A3A]/30 hover:text-[#1A1A3A]/50 transition-colors"
-                   >
-                      <ImagePlus size={24} />
-                      <input 
-                         type="file" 
-                         ref={carouselInputRef} 
-                         accept="image/*" 
-                         multiple 
-                         className="hidden" 
-                         onChange={handleCarouselChange} 
-                         disabled={loading}
-                      />
-                   </motion.div>
-                )}
-             </div>
-             <p className="text-[10px] text-[#1A1A3A]/40 font-bold ml-2 italic">* Se recomienda formato cuadrado (1:1) para el carrusel.</p>
+            <div className="grid grid-cols-4 gap-3">
+              {/* Previews del carrusel */}
+              <AnimatePresence>
+                {carouselPreviews.map((preview, index) => (
+                  <motion.div
+                    key={preview}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    layout
+                    className="relative aspect-square rounded-2xl overflow-hidden bg-[#E0E5EC] shadow-[4px_4px_8px_rgba(163,177,198,0.6),-4px_-4px_8px_rgba(255,255,255,0.8)] group"
+                  >
+                    <img src={preview} alt={`Carousel ${index}`} className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removeCarouselItem(index)}
+                      className="absolute top-1 right-1 p-1.5 bg-red-500/90 rounded-full text-white shadow-md z-10 md:opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X size={12} strokeWidth={3} />
+                    </button>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+
+              {/* Botón para añadir más (Solo si < 10) */}
+              {carouselFiles.length < 10 && (
+                <motion.div
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleCarouselClick}
+                  className="aspect-square rounded-2xl bg-[#E0E5EC] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] flex items-center justify-center cursor-pointer text-[#1A1A3A]/30 hover:text-[#1A1A3A]/50 transition-colors"
+                >
+                  <ImagePlus size={24} />
+                  <input
+                    type="file"
+                    ref={carouselInputRef}
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={handleCarouselChange}
+                    disabled={loading}
+                  />
+                </motion.div>
+              )}
+            </div>
+            <p className="text-[10px] text-[#1A1A3A]/40 font-bold ml-2 italic">* Se recomienda formato cuadrado (1:1) para el carrusel.</p>
           </div>
 
           <div className="h-px w-full bg-gradient-to-r from-transparent via-[#a3b1c6]/30 to-transparent my-2" />
@@ -417,7 +417,7 @@ export default function CreateListing() {
               maxLength={45}
               disabled={loading}
               value={form.title}
-              onChange={(e) => setForm({...form, title: e.target.value})}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
               placeholder="Ej: Tequeños caseros 50 uds"
               className="w-full h-14 px-5 bg-[#E0E5EC] rounded-2xl shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] text-[#1A1A3A] font-semibold placeholder:text-gray-400/70 text-base focus:outline-none focus:ring-2 focus:ring-[#1A1A3A]/10 transition-all"
             />
@@ -426,50 +426,61 @@ export default function CreateListing() {
           {/* DESCRIPCION (Movida debajo del título) */}
           <div className="flex flex-col gap-2">
             <div className="flex justify-between items-center ml-2">
-               <span className="text-sm font-bold text-[#1A1A3A]/70">Descripción del Anuncio *</span>
-               <span className={`text-[10px] font-bold tracking-tight ${form.description.length >= 480 ? 'text-red-500' : 'text-[#1A1A3A]/40'}`}>
-                  {500 - form.description.length} caracteres
-               </span>
+              <span className="text-sm font-bold text-[#1A1A3A]/70">Descripción del Anuncio *</span>
+              <span className={`text-[10px] font-bold tracking-tight ${form.description.length >= 480 ? 'text-red-500' : 'text-[#1A1A3A]/40'}`}>
+                {500 - form.description.length} caracteres
+              </span>
             </div>
             <textarea
               required
               maxLength={500}
               disabled={loading}
               value={form.description}
-              onChange={(e) => setForm({...form, description: e.target.value})}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
               placeholder="Detalles sobre lo que ofreces, ubicación, envíos, garantias, etc..."
               className="w-full h-40 p-5 bg-[#E0E5EC] rounded-2xl shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] text-[#1A1A3A] font-semibold placeholder:text-gray-400/70 text-sm focus:outline-none focus:ring-2 focus:ring-[#1A1A3A]/10 transition-all resize-none"
             />
           </div>
-
+          {/* KEYWORDS */}
+          <div className="flex flex-col gap-2">
+            <span className="text-sm font-bold text-[#1A1A3A]/70 ml-2">Palabras Clave (opcional)</span>
+            <input
+              type="text"
+              disabled={loading}
+              value={form.keywords}
+              onChange={(e) => setForm({ ...form, keywords: e.target.value })}
+              placeholder="Ej: venezolano, snack, fiesta, casero"
+              className="w-full h-14 px-5 bg-[#E0E5EC] rounded-2xl shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] text-[#1A1A3A] font-semibold placeholder:text-gray-400/70 text-base focus:outline-none focus:ring-2 focus:ring-[#1A1A3A]/10 transition-all"
+            />
+            <p className="text-[10px] text-[#1A1A3A]/40 font-bold ml-2 italic">* Separa las palabras con comas para mejorar la búsqueda.</p>
+          </div>
           {/* CATEGORIA y PRECIO (Grilla de 2 columnas) */}
           <div className="flex gap-4">
             <div className="flex-col gap-2 flex-1 flex relative">
               <span className="text-sm font-bold text-[#1A1A3A]/70 ml-2">Categoría *</span>
-              
+
               {/* Custom Dropdown */}
               <div className="relative">
-                <div 
+                <div
                   onClick={() => !loading && setIsDropdownOpen(!isDropdownOpen)}
-                  className={`w-full h-14 px-5 flex items-center justify-between bg-[#E0E5EC] rounded-2xl cursor-pointer transition-all ${
-                    isDropdownOpen 
+                  className={`w-full h-14 px-5 flex items-center justify-between bg-[#E0E5EC] rounded-2xl cursor-pointer transition-all ${isDropdownOpen
                       ? 'shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)]'
                       : 'shadow-[6px_6px_12px_rgba(163,177,198,0.7),-6px_-6px_12px_rgba(255,255,255,0.9)]'
-                  }`}
+                    }`}
                 >
-                   <div className="flex items-center gap-3">
-                      {form.category && (
-                         <selectedStyle.Icon 
-                            size={18} 
-                            style={{ color: selectedStyle.color }} 
-                            className="flex-shrink-0"
-                         />
-                      )}
-                      <span className="text-[#1A1A3A] font-semibold text-base">
-                         {form.category || 'Seleccionar...'}
-                      </span>
-                   </div>
-                   <ChevronDown className={`w-5 h-5 text-[#1A1A3A] transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                  <div className="flex items-center gap-3">
+                    {form.category && (
+                      <selectedStyle.Icon
+                        size={18}
+                        style={{ color: selectedStyle.color }}
+                        className="flex-shrink-0"
+                      />
+                    )}
+                    <span className="text-[#1A1A3A] font-semibold text-base">
+                      {form.category || 'Seleccionar...'}
+                    </span>
+                  </div>
+                  <ChevronDown className={`w-5 h-5 text-[#1A1A3A] transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} />
                 </div>
 
                 <AnimatePresence>
@@ -480,46 +491,45 @@ export default function CreateListing() {
                       exit={{ opacity: 0, y: -10, scale: 0.95 }}
                       className="absolute left-0 right-0 top-full z-[60] mt-2 bg-[#E0E5EC] rounded-2xl shadow-[8px_8px_16px_rgba(163,177,198,0.8),-8px_-8px_16px_rgba(255,255,255,1)] border border-white/40 overflow-hidden"
                     >
-                       <div className="max-h-68 overflow-y-auto custom-scrollbar p-2 flex flex-col gap-1">
-                          {categories.length > 0 ? (
-                             categories.map((cat, idx) => {
-                                const style = getCategoryStyle(cat.name, idx);
-                                const isSelected = form.category === cat.name;
-                                
-                                return (
-                                   <button
-                                      key={cat.id}
-                                      type="button"
-                                      onClick={() => {
-                                         setForm({ ...form, category: cat.name });
-                                         setIsDropdownOpen(false);
-                                      }}
-                                      className={`w-full px-4 py-3 rounded-xl text-left font-bold text-sm transition-all flex items-center justify-between group ${
-                                         isSelected 
-                                            ? 'bg-[#1A1A3A] text-white shadow-lg' 
-                                            : 'text-[#1A1A3A]/70 hover:bg-white/50'
-                                      }`}
-                                   >
-                                      <div className="flex items-center gap-3">
-                                         <style.Icon 
-                                            size={18} 
-                                            style={{ color: isSelected ? '#fff' : style.color }} 
-                                            className="transition-colors"
-                                         />
-                                         {cat.name}
-                                      </div>
-                                      {isSelected && (
-                                         <CheckCircle2 size={14} className="text-white" />
-                                      )}
-                                   </button>
-                                );
-                             })
-                          ) : (
-                             <div className="p-4 text-center text-xs text-[#1A1A3A]/40 font-bold italic">
-                                Cargando categorías...
-                             </div>
-                          )}
-                       </div>
+                      <div className="max-h-68 overflow-y-auto custom-scrollbar p-2 flex flex-col gap-1">
+                        {categories.length > 0 ? (
+                          categories.map((cat, idx) => {
+                            const style = getCategoryStyle(cat.name, idx);
+                            const isSelected = form.category === cat.name;
+
+                            return (
+                              <button
+                                key={cat.id}
+                                type="button"
+                                onClick={() => {
+                                  setForm({ ...form, category: cat.name });
+                                  setIsDropdownOpen(false);
+                                }}
+                                className={`w-full px-4 py-3 rounded-xl text-left font-bold text-sm transition-all flex items-center justify-between group ${isSelected
+                                    ? 'bg-[#1A1A3A] text-white shadow-lg'
+                                    : 'text-[#1A1A3A]/70 hover:bg-white/50'
+                                  }`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <style.Icon
+                                    size={18}
+                                    style={{ color: isSelected ? '#fff' : style.color }}
+                                    className="transition-colors"
+                                  />
+                                  {cat.name}
+                                </div>
+                                {isSelected && (
+                                  <CheckCircle2 size={14} className="text-white" />
+                                )}
+                              </button>
+                            );
+                          })
+                        ) : (
+                          <div className="p-4 text-center text-xs text-[#1A1A3A]/40 font-bold italic">
+                            Cargando categorías...
+                          </div>
+                        )}
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -535,7 +545,7 @@ export default function CreateListing() {
                 step="0.01"
                 disabled={loading}
                 value={form.price}
-                onChange={(e) => setForm({...form, price: e.target.value})}
+                onChange={(e) => setForm({ ...form, price: e.target.value })}
                 placeholder="0.00"
                 className="w-full h-14 px-4 bg-[#E0E5EC] rounded-2xl shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] text-[#1A1A3A] font-black placeholder:text-gray-400/70 text-lg focus:outline-none focus:ring-2 focus:ring-[#1A1A3A]/10 transition-all text-center"
               />
@@ -575,11 +585,10 @@ export default function CreateListing() {
                               setSelectedPrefix(item);
                               setIsPrefixOpen(false);
                             }}
-                            className={`flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-all ${
-                              selectedPrefix.name === item.name 
-                                ? 'bg-[#1A1A3A] text-white' 
+                            className={`flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-all ${selectedPrefix.name === item.name
+                                ? 'bg-[#1A1A3A] text-white'
                                 : 'text-[#1A1A3A]/70 hover:bg-white/80'
-                            }`}
+                              }`}
                           >
                             <span className="text-xl">{item.flag}</span>
                             <div className="flex items-center gap-2">
@@ -599,7 +608,7 @@ export default function CreateListing() {
                 required
                 disabled={loading}
                 value={form.whatsapp}
-                onChange={(e) => setForm({...form, whatsapp: e.target.value.replace(/\D/g, '')})}
+                onChange={(e) => setForm({ ...form, whatsapp: e.target.value.replace(/\D/g, '') })}
                 placeholder="600 000 000"
                 className="flex-1 h-14 px-5 bg-[#E0E5EC] rounded-2xl shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] text-[#1A1A3A] font-semibold placeholder:text-gray-400/70 text-base focus:outline-none focus:ring-2 focus:ring-[#1A1A3A]/10 transition-all"
               />
@@ -624,7 +633,7 @@ export default function CreateListing() {
               'Publicar Anuncio 🚀'
             )}
           </motion.button>
-          
+
         </form>
       </div>
     </div>

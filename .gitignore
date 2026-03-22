@@ -60,3 +60,4 @@ dopestyle/
 .env.development.local
 .env.test.local
 .env.production.local
+service-account.json
