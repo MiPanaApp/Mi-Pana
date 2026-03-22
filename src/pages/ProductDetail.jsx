@@ -1,9 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronDown, Share2, Heart, ShieldCheck, MessageCircle, AlertCircle, Star, MapPin } from 'lucide-react';
+import { ChevronLeft, ChevronDown, Share2, Heart, ShieldCheck, MessageCircle, AlertCircle, Star, MapPin, Flag, X } from 'lucide-react';
 import { db } from '../lib/firebase';
-import { doc, getDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, limit, addDoc } from 'firebase/firestore';
 import { useStore } from '../store/useStore';
 import ProductCard from '../components/ProductCard';
 import { useTimeAgo } from '../hooks/useTimeAgo';
@@ -29,6 +29,47 @@ export default function ProductDetail() {
    const [relatedProducts, setRelatedProducts] = useState([]);
    const [loading, setLoading] = useState(true);
    const [error, setError] = useState('');
+
+   // Reporting State
+   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+   const [reportReasons, setReportReasons] = useState([]);
+   const [isReporting, setIsReporting] = useState(false);
+   const [reportSuccess, setReportSuccess] = useState(false);
+   
+   const REPORT_REASONS = [
+     "Está repetido",
+     "La categoría es incorrecta",
+     "Ya está vendido",
+     "Es un profesional",
+     "El teléfono es incorrecto",
+     "Contenido ilegal",
+     "Es una estafa",
+     "Comentarios ofensivos o discriminatorios"
+   ];
+
+   const handleReportSubmit = async () => {
+     if (reportReasons.length === 0) return;
+     setIsReporting(true);
+     try {
+       await addDoc(collection(db, 'reports'), {
+         productId: product.id,
+         productName: product.name,
+         reasons: reportReasons,
+         createdAt: new Date(),
+         status: 'pending',
+       });
+       setReportSuccess(true);
+       setTimeout(() => {
+         setIsReportModalOpen(false);
+         setReportSuccess(false);
+         setReportReasons([]);
+       }, 3000);
+     } catch (error) {
+       console.error("Error reporting ad:", error);
+     } finally {
+       setIsReporting(false);
+     }
+   };
 
    // Carousel tracking (móvil y desktop tienen refs separados para no conflictar)
    const carouselRef = useRef(null);       // móvil
@@ -636,6 +677,18 @@ tlfno contacto: 672 593 950`}
                      <span className="text-white font-bold tracking-tight text-[15px] whitespace-nowrap">Chat Pana</span>
                   </button>
                </div>
+
+               {/* Botón de denunciar/informar */}
+               <div className="mt-8 flex flex-col items-center justify-center pb-6 border-b border-[#1A1A3A]/10">
+                 <span className="font-bold text-[#1A1A3A] mb-3 text-sm">¿Hay algo que debamos revisar?</span>
+                 <button 
+                   onClick={() => setIsReportModalOpen(true)}
+                   className="flex items-center gap-2 px-6 py-3 border-2 border-[#D90429] text-[#D90429] rounded-2xl font-bold hover:bg-[#D90429] hover:text-white transition-all active:scale-95 w-full md:w-auto justify-center"
+                 >
+                   <Flag className="w-5 h-5 pointer-events-none" />
+                   Informar sobre el anuncio
+                 </button>
+               </div>
             </motion.div>
          </div> {/* Final grid wrapper */}
 
@@ -773,6 +826,93 @@ tlfno contacto: 672 593 950`}
                      </p>
                   </div>
                </motion.div>
+            )}
+         </AnimatePresence>
+
+         {/* --- MODAL DE REPORTE --- */}
+         <AnimatePresence>
+            {isReportModalOpen && (
+               <div className="fixed inset-0 z-[120] flex items-center justify-center px-4">
+                  <motion.div 
+                     initial={{ opacity: 0 }} 
+                     animate={{ opacity: 1 }} 
+                     exit={{ opacity: 0 }} 
+                     onClick={() => setIsReportModalOpen(false)}
+                     className="absolute inset-0 bg-[#E0E5EC]/80 backdrop-blur-sm"
+                  />
+                  <motion.div 
+                     initial={{ opacity: 0, scale: 0.95, y: 20 }} 
+                     animate={{ opacity: 1, scale: 1, y: 0 }} 
+                     exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                     className="relative w-full max-w-md bg-[#E0E5EC] rounded-3xl p-6 flex flex-col max-h-[90vh] shadow-[12px_12px_24px_rgba(163,177,198,0.7),-12px_-12px_24px_rgba(255,255,255,0.9)] border border-white/60"
+                  >
+                     <button 
+                        onClick={() => setIsReportModalOpen(false)}
+                        className="absolute top-4 right-4 p-2 text-[#1A1A3A]/50 hover:text-[#1A1A3A] transition-colors"
+                     >
+                        <X className="w-6 h-6" />
+                     </button>
+                     
+                     {!reportSuccess ? (
+                        <>
+                           <h3 className="text-xl md:text-2xl font-black text-[#1A1A3A] mb-6 pr-8 leading-tight">
+                              ¿Cuál es el motivo de tu denuncia?
+                           </h3>
+                           
+                           <div className="flex-1 overflow-y-auto hide-scrollbar space-y-3 mb-6">
+                              {REPORT_REASONS.map((reason, idx) => {
+                                 const isSelected = reportReasons.includes(reason);
+                                 return (
+                                    <label 
+                                       key={idx} 
+                                       className="flex items-start gap-4 p-2 cursor-pointer group"
+                                    >
+                                       <div className={`mt-0.5 w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors shadow-sm ${isSelected ? 'border-[#003366] bg-[#003366]' : 'border-[#1A1A3A]/20 bg-white group-hover:border-[#003366] group-hover:bg-[#003366]/5'}`}>
+                                          {isSelected && <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>}
+                                       </div>
+                                       <span className="text-[15px] font-bold text-[#1A1A3A]/80 pt-0.5 leading-snug select-none">{reason}</span>
+                                       <input 
+                                          type="checkbox"
+                                          className="hidden"
+                                          checked={isSelected}
+                                          onChange={() => {
+                                             if (isSelected) {
+                                                setReportReasons(prev => prev.filter(r => r !== reason));
+                                             } else {
+                                                setReportReasons(prev => [...prev, reason]);
+                                             }
+                                          }}
+                                       />
+                                    </label>
+                                 )
+                              })}
+                           </div>
+                           
+                           <button 
+                              onClick={handleReportSubmit}
+                              disabled={reportReasons.length === 0 || isReporting}
+                              className="w-full py-4 rounded-2xl bg-[#D90429] text-white font-black shadow-[4px_4px_10px_rgba(217,4,41,0.3)] hover:shadow-[2px_2px_5px_rgba(217,4,41,0.4)] hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none transition-all active:scale-95 flex justify-center items-center h-[56px]"
+                           >
+                              {isReporting ? (
+                                 <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+                              ) : (
+                                 "Enviar Informe"
+                              )}
+                           </button>
+                        </>
+                     ) : (
+                        <div className="py-10 flex flex-col items-center text-center">
+                           <div className="w-20 h-20 bg-[#25D366]/10 rounded-full flex items-center justify-center mb-6 shadow-inner">
+                              <ShieldCheck className="w-10 h-10 text-[#25D366]" />
+                           </div>
+                           <h3 className="text-2xl font-black text-[#1A1A3A] mb-3">¡Gracias por avisarnos!</h3>
+                           <p className="text-[#1A1A3A]/60 font-medium leading-relaxed">
+                              Tu información ha sido recibida por nuestro equipo. Juntos hacemos de "Mi Pana" un lugar más seguro.
+                           </p>
+                        </div>
+                     )}
+                  </motion.div>
+               </div>
             )}
          </AnimatePresence>
 

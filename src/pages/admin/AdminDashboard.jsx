@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Users, ShoppingBag, MessageSquare, Star, ShieldCheck } from 'lucide-react';
+import { Users, ShoppingBag, MessageSquare, Star, ShieldCheck, AlertCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 const METRICS = [
@@ -62,7 +62,7 @@ export default function AdminDashboard() {
          
          {/* Tabs */}
          <div className="bg-white rounded-2xl p-2 shadow-sm border border-gray-100 flex gap-2 overflow-x-auto hide-scrollbar">
-            {['Overview', 'Usuarios', 'Productos', 'Categorías'].map(t => (
+            {['Overview', 'Usuarios', 'Productos', 'Categorías', 'Reportes'].map(t => (
                <button 
                  key={t}
                  onClick={() => setActiveTab(t.toLowerCase())}
@@ -129,6 +129,51 @@ export default function AdminDashboard() {
                         <button className="bg-[#E8FFF2] text-green-700 text-[10px] font-bold px-2 py-1 rounded-md border border-green-200">
                            VERIFICAR PANA
                         </button>
+                     </div>
+                  ))}
+               </div>
+            </div>
+         )}
+         
+         {activeTab === 'reportes' && (
+            <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100">
+               <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-sm font-black text-pana-blue uppercase tracking-wide">Reportes de Anuncios</h3>
+                  <button className="text-xs bg-gray-100 text-gray-600 font-bold px-3 py-1.5 rounded-lg">Filtro</button>
+               </div>
+               
+               {/* Table Mock para reportes */}
+               <div className="space-y-4">
+                  {[
+                    { id: 1, prodName: "MacBook Pro M1", reasons: "Es una estafa", time: "Hace 10 min", status: "Pendiente" },
+                    { id: 2, prodName: "iPhone 13 Pro Max", reasons: "La categoría es incorrecta, Contenido ilegal", time: "Hace 2 horas", status: "Pendiente" },
+                    { id: 3, prodName: "Zapatos Nike M", reasons: "Ya está vendido", time: "Hace 1 día", status: "Revisado" }
+                  ].map(r => (
+                     <div key={r.id} className="flex flex-col md:flex-row md:items-center justify-between p-4 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors gap-4">
+                        <div className="flex items-start gap-4">
+                           <div className="w-12 h-12 bg-red-100/50 rounded-xl flex-shrink-0 flex items-center justify-center border border-red-100 mt-0.5">
+                              <AlertCircle className="w-6 h-6 text-red-500" />
+                           </div>
+                           <div className="flex flex-col max-w-[200px] md:max-w-md">
+                              <span className="font-bold text-sm text-pana-blue line-clamp-1">{r.prodName}</span>
+                              <span className="text-xs font-semibold text-red-500 line-clamp-2 mt-0.5 leading-snug">{r.reasons}</span>
+                              <span className="text-[11px] text-gray-400 mt-1">{r.time}</span>
+                           </div>
+                        </div>
+                        <div className="flex gap-2 shrink-0 self-start md:self-auto mt-2 md:mt-0">
+                           {r.status === 'Pendiente' ? (
+                              <>
+                                 <button className="bg-white text-gray-700 text-[11px] font-bold px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+                                    VER ANUNCIO
+                                 </button>
+                                 <button className="bg-[#1A1A3A] text-white text-[11px] font-bold px-3 py-2 rounded-lg hover:bg-[#1A1A3A]/90 transition-colors">
+                                    TOMAR ACCIÓN
+                                 </button>
+                              </>
+                           ) : (
+                              <span className="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-[11px] border border-green-200 font-bold h-fit">Resuelto</span>
+                           )}
+                        </div>
                      </div>
                   ))}
                </div>
