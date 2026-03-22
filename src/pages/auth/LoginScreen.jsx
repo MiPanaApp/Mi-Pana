@@ -3,7 +3,7 @@ import { signInWithPopup, getAdditionalUserInfo } from "firebase/auth";
 import { auth, googleProvider } from "../../services/firebase";
 import { useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, Rocket, ArrowRight } from "lucide-react";
-import logoTexto from "../../assets/Logo_Mi_pana_solo_texto_.png";
+import logoFull from "../../assets/Logo_Mi_pana.png";
 import "../../styles/auth.css";
 
 export default function LoginScreen() {
@@ -38,9 +38,9 @@ export default function LoginScreen() {
       
       <div className="relative z-10 flex flex-col items-center min-h-screen px-6 pt-[52px]">
         
-        <div className="mb-[32px] text-center">
-          <img src={logoTexto} alt="miPana" style={{ height: "200px", objectFit: "contain", mixBlendMode: "multiply" }} className="mx-auto" />
-          <p className="font-sans text-[24px] font-bold text-black -mt-3">Juntos somos más</p>
+        <div className="mb-[24px] text-center">
+          <img src={logoFull} alt="miPana" style={{ height: "220px", objectFit: "contain" }} className="mx-auto" />
+          <p className="font-sans text-[24px] font-bold text-black -mt-4">Juntos somos más</p>
         </div>
 
         <div className="clay-card-auth w-full max-w-sm">

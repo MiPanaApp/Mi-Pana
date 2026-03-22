@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import ProfileBottomSheet from "../../components/auth/ProfileBottomSheet";
-import logoTexto from "../../assets/Logo_Mi_pana_solo_texto_.png";
+import logoFull from "../../assets/Logo_Mi_pana.png";
 import "../../styles/auth.css";
 
 export default function CompleteProfile() {
@@ -13,7 +13,7 @@ export default function CompleteProfile() {
       
       <div className="relative z-10 flex flex-col items-center min-h-screen px-6 pt-[78px]">
         <div className="mb-[24px] text-center">
-          <img src={logoTexto} alt="miPana" style={{ height: "125px", objectFit: "contain", mixBlendMode: "multiply" }} className="mx-auto" />
+          <img src={logoFull} alt="miPana" style={{ height: "140px", objectFit: "contain" }} className="mx-auto" />
         </div>
       </div>
 

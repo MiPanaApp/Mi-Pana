@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../store/useAuthStore';
-import logoTexto from '../assets/solotexto.png';
+import logoFull from '../assets/Logo_Mi_pana.png';
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -40,8 +40,8 @@ export default function Auth() {
         className="w-full max-w-sm"
       >
         {/* Logo */}
-        <div className="flex justify-center mb-8">
-          <img src={logoTexto} alt="Mi Pana" className="h-28 object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)]" />
+        <div className="flex justify-center mb-6">
+          <img src={logoFull} alt="Mi Pana" className="h-40 object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)]" />
         </div>
 
         {/* Card */}

@@ -5,7 +5,7 @@ import useOtpVerification from "../../hooks/useOtpVerification";
 import PhonePrefixSelect from "../../components/auth/PhonePrefixSelect";
 import OtpInput from "../../components/auth/OtpInput";
 import ProfileBottomSheet from "../../components/auth/ProfileBottomSheet";
-import logoTexto from "../../assets/Logo_Mi_pana_solo_texto_.png";
+import logoFull from "../../assets/Logo_Mi_pana.png";
 import "../../styles/auth.css";
 
 export default function RegisterScreen() {
@@ -55,8 +55,8 @@ export default function RegisterScreen() {
 
       <div className="relative z-10 flex flex-col items-center min-h-screen px-6 pt-[78px]">
         
-        <div className="mb-[24px] text-center">
-          <img src={logoTexto} alt="miPana" style={{ height: "200px", objectFit: "contain", mixBlendMode: "multiply" }} className="mx-auto" />
+        <div className="mb-[20px] text-center">
+          <img src={logoFull} alt="miPana" style={{ height: "180px", objectFit: "contain" }} className="mx-auto" />
         </div>
 
         <h1 className="text-[20px] font-black text-[#1A1A3A] text-center mb-2 -mt-3">Crea tu cuenta</h1>
