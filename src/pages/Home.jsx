@@ -8,6 +8,7 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { searchProducts } from '../services/algolia';
 import { MOCK_PRODUCTS } from '../data/mockProducts';
+import emptyHammock from '../assets/empty_hammock.png';
 
 export default function Home() {
   const { activeCategory, filters, setFilters, sortBy, setSortBy, setIsFilterOpen, isSortOpen, setIsSortOpen } = useStore();
@@ -162,12 +163,16 @@ export default function Home() {
             ))}
 
             {products.length === 0 && (
-              <div className="col-span-full py-20 text-center flex flex-col items-center justify-center p-6 mt-4">
-                <Meh className="w-14 h-14 opacity-20 mb-4 text-[#1A1A3A]" />
-                <p className="text-lg md:text-xl font-bold text-[#1A1A3A]/40 tracking-widest uppercase">
+              <div className="col-span-full py-12 text-center flex flex-col items-center justify-center p-6 mt-4">
+                <img 
+                  src={emptyHammock} 
+                  alt="No hay anuncios" 
+                  className="w-[280px] h-auto object-contain mb-2 drop-shadow-[0_10px_15px_rgba(0,0,0,0.05)]" 
+                />
+                <p className="text-[20px] md:text-[24px] font-black text-[#1A1A3A] tracking-tight uppercase leading-none">
                   Aún no hay anuncios
                 </p>
-                <p className="text-sm font-medium text-[#1A1A3A]/30 mt-2">
+                <p className="text-[14px] font-bold text-[#1A1A3A]/40 mt-3">
                   ¡Sé el primero en anunciar algo!
                 </p>
               </div>
