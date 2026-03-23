@@ -5,21 +5,35 @@ import { Geolocation } from '@capacitor/geolocation';
 import CustomSelect from './CustomSelect';
 import { useStore } from '../../store/useStore';
 import { LOCATION_DATA } from '../../data/locations';
+import { db } from '../../lib/firebase';
+import { collection, getDocs } from 'firebase/firestore';
+import { CATEGORIES as DEFAULT_CATEGORIES, getCategoryIcon, sortCategories } from '../../data/categories';
 
-const MODAL_CATEGORIES = [
-  { id: 1, name: "Comida", icon: Coffee },
-  { id: 2, name: "Envíos", icon: Package },
-  { id: 3, name: "Belleza", icon: Smile },
-  { id: 4, name: "Tecn", icon: Monitor },
-  { id: 5, name: "Servicios", icon: Wrench },
-  { id: 6, name: "Ropa", icon: ShoppingBag },
-  { id: 7, name: "Legal", icon: Briefcase },
-  { id: 8, name: "Salud", icon: Heart },
-];
+// Las categorías se cargan dinámicamente desde Firestore
 
 export default function FilterPanel() {
   const { isFilterOpen, setIsFilterOpen, filters, setFilters, activeCategory, setActiveCategory, selectedCountry } = useStore();
   const [isLocating, setIsLocating] = useState(false);
+  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
+
+  useEffect(() => {
+    const fetch = async () => {
+      try {
+        const snap = await getDocs(collection(db, 'categories'));
+        if (!snap.empty) {
+          const cats = snap.docs.map(d => ({
+            id: d.data().name,
+            name: d.data().name,
+            icon: getCategoryIcon(d.data().name)
+          }));
+          setCategories(sortCategories(cats));
+        }
+      } catch (err) {
+        console.error("Error fetching categories:", err);
+      }
+    };
+    fetch();
+  }, []);
 
   const locationOptions = filters?.location || { level1: '', level2: '', level3: '' };
 
@@ -173,7 +187,7 @@ export default function FilterPanel() {
               <section>
                 <h3 className="text-sm font-bold text-[#1A1A3A]/60 tracking-widest ml-1 mb-4">Categoría</h3>
                 <div className="grid grid-cols-4 gap-3">
-                  {MODAL_CATEGORIES.map((cat) => (
+                  {categories.map((cat) => (
                     <button
                       key={cat.id}
                       onClick={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
@@ -184,7 +198,7 @@ export default function FilterPanel() {
                       }`}
                     >
                       <cat.icon size={18} />
-                      <span className="text-[10px] font-bold mt-1">{cat.name}</span>
+                      <span className="text-[10px] font-bold mt-1 text-center">{cat.name}</span>
                     </button>
                   ))}
                 </div>

@@ -1,8 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, SlidersHorizontal, Star } from 'lucide-react';
+import { db } from '../../lib/firebase';
+import { collection, getDocs } from 'firebase/firestore';
+
+const DEFAULT_CATEGORIES = ["Comida", "Envios", "Inmobiliaria", "Formación", "Deporte", "Empleo", "Servicios", "Ventas", "Legal", "Salud", "Otros"];
 
 export default function AdvancedSearchPanel({ isOpen, onClose }) {
+  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
   const [filters, setFilters] = useState({
     country: '',
     category: '',
@@ -10,6 +15,20 @@ export default function AdvancedSearchPanel({ isOpen, onClose }) {
     premium: false,
     minRating: 0
   });
+
+  useEffect(() => {
+    const fetch = async () => {
+      try {
+        const snap = await getDocs(collection(db, 'categories'));
+        if (!snap.empty) {
+          setCategories(snap.docs.map(d => d.data().name));
+        }
+      } catch (err) {
+        console.error("Error fetching categories:", err);
+      }
+    };
+    fetch();
+  }, []);
 
   return (
     <AnimatePresence>
@@ -71,9 +90,9 @@ export default function AdvancedSearchPanel({ isOpen, onClose }) {
                     onChange={e => setFilters({...filters, category: e.target.value})}
                   >
                     <option value="">Todas las categorías</option>
-                    <option value="Comida">Comida</option>
-                    <option value="Servicios">Servicios</option>
-                    <option value="Legal">Legal y Trámites</option>
+                    {categories.map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
                   </select>
                </div>
 

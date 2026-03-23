@@ -10,8 +10,31 @@ import { searchProducts } from '../services/algolia';
 import { MOCK_PRODUCTS } from '../data/mockProducts';
 import emptyHammock from '../assets/empty_hammock.png';
 
+const CAPITALS = {
+  ES: 'Madrid',
+  CO: 'Bogotá',
+  VE: 'Caracas',
+  US: 'Washington D.C.',
+  CL: 'Santiago',
+  PA: 'Ciudad de Panamá',
+  PE: 'Lima',
+  EC: 'Quito',
+  DO: 'Santo Domingo',
+  AR: 'Buenos Aires'
+};
+
 export default function Home() {
-  const { activeCategory, filters, setFilters, sortBy, setSortBy, setIsFilterOpen, isSortOpen, setIsSortOpen } = useStore();
+  const { 
+    activeCategory, 
+    filters, 
+    setFilters, 
+    sortBy, 
+    setSortBy, 
+    setIsFilterOpen, 
+    isSortOpen, 
+    setIsSortOpen,
+    selectedCountry 
+  } = useStore();
   const sortRef = useRef(null);
 
   const [products, setProducts] = useState([]);
@@ -74,8 +97,22 @@ export default function Home() {
   const filteredProducts = useMemo(() => {
     let result = [...products];
 
+    // REGLAS DE NEGOCIO (Guardadas para futura edición):
+    // 1. Filtrar por país seleccionado por defecto si no hay filtro manual de ubicación.
+    // 2. Orden default (relevance): Priorizar Capital del país, luego más recientes.
+    
+    // Filtrado por País: si no hay un filtro de ubicación específico (level1/level2)
+    const isLocalFilterActive = filters.location?.level1 || filters.location?.level2;
+    if (!isLocalFilterActive) {
+      result = result.filter(p => {
+        // Asumimos 'ES' para mocks o productos sin país para no romper la vista
+        const countryId = p.location?.country || p.country || 'ES'; 
+        return countryId === selectedCountry;
+      });
+    }
+
     if (!usingAlgolia) {
-      if (activeCategory) result = result.filter(p => p.category === activeCategory);
+      if (activeCategory && activeCategory !== 'Todas') result = result.filter(p => p.category === activeCategory);
       if (filters.onlyVerified) result = result.filter(p => p.verified);
       if (filters.searchQuery) {
         const q = filters.searchQuery.toLowerCase();
@@ -86,16 +123,43 @@ export default function Home() {
     if (filters.price?.min) result = result.filter(p => parseFloat(p.price) >= parseFloat(filters.price.min));
     if (filters.price?.max) result = result.filter(p => parseFloat(p.price) <= parseFloat(filters.price.max));
 
+    // Lógica de Ordenación
     switch (sortBy) {
-      case 'rating': result.sort((a, b) => (b.rating || 0) - (a.rating || 0)); break;
-      case 'price_asc': result.sort((a, b) => parseFloat(a.price) - parseFloat(b.price)); break;
-      case 'recent': result.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)); break;
-      case 'distance': result.sort((a, b) => (a.distance || 0) - (b.distance || 0)); break;
-      default: result.sort((a, b) => (b.premium ? 1 : 0) - (a.premium ? 1 : 0));
+      case 'rating': 
+        result.sort((a, b) => (b.rating || 0) - (a.rating || 0)); 
+        break;
+      case 'price_asc': 
+        result.sort((a, b) => parseFloat(a.price) - parseFloat(b.price)); 
+        break;
+      case 'recent': 
+        result.sort((a, b) => {
+          const dateA = a.createdAt?.seconds || 0;
+          const dateB = b.createdAt?.seconds || 0;
+          return dateB - dateA;
+        }); 
+        break;
+      case 'distance': 
+        result.sort((a, b) => (a.distance || 0) - (b.distance || 0)); 
+        break;
+      case 'relevance':
+      default:
+        // Orden default: Capital primero, luego fecha descendente
+        const capitalCity = CAPITALS[selectedCountry] || 'Madrid';
+        result.sort((a, b) => {
+          const isACapital = (a.location?.level2 === capitalCity || a.city === capitalCity) ? 0 : 1;
+          const isBCapital = (b.location?.level2 === capitalCity || b.city === capitalCity) ? 0 : 1;
+
+          if (isACapital !== isBCapital) return isACapital - isBCapital;
+          
+          // Secondary sort: Recents (createdAt)
+          const dateA = a.createdAt?.seconds || 0;
+          const dateB = b.createdAt?.seconds || 0;
+          return dateB - dateA;
+        });
     }
 
     return result;
-  }, [products, filters, activeCategory, sortBy, usingAlgolia]);
+  }, [products, filters, activeCategory, sortBy, usingAlgolia, selectedCountry]);
 
   return (
     <div className="max-w-7xl mx-auto pb-10 transition-all overflow-x-clip">

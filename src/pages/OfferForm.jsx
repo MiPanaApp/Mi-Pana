@@ -1,12 +1,27 @@
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, ChevronLeft, Upload, CheckSquare } from 'lucide-react';
+import { db } from '../lib/firebase';
+import { collection, getDocs } from 'firebase/firestore';
+import { sortCategories } from '../data/categories';
 
-const CATEGORIES = ["Comida", "Envíos", "Belleza", "Tecnología", "Servicios", "Ropa", "Legal", "Salud"];
+const DEFAULT_CATEGORIES = ["Comida", "Envios", "Inmobiliaria", "Formación", "Deporte", "Empleo", "Servicios", "Ventas", "Legal", "Salud", "Otros"];
 
 export default function OfferForm() {
   const [step, setStep] = useState(1);
+  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
+
+  useEffect(() => {
+    const fetch = async () => {
+      try {
+        const snap = await getDocs(collection(db, 'categories'));
+        if (!snap.empty) {
+          setCategories(sortCategories(snap.docs.map(d => d.data().name)));
+        }
+      } catch (err) {
+        console.error("Error fetching categories:", err);
+      }
+    };
+    fetch();
+  }, []);
+
   const { register, handleSubmit, watch, formState: { errors }, setValue } = useForm({
     defaultValues: JSON.parse(localStorage.getItem('mipana-draft')) || {}
   });
@@ -38,7 +53,7 @@ export default function OfferForm() {
           <div className="space-y-4">
             <h3 className="text-xl font-black text-pana-blue">Paso 1: Categoría</h3>
             <div className="grid grid-cols-2 gap-3">
-              {CATEGORIES.map(c => (
+              {categories.map(c => (
                 <div 
                   key={c}
                   onClick={() => setValue('category', c)}
