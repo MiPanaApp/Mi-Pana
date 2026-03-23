@@ -52,6 +52,7 @@ export default function Home() {
           setUsingAlgolia(true);
           const result = await searchProducts({
             query: filters.searchQuery,
+            category: activeCategory !== 'Todas' ? activeCategory : '',
             verified: filters.onlyVerified || null,
           });
           // Mezclar resultados de Algolia con mocks filtrados localmente

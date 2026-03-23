@@ -6,7 +6,7 @@ export const useStore = create(
     (set) => ({
       selectedCountry: 'ES',
       selectedRegion: '',
-      activeCategory: 1,
+      activeCategory: 'Todas',
       isFilterOpen: false,
       isSortOpen: false,
       sortBy: 'relevance',
