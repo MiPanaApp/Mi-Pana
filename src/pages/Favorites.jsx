@@ -148,7 +148,10 @@ export default function Favorites() {
                     <div className="mt-auto flex items-center gap-1.5 text-[#1A1A3A]/50">
                       <MapPin className="w-3.5 h-3.5" />
                       <span className="text-[11px] font-bold md:text-xs truncate">
-                        {product.location || 'Madrid'}
+                        {typeof product.location === 'object' 
+                          ? (product.location.level2 || product.location.level1 || 'Madrid') 
+                          : (product.location || 'Madrid' )
+                        }
                       </span>
                     </div>
                   </div>

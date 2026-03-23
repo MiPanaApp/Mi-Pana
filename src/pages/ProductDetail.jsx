@@ -524,11 +524,14 @@ tlfno contacto: 672 593 950`}
                   {/* Indicador de Ubicación (Dinamico) */}
                   <div className="flex items-center gap-4 pr-1">
                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-br from-[#FFC200] to-[#FFAA00] shadow-[0_4px_10px_rgba(255,180,0,0.3)] group transition-all hover:scale-105 active:scale-95">
-                        <MapPin className="w-3.5 h-3.5 text-[#1A1A3A]" />
-                        <span className="text-[12px] font-bold text-[#1A1A3A] uppercase tracking-wider">
-                           {product.location || "Madrid"}
-                        </span>
-                     </div>
+                         <MapPin className="w-3.5 h-3.5 text-[#1A1A3A]" />
+                         <span className="text-[12px] font-bold text-[#1A1A3A] uppercase tracking-wider">
+                            {typeof product.location === 'object' 
+                              ? (product.location.level2 || product.location.level1 || 'Madrid') 
+                              : (product.location || "Madrid")
+                            }
+                         </span>
+                      </div>
 
                      {/* Botones de Acción: Solo Desktop (sin fondos, alineados con el nombre) */}
                      <div className="hidden md:flex items-center gap-5 pr-1">

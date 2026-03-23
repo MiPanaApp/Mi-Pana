@@ -65,7 +65,10 @@ export default function ProductCard({ product }) {
         <div className="mt-auto flex items-center gap-1 text-[#1A1A3A]/70 font-semibold">
           <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
           <span className="text-[11px] truncate">
-            {product.location || 'Madrid'} • {product.distance || `${(Math.random() * 5 + 0.5).toFixed(1)} km`}
+            {typeof product.location === 'object' 
+              ? (product.location.level2 || product.location.level1 || 'Madrid') 
+              : (product.location || 'Madrid' )
+            } • {product.distance || `${(Math.random() * 5 + 0.5).toFixed(1)} km`}
           </span>
         </div>
       </div>
