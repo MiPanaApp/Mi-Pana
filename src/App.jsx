@@ -54,7 +54,7 @@ function App() {
           {/* Rutas protegidas (requieren login) */}
           <Route path="/favoritos" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
           <Route path="/anunciar" element={<ProtectedRoute><CreateListing /></ProtectedRoute>} />
-          <Route path="/mensajes" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+          <Route path="/mensajes" element={<ProtectedRoute><ChatList /></ProtectedRoute>} />
           <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/ofertar" element={<ProtectedRoute><OfferForm /></ProtectedRoute>} />
           <Route path="/chats" element={<ProtectedRoute><ChatList /></ProtectedRoute>} />
@@ -63,7 +63,7 @@ function App() {
         </Route>
         
         {/* Fullscreen Chat Route (No Layout Wrapper) */}
-        <Route path="/chat/:id" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+        <Route path="/chat/:conversationId" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
         
         {/* Admin Flow */}
         <Route path="/admin" element={<AdminDashboard />} />

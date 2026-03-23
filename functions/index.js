@@ -1,7 +1,6 @@
 const { onDocumentCreated, onDocumentUpdated, onDocumentDeleted } = require("firebase-functions/v2/firestore");
 const { defineSecret } = require("firebase-functions/params");
 const { initializeApp } = require("firebase-admin/app");
-const { algoliasearch } = require("algoliasearch");
 
 initializeApp();
 
@@ -9,10 +8,20 @@ const ALGOLIA_APP_ID = defineSecret("ALGOLIA_APP_ID");
 const ALGOLIA_ADMIN_KEY = defineSecret("ALGOLIA_ADMIN_KEY");
 const INDEX_NAME = "mipana_products";
 
+// Lazy-load algoliasearch to avoid deployment timeout
+let _client = null;
+function getClient() {
+  if (!_client) {
+    const { algoliasearch } = require("algoliasearch");
+    _client = algoliasearch(ALGOLIA_APP_ID.value(), ALGOLIA_ADMIN_KEY.value());
+  }
+  return _client;
+}
+
 exports.onProductCreated = onDocumentCreated(
   { document: "products/{productId}", secrets: [ALGOLIA_APP_ID, ALGOLIA_ADMIN_KEY] },
   async (event) => {
-    const client = algoliasearch(ALGOLIA_APP_ID.value(), ALGOLIA_ADMIN_KEY.value());
+    const client = getClient();
     const product = event.data.data();
     const productId = event.params.productId;
     await client.saveObject({
@@ -25,9 +34,9 @@ exports.onProductCreated = onDocumentCreated(
         price: product.price || 0,
         category: product.category || "",
         subcategory: product.subcategory || "",
-        country: product.country || "",
-        region: product.region || "",
-        city: product.city || "",
+        country: product.country || product.location?.country || "",
+        region: product.region || product.location?.level1 || "",
+        city: product.city || product.location?.level2 || "",
         keywords: product.keywords || [],
         image: product.image || "",
         userName: product.userName || "",
@@ -46,7 +55,7 @@ exports.onProductCreated = onDocumentCreated(
 exports.onProductUpdated = onDocumentUpdated(
   { document: "products/{productId}", secrets: [ALGOLIA_APP_ID, ALGOLIA_ADMIN_KEY] },
   async (event) => {
-    const client = algoliasearch(ALGOLIA_APP_ID.value(), ALGOLIA_ADMIN_KEY.value());
+    const client = getClient();
     const product = event.data.after.data();
     const productId = event.params.productId;
     if (product.active === false) {
@@ -62,8 +71,8 @@ exports.onProductUpdated = onDocumentUpdated(
         description: product.description || "",
         price: product.price || 0,
         category: product.category || "",
-        country: product.country || "",
-        region: product.region || "",
+        country: product.country || product.location?.country || "",
+        region: product.region || product.location?.level1 || "",
         verified: product.verified || false,
         premium: product.premium || false,
         rating: product.rating || 0,
@@ -77,7 +86,7 @@ exports.onProductUpdated = onDocumentUpdated(
 exports.onProductDeleted = onDocumentDeleted(
   { document: "products/{productId}", secrets: [ALGOLIA_APP_ID, ALGOLIA_ADMIN_KEY] },
   async (event) => {
-    const client = algoliasearch(ALGOLIA_APP_ID.value(), ALGOLIA_ADMIN_KEY.value());
+    const client = getClient();
     await client.deleteObject({ indexName: INDEX_NAME, objectID: event.params.productId });
     console.log("🗑️ Eliminado de Algolia:", event.params.productId);
   }

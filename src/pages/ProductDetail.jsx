@@ -7,6 +7,9 @@ import { doc, getDoc, collection, query, where, getDocs, limit, addDoc } from 'f
 import { useStore } from '../store/useStore';
 import ProductCard from '../components/ProductCard';
 import { useTimeAgo } from '../hooks/useTimeAgo';
+import { useAuthStore } from '../store/useAuthStore';
+import { getOrCreateConversation } from '../lib/chat';
+import { MOCK_PRODUCTS } from '../data/mockProducts';
 import panaLengua from '../assets/pana_lengua.png';
 
 // Los productos relacionados se cargan ahora dinámicamente desde Firestore.
@@ -36,6 +39,31 @@ export default function ProductDetail() {
    const [reportReasons, setReportReasons] = useState([]);
    const [isReporting, setIsReporting] = useState(false);
    const [reportSuccess, setReportSuccess] = useState(false);
+   
+   const { user } = useAuthStore();
+   const [startingChat, setStartingChat] = useState(false);
+
+   const handleStartChat = async () => {
+     if (!user) { navigate('/login'); return; }
+     if (product.userId && user.uid === product.userId) return; // No chatear consigo mismo
+     setStartingChat(true);
+     try {
+       const conversationId = await getOrCreateConversation({
+         buyerId: user.uid,
+         sellerId: product.userId,
+         productId: product.id,
+         productName: product.name,
+         productCategory: product.category || 'Otros',
+         sellerName: product.userName || 'Pana',
+         sellerAvatar: '',
+       });
+       navigate(`/chat/${conversationId}`);
+     } catch (err) {
+       console.error('Error iniciando chat:', err);
+     } finally {
+       setStartingChat(false);
+     }
+   };
    
    const REPORT_REASONS = [
      "Está repetido",
@@ -158,46 +186,61 @@ export default function ProductDetail() {
             if (docSnap.exists()) {
                const productData = { id: docSnap.id, ...docSnap.data() };
                setProduct(productData);
-
-               // 2. Fetch Productos Relacionados (Misama categoría, excluyendo el actual)
-               try {
-                  const q = query(
-                     collection(db, 'products'),
-                     where('category', '==', productData.category || 'otros'),
-                     limit(10)
-                  );
-                  const relatedSnap = await getDocs(q);
-                  const relatedList = relatedSnap.docs
-                     .map(doc => ({ id: doc.id, ...doc.data() }))
-                     .filter(p => p.id !== productId);
-                  
-                  // Si hay pocos de la misma categoría, traer unos genéricos
-                  if (relatedList.length < 4) {
-                     const qGeneral = query(collection(db, 'products'), limit(10));
-                     const genSnap = await getDocs(qGeneral);
-                     const genList = genSnap.docs
-                         .map(doc => ({ id: doc.id, ...doc.data() }))
-                         .filter(p => p.id !== productId);
-                     
-                     // Mezclar y eliminar duplicados por ID
-                     const merged = [...relatedList, ...genList];
-                     const unique = Array.from(new Map(merged.map(p => [p.id, p])).values());
-                     setRelatedProducts(unique.slice(0, 10));
-                  } else {
-                     setRelatedProducts(relatedList);
-                  }
-               } catch (err) {
-                  console.warn("Error fetching related products:", err);
-               }
-
+               
+               // Fetch related
+               fetchRelated(productData.category, productData.id);
             } else {
-               setError('El anuncio ya no existe o fue eliminado.');
+               // --- FALLBACK TO MOCK PRODUCTS ---
+               const mock = MOCK_PRODUCTS.find(p => p.id.toString() === productId);
+               if (mock) {
+                  setProduct(mock);
+                  fetchRelated(mock.category, mock.id);
+               } else {
+                  setError('El anuncio ya no existe o fue eliminado.');
+               }
             }
          } catch (err) {
             console.error(err);
             setError('Error de conexión al cargar el anuncio.');
          } finally {
             setLoading(false);
+         }
+      };
+
+      const fetchRelated = async (category, currentId) => {
+         try {
+            const q = query(
+               collection(db, 'products'),
+               where('category', '==', category || 'otros'),
+               limit(10)
+            );
+            const relatedSnap = await getDocs(q);
+            const relatedList = relatedSnap.docs
+               .map(doc => ({ id: doc.id, ...doc.data() }))
+               .filter(p => p.id !== currentId);
+            
+            // Si hay pocos de la misma categoría, traer unos genéricos
+            if (relatedList.length < 4) {
+               const qGeneral = query(collection(db, 'products'), limit(10));
+               const genSnap = await getDocs(qGeneral);
+               const genList = genSnap.docs
+                   .map(doc => ({ id: doc.id, ...doc.data() }))
+                   .filter(p => p.id !== currentId);
+               
+               // Mezclar y eliminar duplicados por ID
+               const merged = [...relatedList, ...genList];
+               const unique = Array.from(new Map(merged.map(p => [p.id, p])).values());
+               setRelatedProducts(unique.slice(0, 10));
+            } else {
+               setRelatedProducts(relatedList);
+            }
+         } catch (err) {
+            console.warn("Error fetching related products:", err);
+            // Fallback: mostrar mocks de la misma categoría si falla firestore
+            const mockRelated = MOCK_PRODUCTS
+               .filter(p => p.category === category && p.id.toString() !== currentId.toString())
+               .slice(0, 4);
+            setRelatedProducts(mockRelated);
          }
       };
 
@@ -673,9 +716,19 @@ tlfno contacto: 672 593 950`}
                      </svg>
                      <span className="text-white font-bold tracking-tight text-[15px] whitespace-nowrap">WhatsApp</span>
                   </button>
-                  <button className="flex-1 h-[56px] px-4 bg-gradient-to-br from-[#2D2D4E] to-[#1A1A3A] rounded-2xl flex items-center justify-center gap-2 shadow-[inset_2px_4px_8px_rgba(255,255,255,0.25),0_8px_16px_rgba(26,26,58,0.5)] hover:-translate-y-1 transition-all outline-none border border-[#1A1A3A]">
-                     <MessageCircle className="w-[18px] h-[18px] stroke-[2.5] text-white flex-shrink-0" />
-                     <span className="text-white font-bold tracking-tight text-[15px] whitespace-nowrap">Chat Pana</span>
+                  <button 
+                    onClick={handleStartChat}
+                    disabled={startingChat || (product?.userId && user?.uid === product?.userId)}
+                    className="flex-1 h-[56px] px-4 bg-gradient-to-br from-[#2D2D4E] to-[#1A1A3A] rounded-2xl flex items-center justify-center gap-2 shadow-[inset_2px_4px_8px_rgba(255,255,255,0.25),0_8px_16px_rgba(26,26,58,0.5)] hover:-translate-y-1 transition-all outline-none border border-[#1A1A3A] disabled:opacity-50 disabled:hover:translate-y-0"
+                  >
+                    {startingChat ? (
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <MessageCircle className="w-[18px] h-[18px] stroke-[2.5] text-white flex-shrink-0" />
+                    )}
+                    <span className="text-white font-bold tracking-tight text-[15px] whitespace-nowrap">
+                      {product?.userId && user?.uid === product?.userId ? 'Tu anuncio' : 'Chat Pana'}
+                    </span>
                   </button>
                </div>
 

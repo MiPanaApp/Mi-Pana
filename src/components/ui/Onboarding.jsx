@@ -16,30 +16,18 @@ const countryData = {
   AR: { name: 'Argentina', flag: '🇦🇷', active: false, quote: 'Argentina tiene historia en el fútbol… pero el venezolano le pone ganas hasta sin historia 💪' }
 };
 
-const SPAIN_REGIONS = [
-  "Madrid", "Cataluña", "Andalucía", "Comunidad Valenciana", 
-  "Galicia", "País Vasco", "Canarias", "Castilla y León", 
-  "Castilla-La Mancha", "Murcia", "Aragón", "Extremadura", 
-  "Baleares", "Asturias", "Navarra", "Cantabria", "La Rioja", 
-  "Ceuta", "Melilla"
-];
-
 export default function Onboarding() {
   const [step, setStep] = useState('selector'); // 'selector' | 'transition'
   const [localCountry, setLocalCountry] = useState('');
-  const [localRegion, setLocalRegion] = useState('');
-  const [showRegions, setShowRegions] = useState(false);
   const [isCountryOpen, setIsCountryOpen] = useState(false);
-  const [isRegionOpen, setIsRegionOpen] = useState(false);
   
   const navigate = useNavigate();
-  const { setCountry, setRegion } = useStore();
+  const { setCountry } = useStore();
 
   const handleConfirm = () => {
-    if (localCountry === 'ES' && !localRegion) return;
+    if (!localCountry) return;
     
     setCountry(localCountry);
-    setRegion(localRegion);
     setStep('transition');
   };
 
@@ -106,8 +94,6 @@ export default function Onboarding() {
                             key={code}
                             onClick={() => {
                               setLocalCountry(code);
-                              setShowRegions(code === 'ES');
-                              if (code !== 'ES') setLocalRegion('');
                               setIsCountryOpen(false);
                             }}
                             className={`w-full h-12 flex items-center gap-3 px-4 rounded-xl transition-all font-bold ${localCountry === code ? 'bg-[#1A1A3A] text-white shadow-lg' : 'hover:bg-[#1A1A3A]/5 text-[#1A1A3A]'}`}
@@ -123,62 +109,11 @@ export default function Onboarding() {
                 </div>
               </div>
 
-              {/* Region Selector (Conditional) */}
-              <AnimatePresence>
-                {showRegions && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="space-y-2 relative z-20"
-                  >
-                    <label className="text-xs font-bold text-[#1A1A3A]/60 tracking-widest ml-4">Región</label>
-                    <div className="relative">
-                      <button 
-                        onClick={() => {
-                          setIsRegionOpen(!isRegionOpen);
-                          setIsCountryOpen(false);
-                        }}
-                        className="w-full h-14 clay-card flex items-center justify-between px-5 text-[#1A1A3A] font-bold text-lg"
-                      >
-                        <span className="truncate">
-                          {localRegion || 'Selecciona tu comunidad...'}
-                        </span>
-                        <ChevronDown className={`w-6 h-6 transition-transform duration-300 ${isRegionOpen ? 'rotate-180' : ''}`} />
-                      </button>
-
-                      <AnimatePresence>
-                        {isRegionOpen && (
-                          <motion.div 
-                            initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                            className="absolute top-full left-0 right-0 mt-2 p-2 bg-white/95 backdrop-blur-xl rounded-[25px] shadow-2xl overflow-hidden z-50 max-h-[250px] overflow-y-auto hide-scrollbar border border-white/20"
-                          >
-                            {SPAIN_REGIONS.map((region) => (
-                              <button
-                                key={region}
-                                onClick={() => {
-                                  setLocalRegion(region);
-                                  setIsRegionOpen(false);
-                                }}
-                                className={`w-full h-12 flex items-center px-4 rounded-xl transition-all font-bold ${localRegion === region ? 'bg-[#1A1A3A] text-white shadow-lg' : 'hover:bg-[#1A1A3A]/5 text-[#1A1A3A]'}`}
-                              >
-                                {region}
-                              </button>
-                            ))}
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </div>
 
             <button 
               onClick={handleConfirm}
-              disabled={!localCountry || (localCountry === 'ES' && !localRegion)}
+              disabled={!localCountry}
               className="w-full mt-12 bg-[#1A1A3A] text-white h-16 rounded-[25px] font-black text-xl shadow-2xl active:scale-95 transition-transform disabled:opacity-50 disabled:active:scale-100 relative z-10"
             >
               ¡Comenzar!

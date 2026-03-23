@@ -33,11 +33,19 @@ const Header = forwardRef((props, ref) => {
   const [isDesktopMenuOpen, setIsDesktopMenuOpen] = useState(false);
   const countryRef = useRef(null);
   const desktopMenuRef = useRef(null);
+  const categoriesRef = useRef(null);
   const { scrollY } = useScroll();
 
   const { user } = useAuthFlow();
   const [userName, setUserName] = useState('');
   const [dbCategories, setDbCategories] = useState(DEFAULT_CATEGORIES);
+
+  // Scroll categories to left on mount or when categories change
+  useEffect(() => {
+    if (categoriesRef.current) {
+      categoriesRef.current.scrollLeft = 0;
+    }
+  }, [dbCategories]);
 
   // Fetch categories from Firestore
   useEffect(() => {
@@ -51,10 +59,20 @@ const Header = forwardRef((props, ref) => {
             name: doc.data().name,
             icon: getCategoryIcon(doc.data().name)
           }));
-          setDbCategories(sortCategories(cats));
+          
+          // Prepend "Todas" category
+          setDbCategories([
+            { id: 'Todas', name: 'Todas', icon: FiPlus },
+            ...sortCategories(cats)
+          ]);
         }
       } catch (err) {
         console.error("Error fetching categories for header:", err);
+        // Fallback with "Todas" prepended to default categories
+        setDbCategories([
+          { id: 'Todas', name: 'Todas', icon: FiPlus },
+          ...sortCategories(DEFAULT_CATEGORIES)
+        ]);
       }
     };
     fetchCategories();
@@ -216,38 +234,83 @@ const Header = forwardRef((props, ref) => {
               </div>
             </div>
 
-            {/* Buscador Claymorphism Amarillo */}
-            <div className="relative flex-1 md:max-w-4xl flex flex-col self-start md:self-center">
-              <div className="relative w-full">
-                <input 
-                  type="text" 
-                  placeholder="¿Qué necesitas, pana?" 
-                  value={filters.searchQuery || ''}
-                  onChange={(e) => setFilters({ searchQuery: e.target.value })}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && filters.searchQuery?.trim() !== '') {
-                      addRecentSearch(filters.searchQuery.trim());
-                    }
-                  }}
-                  className="w-full h-11 md:h-14 pl-11 pr-12 bg-[#FFCC00] rounded-xl md:rounded-2xl text-sm md:text-lg text-[#1A1A3A] font-bold placeholder:text-[#1A1A3A]/70 shadow-[inset_4px_4px_8px_rgba(204,163,0,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] focus:outline-none focus:ring-2 focus:ring-[#0056B3]/40 transition-all"
-                />
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#1A1A3A]/80 w-5 h-5 md:w-7 md:h-7" />
-                
-                {filters.searchQuery && (
-                  <button 
-                    onClick={() => setFilters({ searchQuery: '' })}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 bg-[#1A1A3A]/10 rounded-full hover:bg-[#1A1A3A]/20 transition-colors"
+            {/* Buscador + Menú Hamburguesa (Container único para alineación perfecta) */}
+            <div className="relative flex-1 md:max-w-5xl flex flex-col md:self-center">
+              <div className="flex items-center gap-3 md:gap-4 w-full">
+                {/* Buscador Claymorphism Amarillo */}
+                <div className="relative flex-1">
+                  <input 
+                    type="text" 
+                    placeholder="¿Qué necesitas, pana?" 
+                    value={filters.searchQuery || ''}
+                    onChange={(e) => setFilters({ searchQuery: e.target.value })}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && filters.searchQuery?.trim() !== '') {
+                        addRecentSearch(filters.searchQuery.trim());
+                      }
+                    }}
+                    className="w-full h-11 md:h-14 pl-11 pr-12 bg-[#FFCC00] rounded-xl md:rounded-2xl text-sm md:text-lg text-[#1A1A3A] font-bold placeholder:text-[#1A1A3A]/70 shadow-[inset_4px_4px_8px_rgba(204,163,0,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] focus:outline-none focus:ring-2 focus:ring-[#0056B3]/40 transition-all"
+                  />
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#1A1A3A]/80 w-5 h-5 md:w-7 md:h-7" />
+                  
+                  {filters.searchQuery && (
+                    <button 
+                      onClick={() => setFilters({ searchQuery: '' })}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 bg-[#1A1A3A]/10 rounded-full hover:bg-[#1A1A3A]/20 transition-colors"
+                    >
+                      <X className="w-4 h-4 text-[#1A1A3A]" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Menú Hamburguesa Escritorio */}
+                <div className="hidden md:flex relative flex-shrink-0" ref={desktopMenuRef}>
+                  <button
+                    onClick={() => setIsDesktopMenuOpen(!isDesktopMenuOpen)}
+                    className={`w-10 h-10 md:h-14 md:w-14 rounded-xl md:rounded-2xl flex items-center justify-center transition-all ${
+                      isDesktopMenuOpen 
+                      ? 'bg-[#1A1A3A] text-white shadow-[inset_4px_4px_8px_rgba(26,26,58,0.8),inset_-4px_-4px_8px_rgba(40,40,80,0.5)]' 
+                      : 'bg-[#E0E5EC] text-[#1A1A3A] shadow-[6px_6px_12px_rgba(163,177,198,0.7),-6px_-6px_12px_rgba(255,255,255,0.9)] hover:bg-[#1A1A3A] hover:text-white'
+                    }`}
                   >
-                    <X className="w-4 h-4 text-[#1A1A3A]" />
+                    {isDesktopMenuOpen ? <X className="w-5 h-5 md:w-6 md:h-6" /> : <Menu className="w-5 h-5 md:w-6 md:h-6" />}
                   </button>
-                )}
+
+                  <AnimatePresence>
+                    {isDesktopMenuOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9, y: 10, originX: 1, originY: 0 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                        className="absolute top-[120%] right-0 w-[240px] bg-[#E0E5EC] rounded-3xl shadow-[8px_8px_20px_rgba(163,177,198,0.7),-8px_-8px_20px_rgba(255,255,255,0.9)] border-[0.5px] border-white/60 p-3 z-50 flex flex-col gap-2"
+                      >
+                        <button onClick={() => { setIsDesktopMenuOpen(false); navigate('/home'); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#E0E5EC] text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3),inset_-4px_-4px_8px_rgba(255,255,255,0.5)] hover:shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.7)] transition-all active:scale-95 group">
+                           <Home className="w-5 h-5 text-[#0056B3] group-hover:scale-110 transition-transform" /> Inicio
+                        </button>
+                        <button onClick={() => { setIsDesktopMenuOpen(false); navigate('/favoritos'); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#E0E5EC] text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3),inset_-4px_-4px_8px_rgba(255,255,255,0.5)] hover:shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.7)] transition-all active:scale-95 group">
+                           <LucideHeart className="w-5 h-5 text-[#D90429] group-hover:scale-110 transition-transform" /> Favoritos
+                        </button>
+                        <button onClick={() => { setIsDesktopMenuOpen(false); navigate('/anunciar'); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#E0E5EC] text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3),inset_-4px_-4px_8px_rgba(255,255,255,0.5)] hover:shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.7)] transition-all active:scale-95 group">
+                           <PlusCircle className="w-5 h-5 text-[#1A1A3A] group-hover:scale-110 transition-transform" /> Anunciar
+                        </button>
+                        <button onClick={() => { setIsDesktopMenuOpen(false); navigate('/mensajes'); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#E0E5EC] text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3),inset_-4px_-4px_8px_rgba(255,255,255,0.5)] hover:shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.7)] transition-all active:scale-95 group">
+                           <MessageCircle className="w-5 h-5 text-[#FFB400] group-hover:scale-110 transition-transform" /> Mensajes
+                        </button>
+                        <button onClick={() => { setIsDesktopMenuOpen(false); navigate('/perfil'); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#E0E5EC] text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3),inset_-4px_-4px_8px_rgba(255,255,255,0.5)] hover:shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.7)] transition-all active:scale-95 group">
+                           <LucideUser className="w-5 h-5 text-[#0056B3] group-hover:scale-110 transition-transform" /> Mi Perfil
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
               
               {userName && (
                 <motion.div 
                   initial={{ opacity: 0, y: -5 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-1.5 self-end mr-1"
+                  className="mt-1.5 self-end mr-[64px]"
                 >
                   <p 
                     onClick={() => navigate('/perfil')}
@@ -257,48 +320,6 @@ const Header = forwardRef((props, ref) => {
                   </p>
                 </motion.div>
               )}
-            </div>
-
-            {/* Menú Hamburguesa Escritorio (Movido al lado del buscador) */}
-            <div className="hidden md:flex relative flex-shrink-0" ref={desktopMenuRef}>
-              <button
-                onClick={() => setIsDesktopMenuOpen(!isDesktopMenuOpen)}
-                className={`w-10 h-10 md:h-14 md:w-14 rounded-xl md:rounded-2xl flex items-center justify-center transition-all ${
-                  isDesktopMenuOpen 
-                  ? 'bg-[#1A1A3A] text-white shadow-[inset_4px_4px_8px_rgba(26,26,58,0.8),inset_-4px_-4px_8px_rgba(40,40,80,0.5)]' 
-                  : 'bg-[#E0E5EC] text-[#1A1A3A] shadow-[6px_6px_12px_rgba(163,177,198,0.7),-6px_-6px_12px_rgba(255,255,255,0.9)] hover:bg-[#1A1A3A] hover:text-white'
-                }`}
-              >
-                {isDesktopMenuOpen ? <X className="w-5 h-5 md:w-6 md:h-6" /> : <Menu className="w-5 h-5 md:w-6 md:h-6" />}
-              </button>
-
-              <AnimatePresence>
-                {isDesktopMenuOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9, y: 10, originX: 1, originY: 0 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.9, y: 10 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                    className="absolute top-[120%] right-0 w-[240px] bg-[#E0E5EC] rounded-3xl shadow-[8px_8px_20px_rgba(163,177,198,0.7),-8px_-8px_20px_rgba(255,255,255,0.9)] border-[0.5px] border-white/60 p-3 z-50 flex flex-col gap-2"
-                  >
-                    <button onClick={() => { setIsDesktopMenuOpen(false); navigate('/home'); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#E0E5EC] text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3),inset_-4px_-4px_8px_rgba(255,255,255,0.5)] hover:shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.7)] transition-all active:scale-95 group">
-                       <Home className="w-5 h-5 text-[#0056B3] group-hover:scale-110 transition-transform" /> Inicio
-                    </button>
-                    <button onClick={() => { setIsDesktopMenuOpen(false); navigate('/favoritos'); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#E0E5EC] text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3),inset_-4px_-4px_8px_rgba(255,255,255,0.5)] hover:shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.7)] transition-all active:scale-95 group">
-                       <LucideHeart className="w-5 h-5 text-[#D90429] group-hover:scale-110 transition-transform" /> Favoritos
-                    </button>
-                    <button onClick={() => { setIsDesktopMenuOpen(false); navigate('/anunciar'); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#E0E5EC] text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3),inset_-4px_-4px_8px_rgba(255,255,255,0.5)] hover:shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.7)] transition-all active:scale-95 group">
-                       <PlusCircle className="w-5 h-5 text-[#1A1A3A] group-hover:scale-110 transition-transform" /> Anunciar
-                    </button>
-                    <button onClick={() => { setIsDesktopMenuOpen(false); navigate('/mensajes'); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#E0E5EC] text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3),inset_-4px_-4px_8px_rgba(255,255,255,0.5)] hover:shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.7)] transition-all active:scale-95 group">
-                       <MessageCircle className="w-5 h-5 text-[#FFB400] group-hover:scale-110 transition-transform" /> Mensajes
-                    </button>
-                    <button onClick={() => { setIsDesktopMenuOpen(false); navigate('/perfil'); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#E0E5EC] text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3),inset_-4px_-4px_8px_rgba(255,255,255,0.5)] hover:shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.7)] transition-all active:scale-95 group">
-                       <LucideUser className="w-5 h-5 text-[#0056B3] group-hover:scale-110 transition-transform" /> Mi Perfil
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </div>
 
           </div>
@@ -316,7 +337,10 @@ const Header = forwardRef((props, ref) => {
             className={`bg-[#E0E5EC]/95 backdrop-blur-md ${isDesktopMenuOpen ? 'overflow-visible' : 'overflow-hidden'}`}
           >
             <div className="max-w-7xl mx-auto py-2">
-              <div className="flex items-center gap-3 overflow-x-auto py-2 px-5 w-full [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div 
+                ref={categoriesRef}
+                className="flex items-center gap-3 overflow-x-auto py-2 px-5 w-full [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              >
                 {dbCategories.map((cat, index) => {
                   const isActive = activeCategory === cat.id;
                   
