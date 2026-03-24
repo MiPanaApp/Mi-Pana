@@ -221,12 +221,6 @@ export default function Favorites() {
                 <p className="text-[#1A1A3A]/40 font-bold text-sm leading-relaxed max-w-[250px] mt-2">
                   Explora anuncios y guárdalos con el corazón para verlos más tarde.
                 </p>
-                <button
-                  onClick={() => navigate('/home')}
-                  className="mt-10 px-10 py-4 bg-[#1A1A3A] text-white rounded-2xl font-black text-[15px] shadow-[4px_4px_10px_rgba(163,177,198,0.8),-4px_-4px_10px_rgba(255,255,255,1)] active:scale-95 transition-all uppercase tracking-wide"
-                >
-                  Descubrir Panas
-                </button>
               </motion.div>
             )}
           </motion.div>
@@ -286,19 +280,15 @@ export default function Favorites() {
                  animate={{ opacity: 1 }}
                  className="flex flex-col items-center justify-center py-16 px-6 text-center"
                >
-                 <div className="w-24 h-24 bg-[#E0E5EC] rounded-full flex items-center justify-center shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] mb-6">
-                   <Search className="w-10 h-10 text-[#1A1A3A]/20" />
-                 </div>
-                 <h3 className="text-xl font-black text-[#1A1A3A] mb-2">Sin búsquedas recientes</h3>
-                 <p className="text-[#1A1A3A]/60 font-medium text-sm leading-relaxed max-w-[250px]">
+                 <img 
+                   src={emptyHammock} 
+                   alt="Sin búsquedas" 
+                   className="w-[240px] h-auto object-contain mb-2 drop-shadow-[0_10px_15px_rgba(0,0,0,0.05)]" 
+                 />
+                 <h3 className="text-xl font-black text-[#1A1A3A] mb-2 uppercase">Sin búsquedas recientes</h3>
+                 <p className="text-[#1A1A3A]/60 font-medium text-sm leading-relaxed max-w-[250px] mt-2">
                    El historial de lo que busques en "Descubrir Panas" aparecerá aquí.
                  </p>
-                 <button
-                  onClick={() => navigate('/home')}
-                  className="mt-8 px-8 py-3.5 bg-[#1A1A3A] text-white rounded-2xl font-black text-[15px] shadow-[4px_4px_10px_rgba(163,177,198,0.8),-4px_-4px_10px_rgba(255,255,255,1)] active:scale-95 transition-all"
-                >
-                  Buscar ahora
-                </button>
                </motion.div>
             )}
           </motion.div>
