@@ -67,9 +67,11 @@ export async function markMessagesAsRead({ conversationId, userId }) {
   });
 
   // Marcar mensajes no leídos del otro como "read"
-  const q = query(msgRef, where('senderId', '!=', userId), where('status', '!=', 'read'));
+  const q = query(msgRef, where('senderId', '!=', userId));
   const snap = await getDocs(q);
-  const updates = snap.docs.map(d => updateDoc(d.ref, { status: 'read' }));
+  const updates = snap.docs
+    .filter(d => d.data().status !== 'read')
+    .map(d => updateDoc(d.ref, { status: 'read' }));
   await Promise.all(updates);
 }
 

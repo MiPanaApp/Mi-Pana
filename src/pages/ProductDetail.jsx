@@ -113,7 +113,9 @@ export default function ProductDetail() {
          try {
             await navigator.share(shareData);
          } catch (err) {
-            console.log('Error al compartir:', err);
+            if (err.name !== 'AbortError') {
+               console.error('Error al compartir:', err);
+            }
          }
       } else {
          try {
