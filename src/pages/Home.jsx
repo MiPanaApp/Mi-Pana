@@ -4,9 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ProductCard from '../components/ProductCard';
 import FilterPanel from '../components/ui/FilterPanel';
 import { useStore } from '../store/useStore';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { searchProducts } from '../services/algolia';
+import { normalizeText } from '../utils/textUtils';
 import { MOCK_PRODUCTS } from '../data/mockProducts';
 import emptyHammock from '../assets/empty_hammock.png';
 
@@ -39,49 +39,43 @@ export default function Home() {
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [usingAlgolia, setUsingAlgolia] = useState(false);
-
   useEffect(() => {
     const fetch = async () => {
       setLoading(true);
       const hasSearch = !!filters.searchQuery;
 
-      if (hasSearch) {
-        // --- Búsqueda con Algolia (solo cuando hay texto) ---
-        try {
-          setUsingAlgolia(true);
-          const result = await searchProducts({
-            query: filters.searchQuery,
-            category: activeCategory !== 'Todas' ? activeCategory : '',
-            verified: filters.onlyVerified || null,
-          });
-          // Mezclar resultados de Algolia con mocks filtrados localmente
-          const mocks = MOCK_PRODUCTS;
-          const q = filters.searchQuery.toLowerCase();
-          const filteredMocks = mocks.filter(p =>
-            p.name?.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q)
+      try {
+        let q;
+        const productsRef = collection(db, 'products');
+
+        if (hasSearch) {
+          const searchTerm = normalizeText(filters.searchQuery);
+          q = query(
+            productsRef, 
+            where('search_indexes', 'array-contains', searchTerm)
           );
-          setProducts([...result.hits, ...filteredMocks]);
-        } catch (err) {
-          console.error("Error Algolia:", err);
-          const mocks = MOCK_PRODUCTS;
-          setProducts(mocks);
+        } else {
+          q = query(productsRef);
         }
-      } else {
-        // --- Carga inicial desde Firestore + Mocks (sin búsqueda) ---
-        try {
-          setUsingAlgolia(false);
-          const snap = await getDocs(collection(db, 'products'));
-          const firestoreData = snap.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-          const mocks = MOCK_PRODUCTS;
-          setProducts([...firestoreData, ...mocks]);
-        } catch (err) {
-          console.error("Error Firestore:", err);
-          const mocks = MOCK_PRODUCTS;
-          setProducts(mocks);
+
+        const snap = await getDocs(q);
+        const firestoreData = snap.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+        
+        let mocks = MOCK_PRODUCTS;
+        if (hasSearch) {
+          const s = normalizeText(filters.searchQuery);
+          mocks = mocks.filter(p => 
+            normalizeText(p.name).includes(s) || 
+            normalizeText(p.description).includes(s)
+          );
         }
+
+        setProducts([...firestoreData, ...mocks]);
+      } catch (err) {
+        console.error("Error fetching products:", err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     fetch();
   }, [filters.searchQuery, filters.onlyVerified, activeCategory]);
@@ -106,19 +100,27 @@ export default function Home() {
     const isLocalFilterActive = filters.location?.level1 || filters.location?.level2;
     if (!isLocalFilterActive) {
       result = result.filter(p => {
-        // Asumimos 'ES' para mocks o productos sin país para no romper la vista
+        // Tolerancia para data mock o recién creada sin país exacto
         const countryId = p.location?.country || p.country || 'ES'; 
+        const isSp = ['ES', 'España', 'Spain', 'es'].includes(countryId);
+        const isCo = ['CO', 'Colombia', 'co'].includes(countryId);
+        if (selectedCountry === 'ES') return isSp;
+        if (selectedCountry === 'CO') return isCo;
         return countryId === selectedCountry;
       });
     }
 
-    if (!usingAlgolia) {
-      if (activeCategory && activeCategory !== 'Todas') result = result.filter(p => p.category === activeCategory);
-      if (filters.onlyVerified) result = result.filter(p => p.verified);
-      if (filters.searchQuery) {
-        const q = filters.searchQuery.toLowerCase();
-        result = result.filter(p => p.name?.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q));
-      }
+    if (activeCategory && activeCategory !== 'Todas') {
+      const activeCatNorm = normalizeText(activeCategory);
+      result = result.filter(p => normalizeText(p.category) === activeCatNorm);
+    }
+    if (filters.onlyVerified) result = result.filter(p => p.verified);
+    if (filters.searchQuery) {
+      const q = normalizeText(filters.searchQuery);
+      result = result.filter(p => 
+        normalizeText(p.name).includes(q) || 
+        normalizeText(p.description).includes(q)
+      );
     }
 
     if (filters.price?.min) result = result.filter(p => parseFloat(p.price) >= parseFloat(filters.price.min));
@@ -152,19 +154,27 @@ export default function Home() {
 
           if (isACapital !== isBCapital) return isACapital - isBCapital;
           
-          // Secondary sort: Recents (createdAt)
-          const dateA = a.createdAt?.seconds || 0;
-          const dateB = b.createdAt?.seconds || 0;
+          // Secondary sort: Recents (createdAt). Handle standard Timestamp or Date or string
+          const getMillis = (dateObj) => {
+             if (!dateObj) return 0;
+             if (dateObj.toMillis) return dateObj.toMillis();
+             if (dateObj.seconds) return dateObj.seconds * 1000;
+             if (typeof dateObj === 'string' || typeof dateObj === 'number') return new Date(dateObj).getTime();
+             if (dateObj instanceof Date) return dateObj.getTime();
+             return 0;
+          };
+          const dateA = getMillis(a.createdAt);
+          const dateB = getMillis(b.createdAt);
           return dateB - dateA;
         });
     }
 
     return result;
-  }, [products, filters, activeCategory, sortBy, usingAlgolia, selectedCountry]);
+  }, [products, filters, activeCategory, sortBy, selectedCountry]);
 
   return (
     <div className="max-w-7xl mx-auto pb-10 transition-all overflow-x-clip">
-      <div className="mt-2 md:mt-4">
+      <div className="-mt-3.5 md:mt-4">
         <div className="flex flex-row items-center justify-between w-full px-4 mb-3">
           <h2 className="flex-1 min-w-0 font-black text-[#1A1A3A] text-base sm:text-lg truncate pr-2 drop-shadow-sm">
             Panas, para ti

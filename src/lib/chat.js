@@ -1,12 +1,12 @@
 import {
   collection, doc, addDoc, updateDoc, getDoc, getDocs,
   query, where, orderBy, onSnapshot, serverTimestamp,
-  arrayUnion, setDoc, increment
+  arrayUnion, setDoc, increment, deleteDoc, writeBatch
 } from 'firebase/firestore';
 import { db } from './firebase';
 
 // ─── Crear o recuperar conversación ───────────────────────────────────────────
-export async function getOrCreateConversation({ buyerId, sellerId, productId, productName, productCategory, sellerName, sellerAvatar }) {
+export async function getOrCreateConversation({ buyerId, sellerId, productId, productName, productCategory, productImage, sellerName, sellerAvatar }) {
   // ID determinista para evitar duplicados
   const ids = [buyerId, sellerId].sort();
   const conversationId = `${ids[0]}_${ids[1]}_${productId}`;
@@ -19,6 +19,7 @@ export async function getOrCreateConversation({ buyerId, sellerId, productId, pr
       productId,
       productName,
       productCategory: productCategory || '',
+      productImage: productImage || '',
       sellerName,
       sellerAvatar: sellerAvatar || '',
       lastMessage: '',
@@ -111,4 +112,21 @@ export function subscribeToConversations(userId, callback) {
     const convs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     callback(convs);
   });
+}
+// ─── Borrar conversación (individual) ──────────────────────────────────────────
+export async function deleteConversation(conversationId) {
+  const ref = doc(db, 'conversations', conversationId);
+  await deleteDoc(ref);
+}
+
+// ─── Borrar TODAS las conversaciones de un usuario ────────────────────────────
+export async function deleteAllConversations(userId) {
+  const q = query(
+    collection(db, 'conversations'),
+    where('participants', 'array-contains', userId)
+  );
+  const snap = await getDocs(q);
+  const batch = writeBatch(db);
+  snap.docs.forEach(d => batch.delete(d.ref));
+  await batch.commit();
 }

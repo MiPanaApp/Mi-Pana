@@ -194,7 +194,7 @@ export default function Chat() {
     <div className="flex flex-col h-screen bg-[#E0E5EC] overflow-hidden">
 
       {/* ── Header ── */}
-      <div className="bg-[#1A1A3A] text-white px-4 pt-safe pb-4 pt-4 flex items-center gap-3 z-20 rounded-b-3xl shadow-lg flex-shrink-0">
+      <div className="bg-[#1A1A3A] text-white px-4 pt-safe pb-4 pt-[30px] flex items-center gap-3 z-20 rounded-b-3xl shadow-lg flex-shrink-0">
         <button
           onClick={() => navigate(-1)}
           className="p-2 -ml-1 hover:bg-white/10 rounded-full transition-colors flex-shrink-0"
@@ -204,24 +204,28 @@ export default function Chat() {
 
         <div className="flex-1 min-w-0">
           <p className="font-black text-base leading-tight truncate">{otherName || '...'}</p>
-          <div className="flex items-center gap-1.5 mt-0.5 overflow-hidden">
-            {(() => {
-              const IconComp = getCategoryIcon(conversation?.productCategory) || FiPlus;
-              return <IconComp size={12} className="text-[#FFC200] flex-shrink-0" />;
-            })()}
+          <div className="flex items-center mt-0.5 overflow-hidden">
             <p className="text-[11px] text-[#FFC200] font-bold truncate">
-              {conversation?.productCategory ? `${conversation.productCategory} / ` : ''}{conversation?.productName || '...'}
+              {conversation?.productName || '...'}
             </p>
           </div>
         </div>
 
-        {/* Online / typing indicator */}
-        <div className="flex-shrink-0">
-          {otherIsTyping ? (
-            <span className="text-[11px] text-white/60 font-bold italic animate-pulse">escribiendo...</span>
-          ) : (
-            <div className="w-2.5 h-2.5 rounded-full bg-[#4CAF50] shadow-lg shadow-green-500/50" />
+        {/* Thumbnail del Producto */}
+        <div className="flex-shrink-0 flex items-center gap-3">
+          {otherIsTyping && (
+            <span className="text-[11px] text-[#FFC200] font-bold italic animate-pulse">escribiendo...</span>
           )}
+          <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-[0_4px_10px_rgba(0,0,0,0.3)] border-2 border-white/10 bg-white/5 flex-shrink-0">
+            <img 
+              src={conversation?.productImage || 'https://images.unsplash.com/photo-1599566150163-29194dcaad36'} 
+              className="w-full h-full object-cover" 
+              alt="Producto"
+              onError={(e) => {
+                e.target.src = 'https://images.unsplash.com/photo-1599566150163-29194dcaad36';
+              }}
+            />
+          </div>
         </div>
       </div>
 
@@ -329,7 +333,7 @@ export default function Chat() {
       </AnimatePresence>
 
       {/* ── Input Area ── */}
-      <div className="bg-[#E0E5EC] border-t border-[#d0d8e4] px-3 py-3 pb-safe flex-shrink-0">
+      <div className="bg-[#E0E5EC] border-t border-[#d0d8e4] px-3 pt-3 pb-[30px] pb-safe flex-shrink-0">
         <div className="flex items-center gap-2">
           {/* Emoji button */}
           <button

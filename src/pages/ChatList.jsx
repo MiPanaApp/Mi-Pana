@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageCircle, Search } from 'lucide-react';
+import { MessageCircle, Search, Trash2, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../store/useAuthStore';
-import { subscribeToConversations } from '../lib/chat';
+import { subscribeToConversations, deleteConversation, deleteAllConversations } from '../lib/chat';
 import { getCategoryIcon } from '../data/categories';
 import { FiPlus } from 'react-icons/fi';
 
@@ -49,19 +49,50 @@ export default function ChatList() {
 
   const totalUnread = conversations.reduce((acc, c) => acc + (c.unreadCount?.[user?.uid] || 0), 0);
 
+  const handleDeleteAll = async () => {
+    if (window.confirm('¿Estás seguro de que quieres borrar TODAS tus conversaciones?')) {
+      try {
+        await deleteAllConversations(user?.uid);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
+
+  const handleDeleteOne = async (e, convId) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (window.confirm('¿Borrar esta conversación?')) {
+      try {
+        await deleteConversation(convId);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#E0E5EC] pb-24">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-[#E0E5EC]/90 backdrop-blur-xl px-5 pt-5 pb-3">
+        <div className="sticky top-0 z-10 bg-[#E0E5EC]/90 backdrop-blur-xl px-5 pt-0 pb-3">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-2xl font-black text-[#1A1A3A]">Mensajes</h1>
+              <h1 className="text-2xl font-black text-[#1A1A3A] -mt-1 md:mt-0">Mensajes</h1>
               {totalUnread > 0 && (
                 <p className="text-xs font-bold text-[#D90429]">{totalUnread} sin leer</p>
               )}
             </div>
-            <div />
+            <div className="flex items-center gap-3">
+              {conversations.length > 0 && (
+                <button 
+                  onClick={handleDeleteAll}
+                  className="flex items-center gap-1 px-3 py-1.5 bg-[#E8E8F0] shadow-[3px_3px_6px_rgba(163,177,198,0.4),-3px_-3px_6px_rgba(255,255,255,0.7)] rounded-xl text-[10px] font-black text-[#D90429] active:scale-95 transition-transform"
+                >
+                  <Trash2 size={12} /> Borrar todo
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Buscador */}
@@ -108,7 +139,7 @@ export default function ChatList() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.05 }}
                     onClick={() => navigate(`/chat/${conv.id}`)}
-                    className="flex flex-col cursor-pointer active:opacity-70 transition-all group"
+                    className="flex flex-col cursor-pointer active:opacity-70 transition-all group relative"
                   >
                     <div className="flex items-center gap-4 py-3">
                       {/* Avatar */}
@@ -135,7 +166,7 @@ export default function ChatList() {
                           <p className={`font-black text-sm text-[#1A1A3A] truncate pr-2 ${unread > 0 ? '' : 'opacity-70'}`}>
                             {otherName}
                           </p>
-                          <span className="text-[10px] text-[#D90429] font-bold whitespace-nowrap">
+                          <span className="text-[10px] text-[#1A1A3A] font-black whitespace-nowrap opacity-60">
                             {timeAgo(conv.lastMessageTime)}
                           </span>
                         </div>

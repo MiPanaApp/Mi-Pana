@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/useAuthStore';
 
+import ScrollToTop from './components/ScrollToTop';
 import SplashScreen from './components/ui/SplashScreen';
 import Onboarding from './components/ui/Onboarding';
 import LoginScreen from './pages/auth/LoginScreen';
@@ -34,6 +35,7 @@ function App() {
 
   return (
     <Router>
+      <ScrollToTop />
       <Routes>
         {/* Main Auth Flow */}
         <Route path="/login" element={<LoginScreen />} />

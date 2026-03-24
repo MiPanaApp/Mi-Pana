@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Users, ShoppingBag, MessageSquare, Star, ShieldCheck, AlertCircle,
   Home, BarChart2, Layers, Activity, Search, Bell, Settings, LogOut
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { db } from '../../services/firebase';
+import { collection, getDocs, query, limit } from 'firebase/firestore';
 
 const METRICS = [
   { id: 1, label: "Panas Activos", val: "1,248", trend: "+5.2%", isPositive: true },
@@ -29,6 +31,48 @@ const COLORS = ['#8B5CF6', '#06B6D4', '#F43F5E', '#10B981', '#F59E0B'];
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalProducts: 0,
+    categories: []
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const usersSnap = await getDocs(collection(db, "users"));
+        const productsSnap = await getDocs(collection(db, "products"));
+        
+        const catMap = {};
+        productsSnap.docs.forEach(doc => {
+          const cat = doc.data().category || 'Otros';
+          catMap[cat] = (catMap[cat] || 0) + 1;
+        });
+
+        const catData = Object.keys(catMap).map(name => ({
+          name,
+          value: catMap[name]
+        })).sort((a,b) => b.value - a.value).slice(0, 5);
+
+        setStats({
+          totalUsers: usersSnap.size,
+          totalProducts: productsSnap.size,
+          categories: catData
+        });
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching stats:", err);
+      }
+    }
+    fetchStats();
+  }, []);
+
+  const metrics = [
+    { id: 1, label: "Panas Activos", val: stats.totalUsers.toLocaleString(), trend: "+5.2%", isPositive: true },
+    { id: 2, label: "Ofertas", val: stats.totalProducts.toLocaleString(), trend: "+1.1%", isPositive: true },
+    { id: 3, label: "Chats", val: "89", trend: "-2.0%", isPositive: false },
+  ];
 
   return (
     <div className="min-h-screen bg-[#F4F7FE] flex p-4 lg:p-6 font-sans overflow-hidden">
@@ -98,7 +142,7 @@ export default function AdminDashboard() {
 
             {/* Top Metrics Row */}
             <div className="xl:col-span-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-              {METRICS.map(m => (
+              {metrics.map(m => (
                 <div key={m.id} className="bg-white p-6 rounded-[2rem] shadow-[0_15px_40px_rgba(0,0,0,0.03)] flex flex-col justify-between border border-gray-50">
                   <div className="flex justify-between items-start">
                     <span className="text-gray-800 font-black text-[28px] tracking-tight">{m.val}</span>
@@ -135,19 +179,20 @@ export default function AdminDashboard() {
                   <div className="h-40 w-full relative">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
-                        <Pie data={PIEDATA} innerRadius={45} outerRadius={65} paddingAngle={8} dataKey="value" stroke="none">
-                          {PIEDATA.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                        <Pie data={stats.categories} innerRadius={45} outerRadius={65} paddingAngle={8} dataKey="value" stroke="none">
+                          {stats.categories.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
                         </Pie>
                         <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 15px rgba(0,0,0,0.08)' }} />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
                   <div className="flex flex-wrap gap-x-4 gap-y-2 mt-4 justify-center">
-                    <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-[#8B5CF6]"></div><span className="text-[10px] text-gray-500 font-bold">Comida</span></div>
-                    <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-[#06B6D4]"></div><span className="text-[10px] text-gray-500 font-bold">Ventas</span></div>
-                    <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-[#F43F5E]"></div><span className="text-[10px] text-gray-500 font-bold">Servicios</span></div>
-                    <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-[#10B981]"></div><span className="text-[10px] text-gray-500 font-bold">Inmobiliaria</span></div>
-                    <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]"></div><span className="text-[10px] text-gray-500 font-bold">Legal</span></div>
+                    {stats.categories.map((cat, i) => (
+                      <div key={cat.name} className="flex items-center gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }}></div>
+                        <span className="text-[10px] text-gray-500 font-bold">{cat.name}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
 

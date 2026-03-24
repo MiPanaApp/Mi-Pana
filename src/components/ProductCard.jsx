@@ -6,7 +6,7 @@ import { useStore } from '../store/useStore';
 export default function ProductCard({ product }) {
   const navigate = useNavigate();
   const { favorites, toggleFavorite } = useStore();
-  const isFavorite = favorites.includes(product.id);
+  const isFavorite = (favorites || []).some(id => String(id) === String(product.id));
 
   return (
     <motion.div 

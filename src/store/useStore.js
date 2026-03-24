@@ -31,11 +31,15 @@ export const useStore = create(
       setSearchQuery: (query) => set((state) => ({
         filters: { ...state.filters, searchQuery: query }
       })),
-      toggleFavorite: (productId) => set((state) => ({
-        favorites: state.favorites.includes(productId)
-          ? state.favorites.filter(id => id !== productId)
-          : [...state.favorites, productId] // Se añaden al final, por lo que el más nuevo está al final (o podemos hacer [productId, ...state.favorites] para que sea al principio, pero así ya estaba. Lo dejamos así y revertimos al mostrar)
-      })),
+      toggleFavorite: (productId) => set((state) => {
+        const idStr = String(productId);
+        const exists = state.favorites.some(id => String(id) === idStr);
+        return {
+          favorites: exists
+            ? state.favorites.filter(id => String(id) !== idStr)
+            : [...state.favorites, productId]
+        };
+      }),
       addRecentSearch: (query) => set((state) => {
         if (!query.trim()) return state;
         // Agrega al principio, elimina duplicados, mantiene máx 10
@@ -46,6 +50,7 @@ export const useStore = create(
         recentSearches: state.recentSearches.filter(s => s !== query)
       })),
       clearRecentSearches: () => set({ recentSearches: [] }),
+      clearFavorites: () => set({ favorites: [] }),
       
       clearLocation: () => set({ selectedCountry: 'ES', selectedRegion: '' }),
     }),

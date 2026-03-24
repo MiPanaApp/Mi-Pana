@@ -5,11 +5,12 @@ import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
 import { db } from '../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import { MOCK_PRODUCTS } from '../data/mockProducts';
 import emptyHammock from '../assets/empty_hammock.png';
 
 export default function Favorites() {
   const navigate = useNavigate();
-  const { favorites, toggleFavorite, recentSearches, removeRecentSearch, clearRecentSearches, setSearchQuery } = useStore();
+  const { favorites, toggleFavorite, clearFavorites, recentSearches, removeRecentSearch, clearRecentSearches, setSearchQuery } = useStore();
   const [activeTab, setActiveTab] = useState('anuncios'); // 'anuncios' | 'busquedas'
   
   const [products, setProducts] = useState([]);
@@ -29,19 +30,40 @@ export default function Favorites() {
       }
       
       try {
-        setLoading(true);
-        // Cargar productos en paralelo
-        const promises = favorites.map(id => getDoc(doc(db, 'products', id)));
+        // Solo mostramos loading si la lista está vacía (carga inicial)
+        if (products.length === 0) setLoading(true);
+        
+        // Normalizamos IDs para comparar de forma segura (strings)
+        const favStrings = favorites.map(f => String(f));
+        
+        // Mocks
+        const mockFavorites = MOCK_PRODUCTS.filter(p => favStrings.includes(String(p.id)));
+        
+        // Firestore
+        const firestoreIds = favStrings.filter(id => !MOCK_PRODUCTS.some(m => String(m.id) === id));
+        const promises = firestoreIds.map(id => getDoc(doc(db, 'products', id)));
         const docsSnap = await Promise.all(promises);
         
-        const fetchedProducts = docsSnap
+        const firestoreProducts = docsSnap
           .filter(docSnap => docSnap.exists())
-          .map(docSnap => ({ id: docSnap.id, ...docSnap.data() }))
-          // Invertir para mostrar los agregados más recientemente primero
-          .reverse();
+          .map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+
+        const allProducts = [...firestoreProducts, ...mockFavorites];
+        
+        // Mantener orden y asegurar unicidad
+        const uniqueProductsMap = new Map();
+        allProducts.forEach(p => {
+           if (!uniqueProductsMap.has(String(p.id))) {
+              uniqueProductsMap.set(String(p.id), p);
+           }
+        });
+
+        const sortedProducts = Array.from(uniqueProductsMap.values()).sort((a, b) => {
+           return favStrings.indexOf(String(b.id)) - favStrings.indexOf(String(a.id));
+        });
 
         if (isMounted) {
-          setProducts(fetchedProducts);
+          setProducts(sortedProducts);
         }
       } catch (error) {
         console.error("Error fetching favorites:", error);
@@ -49,11 +71,11 @@ export default function Favorites() {
         if (isMounted) setLoading(false);
       }
     };
-
+ 
     fetchFavorites();
-    
+ 
     return () => { isMounted = false; };
-  }, [favorites]);
+  }, [favorites.length]); // eslint-disable-line react-hooks/exhaustive-deps
   
   const handleSearchClick = (query) => {
     setSearchQuery(query);
@@ -61,8 +83,8 @@ export default function Favorites() {
   };
 
   return (
-    <div className="bg-[#E0E5EC] min-h-screen font-sans pb-24 pt-10 md:pt-14 px-5 max-w-3xl mx-auto overflow-x-hidden">
-      <h1 className="text-3xl md:text-4xl font-black text-[#1A1A3A] mb-8 drop-shadow-sm px-1">
+    <div className="bg-[#E0E5EC] min-h-screen font-sans pb-24 pt-0 md:pt-6 px-5 max-w-3xl mx-auto overflow-x-hidden">
+      <h1 className="text-3xl md:text-4xl font-black text-[#1A1A3A] mb-8 drop-shadow-sm px-1 -mt-1 md:mt-0">
         Tus Favoritos
       </h1>
 
@@ -115,8 +137,21 @@ export default function Favorites() {
                  </div>
               ))
             ) : products.length > 0 ? (
-              /* Lista de Favoritos Activos */
-              products.map((product) => (
+              <>
+                <div className="flex justify-between items-center px-3 mb-1">
+                  <span className="text-[11px] font-bold text-[#1A1A3A]/50 tracking-tighter">Tus guardados</span>
+                  <button 
+                    onClick={() => {
+                        clearFavorites();
+                        setProducts([]);
+                    }}
+                    className="text-[11px] font-bold text-[#D90429] opacity-80 hover:opacity-100 transition-colors tracking-tighter px-2 py-1 rounded-md hover:bg-white/40"
+                  >
+                    Borrar todo
+                  </button>
+                </div>
+                {/* Lista de Favoritos Activos */}
+                {products.map((product) => (
                 <motion.div 
                   key={product.id}
                   layout
@@ -136,7 +171,7 @@ export default function Favorites() {
                   </div>
 
                   {/* Info (Derecha) */}
-                  <div className="flex-1 flex flex-col justify-center py-1.5 pr-10">
+                  <div className="flex-1 flex flex-col justify-center py-1.5 pr-12">
                     <h3 className="font-bold text-[#1A1A3A] text-[14px] md:text-[15px] leading-tight line-clamp-2 md:mb-1 drop-shadow-sm">
                       {product.name}
                     </h3>
@@ -156,19 +191,20 @@ export default function Favorites() {
                     </div>
                   </div>
                   
-                  {/* Botón corazón para quitar de favoritos */}
+                  {/* Botón X para quitar de favoritos (más pequeño y sin solapamiento) */}
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();
                       toggleFavorite(product.id);
-                      setProducts(prev => prev.filter(p => p.id !== product.id)); // Optimistic UI update
+                      setProducts(prev => prev.filter(p => String(p.id) !== String(product.id)));
                     }}
-                    className="absolute top-4 right-4 p-2.5 bg-[#E0E5EC]/80 backdrop-blur-md rounded-full shadow-[inset_2px_2px_4px_rgba(163,177,198,0.4),inset_-2px_-2px_4px_rgba(255,255,255,0.7)] hover:shadow-none active:scale-90 transition-all z-10 text-[#D90429]"
+                    className="absolute top-3 right-3 p-1.5 bg-[#E0E5EC] rounded-full shadow-[2px_2px_4px_rgba(163,177,198,0.5),-2px_-2px_4px_rgba(255,255,255,0.7)] hover:shadow-[inset_2px_2px_4px_rgba(163,177,198,0.4),inset_-2px_-2px_4px_rgba(255,255,255,0.7)] active:scale-90 transition-all z-10 text-[#1A1A3A]/40 hover:text-[#D90429]"
                   >
-                    <Heart size={18} className="fill-[#D90429] drop-shadow-sm" />
+                    <X size={13} strokeWidth={3} />
                   </button>
                 </motion.div>
-              ))
+                ))}
+              </>
             ) : (
               /* Estado Vacío de Anuncios Favoritos */
               <motion.div 
@@ -207,10 +243,10 @@ export default function Favorites() {
             {recentSearches.length > 0 ? (
               <>
                 <div className="flex justify-between items-center px-3 mb-1">
-                  <span className="text-[11px] font-bold text-[#1A1A3A]/50 uppercase tracking-widest">Historial</span>
+                  <span className="text-[11px] font-bold text-[#1A1A3A]/50 tracking-tighter">Historial</span>
                   <button 
                     onClick={clearRecentSearches}
-                    className="text-[11px] font-bold text-[#D90429] opacity-80 hover:opacity-100 transition-colors uppercase tracking-widest px-2 py-1 rounded-md hover:bg-white/40"
+                    className="text-[11px] font-bold text-[#D90429] opacity-80 hover:opacity-100 transition-colors tracking-tighter px-2 py-1 rounded-md hover:bg-white/40"
                   >
                     Borrar todo
                   </button>

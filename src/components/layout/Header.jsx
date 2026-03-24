@@ -6,7 +6,7 @@ import { useStore } from '../../store/useStore';
 import logoTexto from '../../assets/solotexto.png';
 import useAuthFlow from '../../hooks/useAuthFlow';
 import { db } from '../../services/firebase';
-import { doc, getDoc, collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { CATEGORIES as DEFAULT_CATEGORIES, getCategoryIcon, sortCategories } from '../../data/categories';
 import { FiPlus } from 'react-icons/fi';
 
@@ -79,40 +79,83 @@ const Header = forwardRef((props, ref) => {
   }, []);
 
   useEffect(() => {
-    async function fetchUserName() {
+    async function fetchUserData() {
       if (user?.uid) {
         try {
-          // Intentamos siempre buscar en Firestore primero para ver el nombre real registrado
           const docRef = doc(db, "users", user.uid);
           const docSnap = await getDoc(docRef);
           
-          if (docSnap.exists() && docSnap.data().name) {
-            setUserName(docSnap.data().name);
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            if (data.name) setUserName(data.name);
+
+            // Initialize app state to user's registered country automatically
+            if (data.country && !sessionStorage.getItem('country_initialized')) {
+              let code = 'ES';
+              if (data.country.includes('Colombia')) code = 'CO';
+              else if (data.country.includes('Estados Unidos')) code = 'US';
+              else if (data.country.includes('Chile')) code = 'CL';
+              else if (data.country.includes('Panamá')) code = 'PA';
+              else if (data.country.includes('República Dominicana')) code = 'DO';
+              else if (data.country.includes('Argentina')) code = 'AR';
+
+              setCountry(code);
+              if (data.region) {
+                setRegion(data.region);
+                setFilters({ ...filters, location: { level1: data.region, level2: data.region, level3: '' } });
+              }
+              sessionStorage.setItem('country_initialized', 'true');
+            }
             return;
           }
 
-          // Si no hay doc en Firestore pero estamos en bypass, usamos el displayName de prueba
           if (import.meta.env.VITE_AUTH_BYPASS === 'true') {
             setUserName(user.displayName?.split(' ')[0] || 'Pana');
             return;
           }
           
-          // Si no hay doc y no es bypass, intentamos usar el displayName de Firebase Auth
           if (user.displayName) {
             setUserName(user.displayName.split(' ')[0]);
           } else {
             setUserName('');
           }
         } catch (err) {
-          console.error("Error fetching user name:", err);
+          console.error("Error fetching user data:", err);
           setUserName('Pana');
         }
       } else {
         setUserName('');
       }
     }
-    fetchUserName();
+    fetchUserData();
   }, [user]);
+
+  const handleCountryChange = async (countryCode, defaultRegion) => {
+    setCountry(countryCode);
+    setRegion(defaultRegion);
+    setFilters({ location: { level1: defaultRegion, level2: defaultRegion, level3: '' } });
+    setIsCountryOpen(false);
+
+    if (user?.uid && import.meta.env.VITE_AUTH_BYPASS !== 'true') {
+      try {
+        const countryNames = {
+          'ES': '🇪🇸 España',
+          'CO': '🇨🇴 Colombia',
+          'US': '🇺🇸 Estados Unidos',
+          'CL': '🇨🇱 Chile',
+          'PA': '🇵🇦 Panamá',
+          'DO': '🇩🇴 República Dominicana',
+          'AR': '🇦🇷 Argentina'
+        };
+        await updateDoc(doc(db, "users", user.uid), {
+          country: countryNames[countryCode] || countryNames['ES'],
+          region: defaultRegion
+        });
+      } catch (err) {
+        console.error("Error saving smart country pref:", err);
+      }
+    }
+  };
 
   // Close country dropdown on outside click
   useEffect(() => {
@@ -188,12 +231,7 @@ const Header = forwardRef((props, ref) => {
                         className="absolute top-full left-0 mt-4 bg-[#E0E5EC] rounded-3xl shadow-[8px_8px_16px_rgba(163,177,198,0.7),-8px_-8px_16px_rgba(255,255,255,0.9)] border-[0.5px] border-white/60 p-2.5 z-[1001] flex flex-col gap-3"
                       >
                         <button
-                          onClick={() => {
-                            setCountry('ES');
-                            setRegion('Madrid');
-                            setFilters({ location: { level1: 'Madrid', level2: 'Madrid', level3: '' } });
-                            setIsCountryOpen(false);
-                          }}
+                          onClick={() => handleCountryChange('ES', 'Madrid')}
                           className={`w-12 h-12 flex items-center justify-center rounded-full transition-all ${selectedCountry === 'ES' ? 'shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.9)]' : 'shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.8)] hover:scale-105 active:scale-95'}`}
                         >
                           <div className="w-6 h-6 rounded-full overflow-hidden flex flex-col shadow-sm">
@@ -203,12 +241,7 @@ const Header = forwardRef((props, ref) => {
                           </div>
                         </button>
                         <button
-                          onClick={() => {
-                            setCountry('CO');
-                            setRegion('Bogotá');
-                            setFilters({ location: { level1: 'Cundinamarca', level2: 'Bogotá', level3: '' } });
-                            setIsCountryOpen(false);
-                          }}
+                          onClick={() => handleCountryChange('CO', 'Bogotá')}
                           className={`w-12 h-12 flex items-center justify-center rounded-full transition-all ${selectedCountry === 'CO' ? 'shadow-[inset_4px_4px_8_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.9)]' : 'shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.8)] hover:scale-105 active:scale-95'}`}
                         >
                           <div className="w-6 h-6 rounded-full overflow-hidden flex flex-col shadow-sm">
@@ -310,7 +343,7 @@ const Header = forwardRef((props, ref) => {
                 <motion.div 
                   initial={{ opacity: 0, y: -5 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-1.5 self-end mr-[64px]"
+                  className="mt-1.5 self-end mr-0 md:mr-[64px]"
                 >
                   <p 
                     onClick={() => navigate('/perfil')}

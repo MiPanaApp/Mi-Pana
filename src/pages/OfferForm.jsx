@@ -1,6 +1,7 @@
 import { db } from '../lib/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { sortCategories } from '../data/categories';
+import { getWords, generateSubstrings } from '../utils/textUtils';
 
 const DEFAULT_CATEGORIES = ["Comida", "Envios", "Inmobiliaria", "Formación", "Deporte", "Empleo", "Servicios", "Ventas", "Legal", "Salud", "Otros"];
 
@@ -36,9 +37,44 @@ export default function OfferForm() {
     return () => clearTimeout(timer);
   }, [formValues]);
 
+  const processSearchData = (formData) => {
+    const searchSet = new Set();
+    
+    if (formData.keywords) {
+       const manualKeywords = formData.keywords.split(',').map(k => k.trim().toLowerCase()).filter(k => k.length > 0);
+       manualKeywords.forEach(k => searchSet.add(k));
+    }
+    
+    // Aplicamos prefijos al nombre de la oferta para búsqueda predictiva
+    getWords(formData.name).forEach(w => {
+       generateSubstrings(w).forEach(sub => searchSet.add(sub));
+    });
+    
+    getWords(formData.category).forEach(w => searchSet.add(w));
+    getWords(formData.description).forEach(w => searchSet.add(w));
+    getWords(formData.shortDesc).forEach(w => searchSet.add(w));
+    
+    if (formData.country) getWords(formData.country).forEach(w => searchSet.add(w));
+    if (formData.province) getWords(formData.province).forEach(w => searchSet.add(w));
+    if (formData.municipality) getWords(formData.municipality).forEach(w => searchSet.add(w));
+    if (formData.location) {
+       if (formData.location.country) getWords(formData.location.country).forEach(w => searchSet.add(w));
+       if (formData.location.level1) getWords(formData.location.level1).forEach(w => searchSet.add(w));
+       if (formData.location.level2) getWords(formData.location.level2).forEach(w => searchSet.add(w));
+    }
+    
+    return Array.from(searchSet);
+  };
+
   const onSubmit = (data) => {
     console.log("Submitting to Firebase...", data);
-    // Here we would upload to Firebase Storage & Firestore
+    
+    const search_indexes = processSearchData(data);
+    const finalData = { ...data, search_indexes };
+    
+    console.log("Data ready to save with search_indexes:", finalData);
+    // Here we would upload to Firebase Storage & Firestore using finalData
+    
     localStorage.removeItem('mipana-draft');
     alert("¡Oferta publicada exitosamente! 🎉");
   };

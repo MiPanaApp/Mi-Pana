@@ -39,65 +39,91 @@ export default function ProductDetail() {
    const [reportReasons, setReportReasons] = useState([]);
    const [isReporting, setIsReporting] = useState(false);
    const [reportSuccess, setReportSuccess] = useState(false);
-   
+
    const { user } = useAuthStore();
    const [startingChat, setStartingChat] = useState(false);
 
    const handleStartChat = async () => {
-     if (!user) { navigate('/login'); return; }
-     if (product.userId && user.uid === product.userId) return; // No chatear consigo mismo
-     setStartingChat(true);
-     try {
-       const conversationId = await getOrCreateConversation({
-         buyerId: user.uid,
-         sellerId: product.userId,
-         productId: product.id,
-         productName: product.name,
-         productCategory: product.category || 'Otros',
-         sellerName: product.userName || 'Pana',
-         sellerAvatar: '',
-       });
-       navigate(`/chat/${conversationId}`);
-     } catch (err) {
-       console.error('Error iniciando chat:', err);
-     } finally {
-       setStartingChat(false);
-     }
+      if (!user) { navigate('/login'); return; }
+      if (product.userId && user.uid === product.userId) return; // No chatear consigo mismo
+      setStartingChat(true);
+      try {
+         const conversationId = await getOrCreateConversation({
+            buyerId: user.uid,
+            sellerId: product.userId || 'mock-pana-seller',
+            productId: product.id,
+            productName: product.name,
+            productCategory: product.category || 'Otros',
+            productImage: product.image || '',
+            sellerName: product.userName || 'Pana',
+            sellerAvatar: '',
+         });
+         navigate(`/chat/${conversationId}`);
+      } catch (err) {
+         console.error('Error iniciando chat:', err);
+         alert('No se pudo iniciar el chat. Intenta de nuevo más tarde.');
+      } finally {
+         setStartingChat(false);
+      }
    };
-   
+
    const REPORT_REASONS = [
-     "Está repetido",
-     "La categoría es incorrecta",
-     "Ya está vendido",
-     "Es un profesional",
-     "El teléfono es incorrecto",
-     "Contenido ilegal",
-     "Es una estafa",
-     "Comentarios ofensivos o discriminatorios"
+      "Está repetido",
+      "La categoría es incorrecta",
+      "Ya está vendido",
+      "Es un profesional",
+      "El teléfono es incorrecto",
+      "Contenido ilegal",
+      "Es una estafa",
+      "Comentarios ofensivos o discriminatorios"
    ];
 
    const handleReportSubmit = async () => {
-     if (reportReasons.length === 0) return;
-     setIsReporting(true);
-     try {
-       await addDoc(collection(db, 'reports'), {
-         productId: product.id,
-         productName: product.name,
-         reasons: reportReasons,
-         createdAt: new Date(),
-         status: 'pending',
-       });
-       setReportSuccess(true);
-       setTimeout(() => {
-         setIsReportModalOpen(false);
-         setReportSuccess(false);
-         setReportReasons([]);
-       }, 3000);
-     } catch (error) {
-       console.error("Error reporting ad:", error);
-     } finally {
-       setIsReporting(false);
-     }
+      if (reportReasons.length === 0) return;
+      setIsReporting(true);
+      try {
+         await addDoc(collection(db, 'reports'), {
+            productId: product.id,
+            productName: product.name,
+            reasons: reportReasons,
+            createdAt: new Date(),
+            status: 'pending',
+         });
+         setReportSuccess(true);
+         setTimeout(() => {
+            setIsReportModalOpen(false);
+            setReportSuccess(false);
+            setReportReasons([]);
+         }, 3000);
+      } catch (error) {
+         console.error("Error reporting ad:", error);
+      } finally {
+         setIsReporting(false);
+      }
+   };
+
+   const handleShare = async () => {
+      const shareData = {
+         title: product.name,
+         text: `Mira lo que encontré en Mi Pana: ${product.name}`,
+         url: window.location.href,
+      };
+
+      if (navigator.share) {
+         try {
+            await navigator.share(shareData);
+         } catch (err) {
+            console.log('Error al compartir:', err);
+         }
+      } else {
+         try {
+            await navigator.clipboard.writeText(window.location.href);
+            // Podríamos usar un toast, por ahora un alert sencillo
+            alert('¡Enlace copiado al portapapeles, Pana!');
+         } catch (err) {
+            console.error('Error al copiar:', err);
+         }
+      }
    };
 
    // Carousel tracking (móvil y desktop tienen refs separados para no conflictar)
@@ -106,7 +132,7 @@ export default function ProductDetail() {
    const [showAllReviews, setShowAllReviews] = useState(false); // valoraciones expandidas
    const [activeIndex, setActiveIndex] = useState(0);
 
-   const isFavorite = (favorites || []).includes(productId);
+   const isFavorite = (favorites || []).some(id => String(id) === String(productId));
 
    const timeAgo = useTimeAgo(product?.createdAt);
 
@@ -186,7 +212,7 @@ export default function ProductDetail() {
             if (docSnap.exists()) {
                const productData = { id: docSnap.id, ...docSnap.data() };
                setProduct(productData);
-               
+
                // Fetch related
                fetchRelated(productData.category, productData.id);
             } else {
@@ -218,15 +244,15 @@ export default function ProductDetail() {
             const relatedList = relatedSnap.docs
                .map(doc => ({ id: doc.id, ...doc.data() }))
                .filter(p => p.id !== currentId);
-            
+
             // Si hay pocos de la misma categoría, traer unos genéricos
             if (relatedList.length < 4) {
                const qGeneral = query(collection(db, 'products'), limit(10));
                const genSnap = await getDocs(qGeneral);
                const genList = genSnap.docs
-                   .map(doc => ({ id: doc.id, ...doc.data() }))
-                   .filter(p => p.id !== currentId);
-               
+                  .map(doc => ({ id: doc.id, ...doc.data() }))
+                  .filter(p => p.id !== currentId);
+
                // Mezclar y eliminar duplicados por ID
                const merged = [...relatedList, ...genList];
                const unique = Array.from(new Map(merged.map(p => [p.id, p])).values());
@@ -305,11 +331,11 @@ export default function ProductDetail() {
                      <span className="text-[15px] tracking-wide">Volver</span>
                   </button>
                   <div className="flex md:hidden items-center gap-5">
-                     <button className="text-[#1A1A3A] hover:opacity-70 transition-all">
+                     <button onClick={handleShare} className="text-[#1A1A3A] hover:opacity-70 transition-all active:scale-95">
                         <Share2 className="w-5 h-5" />
                      </button>
-                     <button onClick={() => toggleFavorite(product.id)} className="transition-all active:scale-90">
-                        <Heart className={`w-5 h-5 transition-colors ${isFavorite ? 'fill-[#D90429] text-[#D90429]' : 'text-[#1A1A3A] hover:text-[#D90429]'}`} />
+                     <button onClick={() => toggleFavorite(product.id)} className="transition-all active:scale-90 group">
+                        <Heart className={`w-5 h-5 transition-all duration-300 ${isFavorite ? 'fill-[#D90429] text-[#D90429]' : 'text-[#1A1A3A] group-hover:text-[#D90429] group-hover:fill-[#D90429]/10'}`} />
                      </button>
                   </div>
                </div>
@@ -352,7 +378,7 @@ export default function ProductDetail() {
                      <div className="w-full h-[4px] bg-white/70" />
                   </div>
 
-                   {/* DESKTOP: carrusel con bordes redondeados y estilos normales */}
+                  {/* DESKTOP: carrusel con bordes redondeados y estilos normales */}
                   <div className="hidden md:block">
                      <div
                         ref={carouselRefDesktop}
@@ -399,10 +425,10 @@ export default function ProductDetail() {
 
                {/* Descripción (SOLO TABLET/ORDENADOR) debajo del carrusel */}
                <div className="hidden md:block w-full relative z-10 mb-[150px] mt-14">
-                   <h3 className="text-2xl font-black text-[#1A1A3A] mb-8">
-                      Descripción del Anuncio{" "}
-                      <span className="inline-block h-1.5 w-6 bg-gradient-to-r from-[#FFC200] to-[#FFAA00] rounded-full translate-y-[-4px] ml-1"></span>
-                   </h3>
+                  <h3 className="text-2xl font-black text-[#1A1A3A] mb-8">
+                     Descripción del Anuncio{" "}
+                     <span className="inline-block h-1.5 w-6 bg-gradient-to-r from-[#FFC200] to-[#FFAA00] rounded-full translate-y-[-4px] ml-1"></span>
+                  </h3>
                   <p className="text-[#1A1A3A]/80 font-medium leading-relaxed whitespace-pre-wrap text-lg">
                      {product.description || `Se ofrece servicios informáticos tanto para mac como para Windows. En remoto o en mi casa si no es posible el remoto.
 
@@ -433,10 +459,10 @@ tlfno contacto: 672 593 950`}
 
                {/* Valoraciones de la Comunidad — SOLO TABLET/ESCRITORIO (Columna izquierda) */}
                <div className="hidden md:block w-full mt-[100px]">
-                   <h3 className="text-2xl font-black text-[#1A1A3A] mb-8">
-                      Valoraciones de la Comunidad{" "}
-                      <span className="inline-block h-1.5 w-6 bg-gradient-to-r from-[#FFC200] to-[#FFAA00] rounded-full translate-y-[-4px] ml-1"></span>
-                   </h3>
+                  <h3 className="text-2xl font-black text-[#1A1A3A] mb-8">
+                     Valoraciones de la Comunidad{" "}
+                     <span className="inline-block h-1.5 w-6 bg-gradient-to-r from-[#FFC200] to-[#FFAA00] rounded-full translate-y-[-4px] ml-1"></span>
+                  </h3>
 
                   {/* Tarjeta de Resumen - Ancha para ocupar el espacio horizontal */}
                   <div className="mb-10 bg-[#E0E5EC] rounded-[2.5rem] p-10 border border-white/40 shadow-[6px_6px_12px_rgba(163,177,198,0.6),-6px_-6px_12px_rgba(255,255,255,0.8)] flex items-center justify-between gap-20">
@@ -489,7 +515,7 @@ tlfno contacto: 672 593 950`}
                               <span className="text-[10px] text-[#1A1A3A]/40 font-bold uppercase tracking-widest">{rw.date}</span>
                            </div>
                            <p className="text-[14px] text-[#1A1A3A]/80 font-semibold leading-relaxed pl-1 italic">"{rw.text}"</p>
-                           
+
                            {/* Línea tricolor divisoria */}
                            <div className="flex w-full h-[2px] mt-2 opacity-20">
                               <div className="flex-1 bg-[#FFCC00]"></div>
@@ -524,22 +550,22 @@ tlfno contacto: 672 593 950`}
                   {/* Indicador de Ubicación (Dinamico) */}
                   <div className="flex items-center gap-4 pr-1">
                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-br from-[#FFC200] to-[#FFAA00] shadow-[0_4px_10px_rgba(255,180,0,0.3)] group transition-all hover:scale-105 active:scale-95">
-                         <MapPin className="w-3.5 h-3.5 text-[#1A1A3A]" />
-                         <span className="text-[12px] font-bold text-[#1A1A3A] uppercase tracking-wider">
-                            {typeof product.location === 'object' 
-                              ? (product.location.level2 || product.location.level1 || 'Madrid') 
+                        <MapPin className="w-3.5 h-3.5 text-[#1A1A3A]" />
+                        <span className="text-[12px] font-bold text-[#1A1A3A] uppercase tracking-wider">
+                           {typeof product.location === 'object'
+                              ? (product.location.level2 || product.location.level1 || 'Madrid')
                               : (product.location || "Madrid")
-                            }
-                         </span>
-                      </div>
+                           }
+                        </span>
+                     </div>
 
                      {/* Botones de Acción: Solo Desktop (sin fondos, alineados con el nombre) */}
                      <div className="hidden md:flex items-center gap-5 pr-1">
-                        <button className="text-[#1A1A3A] hover:opacity-70 transition-all">
+                        <button onClick={handleShare} className="text-[#1A1A3A] hover:opacity-70 transition-all active:scale-95">
                            <Share2 className="w-5 h-5 md:w-6 md:h-6" />
                         </button>
-                        <button onClick={() => toggleFavorite(product.id)} className="transition-all active:scale-90">
-                           <Heart className={`w-5 h-5 md:w-6 md:h-6 transition-colors ${isFavorite ? 'fill-[#D90429] text-[#D90429]' : 'text-[#1A1A3A] hover:text-[#D90429]'}`} />
+                        <button onClick={() => toggleFavorite(product.id)} className="transition-all active:scale-90 group">
+                           <Heart className={`w-5 h-5 md:w-6 md:h-6 transition-all duration-300 ${isFavorite ? 'fill-[#D90429] text-[#D90429]' : 'text-[#1A1A3A] group-hover:text-[#D90429] group-hover:fill-[#D90429]/10'}`} />
                         </button>
                      </div>
                   </div>
@@ -564,7 +590,7 @@ tlfno contacto: 672 593 950`}
                         <span className="text-3xl md:text-4xl font-black">
                            {Math.floor(parseFloat(product.price) || 0)}
                         </span>
-                         <span className="text-xl md:text-2xl font-black">
+                        <span className="text-xl md:text-2xl font-black">
                            ,{((parseFloat(product.price) || 0) % 1).toFixed(2).split('.')[1]}
                         </span>
                         <span className="text-xl md:text-2xl font-black ml-0.5">€</span>
@@ -580,10 +606,10 @@ tlfno contacto: 672 593 950`}
 
                {/* Descripción (Sólo Móvil, en Desktop va a la izq) */}
                <div className="md:hidden mb-[150px] px-1">
-                   <h3 className="text-xl font-black text-[#1A1A3A] mb-4">
-                      Descripción{" "}
-                      <span className="inline-block h-1.5 w-6 bg-gradient-to-r from-[#FFC200] to-[#FFAA00] rounded-full translate-y-[-4px] ml-1"></span>
-                   </h3>
+                  <h3 className="text-xl font-black text-[#1A1A3A] mb-4">
+                     Descripción{" "}
+                     <span className="inline-block h-1.5 w-6 bg-gradient-to-r from-[#FFC200] to-[#FFAA00] rounded-full translate-y-[-4px] ml-1"></span>
+                  </h3>
                   <p className="text-[#1A1A3A]/80 font-medium leading-relaxed whitespace-pre-wrap">
                      {product.description || `Se ofrece servicios informáticos tanto para mac como para Windows. En remoto o en mi casa si no es posible el remoto.
 
@@ -614,10 +640,10 @@ tlfno contacto: 672 593 950`}
 
                {/* 3. Estadísticas de Reseñas — Solo visible en móvil */}
                <div className="md:hidden mb-6">
-                   <h3 className="text-xl md:text-2xl font-black text-[#1A1A3A] mb-6">
-                      Valoraciones de la Comunidad{" "}
-                      <span className="inline-block h-1.5 w-6 bg-gradient-to-r from-[#FFC200] to-[#FFAA00] rounded-full translate-y-[-4px] ml-1"></span>
-                   </h3>
+                  <h3 className="text-xl md:text-2xl font-black text-[#1A1A3A] mb-6">
+                     Valoraciones de la Comunidad{" "}
+                     <span className="inline-block h-1.5 w-6 bg-gradient-to-r from-[#FFC200] to-[#FFAA00] rounded-full translate-y-[-4px] ml-1"></span>
+                  </h3>
 
                   <div className="flex gap-6 items-center mb-6 bg-[#E0E5EC] rounded-[2rem] p-6 border border-white/40 shadow-[6px_6px_12px_rgba(163,177,198,0.6),-6px_-6px_12px_rgba(255,255,255,0.8)]">
                      {/* Left: Promedio */}
@@ -719,32 +745,32 @@ tlfno contacto: 672 593 950`}
                      </svg>
                      <span className="text-white font-bold tracking-tight text-[15px] whitespace-nowrap">WhatsApp</span>
                   </button>
-                  <button 
-                    onClick={handleStartChat}
-                    disabled={startingChat || (product?.userId && user?.uid === product?.userId)}
-                    className="flex-1 h-[56px] px-4 bg-gradient-to-br from-[#2D2D4E] to-[#1A1A3A] rounded-2xl flex items-center justify-center gap-2 shadow-[inset_2px_4px_8px_rgba(255,255,255,0.25),0_8px_16px_rgba(26,26,58,0.5)] hover:-translate-y-1 transition-all outline-none border border-[#1A1A3A] disabled:opacity-50 disabled:hover:translate-y-0"
+                  <button
+                     onClick={handleStartChat}
+                     disabled={startingChat || (product?.userId && user?.uid === product?.userId)}
+                     className="flex-1 h-[56px] px-4 bg-gradient-to-br from-[#2D2D4E] to-[#1A1A3A] rounded-2xl flex items-center justify-center gap-2 shadow-[inset_2px_4px_8px_rgba(255,255,255,0.25),0_8px_16px_rgba(26,26,58,0.5)] hover:-translate-y-1 transition-all outline-none border border-[#1A1A3A] disabled:opacity-50 disabled:hover:translate-y-0"
                   >
-                    {startingChat ? (
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : (
-                      <MessageCircle className="w-[18px] h-[18px] stroke-[2.5] text-white flex-shrink-0" />
-                    )}
-                    <span className="text-white font-bold tracking-tight text-[15px] whitespace-nowrap">
-                      {product?.userId && user?.uid === product?.userId ? 'Tu anuncio' : 'Chat Pana'}
-                    </span>
+                     {startingChat ? (
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                     ) : (
+                        <MessageCircle className="w-[18px] h-[18px] stroke-[2.5] text-white flex-shrink-0" />
+                     )}
+                     <span className="text-white font-bold tracking-tight text-[15px] whitespace-nowrap">
+                        {product?.userId && user?.uid === product?.userId ? 'Tu anuncio' : 'Chat Pana'}
+                     </span>
                   </button>
                </div>
 
                {/* Botón de denunciar/informar */}
                <div className="mt-8 flex flex-col items-center justify-center pb-6 border-b border-[#1A1A3A]/10">
-                 <span className="font-bold text-[#1A1A3A] mb-3 text-sm">¿Hay algo que debamos revisar?</span>
-                 <button 
-                   onClick={() => setIsReportModalOpen(true)}
-                   className="flex items-center gap-2 px-6 py-3 border-2 border-[#D90429] text-[#D90429] rounded-2xl font-bold hover:bg-[#D90429] hover:text-white transition-all active:scale-95 w-full md:w-auto justify-center"
-                 >
-                   <Flag className="w-5 h-5 pointer-events-none" />
-                   Informar sobre el anuncio
-                 </button>
+                  <span className="font-bold text-[#1A1A3A] mb-3 text-sm">¿Hay algo que debamos revisar?</span>
+                  <button
+                     onClick={() => setIsReportModalOpen(true)}
+                     className="flex items-center gap-2 px-6 py-3 border-2 border-[#D90429] text-[#D90429] rounded-2xl font-bold hover:bg-[#D90429] hover:text-white transition-all active:scale-95 w-full md:w-auto justify-center"
+                  >
+                     <Flag className="w-5 h-5 pointer-events-none" />
+                     Informar sobre el anuncio
+                  </button>
                </div>
             </motion.div>
          </div> {/* Final grid wrapper */}
@@ -866,11 +892,10 @@ tlfno contacto: 672 593 950`}
                                     setLightboxIndex(idx);
                                     setZoomed(false);
                                  }}
-                                 className={`rounded-full transition-all duration-300 ${
-                                    idx === lightboxIndex
+                                 className={`rounded-full transition-all duration-300 ${idx === lightboxIndex
                                        ? 'bg-white w-5 h-2'
                                        : 'bg-white/30 w-2 h-2'
-                                 }`}
+                                    }`}
                               />
                            ))}
                         </div>
@@ -890,45 +915,45 @@ tlfno contacto: 672 593 950`}
          <AnimatePresence>
             {isReportModalOpen && (
                <div className="fixed inset-0 z-[120] flex items-center justify-center px-4">
-                  <motion.div 
-                     initial={{ opacity: 0 }} 
-                     animate={{ opacity: 1 }} 
-                     exit={{ opacity: 0 }} 
+                  <motion.div
+                     initial={{ opacity: 0 }}
+                     animate={{ opacity: 1 }}
+                     exit={{ opacity: 0 }}
                      onClick={() => setIsReportModalOpen(false)}
                      className="absolute inset-0 bg-[#E0E5EC]/80 backdrop-blur-sm"
                   />
-                  <motion.div 
-                     initial={{ opacity: 0, scale: 0.95, y: 20 }} 
-                     animate={{ opacity: 1, scale: 1, y: 0 }} 
+                  <motion.div
+                     initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                     animate={{ opacity: 1, scale: 1, y: 0 }}
                      exit={{ opacity: 0, scale: 0.95, y: 20 }}
                      className="relative w-full max-w-md bg-[#E0E5EC] rounded-3xl p-6 flex flex-col max-h-[90vh] shadow-[12px_12px_24px_rgba(163,177,198,0.7),-12px_-12px_24px_rgba(255,255,255,0.9)] border border-white/60"
                   >
-                     <button 
+                     <button
                         onClick={() => setIsReportModalOpen(false)}
                         className="absolute top-4 right-4 p-2 text-[#1A1A3A]/50 hover:text-[#1A1A3A] transition-colors"
                      >
                         <X className="w-6 h-6" />
                      </button>
-                     
+
                      {!reportSuccess ? (
                         <>
                            <h3 className="text-xl md:text-2xl font-black text-[#1A1A3A] mb-6 pr-8 leading-tight">
                               ¿Cuál es el motivo de tu denuncia?
                            </h3>
-                           
+
                            <div className="flex-1 overflow-y-auto hide-scrollbar space-y-3 mb-6">
                               {REPORT_REASONS.map((reason, idx) => {
                                  const isSelected = reportReasons.includes(reason);
                                  return (
-                                    <label 
-                                       key={idx} 
+                                    <label
+                                       key={idx}
                                        className="flex items-start gap-4 p-2 cursor-pointer group"
                                     >
                                        <div className={`mt-0.5 w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors shadow-sm ${isSelected ? 'border-[#003366] bg-[#003366]' : 'border-[#1A1A3A]/20 bg-white group-hover:border-[#003366] group-hover:bg-[#003366]/5'}`}>
                                           {isSelected && <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>}
                                        </div>
                                        <span className="text-[15px] font-bold text-[#1A1A3A]/80 pt-0.5 leading-snug select-none">{reason}</span>
-                                       <input 
+                                       <input
                                           type="checkbox"
                                           className="hidden"
                                           checked={isSelected}
@@ -944,8 +969,8 @@ tlfno contacto: 672 593 950`}
                                  )
                               })}
                            </div>
-                           
-                           <button 
+
+                           <button
                               onClick={handleReportSubmit}
                               disabled={reportReasons.length === 0 || isReporting}
                               className="w-full py-4 rounded-2xl bg-[#D90429] text-white font-black shadow-[4px_4px_10px_rgba(217,4,41,0.3)] hover:shadow-[2px_2px_5px_rgba(217,4,41,0.4)] hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none transition-all active:scale-95 flex justify-center items-center h-[56px]"

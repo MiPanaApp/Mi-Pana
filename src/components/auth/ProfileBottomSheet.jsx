@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from "react";
-import { Camera as CameraIcon, Image as ImageIcon, Scissors, User, Rocket, PartyPopper, ChevronDown, Calendar } from "lucide-react";
+import { Camera as CameraIcon, Image as ImageIcon, Scissors, User, Rocket, PartyPopper, ChevronDown, Calendar, Eye, EyeOff } from "lucide-react";
 import { Camera } from "@capacitor/camera";
 import AvatarCropper from "./AvatarCropper";
-import { storage, db } from "../../services/firebase";
+import { auth, storage, db } from "../../services/firebase";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { doc, setDoc } from "firebase/firestore";
+import { updateEmail, updatePassword, EmailAuthProvider, linkWithCredential } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 
 export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
@@ -16,6 +17,9 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
   const [formData, setFormData] = useState({
     name: "",
     lastName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
     country: "Seleccionar país",
     region: "",
     birthDate: "",
@@ -71,7 +75,8 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
     }
   };
 
-  const handleCropApply = () => {
+  const handleCropApply = (croppedDataUrl) => {
+    setPhotoPreview(croppedDataUrl);
     setShowCropper(false);
   };
 
@@ -80,15 +85,46 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
       setErrorMsg("Por favor, sube una foto de perfil.");
       return;
     }
-    if (!formData.name || !formData.lastName || formData.country === "Seleccionar país" || !formData.region || !formData.birthDate || !formData.gender) {
+    if (!formData.name || !formData.lastName || !formData.email || !formData.password || formData.country === "Seleccionar país" || !formData.region || !formData.birthDate || !formData.gender) {
       setErrorMsg("Por favor, completa todos los campos del formulario.");
       return;
     }
+
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d\w\W]{8,}$/;
+    if (!passwordRegex.test(formData.password)) {
+      setErrorMsg("La contraseña debe tener mínimo 8 caracteres, una mayúscula, una minúscula y un número.");
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setErrorMsg("Las contraseñas no coinciden.");
+      return;
+    }
+
     setErrorMsg("");
 
     try {
+      const userToUpdate = auth.currentUser;
+      if (userToUpdate) {
+        // Correct way to add email/password to an existing phone account
+        try {
+          const credential = EmailAuthProvider.credential(formData.email, formData.password);
+          await linkWithCredential(userToUpdate, credential);
+        } catch (linkErr) {
+          console.error("Linking error:", linkErr);
+          // If already linked or other error, try direct updates as fallback
+          if (linkErr.code === 'auth/operation-not-allowed') {
+             throw new Error("El método de Email/Contraseña no está habilitado en Firebase Console. Por favor, actívalo.");
+          }
+          if (linkErr.code !== 'auth/credential-already-in-use') {
+            await updateEmail(userToUpdate, formData.email);
+            await updatePassword(userToUpdate, formData.password);
+          }
+        }
+      }
+
       let avatarUrl = "";
-      const uid = authUser?.uid || "test-001";
+      const uid = authUser?.uid || auth.currentUser?.uid || "test-001";
       if (photoPreview) {
         const storageRef = ref(storage, `avatars/${uid}/profile.jpg`);
         await uploadString(storageRef, photoPreview, "data_url");
@@ -96,7 +132,13 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
       }
 
       await setDoc(doc(db, "users", uid), {
-        ...formData,
+        name: formData.name,
+        lastName: formData.lastName,
+        email: formData.email,
+        country: formData.country,
+        region: formData.region,
+        birthDate: formData.birthDate,
+        gender: formData.gender,
         avatar: avatarUrl,
         phone: authUser?.phoneNumber || "",
         phoneVerified: true,
@@ -108,60 +150,55 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
       onClose();
       navigate("/home");
     } catch (err) {
-      setErrorMsg("Error guardando el perfil. Intenta de nuevo.");
+      setErrorMsg(err.message || "Error guardando el perfil. Intenta de nuevo.");
       console.error(err);
     }
   };
 
   const [showPhotoOptions, setShowPhotoOptions] = useState(false);
-
-  const [dateParts, setDateParts] = useState({ day: "", month: "", year: "" });
-  const [showDaySelect, setShowDaySelect] = useState(false);
-  const [showMonthSelect, setShowMonthSelect] = useState(false);
-  const [showYearSelect, setShowYearSelect] = useState(false);
+  const [showGenderSelect, setShowGenderSelect] = useState(false);
+  const [showDateSelect, setShowDateSelect] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [dateParts, setDateParts] = useState({ day: "1", month: "Ene", year: "2000" });
 
   const days = Array.from({ length: 31 }, (_, i) => i + 1);
   const months = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 100 }, (_, i) => currentYear - 13 - i);
 
-  const handleDatePartSelect = (part, val) => {
-    const newParts = { ...dateParts, [part]: val };
-    setDateParts(newParts);
-    if (newParts.day && newParts.month && newParts.year) {
-      const monthIdx = months.indexOf(newParts.month) + 1;
-      const formattedMonth = monthIdx < 10 ? `0${monthIdx}` : monthIdx;
-      const formattedDay = parseInt(newParts.day) < 10 ? `0${newParts.day}` : newParts.day;
-      setFormData({ ...formData, birthDate: `${newParts.year}-${formattedMonth}-${formattedDay}` });
-    }
+  const applyDate = () => {
+    const mFormat = (months.indexOf(dateParts.month) + 1).toString().padStart(2, '0');
+    const dFormat = dateParts.day.toString().padStart(2, '0');
+    setFormData({ ...formData, birthDate: `${dateParts.year}-${mFormat}-${dFormat}` });
+    setShowDateSelect(false);
   };
 
   return (
     <>
       <div className={`bs-overlay ${isOpen ? "open" : ""}`} onClick={onClose} />
       <div className={`bs-sheet ${isOpen ? "open" : ""}`}>
-        <div className="w-[44px] h-[5px] bg-[#E8E8F0] rounded-[3px] mx-auto mb-[18px] shadow-[inset_1px_1px_3px_rgba(180,180,210,0.5),inset_-1px_-1px_3px_rgba(255,255,255,0.9)]" />
+        <div className="w-[44px] h-[5px] bg-[#E8E8F0] rounded-[3px] mx-auto mb-[12px] shadow-[inset_1px_1px_3px_rgba(180,180,210,0.5),inset_-1px_-1px_3px_rgba(255,255,255,0.9)]" />
         
-        <div className="mb-4">
+        <div className="mb-2">
           <h2 className="text-[18px] font-black text-[#1A1A3A] flex items-center gap-2">
             ¡Ya casi, pana! <PartyPopper size={20} className="text-[#FFB400]" />
           </h2>
           <p className="text-[12px] font-bold text-[#8888AA]">Completa tus datos para empezar</p>
         </div>
 
-        <div className="mb-4 text-center">
+        <div className="mb-2 text-center">
           <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
           
           <div 
-            className="w-[110px] h-[110px] bg-[#E8E8F0] rounded-full mx-auto shadow-[6px_6px_14px_rgba(180,180,210,0.7),-6px_-6px_14px_rgba(255,255,255,0.95)] flex flex-col items-center justify-center cursor-pointer overflow-hidden mb-3 border-4 border-white"
+            className="w-[84px] h-[84px] bg-[#E8E8F0] rounded-full mx-auto shadow-[6px_6px_14px_rgba(180,180,210,0.7),-6px_-6px_14px_rgba(255,255,255,0.95)] flex flex-col items-center justify-center cursor-pointer overflow-hidden mb-2 border-4 border-white"
             onClick={() => setShowPhotoOptions(!showPhotoOptions)}
           >
             {photoPreview && !showCropper ? (
               <img src={photoPreview} alt="Avatar" className="w-full h-full object-cover" />
             ) : (
               <div className="flex flex-col items-center text-[#1A1A3A] opacity-80">
-                <CameraIcon size={34} strokeWidth={2.5} />
-                <span className="text-[11px] mt-1 font-black">Subir foto</span>
+                <CameraIcon size={24} strokeWidth={2.5} />
+                <span className="text-[10px] mt-1 font-black">Subir foto</span>
               </div>
             )}
           </div>
@@ -191,11 +228,15 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
           )}
 
           {showCropper && photoPreview && (
-            <AvatarCropper image={photoPreview} onApply={handleCropApply} />
+            <AvatarCropper 
+              image={photoPreview} 
+              onApply={handleCropApply} 
+              onCancel={() => setShowCropper(false)}
+            />
           )}
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-[12px]">
           <div className="flex gap-4">
             <div className="flex-1">
               <label className="text-[11px] font-bold uppercase text-[#666688] block mb-[5px]">Nombres</label>
@@ -204,6 +245,54 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
             <div className="flex-1">
               <label className="text-[11px] font-bold uppercase text-[#666688] block mb-[5px]">Apellidos</label>
               <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="Rodríguez" className="w-full px-4 py-3 bg-[#E8E8F0] rounded-[14px] outline-none border-none shadow-[inset_4px_4px_9px_rgba(180,180,210,0.55),inset_-4px_-4px_9px_rgba(255,255,255,0.9)] text-[14px] font-bold text-[#1A1A3A]" />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-[11px] font-bold uppercase text-[#666688] block mb-[5px]">Correo Electrónico</label>
+            <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="ejemplo@mipana.com" className="w-full px-4 py-3 bg-[#E8E8F0] rounded-[14px] outline-none border-none shadow-[inset_4px_4px_9px_rgba(180,180,210,0.55),inset_-4px_-4px_9px_rgba(255,255,255,0.9)] text-[14px] font-bold text-[#1A1A3A]" />
+          </div>
+
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <label className="text-[11px] font-bold uppercase text-[#666688] block mb-[5px]">Contraseña</label>
+              <div className="relative">
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  name="password" 
+                  value={formData.password} 
+                  onChange={handleChange} 
+                  placeholder="••••••••" 
+                  className="w-full px-4 py-3 bg-[#E8E8F0] rounded-[14px] outline-none border-none shadow-[inset_4px_4px_9px_rgba(180,180,210,0.55),inset_-4px_-4px_9px_rgba(255,255,255,0.9)] text-[14px] font-bold text-[#1A1A3A] pr-10" 
+                />
+                <button 
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8888AA] hover:text-[#1A1A3A] transition-colors focus:outline-none"
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+            <div className="flex-1">
+              <label className="text-[11px] font-bold uppercase text-[#666688] block mb-[5px]">Repetir Contraseña</label>
+              <div className="relative">
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  name="confirmPassword" 
+                  value={formData.confirmPassword} 
+                  onChange={handleChange} 
+                  placeholder="••••••••" 
+                  className="w-full px-4 py-3 bg-[#E8E8F0] rounded-[14px] outline-none border-none shadow-[inset_4px_4px_9px_rgba(180,180,210,0.55),inset_-4px_-4px_9px_rgba(255,255,255,0.9)] text-[14px] font-bold text-[#1A1A3A] pr-10" 
+                />
+                <button 
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8888AA] hover:text-[#1A1A3A] transition-colors focus:outline-none"
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -263,59 +352,82 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
             </div>
           </div>
 
-          <div>
-            <label className="text-[11px] font-bold uppercase text-[#666688] block mb-[5px]">Fecha de nacimiento</label>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <div onClick={() => { setShowDaySelect(!showDaySelect); setShowMonthSelect(false); setShowYearSelect(false); }} className="w-full px-2 py-3 bg-[#E8E8F0] rounded-[14px] shadow-[inset_3px_3px_7px_rgba(180,180,210,0.5),inset_-3px_-3px_7px_rgba(255,255,255,0.9)] text-[13px] font-bold text-[#1A1A3A] text-center cursor-pointer border border-white/40">
-                  {dateParts.day || "Día"}
+          <div className="flex gap-4">
+            <div className="flex-1 relative">
+              <label className="text-[11px] font-bold uppercase text-[#666688] block mb-[5px]">Nacimiento</label>
+              <div 
+                onClick={() => { setShowDateSelect(!showDateSelect); setShowGenderSelect(false); setShowCountrySelect(false); setShowRegionSelect(false); }}
+                className="w-full bg-[#E8E8F0] rounded-[14px] shadow-[inset_3px_3px_7px_rgba(180,180,210,0.5),inset_-3px_-3px_7px_rgba(255,255,255,0.9)] px-3 py-3 flex justify-between items-center cursor-pointer border border-white/40"
+              >
+                <div className="flex items-center gap-2 truncate">
+                  <Calendar size={14} className="text-[#8888AA]" />
+                  <span className="text-[13px] font-bold text-[#1A1A3A] truncate">
+                    {formData.birthDate ? formData.birthDate.split('-').reverse().join('/') : "DD/MM/AAAA"}
+                  </span>
                 </div>
-                {showDaySelect && (
-                  <div className="absolute top-0 left-0 right-0 -translate-y-full mb-2 bg-[#EDEDF5] rounded-[18px] shadow-2xl z-[260] max-h-[150px] overflow-y-auto p-1 border border-white/50 scrollbar-hide animate-[fadeIn_0.2s_ease-out]">
-                    {days.map(d => <div key={d} onClick={() => { handleDatePartSelect('day', d); setShowDaySelect(false); }} className="py-2.5 text-center text-[13px] font-bold text-[#1A1A3A] hover:bg-[#E8E8F0] rounded-lg cursor-pointer transition-colors">{d}</div>)}
-                  </div>
-                )}
+                <ChevronDown size={16} className={`text-[#8888AA] transition-transform flex-shrink-0 ${showDateSelect ? 'rotate-180' : ''}`} />
               </div>
-              <div className="relative flex-[1.5]">
-                <div onClick={() => { setShowMonthSelect(!showMonthSelect); setShowDaySelect(false); setShowYearSelect(false); }} className="w-full px-2 py-3 bg-[#E8E8F0] rounded-[14px] shadow-[inset_3px_3px_7px_rgba(180,180,210,0.5),inset_-3px_-3px_7px_rgba(255,255,255,0.9)] text-[13px] font-bold text-[#1A1A3A] text-center cursor-pointer border border-white/40">
-                  {dateParts.month || "Mes"}
-                </div>
-                {showMonthSelect && (
-                  <div className="absolute top-0 left-0 right-0 -translate-y-full mb-2 bg-[#EDEDF5] rounded-[18px] shadow-2xl z-[260] max-h-[150px] overflow-y-auto p-1 border border-white/50 scrollbar-hide animate-[fadeIn_0.2s_ease-out]">
-                    {months.map(m => <div key={m} onClick={() => { handleDatePartSelect('month', m); setShowMonthSelect(false); }} className="py-2.5 text-center text-[13px] font-bold text-[#1A1A3A] hover:bg-[#E8E8F0] rounded-lg cursor-pointer transition-colors">{m}</div>)}
+              
+              {showDateSelect && (
+                <div className="absolute bottom-full left-0 w-[240px] md:w-[280px] mb-2 bg-[#EDEDF5] rounded-[24px] shadow-[10px_10px_40px_rgba(163,177,198,0.8),-10px_-10px_40px_rgba(255,255,255,0.95)] z-[270] p-4 border border-white/50 animate-[fadeIn_0.2s_ease-out]">
+                  <div className="flex gap-2 justify-between mb-4">
+                    {/* Dia */}
+                    <div className="flex-1 bg-[#E8E8F0] shadow-[inset_2px_2px_5px_rgba(180,180,210,0.5),inset_-2px_-2px_5px_rgba(255,255,255,0.9)] rounded-[12px] h-[160px] overflow-y-auto scrollbar-hide py-2">
+                       {days.map(d => (
+                         <div key={d} onClick={() => setDateParts({...dateParts, day: d.toString()})} className={`text-center py-2 text-[13px] font-bold cursor-pointer transition-colors ${dateParts.day === d.toString() ? 'bg-[#1A1A3A] text-white shadow-md mx-2 rounded-[8px]' : 'text-[#8888AA] hover:text-[#1A1A3A]'}`}>
+                           {d.toString().padStart(2, '0')}
+                         </div>
+                       ))}
+                    </div>
+                    {/* Mes */}
+                    <div className="flex-1 bg-[#E8E8F0] shadow-[inset_2px_2px_5px_rgba(180,180,210,0.5),inset_-2px_-2px_5px_rgba(255,255,255,0.9)] rounded-[12px] h-[160px] overflow-y-auto scrollbar-hide py-2">
+                       {months.map(m => (
+                         <div key={m} onClick={() => setDateParts({...dateParts, month: m})} className={`text-center py-2 text-[13px] font-bold cursor-pointer transition-colors ${dateParts.month === m ? 'bg-[#1A1A3A] text-white shadow-md mx-2 rounded-[8px]' : 'text-[#8888AA] hover:text-[#1A1A3A]'}`}>
+                           {m}
+                         </div>
+                       ))}
+                    </div>
+                    {/* Año */}
+                    <div className="flex-1 bg-[#E8E8F0] shadow-[inset_2px_2px_5px_rgba(180,180,210,0.5),inset_-2px_-2px_5px_rgba(255,255,255,0.9)] rounded-[12px] h-[160px] overflow-y-auto scrollbar-hide py-2">
+                       {years.map(y => (
+                         <div key={y} onClick={() => setDateParts({...dateParts, year: y.toString()})} className={`text-center py-2 text-[13px] font-bold cursor-pointer transition-colors ${dateParts.year === y.toString() ? 'bg-[#1A1A3A] text-white shadow-md mx-2 rounded-[8px]' : 'text-[#8888AA] hover:text-[#1A1A3A]'}`}>
+                           {y}
+                         </div>
+                       ))}
+                    </div>
                   </div>
-                )}
-              </div>
-              <div className="relative flex-[1.2]">
-                <div onClick={() => { setShowYearSelect(!showYearSelect); setShowDaySelect(false); setShowMonthSelect(false); }} className="w-full px-2 py-3 bg-[#E8E8F0] rounded-[14px] shadow-[inset_3px_3px_7px_rgba(180,180,210,0.5),inset_-3px_-3px_7px_rgba(255,255,255,0.9)] text-[13px] font-bold text-[#1A1A3A] text-center cursor-pointer border border-white/40">
-                  {dateParts.year || "Año"}
-                </div>
-                {showYearSelect && (
-                  <div className="absolute top-0 left-0 right-0 -translate-y-full mb-2 bg-[#EDEDF5] rounded-[18px] shadow-2xl z-[260] max-h-[150px] overflow-y-auto p-1 border border-white/50 scrollbar-hide animate-[fadeIn_0.2s_ease-out]">
-                    {years.map(y => <div key={y} onClick={() => { handleDatePartSelect('year', y); setShowYearSelect(false); }} className="py-2.5 text-center text-[13px] font-bold text-[#1A1A3A] hover:bg-[#E8E8F0] rounded-lg cursor-pointer transition-colors">{y}</div>)}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <label className="text-[11px] font-bold uppercase text-[#666688] block mb-[5px]">Sexo</label>
-            <div className="flex gap-2">
-              {['Hombre', 'Mujer', 'Otro'].map((g) => {
-                const isActive = formData.gender === g;
-                return (
-                  <button 
-                    key={g}
-                    type="button"
-                    onClick={() => handleGenderSelect(g)}
-                    className={`flex-1 py-2.5 rounded-[14px] text-[12px] font-bold transition-all flex items-center justify-center gap-2 ${isActive ? 'bg-gradient-to-br from-[#1A1A3A] to-[#2D2D5E] text-white shadow-[3px_3px_8px_rgba(20,20,60,0.3)] border-none' : 'bg-[#E8E8F0] shadow-[4px_4px_9px_rgba(180,180,210,0.4),-4px_-4px_9px_rgba(255,255,255,0.9)] text-[#8888AA] border border-white/40'}`}
-                  >
-                    <User size={14} className={isActive ? 'text-white' : 'text-[#8888AA]'} />
-                    {g}
+                  <button onClick={applyDate} type="button" className="w-full bg-[#1A1A3A] text-white font-black text-[13px] py-3 rounded-[14px] shadow-[4px_4px_10px_rgba(0,0,0,0.2)] active:shadow-[inset_2px_2px_5px_rgba(0,0,0,0.5)] transition-all">
+                    Confirmar fecha
                   </button>
-                )
-              })}
+                </div>
+              )}
+            </div>
+
+            <div className="flex-1 relative">
+              <label className="text-[11px] font-bold uppercase text-[#666688] block mb-[5px]">Sexo</label>
+              <div 
+                onClick={() => { setShowGenderSelect(!showGenderSelect); setShowCountrySelect(false); setShowRegionSelect(false); }}
+                className="w-full bg-[#E8E8F0] rounded-[14px] shadow-[inset_3px_3px_7px_rgba(180,180,210,0.5),inset_-3px_-3px_7px_rgba(255,255,255,0.9)] px-3 py-3 flex justify-between items-center cursor-pointer border border-white/40"
+              >
+                <div className="flex items-center gap-2 truncate">
+                  <User size={14} className="text-[#8888AA]" />
+                  <span className="text-[13px] font-bold text-[#1A1A3A] truncate">{formData.gender || "Sexo"}</span>
+                </div>
+                <ChevronDown size={16} className={`text-[#8888AA] transition-transform flex-shrink-0 ${showGenderSelect ? 'rotate-180' : ''}`} />
+              </div>
+              {showGenderSelect && (
+                <div className="absolute top-0 right-0 left-0 -translate-y-full mb-2 bg-[#EDEDF5] rounded-[18px] shadow-[6px_6px_20px_rgba(180,180,210,0.6),-6px_-6px_20px_rgba(255,255,255,0.9)] z-[270] max-h-[180px] overflow-y-auto p-2 scrollbar-hide border border-white/50 animate-[fadeIn_0.2s_ease-out]">
+                  {['Hombre', 'Mujer', 'Otro'].map((g) => (
+                    <div 
+                      key={g}
+                      onClick={() => { setFormData({...formData, gender: g}); setShowGenderSelect(false); }}
+                      className="px-4 py-2.5 hover:bg-[#E8E8F0] rounded-[12px] text-[13px] font-bold text-[#1A1A3A] cursor-pointer"
+                    >
+                      {g}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
           
@@ -328,8 +440,8 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
             ¡Listo! Entrar a Mi Pana <Rocket size={20} />
           </button>
           
-          <p className="text-[9px] text-[#AAAACC] text-center mt-2 mb-4">
-            Al registrarte aceptas nuestros <span className="underline cursor-pointer">términos de uso</span> y <span className="underline cursor-pointer">política de privacidad</span>
+          <p className="text-[10px] font-bold text-[#555577] text-center mt-2 mb-2">
+            Al registrarte aceptas nuestros <span className="underline cursor-pointer text-[#1A1A3A]">términos de uso</span> y <span className="underline cursor-pointer text-[#1A1A3A]">política de privacidad</span>
           </p>
         </div>
       </div>
