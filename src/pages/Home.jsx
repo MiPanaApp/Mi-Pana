@@ -101,9 +101,11 @@ export default function Home() {
     if (!isLocalFilterActive) {
       result = result.filter(p => {
         // Tolerancia para data mock o recién creada sin país exacto
-        const countryId = p.location?.country || p.country || 'ES'; 
+        // Si no tiene país, permitimos que se vea en el país seleccionado actualmente
+        const countryId = p.location?.country || p.country || selectedCountry; 
         const isSp = ['ES', 'España', 'Spain', 'es'].includes(countryId);
         const isCo = ['CO', 'Colombia', 'co'].includes(countryId);
+        
         if (selectedCountry === 'ES') return isSp;
         if (selectedCountry === 'CO') return isCo;
         return countryId === selectedCountry;

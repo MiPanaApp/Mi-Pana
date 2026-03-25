@@ -81,7 +81,8 @@ export const MOCK_PRODUCTS = [
     premium: true,
     verified: true,
     whatsapp: "34600000000",
-    category: "Belleza", // Belleza
+    category: "Salud", // Actualizado de Belleza a Salud
+    description: "Cortes de cabello y estética premium para toda la familia. Servicios profesionales a domicilio.",
   },
   {
     id: 108,

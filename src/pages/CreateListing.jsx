@@ -579,11 +579,11 @@ export default function CreateListing() {
               {/* Botón para añadir más (Solo si < 10) */}
               {carouselFiles.length < 10 && (
                 <motion.div 
-                  whileTap={{ scale: 0.95 }}
+                  whileTap={{ scale: 0.96 }}
                   onClick={handleCarouselClick}
-                  className="aspect-square rounded-2xl bg-[#E0E5EC] shadow-[inset_4px_4px_8_rgba(163,177,198,0.6),inset_-4px_-4px_8_rgba(255,255,255,0.8)] flex items-center justify-center cursor-pointer text-[#1A1A3A]/30 hover:text-[#1A1A3A]/50 transition-colors"
+                  className="aspect-square rounded-[2rem] bg-[#E0E5EC] shadow-[inset_6px_6px_12px_rgba(163,177,198,0.7),inset_-6px_-6px_12px_rgba(255,255,255,0.8)] flex items-center justify-center cursor-pointer text-[#1A1A3A]/30 hover:text-[#1A1A3A]/50 transition-all active:shadow-[inset_8px_8px_16px_rgba(163,177,198,0.8),inset_-8px_-8px_16px_rgba(255,255,255,0.9)]"
                 >
-                  <ImagePlus size={24} />
+                  <ImagePlus size={24} strokeWidth={2} />
                   <input 
                     type="file" 
                     ref={carouselInputRef}
@@ -770,9 +770,9 @@ export default function CreateListing() {
                   Lugar del Anuncio <span className="text-red-500">*</span>
                 </span>
 
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
                   {/* Selector Level 1 (Comunidad / Departamento / Estado / Región...) */}
-                  <div className="relative flex-1">
+                  <div className="relative flex-1 min-w-0">
                     <div
                       onClick={() => { setIsLocationDropdownOpen(!isLocationDropdownOpen); setIsCityDropdownOpen(false); }}
                       className={`w-full h-14 px-4 flex items-center justify-between bg-[#E0E5EC] rounded-2xl cursor-pointer transition-all ${
@@ -820,7 +820,7 @@ export default function CreateListing() {
                   </div>
 
                   {/* Selector Level 2 (Ciudad) — solo si hay level1 */}
-                  <div className="relative flex-1">
+                  <div className="relative flex-1 min-w-0">
                     <div
                       onClick={() => {
                         if (!location.level1) return;

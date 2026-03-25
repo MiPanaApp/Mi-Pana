@@ -128,9 +128,8 @@ export default function ProductDetail() {
       }
    };
 
-   // Carousel tracking (móvil y desktop tienen refs separados para no conflictar)
-   const carouselRef = useRef(null);       // móvil
-   const carouselRefDesktop = useRef(null); // desktop
+   // Carousel tracking (unificado)
+   const carouselRef = useRef(null);
    const [showAllReviews, setShowAllReviews] = useState(false); // valoraciones expandidas
    const [activeIndex, setActiveIndex] = useState(0);
 
@@ -285,8 +284,7 @@ export default function ProductDetail() {
    };
 
    const scrollToIndex = (idx) => {
-      // Intentar con el ref activo (móvil primero, luego desktop)
-      const el = carouselRef.current || carouselRefDesktop.current;
+      const el = carouselRef.current;
       if (el) {
          el.scrollTo({ left: idx * el.clientWidth, behavior: 'smooth' });
       }
@@ -346,84 +344,66 @@ export default function ProductDetail() {
                {/* Wrapper exclusivo para Imágenes y Dots */}
                {/* MÓVIL: sangrado completo (edge-to-edge), sin bordes redondeados en lados */}
                {/* DESKTOP: con padding y bordes redondeados */}
-               <div className="relative w-full md:px-0">
-                  {/* Contenedor edge-to-edge en móvil: -mx compensa el px del padre */}
-                  <div className="md:hidden -mx-3">
-                     {/* Borde blanco superior */}
-                     <div className="w-full h-[4px] bg-white/70" />
-                     <div
-                        ref={carouselRef}
-                        onScroll={() => handleScroll(carouselRef)}
-                        className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar w-full gap-0"
-                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                     >
-                        {images.map((img, idx) => (
-                           <div key={idx} className="min-w-full flex-shrink-0 snap-center overflow-hidden bg-white relative">
-                              <img
-                                 src={img}
-                                 alt={`${product.name} - foto ${idx + 1}`}
-                                 className="w-full h-[260px] object-cover cursor-zoom-in active:scale-95 transition-transform duration-150"
-                                 onClick={() => openLightbox(idx)}
-                              />
-                              {/* Icono de lupa sutil en esquina */}
-                              <div className="absolute bottom-3 right-3 bg-black/30 backdrop-blur-sm rounded-full p-1.5 pointer-events-none">
-                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                    <circle cx="11" cy="11" r="8" />
-                                    <path d="m21 21-4.35-4.35" />
-                                    <path d="M11 8v6M8 11h6" />
-                                 </svg>
-                              </div>
-                           </div>
-                        ))}
-                     </div>
-                     {/* Borde blanco inferior */}
-                     <div className="w-full h-[4px] bg-white/70" />
-                  </div>
+                <div className="relative w-full overflow-hidden md:rounded-[2.5rem]">
+                   {/* Contenedor del Carrusel Unificado y Responsivo */}
+                   <div
+                      ref={carouselRef}
+                      onScroll={() => handleScroll(carouselRef)}
+                      className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar w-full gap-0"
+                      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                   >
+                      {images.map((img, idx) => (
+                        <div key={idx} className="min-w-full flex-shrink-0 snap-center relative overflow-hidden bg-[#E0E5EC] group cursor-zoom-in"
+                             onClick={() => openLightbox(idx)}>
+                          
+                          {/* Capa 0: Fondo Dinámico con Blur (Solo se nota si la foto no llena el espacio) */}
+                          <div 
+                            className="absolute inset-0 z-0 scale-110 blur-[40px] opacity-30 transition-opacity duration-700 group-hover:opacity-50"
+                            style={{ 
+                              backgroundImage: `url(${img})`, 
+                              backgroundSize: 'cover', 
+                              backgroundPosition: 'center' 
+                            }}
+                          />
 
-                  {/* DESKTOP: carrusel con bordes redondeados y estilos normales */}
-                  <div className="hidden md:block">
-                     <div
-                        ref={carouselRefDesktop}
-                        onScroll={() => handleScroll(carouselRefDesktop)}
-                        className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar w-full gap-0"
-                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                     >
-                        {images.map((img, idx) => (
-                           <div key={idx} className="min-w-full flex-shrink-0 snap-center rounded-[2.5rem] overflow-hidden border-[4px] border-white/60 bg-white relative shadow-sm">
-                              <img
-                                 src={img}
-                                 alt={`${product.name} - foto ${idx + 1}`}
-                                 className="w-full h-[450px] lg:h-[550px] object-cover cursor-zoom-in active:scale-95 transition-transform duration-150"
-                                 onClick={() => openLightbox(idx)}
-                              />
-                              <div className="absolute bottom-3 right-3 bg-black/30 backdrop-blur-sm rounded-full p-1.5 pointer-events-none">
-                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                    <circle cx="11" cy="11" r="8" />
-                                    <path d="m21 21-4.35-4.35" />
-                                    <path d="M11 8v6M8 11h6" />
-                                 </svg>
-                              </div>
-                           </div>
-                        ))}
-                     </div>
-                  </div>
+                          {/* Capa 1: Contenedor de la Foto con Altura Responsiva */}
+                          {/* Móvil: 350px | Tablet: 480px | Desktop: 580px */}
+                          <div className="relative z-10 w-full h-[350px] md:h-[480px] lg:h-[580px] flex items-center justify-center p-2 md:p-6 lg:p-10">
+                            <img 
+                              src={img} 
+                              alt={`${product.name} - foto ${idx + 1}`}
+                              className="max-w-full max-h-full w-auto h-auto object-contain rounded-2xl md:rounded-[2.5rem] shadow-[10px_10px_20px_rgba(0,0,0,0.1)] transition-transform duration-500 group-hover:scale-[1.01]"
+                            />
+                            
+                            {/* Icono de lupa flotante */}
+                            <div className="absolute bottom-4 right-4 bg-black/20 backdrop-blur-md rounded-full p-2 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+                               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <circle cx="11" cy="11" r="8" />
+                                  <path d="m21 21-4.35-4.35" />
+                                  <path d="M11 8v6M8 11h6" />
+                               </svg>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                   </div>
 
-                  {/* Indicador de posición (Dots flotantes) — aplica a ambos */}
-                  <div className="absolute bottom-7 left-0 w-full flex justify-center z-20 pointer-events-none">
-                     <div className="bg-white/80 backdrop-blur-xl px-2 py-1.5 md:px-4 md:py-2.5 rounded-full flex items-center gap-1.5 md:gap-2.5 shadow-[0_4px_12px_rgba(0,0,0,0.15)] border border-white/50 pointer-events-auto">
-                        {images.map((_, idx) => (
-                           <button
-                              key={idx}
-                              onClick={() => scrollToIndex(idx)}
-                              className={`h-1 md:h-2 rounded-full transition-all duration-500 ease-out outline-none ${idx === activeIndex
-                                 ? 'bg-[#1A1A3A] w-3 md:w-8'
-                                 : 'bg-[#1A1A3A]/20 w-1 md:w-2'
-                                 }`}
-                           />
-                        ))}
-                     </div>
-                  </div>
-               </div>
+                   {/* Indicador de posición (Dots flotantes) */}
+                   <div className="absolute bottom-6 left-0 w-full flex justify-center z-20 pointer-events-none">
+                      <div className="bg-white/80 backdrop-blur-xl px-4 py-2 rounded-full flex items-center gap-2 shadow-[0_4px_12px_rgba(0,0,0,0.1)] border border-white/50 pointer-events-auto">
+                         {images.map((_, idx) => (
+                            <button
+                               key={idx}
+                               onClick={() => scrollToIndex(idx)}
+                               className={`h-1.5 rounded-full transition-all duration-500 ease-out outline-none ${idx === activeIndex
+                                  ? 'bg-[#1A1A3A] w-6'
+                                  : 'bg-[#1A1A3A]/20 w-1.5'
+                                  }`}
+                            />
+                         ))}
+                      </div>
+                   </div>
+                </div>
 
                {/* Descripción (SOLO TABLET/ORDENADOR) debajo del carrusel */}
                <div className="hidden md:block w-full relative z-10 mb-[150px] mt-14">
