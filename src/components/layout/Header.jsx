@@ -276,7 +276,17 @@ const Header = forwardRef((props, ref) => {
                     type="text" 
                     placeholder="¿Qué necesitas, pana?" 
                     value={filters.searchQuery || ''}
-                    onChange={(e) => setFilters({ searchQuery: e.target.value })}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      // Resetear categoría y filtros al buscar, para dar "borrón y cuenta nueva"
+                      setActiveCategory('Todas');
+                      setFilters({
+                        searchQuery: val,
+                        price: { min: '', max: '' },
+                        location: filters.location, // mantenemos la ubicación para no perder el país
+                        onlyVerified: false,
+                      });
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && filters.searchQuery?.trim() !== '') {
                         addRecentSearch(filters.searchQuery.trim());

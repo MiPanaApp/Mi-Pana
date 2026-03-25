@@ -66,7 +66,6 @@ export default function Onboarding() {
                   <button 
                     onClick={() => {
                       setIsCountryOpen(!isCountryOpen);
-                      setIsRegionOpen(false);
                     }}
                     className="w-full h-14 clay-card flex items-center justify-between px-5 text-[#1A1A3A] font-bold text-lg"
                   >

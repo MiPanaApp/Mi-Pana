@@ -191,185 +191,186 @@ export default function Chat() {
     : 'Comprador';
 
   return (
-    <div className="flex flex-col h-screen bg-[#E0E5EC] overflow-hidden">
+    <div className="h-screen bg-[#D1D9E6] flex justify-center overflow-hidden">
+      <div className="flex flex-col h-full w-full max-w-4xl bg-[#E0E5EC] shadow-2xl relative overflow-hidden">
 
-      {/* ── Header ── */}
-      <div className="bg-[#1A1A3A] text-white px-4 pt-safe pb-4 pt-[30px] flex items-center gap-3 z-20 rounded-b-3xl shadow-lg flex-shrink-0">
-        <button
-          onClick={() => navigate(-1)}
-          className="p-2 -ml-1 hover:bg-white/10 rounded-full transition-colors flex-shrink-0"
-        >
-          <ArrowLeft size={22} />
-        </button>
-
-        <div className="flex-1 min-w-0">
-          <p className="font-black text-base leading-tight truncate">{otherName || '...'}</p>
-          <div className="flex items-center mt-0.5 overflow-hidden">
-            <p className="text-[11px] text-[#FFC200] font-bold truncate">
-              {conversation?.productName || '...'}
-            </p>
-          </div>
-        </div>
-
-        {/* Thumbnail del Producto */}
-        <div className="flex-shrink-0 flex items-center gap-3">
-          {otherIsTyping && (
-            <span className="text-[11px] text-[#FFC200] font-bold italic animate-pulse">escribiendo...</span>
-          )}
-          <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-[0_4px_10px_rgba(0,0,0,0.3)] border-2 border-white/10 bg-white/5 flex-shrink-0">
-            <img 
-              src={conversation?.productImage || 'https://images.unsplash.com/photo-1599566150163-29194dcaad36'} 
-              className="w-full h-full object-cover" 
-              alt="Producto"
-              onError={(e) => {
-                e.target.src = 'https://images.unsplash.com/photo-1599566150163-29194dcaad36';
-              }}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* ── Mensajes ── */}
-      <div
-        className="flex-1 overflow-y-auto px-4 py-4"
-        onClick={() => setShowEmoji(false)}
-      >
-        {loading ? (
-          <div className="flex justify-center py-10">
-            <div className="w-8 h-8 border-[3px] border-[#1A1A3A]/20 border-t-[#1A1A3A] rounded-full animate-spin" />
-          </div>
-        ) : messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <div className="p-6 bg-[#E0E5EC] rounded-[2rem] shadow-[6px_6px_12px_rgba(163,177,198,0.6),-6px_-6px_12px_rgba(255,255,255,0.8)]">
-              <Smile size={32} className="text-[#FFC200]" />
-            </div>
-            <p className="text-sm font-bold text-[#1A1A3A]/40 text-center">
-              ¡Inicia la conversación!<br/>Pregunta lo que necesites al pana.
-            </p>
-          </div>
-        ) : (
-          <>
-            {messages.map((msg, i) => (
-              <MessageBubble
-                key={msg.id}
-                msg={msg}
-                isMine={msg.senderId === user?.uid}
-                onReply={setReplyTo}
-                isLast={i === messages.length - 1}
-              />
-            ))}
-
-            {/* Typing bubble */}
-            <AnimatePresence>
-              {otherIsTyping && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 8 }}
-                  className="flex justify-start mb-2"
-                >
-                  <div className="bg-white rounded-[18px] rounded-tl-sm px-4 py-3 shadow-sm border border-gray-100">
-                    <div className="flex gap-1 items-center h-4">
-                      {[0, 0.2, 0.4].map((delay, i) => (
-                        <motion.div
-                          key={i}
-                          animate={{ y: [0, -4, 0] }}
-                          transition={{ repeat: Infinity, duration: 0.6, delay }}
-                          className="w-1.5 h-1.5 bg-[#1A1A3A]/30 rounded-full"
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <div ref={messagesEndRef} />
-          </>
-        )}
-      </div>
-
-      {/* ── Reply preview ── */}
-      <AnimatePresence>
-        {replyTo && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="bg-white/80 backdrop-blur-sm border-t border-gray-200 px-4 py-2 flex items-center gap-3 flex-shrink-0"
-          >
-            <div className="flex-1 min-w-0 pl-3 border-l-3 border-[#FFC200]" style={{ borderLeftWidth: 3 }}>
-              <p className="text-[11px] font-black text-[#FFC200]">
-                {replyTo.senderId === user?.uid ? 'Tú' : otherName}
-              </p>
-              <p className="text-xs text-[#1A1A3A]/60 truncate">{replyTo.text}</p>
-            </div>
-            <button onClick={() => setReplyTo(null)} className="p-1 text-[#1A1A3A]/40 hover:text-[#D90429] transition-colors">
-              <X size={16} />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ── Emoji Picker ── */}
-      <AnimatePresence>
-        {showEmoji && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="flex-shrink-0 overflow-hidden"
-          >
-            <EmojiPicker
-              onEmojiClick={onEmojiClick}
-              width="100%"
-              height={320}
-              searchPlaceholder="Buscar emoji..."
-              skinTonesDisabled
-              previewConfig={{ showPreview: false }}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ── Input Area ── */}
-      <div className="bg-[#E0E5EC] border-t border-[#d0d8e4] px-3 pt-3 pb-[30px] pb-safe flex-shrink-0">
-        <div className="flex items-center gap-2">
-          {/* Emoji button */}
+        {/* ── Header ── */}
+        <div className="bg-[#1A1A3A] text-white px-4 pt-safe pb-4 pt-[50px] flex items-center gap-3 z-20 md:rounded-b-none rounded-b-3xl shadow-lg flex-shrink-0">
           <button
-            onClick={() => { setShowEmoji(v => !v); inputRef.current?.focus(); }}
-            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all flex-shrink-0 ${
-              showEmoji
-                ? 'bg-[#FFC200] text-[#1A1A3A] shadow-inner'
-                : 'bg-[#E0E5EC] text-[#1A1A3A]/50 shadow-[3px_3px_6px_rgba(163,177,198,0.5),-3px_-3px_6px_rgba(255,255,255,0.8)]'
-            }`}
+            onClick={() => navigate(-1)}
+            className="p-2 -ml-1 hover:bg-white/10 rounded-full transition-colors flex-shrink-0"
           >
-            <Smile size={18} />
+            <ArrowLeft size={22} />
           </button>
 
-          {/* Input */}
-          <input
-            ref={inputRef}
-            value={inputText}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            placeholder="Escribe un mensaje..."
-            className="flex-1 h-11 bg-[#E0E5EC] rounded-2xl px-4 shadow-[inset_3px_3px_6px_rgba(163,177,198,0.5),inset_-3px_-3px_6px_rgba(255,255,255,0.7)] text-sm font-semibold text-[#1A1A3A] placeholder:text-[#1A1A3A]/30 focus:outline-none"
-          />
+          <div className="flex-1 min-w-0">
+            <p className="font-black text-base leading-tight truncate">{otherName || '...'}</p>
+            <div className="flex items-center mt-0.5 overflow-hidden">
+              <p className="text-[11px] text-[#FFC200] font-bold truncate">
+                {conversation?.productName || '...'}
+              </p>
+            </div>
+          </div>
 
-          {/* Send button */}
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            onClick={handleSend}
-            disabled={!inputText.trim()}
-            className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all flex-shrink-0 ${
-              inputText.trim()
-                ? 'bg-[#1A1A3A] text-white shadow-[4px_4px_8px_rgba(163,177,198,0.6),-4px_-4px_8px_rgba(255,255,255,0.8)]'
-                : 'bg-[#E0E5EC] text-[#1A1A3A]/20 shadow-[inset_2px_2px_4px_rgba(163,177,198,0.4),inset_-2px_-2px_4px_rgba(255,255,255,0.6)]'
-            }`}
-          >
-            <Send size={16} className={inputText.trim() ? 'ml-0.5' : ''} />
-          </motion.button>
+          {/* Thumbnail del Producto */}
+          <div className="flex-shrink-0 flex items-center gap-3">
+            {otherIsTyping && (
+              <span className="text-[11px] text-[#FFC200] font-bold italic animate-pulse whitespace-nowrap hidden sm:inline">escribiendo...</span>
+            )}
+            <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-[0_4px_10px_rgba(0,0,0,0.3)] border-2 border-white/10 bg-white/5 flex-shrink-0">
+              <img 
+                src={conversation?.productImage || 'https://images.unsplash.com/photo-1599566150163-29194dcaad36'} 
+                className="w-full h-full object-cover" 
+                alt="Producto"
+                onError={(e) => {
+                  e.target.src = 'https://images.unsplash.com/photo-1599566150163-29194dcaad36';
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* ── Mensajes ── */}
+        <div
+          className="flex-1 overflow-y-auto px-4 py-4 hide-scrollbar"
+          onClick={() => setShowEmoji(false)}
+        >
+          {loading ? (
+            <div className="flex justify-center py-10">
+              <div className="w-8 h-8 border-[3px] border-[#1A1A3A]/20 border-t-[#1A1A3A] rounded-full animate-spin" />
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 gap-3">
+              <div className="p-6 bg-[#E0E5EC] rounded-[2rem] shadow-[6px_6px_12px_rgba(163,177,198,0.6),-6px_-6px_12px_rgba(255,255,255,0.8)]">
+                <Smile size={32} className="text-[#FFC200]" />
+              </div>
+              <p className="text-sm font-bold text-[#1A1A3A]/40 text-center">
+                ¡Inicia la conversación!<br/>Pregunta lo que necesites al pana.
+              </p>
+            </div>
+          ) : (
+            <div className="max-w-3xl mx-auto w-full">
+              {messages.map((msg, i) => (
+                <MessageBubble
+                  key={msg.id}
+                  msg={msg}
+                  isMine={msg.senderId === user?.uid}
+                  onReply={setReplyTo}
+                  isLast={i === messages.length - 1}
+                />
+              ))}
+
+              {/* Typing bubble */}
+              <AnimatePresence>
+                {otherIsTyping && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 8 }}
+                    className="flex justify-start mb-2"
+                  >
+                    <div className="bg-white rounded-[18px] rounded-tl-sm px-4 py-3 shadow-sm border border-gray-100">
+                      <div className="flex gap-1 items-center h-4">
+                        {[0, 0.2, 0.4].map((delay, i) => (
+                          <motion.div
+                            key={i}
+                            animate={{ y: [0, -4, 0] }}
+                            transition={{ repeat: Infinity, duration: 0.6, delay }}
+                            className="w-1.5 h-1.5 bg-[#1A1A3A]/30 rounded-full"
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              <div ref={messagesEndRef} />
+            </div>
+          )}
+        </div>
+
+        {/* ── Reply preview ── */}
+        <AnimatePresence>
+          {replyTo && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="bg-white/90 backdrop-blur-sm border-t border-gray-200 px-4 py-2 flex items-center gap-3 flex-shrink-0"
+            >
+              <div className="flex-1 min-w-0 pl-3 border-l-4 border-[#FFC200]">
+                <p className="text-[11px] font-black text-[#FFC200]">
+                  {replyTo.senderId === user?.uid ? 'Tú' : otherName}
+                </p>
+                <p className="text-xs text-[#1A1A3A]/60 truncate">{replyTo.text}</p>
+              </div>
+              <button onClick={() => setReplyTo(null)} className="p-1 text-[#1A1A3A]/40 hover:text-[#D90429] transition-colors">
+                <X size={16} />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── Emoji Picker ── */}
+        <AnimatePresence>
+          {showEmoji && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="flex-shrink-0 overflow-hidden"
+            >
+              <EmojiPicker
+                onEmojiClick={onEmojiClick}
+                width="100%"
+                height={320}
+                searchPlaceholder="Buscar emoji..."
+                skinTonesDisabled
+                previewConfig={{ showPreview: false }}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── Input Area ── */}
+        <div className="bg-[#E0E5EC]/80 backdrop-blur-md border-t border-[#d0d8e4] px-3 pt-3 pb-[30px] md:pb-6 flex-shrink-0 flex justify-center">
+          <div className="flex items-center gap-2 w-full max-w-3xl">
+            {/* Emoji button */}
+            <button
+              onClick={() => { setShowEmoji(v => !v); inputRef.current?.focus(); }}
+              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all flex-shrink-0 ${
+                showEmoji
+                  ? 'bg-[#FFC200] text-[#1A1A3A] shadow-inner'
+                  : 'bg-[#E0E5EC] text-[#1A1A3A]/50 shadow-[3px_3px_6px_rgba(163,177,198,0.5),-3px_-3px_6px_rgba(255,255,255,0.8)]'
+              }`}
+            >
+              <Smile size={18} />
+            </button>
+
+            {/* Input */}
+            <input
+              ref={inputRef}
+              value={inputText}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              placeholder="Escribe un mensaje..."
+              className="flex-1 h-11 bg-[#E0E5EC] rounded-2xl px-4 shadow-[inset_3px_3px_6px_rgba(163,177,198,0.5),inset_-3px_-3px_6px_rgba(255,255,255,0.7)] text-sm font-semibold text-[#1A1A3A] placeholder:text-[#1A1A3A]/30 focus:outline-none"
+            />
+
+            {/* Send button */}
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={handleSend}
+              disabled={!inputText.trim()}
+              className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all flex-shrink-0 ${
+                inputText.trim()
+                  ? 'bg-[#1A1A3A] text-white shadow-[4px_4px_8px_rgba(163,177,198,0.6),-4px_-4px_8px_rgba(255,255,255,0.8)]'
+                  : 'bg-[#E0E5EC] text-[#1A1A3A]/20 shadow-[inset_2px_2px_4px_rgba(163,177,198,0.4),inset_-2px_-2px_4px_rgba(255,255,255,0.6)]'
+              }`}
+            >
+              <Send size={16} className={inputText.trim() ? 'ml-0.5' : ''} />
+            </motion.button>
+          </div>
         </div>
       </div>
     </div>

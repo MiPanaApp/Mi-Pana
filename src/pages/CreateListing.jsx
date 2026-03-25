@@ -596,7 +596,7 @@ export default function CreateListing() {
                 </motion.div>
               )}
             </div>
-            <p className="text-[10px] text-[#1A1A3A]/40 font-bold ml-2 italic">* Se recomienda formato cuadrado (1:1) para el carrusel.</p>
+            <p className="text-[10px] text-[#1A1A3A]/40 font-bold ml-2 italic">* Se recomiendan fotos horizontales (16:9) o cuadradas (1:1).</p>
           </div>
 
           <div className="h-px w-full bg-gradient-to-r from-transparent via-[#a3b1c6]/30 to-transparent my-2" />
