@@ -109,7 +109,7 @@ export default function ProductDetail() {
    const handleShare = async () => {
       const shareData = {
          title: product.name,
-         text: `Mira lo que encontré en Mi Pana: ${product.name}\n\n${product.image}`,
+         text: `Mira lo que encontré en Mi Pana: ${product.name}`,
          url: window.location.href,
       };
 

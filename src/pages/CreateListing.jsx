@@ -10,6 +10,7 @@ import { collection, addDoc, getDoc, getDocs, doc, serverTimestamp, query, order
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { ChevronDown, Tag } from 'lucide-react';
 import { getCategoryIcon, getBrandColor, sortCategories } from '../data/categories';
+import panaExito from '../assets/pana_exito.png';
 
 // Mapa de datos por país: { label (nombre del nivel), level1: [{ name, cities }] }
 const LOCATION_DATA = {
@@ -466,13 +467,13 @@ export default function CreateListing() {
   if (success) {
     return (
       <div className="min-h-screen bg-[#E0E5EC] flex flex-col items-center justify-center px-6 pb-24 text-center">
-        <motion.div 
-          initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="p-8 bg-[#E0E5EC] rounded-full shadow-[inset_9px_9px_18px_rgba(163,177,198,0.7),inset_-9px_-9px_18px_rgba(255,255,255,0.9)] mb-6 text-[#4CAF50]"
-        >
-          <CheckCircle2 size={64} strokeWidth={2.5} />
-        </motion.div>
+        <motion.img 
+          initial={{ scale: 0.5, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          src={panaExito}
+          alt="Éxito"
+          className="w-[280px] h-auto object-contain mb-4 drop-shadow-[0_15px_30px_rgba(0,0,0,0.1)]"
+        />
         <h2 className="text-3xl font-black text-[#1A1A3A] mb-2">¡Anuncio Publicado!</h2>
         <p className="text-[#1A1A3A]/60 font-medium">Tu anuncio ya está visible para todos los Panas.</p>
       </div>

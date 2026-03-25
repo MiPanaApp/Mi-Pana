@@ -73,27 +73,35 @@ export default function FilterPanel() {
   const handleGeolocation = async () => {
     try {
       setIsLocating(true);
-      const permission = await Geolocation.requestPermissions();
-      if (permission.location !== 'granted') {
-        alert("Permiso de ubicación denegado.");
-        setIsLocating(false);
-        return;
+      
+      try {
+        const permission = await Geolocation.checkPermissions();
+        if (permission.location === 'prompt' || permission.location === 'prompt-with-rationale') {
+           await Geolocation.requestPermissions();
+        } else if (permission.location === 'denied') {
+           alert("Permiso de ubicación denegado. Por favor actívalo en tu navegador/dispositivo.");
+           setIsLocating(false);
+           return;
+        }
+      } catch (e) {
+        // En entorno web, checkPermissions/requestPermissions puede no estar implementado
+        // El navegador lanzará el prompt automáticamente al llamar a getCurrentPosition
+        console.warn('Chequeo de permisos omitido en web:', e);
       }
 
       await Geolocation.getCurrentPosition();
       
-      // Simulación de Geocodificación Inversa (Mock "Madrid")
-      // En producción: fetch a API de OpenStreetMap o Google Maps con coords
+      // Simulación de Geocodificación Inversa
       setFilters({
         location: {
-          level1: selectedCountry === 'ES' ? 'Madrid' : 'Bogotá', // Mock Inteligente
+          level1: selectedCountry === 'ES' ? 'Madrid' : 'Bogotá', 
           level2: selectedCountry === 'ES' ? 'Madrid' : 'Bogotá',
           level3: '',
         }
       });
     } catch (error) {
       console.error('Error getting location', error);
-      alert("No se pudo obtener la ubicación.");
+      alert("No se pudo obtener la ubicación. Asegúrate de tener el GPS activado y dar permisos al navegador.");
     } finally {
       setIsLocating(false);
     }

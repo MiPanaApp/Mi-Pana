@@ -9,6 +9,7 @@ import { db } from '../lib/firebase';
 import { normalizeText } from '../utils/textUtils';
 import { MOCK_PRODUCTS } from '../data/mockProducts';
 import emptyHammock from '../assets/empty_hammock.png';
+import panaEnMecedora from '../assets/pana_en_mecedora.png';
 
 const CAPITALS = {
   ES: 'Madrid',
@@ -45,18 +46,11 @@ export default function Home() {
       const hasSearch = !!filters.searchQuery;
 
       try {
-        let q;
+        // Para el MVP y como Firebase no soporta busquedas por fragmentos nativamente, 
+        // traemos los documentos principales para que el filtro inteligente del cliente actúe, 
+        // que soporta "includes" en nombre, descripción y ahora "keywords".
         const productsRef = collection(db, 'products');
-
-        if (hasSearch) {
-          const searchTerm = normalizeText(filters.searchQuery);
-          q = query(
-            productsRef, 
-            where('search_indexes', 'array-contains', searchTerm)
-          );
-        } else {
-          q = query(productsRef);
-        }
+        let q = query(productsRef);
 
         const snap = await getDocs(q);
         const firestoreData = snap.docs.map(doc => ({ ...doc.data(), id: doc.id }));
@@ -119,10 +113,12 @@ export default function Home() {
     if (filters.onlyVerified) result = result.filter(p => p.verified);
     if (filters.searchQuery) {
       const q = normalizeText(filters.searchQuery);
-      result = result.filter(p => 
-        normalizeText(p.name).includes(q) || 
-        normalizeText(p.description).includes(q)
-      );
+      result = result.filter(p => {
+        const matchesName = normalizeText(p.name || '').includes(q);
+        const matchesDesc = normalizeText(p.description || '').includes(q);
+        const matchesKeyword = Array.isArray(p.keywords) && p.keywords.some(k => normalizeText(k).includes(q));
+        return matchesName || matchesDesc || matchesKeyword;
+      });
     }
 
     if (filters.price?.min) result = result.filter(p => parseFloat(p.price) >= parseFloat(filters.price.min));
@@ -176,11 +172,11 @@ export default function Home() {
 
   return (
     <div className="max-w-7xl mx-auto pb-10 transition-all overflow-x-clip">
-      <div className="-mt-3.5 md:mt-4">
-        <div className="flex flex-row items-center justify-between w-full px-4 mb-3">
-          <h2 className="flex-1 min-w-0 font-black text-[#1A1A3A] text-base sm:text-lg truncate pr-2 drop-shadow-sm">
+      <div className="-mt-4 md:mt-1">
+        <div className="flex flex-row items-center justify-between w-full px-4 mb-1">
+          <h2 className="flex-1 min-w-0 font-black text-[#1A1A3A] text-[17px] truncate pr-2 drop-shadow-sm">
             Panas, para ti
-            <div className="h-1 w-8 bg-[#FFC200] mt-0.5 rounded-full"></div>
+            <div className="h-1 w-7 bg-[#FFC200] mt-0.5 rounded-full"></div>
           </h2>
 
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -256,13 +252,18 @@ export default function Home() {
             )}
 
             {products.length > 0 && filteredProducts.length === 0 && (
-              <div className="col-span-full py-20 text-center">
-                <p className="text-xl font-bold text-[#1A1A3A]/40 tracking-widest flex items-center justify-center gap-2">
-                  No hay panas con estos filtros <Meh className="w-6 h-6 opacity-60" />
-                </p>
+              <div className="col-span-full py-8 text-center flex flex-col items-center justify-center p-6 mt-0">
+                <img 
+                  src={panaEnMecedora} 
+                  alt="No hay resultados" 
+                  className="w-[190px] h-auto object-contain mb-1 drop-shadow-[0_10px_15px_rgba(0,0,0,0.05)]" 
+                />
+                <h3 className="text-[22px] font-black text-[#1A1A3A] tracking-tight uppercase leading-none">
+                  No hay panas con estos filtros
+                </h3>
                 <button
                   onClick={() => { setFilters({ price: { min: '', max: '' }, distance: 50, searchQuery: '' }); setSortBy('relevance'); }}
-                  className="mt-4 text-[#1A1A3A] font-black hover:text-[#D90429] transition-colors"
+                  className="mt-5 text-[#1A1A3A] font-black hover:text-[#D90429] transition-colors bg-[#EDEDF5] px-6 py-2.5 rounded-xl shadow-[4px_4px_8px_rgba(180,180,210,0.6),-4px_-4px_8px_rgba(255,255,255,0.8)] active:scale-95 transition-all text-[12px] uppercase tracking-wider"
                 >
                   Limpiar filtros
                 </button>
