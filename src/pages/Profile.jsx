@@ -1,11 +1,16 @@
-import { useState } from 'react';
-import { User, Mail, Phone, MapPin, Calendar, UserCircle2, LogOut, ChevronRight, Edit2, ShieldCheck, Star } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { User, Mail, Phone, MapPin, Calendar, UserCircle2, LogOut, ChevronRight, Edit2, ShieldCheck, Star, Loader2, Camera } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db, storage } from '../lib/firebase';
 
 export default function Profile() {
   const { userData, currentUser, userAvatar, logout } = useAuth();
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -13,6 +18,52 @@ export default function Profile() {
       navigate('/login');
     } catch (error) {
       console.error("Error al cerrar sesión:", error);
+    }
+  };
+
+  const handleEditAvatar = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !currentUser) return;
+
+    // Validar tipo de archivo
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor, selecciona una imagen válida.');
+      return;
+    }
+
+    // Validar tamaño (máximo 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('La imagen es demasiado grande. Máximo 5MB.');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      // 1. Subir a Firebase Storage
+      const fileExtension = file.name.split('.').pop() || 'jpg';
+      const fileName = `avatar_${Date.now()}.${fileExtension}`;
+      const storageRef = ref(storage, `avatars/${currentUser.uid}/${fileName}`);
+      
+      const snapshot = await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(snapshot.ref);
+
+      // 2. Actualizar Firestore
+      const userRef = doc(db, 'users', currentUser.uid);
+      await updateDoc(userRef, {
+        avatar: downloadURL,
+        updatedAt: new Date()
+      });
+
+      // No hace falta actualizar estado local, ya que AuthContext escucha Firestore (onSnapshot)
+    } catch (error) {
+      console.error("Error al subir avatar:", error);
+      alert('No se pudo subir la foto. Intenta de nuevo.');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -32,19 +83,37 @@ export default function Profile() {
     <div className="min-h-screen bg-[#E0E5EC] pb-24 pt-safe safe-area-pt px-6">
       {/* Header Profile */}
       <div className="flex flex-col items-center pt-8 pb-10">
-        <div className="relative">
-          <div className="w-28 h-28 bg-[#E0E5EC] rounded-full p-1 shadow-[8px_8px_20px_rgba(163,177,198,0.7),-8px_-8px_20px_rgba(255,255,255,0.95)] border-4 border-white overflow-hidden">
-            {userAvatar ? (
+        <div className="relative group">
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileChange} 
+            accept="image/*" 
+            className="hidden" 
+          />
+          <div 
+            onClick={handleEditAvatar}
+            className={`w-28 h-28 bg-[#E0E5EC] rounded-full p-1 shadow-[8px_8px_20px_rgba(163,177,198,0.7),-8px_-8px_20px_rgba(255,255,255,0.95)] border-4 border-white overflow-hidden cursor-pointer relative ${isUploading ? 'opacity-50' : 'active:scale-95 transition-transform'}`}
+          >
+            {isUploading ? (
+              <div className="w-full h-full flex items-center justify-center">
+                <Loader2 size={32} className="text-[#1A1A3A] animate-spin" />
+              </div>
+            ) : userAvatar ? (
               <img src={userAvatar} alt="Avatar" className="w-full h-full object-cover rounded-full" referrerPolicy="no-referrer" />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-full">
                 <UserCircle2 size={64} className="text-[#1A1A3A]/20" />
               </div>
             )}
+            
+            {/* Overlay al hacer hover (Desktop) */}
+            {!isUploading && (
+              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-full">
+                <Camera size={24} className="text-white" />
+              </div>
+            )}
           </div>
-          <button className="absolute bottom-0 right-0 p-2 bg-[#FFB400] text-white rounded-xl shadow-lg border-2 border-white active:scale-90 transition-transform">
-            <Edit2 size={16} />
-          </button>
         </div>
         
         <h1 className="mt-4 text-2xl font-black text-[#1A1A3A] tracking-tight">

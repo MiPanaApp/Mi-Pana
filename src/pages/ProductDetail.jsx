@@ -109,7 +109,7 @@ export default function ProductDetail() {
    const handleShare = async () => {
       const shareData = {
          title: product.name,
-         text: `Mira lo que encontré en Mi Pana: ${product.name}`,
+         text: `Mira lo que encontré en Mi Pana: ${product.name}\n\n${product.image}`,
          url: window.location.href,
       };
 
@@ -526,7 +526,7 @@ tlfno contacto: 672 593 950`}
                   <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-full overflow-hidden shadow-[inset_2px_2px_4px_rgba(163,177,198,0.5),inset_-2px_-2px_4px_rgba(255,255,255,0.7)] bg-white border-2 border-white flex-shrink-0">
                          <img 
-                           src={product.sellerAvatar || `https://api.dicebear.com/7.x/micah/svg?seed=${product.userName || 'Pana'}&backgroundColor=E0E5EC`} 
+                           src={(product.userId === user?.uid ? userAvatar : product.sellerAvatar) || `https://api.dicebear.com/7.x/micah/svg?seed=${product.userName || 'Pana'}&backgroundColor=E0E5EC`} 
                            className="w-full h-full object-cover" 
                            alt="Avatar"
                            referrerPolicy="no-referrer"
