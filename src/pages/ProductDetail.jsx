@@ -8,6 +8,7 @@ import { useStore } from '../store/useStore';
 import ProductCard from '../components/ProductCard';
 import { useTimeAgo } from '../hooks/useTimeAgo';
 import { useAuthStore } from '../store/useAuthStore';
+import { useAuth } from '../context/AuthContext';
 import { getOrCreateConversation } from '../lib/chat';
 import { MOCK_PRODUCTS } from '../data/mockProducts';
 import panaLengua from '../assets/pana_lengua.png';
@@ -41,6 +42,7 @@ export default function ProductDetail() {
    const [reportSuccess, setReportSuccess] = useState(false);
 
    const { user } = useAuthStore();
+   const { userData, userAvatar } = useAuth();
    const [startingChat, setStartingChat] = useState(false);
 
    const handleStartChat = async () => {
@@ -56,7 +58,9 @@ export default function ProductDetail() {
             productCategory: product.category || 'Otros',
             productImage: product.image || '',
             sellerName: product.userName || 'Pana',
-            sellerAvatar: '',
+            sellerAvatar: product.sellerAvatar || '',
+            buyerName: userData?.name || user?.displayName || 'Pana',
+            buyerAvatar: userAvatar || '',
          });
          navigate(`/chat/${conversationId}`);
       } catch (err) {
@@ -520,9 +524,17 @@ tlfno contacto: 672 593 950`}
                {/* Fila superior Desktop: Información del Vendedor + Botones Acción alineados */}
                <div className="flex items-center justify-between mb-4 pl-1">
                   <div className="flex items-center gap-3">
-                     <div className="w-12 h-12 rounded-full overflow-hidden shadow-[inset_2px_2px_4px_rgba(163,177,198,0.5),inset_-2px_-2px_4px_rgba(255,255,255,0.7)] bg-white border-2 border-white flex-shrink-0">
-                        <img src={`https://api.dicebear.com/7.x/micah/svg?seed=${product.userName || 'Pana'}&backgroundColor=E0E5EC`} className="w-full h-full object-cover" alt="Avatar" />
-                     </div>
+                      <div className="w-12 h-12 rounded-full overflow-hidden shadow-[inset_2px_2px_4px_rgba(163,177,198,0.5),inset_-2px_-2px_4px_rgba(255,255,255,0.7)] bg-white border-2 border-white flex-shrink-0">
+                         <img 
+                           src={product.sellerAvatar || `https://api.dicebear.com/7.x/micah/svg?seed=${product.userName || 'Pana'}&backgroundColor=E0E5EC`} 
+                           className="w-full h-full object-cover" 
+                           alt="Avatar"
+                           referrerPolicy="no-referrer"
+                           onError={(e) => {
+                             e.target.src = `https://api.dicebear.com/7.x/micah/svg?seed=${product.userName || 'Pana'}&backgroundColor=E0E5EC`;
+                           }}
+                         />
+                      </div>
                      <div className="flex items-center gap-1.5 pt-0.5">
                         <span className="font-bold text-lg text-[#1A1A3A] truncate max-w-[140px] md:max-w-[180px] lg:max-w-[220px]">{product.userName || "Pana Local"}</span>
                         {(product.verified || true) && <ShieldCheck className="w-5 h-5 text-[#25D366] fill-[#25D366]/10" />}

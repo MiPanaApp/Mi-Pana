@@ -129,8 +129,8 @@ export default function ChatList() {
               {filtered.map((conv, i) => {
                 const unread = conv.unreadCount?.[user?.uid] || 0;
                 const isMeSeller = conv.participants?.[1] === user?.uid;
-                const otherName = isMeSeller ? 'Comprador' : conv.sellerName;
-                const otherAvatar = conv.sellerAvatar;
+                const otherName = isMeSeller ? (conv.buyerName || 'Comprador') : conv.sellerName;
+                const otherAvatar = isMeSeller ? conv.buyerAvatar : conv.sellerAvatar;
 
                 return (
                   <motion.div

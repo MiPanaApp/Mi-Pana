@@ -203,6 +203,17 @@ export default function Chat() {
             <ArrowLeft size={22} />
           </button>
 
+          {/* Avatar del otro participante */}
+          <div className="w-10 h-10 rounded-full overflow-hidden bg-white/20 shadow-inner flex-shrink-0 border-2 border-white/20">
+            {otherAvatar ? (
+              <img src={otherAvatar} className="w-full h-full object-cover" referrerPolicy="no-referrer" alt="" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-sm font-black text-white/40">
+                {otherName?.[0]?.toUpperCase()}
+              </div>
+            )}
+          </div>
+
           <div className="flex-1 min-w-0">
             <p className="font-black text-base leading-tight truncate">{otherName || '...'}</p>
             <div className="flex items-center mt-0.5 overflow-hidden">

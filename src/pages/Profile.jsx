@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 export default function Profile() {
-  const { userData, logout } = useAuth();
+  const { userData, currentUser, userAvatar, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -34,8 +34,8 @@ export default function Profile() {
       <div className="flex flex-col items-center pt-8 pb-10">
         <div className="relative">
           <div className="w-28 h-28 bg-[#E0E5EC] rounded-full p-1 shadow-[8px_8px_20px_rgba(163,177,198,0.7),-8px_-8px_20px_rgba(255,255,255,0.95)] border-4 border-white overflow-hidden">
-            {userData?.avatar ? (
-              <img src={userData.avatar} alt="Avatar" className="w-full h-full object-cover rounded-full" />
+            {userAvatar ? (
+              <img src={userAvatar} alt="Avatar" className="w-full h-full object-cover rounded-full" referrerPolicy="no-referrer" />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-full">
                 <UserCircle2 size={64} className="text-[#1A1A3A]/20" />
@@ -48,7 +48,9 @@ export default function Profile() {
         </div>
         
         <h1 className="mt-4 text-2xl font-black text-[#1A1A3A] tracking-tight">
-          {userData?.name} {userData?.lastName}
+          {userData?.name 
+            ? `${userData.name} ${userData?.lastName || ''}`.trim()
+            : (currentUser?.displayName || 'Mi Pana')}
         </h1>
         <div className="flex items-center gap-1 mt-1 text-[#0056B3] font-bold text-xs bg-[#0056B3]/10 px-3 py-1 rounded-full border border-[#0056B3]/20">
           <ShieldCheck size={14} /> Pana Verificado Nivel {userData?.verificationLevel || 1}

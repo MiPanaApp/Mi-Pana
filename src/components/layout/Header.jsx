@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
 import logoTexto from '../../assets/solotexto.png';
 import useAuthFlow from '../../hooks/useAuthFlow';
+import { useAuth } from '../../context/AuthContext';
 import { db } from '../../services/firebase';
 import { doc, getDoc, updateDoc, collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { CATEGORIES as DEFAULT_CATEGORIES, getCategoryIcon, sortCategories } from '../../data/categories';
@@ -36,7 +37,7 @@ const Header = forwardRef((props, ref) => {
   const categoriesRef = useRef(null);
   const { scrollY } = useScroll();
 
-  const { user } = useAuthFlow();
+  const { user, userData, userAvatar } = useAuth();
   const [userName, setUserName] = useState('');
   const [dbCategories, setDbCategories] = useState(DEFAULT_CATEGORIES);
 
@@ -79,56 +80,14 @@ const Header = forwardRef((props, ref) => {
   }, []);
 
   useEffect(() => {
-    async function fetchUserData() {
-      if (user?.uid) {
-        try {
-          const docRef = doc(db, "users", user.uid);
-          const docSnap = await getDoc(docRef);
-          
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            if (data.name) setUserName(data.name);
-
-            // Initialize app state to user's registered country automatically
-            if (data.country && !sessionStorage.getItem('country_initialized')) {
-              let code = 'ES';
-              if (data.country.includes('Colombia')) code = 'CO';
-              else if (data.country.includes('Estados Unidos')) code = 'US';
-              else if (data.country.includes('Chile')) code = 'CL';
-              else if (data.country.includes('Panamá')) code = 'PA';
-              else if (data.country.includes('República Dominicana')) code = 'DO';
-              else if (data.country.includes('Argentina')) code = 'AR';
-
-              setCountry(code);
-              if (data.region) {
-                setRegion(data.region);
-                setFilters({ ...filters, location: { level1: data.region, level2: data.region, level3: '' } });
-              }
-              sessionStorage.setItem('country_initialized', 'true');
-            }
-            return;
-          }
-
-          if (import.meta.env.VITE_AUTH_BYPASS === 'true') {
-            setUserName(user.displayName?.split(' ')[0] || 'Pana');
-            return;
-          }
-          
-          if (user.displayName) {
-            setUserName(user.displayName.split(' ')[0]);
-          } else {
-            setUserName('');
-          }
-        } catch (err) {
-          console.error("Error fetching user data:", err);
-          setUserName('Pana');
-        }
-      } else {
-        setUserName('');
-      }
+    if (userData?.name) {
+      setUserName(userData.name);
+    } else if (user?.displayName) {
+      setUserName(user.displayName.split(' ')[0]);
+    } else {
+      setUserName('');
     }
-    fetchUserData();
-  }, [user]);
+  }, [user, userData]);
 
   const handleCountryChange = async (countryCode, defaultRegion) => {
     setCountry(countryCode);
@@ -341,7 +300,12 @@ const Header = forwardRef((props, ref) => {
                            <MessageCircle className="w-5 h-5 text-[#FFB400] group-hover:scale-110 transition-transform" /> Mensajes
                         </button>
                         <button onClick={() => { setIsDesktopMenuOpen(false); navigate('/perfil'); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#E0E5EC] text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3),inset_-4px_-4px_8px_rgba(255,255,255,0.5)] hover:shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.7)] transition-all active:scale-95 group">
-                           <LucideUser className="w-5 h-5 text-[#0056B3] group-hover:scale-110 transition-transform" /> Mi Perfil
+                           {userAvatar ? (
+                             <img src={userAvatar} className="w-5 h-5 rounded-full object-cover group-hover:scale-110 transition-transform" referrerPolicy="no-referrer" alt="" />
+                           ) : (
+                             <LucideUser className="w-5 h-5 text-[#0056B3] group-hover:scale-110 transition-transform" />
+                           )}
+                           Mi Perfil
                         </button>
                       </motion.div>
                     )}
@@ -353,7 +317,7 @@ const Header = forwardRef((props, ref) => {
                 <motion.div 
                   initial={{ opacity: 0, y: -5 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-1.5 self-end mr-0 md:mr-[64px]"
+                  className="mt-1.5 self-end mr-0 md:mr-[64px] flex items-center gap-2"
                 >
                   <p 
                     onClick={() => navigate('/perfil')}
@@ -361,6 +325,18 @@ const Header = forwardRef((props, ref) => {
                   >
                     Hola, <span className="font-bold underline underline-offset-2">{userName}</span>
                   </p>
+                  <div 
+                    onClick={() => navigate('/perfil')}
+                    className="w-6 h-6 md:w-8 md:h-8 rounded-full overflow-hidden border border-[#1A1A3A]/10 shadow-sm cursor-pointer"
+                  >
+                    {userAvatar ? (
+                      <img src={userAvatar} className="w-full h-full object-cover" referrerPolicy="no-referrer" alt="Perfil" />
+                    ) : (
+                      <div className="w-full h-full bg-[#E0E5EC] flex items-center justify-center">
+                         <LucideUser className="w-4 h-4 text-[#1A1A3A]/40" />
+                      </div>
+                    )}
+                  </div>
                 </motion.div>
               )}
             </div>

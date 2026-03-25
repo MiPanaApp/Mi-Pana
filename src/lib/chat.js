@@ -6,7 +6,10 @@ import {
 import { db } from './firebase';
 
 // ─── Crear o recuperar conversación ───────────────────────────────────────────
-export async function getOrCreateConversation({ buyerId, sellerId, productId, productName, productCategory, productImage, sellerName, sellerAvatar }) {
+export async function getOrCreateConversation({ 
+  buyerId, sellerId, productId, productName, productCategory, productImage, 
+  sellerName, sellerAvatar, buyerName, buyerAvatar 
+}) {
   // ID determinista para evitar duplicados
   const ids = [buyerId, sellerId].sort();
   const conversationId = `${ids[0]}_${ids[1]}_${productId}`;
@@ -22,6 +25,8 @@ export async function getOrCreateConversation({ buyerId, sellerId, productId, pr
       productImage: productImage || '',
       sellerName,
       sellerAvatar: sellerAvatar || '',
+      buyerName: buyerName || 'Comprador',
+      buyerAvatar: buyerAvatar || '',
       lastMessage: '',
       lastMessageTime: serverTimestamp(),
       unreadCount: { [buyerId]: 0, [sellerId]: 0 },

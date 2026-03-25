@@ -210,7 +210,7 @@ export default function Favorites() {
               <motion.div 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="flex flex-col items-center justify-center py-10 px-6 text-center"
+                className="flex flex-col items-center justify-center pt-2 pb-10 px-6 text-center"
               >
                 <img 
                   src={emptyHammock} 
@@ -278,7 +278,7 @@ export default function Favorites() {
                <motion.div 
                  initial={{ opacity: 0 }}
                  animate={{ opacity: 1 }}
-                 className="flex flex-col items-center justify-center py-16 px-6 text-center"
+                 className="flex flex-col items-center justify-center pt-2 pb-16 px-6 text-center"
                >
                  <img 
                    src={emptyHammock} 

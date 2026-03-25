@@ -89,6 +89,8 @@ export function AuthProvider({ children }) {
   const value = {
     currentUser,
     userData,
+    // Avatar dinámico: prioriza el guardado en Firestore, luego el de Google/Auth
+    userAvatar: userData?.avatar || currentUser?.photoURL || null,
     loginWithGoogle,
     logout
   };

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, ImagePlus, ChevronLeft, CheckCircle2, Loader2, X, MapPin } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
+import { useAuth } from '../context/AuthContext';
 import { useStore } from '../store/useStore';
 import { db, storage } from '../lib/firebase';
 import { collection, addDoc, getDoc, getDocs, doc, serverTimestamp, query, orderBy, where } from 'firebase/firestore';
@@ -221,6 +222,7 @@ const COUNTRY_CODES = [
 export default function CreateListing() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const { userData } = useAuth(); // Avatar y datos del perfil de Firestore
   const { selectedCountry } = useStore();
   const mainInputRef = useRef(null);
   const carouselInputRef = useRef(null);
@@ -436,7 +438,9 @@ export default function CreateListing() {
           level2: location.level2,
         },
         userId: user?.uid || 'test-user-id',
-        userName: user?.displayName || 'Usuario de Prueba',
+        userName: user?.displayName || userData?.name || 'Usuario de Prueba',
+        sellerAvatar: user?.photoURL || userData?.avatar || '',
+        sellerEmail: user?.email || '',
         createdAt: serverTimestamp(),
         rating: 5.0,
         reviewCount: 0,
