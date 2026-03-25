@@ -325,18 +325,6 @@ const Header = forwardRef((props, ref) => {
                   >
                     Hola, <span className="font-bold underline underline-offset-2">{userName}</span>
                   </p>
-                  <div 
-                    onClick={() => navigate('/perfil')}
-                    className="w-6 h-6 md:w-8 md:h-8 rounded-full overflow-hidden border border-[#1A1A3A]/10 shadow-sm cursor-pointer"
-                  >
-                    {userAvatar ? (
-                      <img src={userAvatar} className="w-full h-full object-cover" referrerPolicy="no-referrer" alt="Perfil" />
-                    ) : (
-                      <div className="w-full h-full bg-[#E0E5EC] flex items-center justify-center">
-                         <LucideUser className="w-4 h-4 text-[#1A1A3A]/40" />
-                      </div>
-                    )}
-                  </div>
                 </motion.div>
               )}
             </div>
