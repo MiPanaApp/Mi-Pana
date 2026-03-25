@@ -185,10 +185,10 @@ export default function Chat() {
   };
 
   // ─── Info del otro participante ─────────────────────────────────────────────
+  const isMeSeller = conversation?.participants?.[1] === user?.uid;
   const otherId = conversation?.participants?.find(p => p !== user?.uid);
-  const otherName = user?.uid === conversation?.participants?.[0]
-    ? conversation?.sellerName
-    : 'Comprador';
+  const otherName = isMeSeller ? (conversation?.buyerName || 'Comprador') : (conversation?.sellerName || 'Vendedor');
+  const otherAvatar = isMeSeller ? conversation?.buyerAvatar : conversation?.sellerAvatar;
 
   return (
     <div className="h-screen bg-[#D1D9E6] flex justify-center overflow-hidden">
