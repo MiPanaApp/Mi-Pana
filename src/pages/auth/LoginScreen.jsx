@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { signInWithPopup, getAdditionalUserInfo } from "firebase/auth";
+import { useEffect, useState } from "react";
+import { signInWithRedirect, getRedirectResult, getAdditionalUserInfo } from "firebase/auth";
 import { auth, googleProvider } from "../../services/firebase";
 import { useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, Rocket, ArrowRight } from "lucide-react";
@@ -11,23 +11,34 @@ export default function LoginScreen() {
   const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    // Escuchar el resultado de la redirección al volver del login de Google
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result) {
+          const additionalInfo = getAdditionalUserInfo(result);
+          if (additionalInfo?.isNewUser) {
+            navigate("/register", { state: { isGoogleUser: true, user: result.user } });
+          } else {
+            navigate("/home");
+          }
+        }
+      })
+      .catch((error) => {
+        console.error("Error en Google Auth Redirect:", error);
+        // Algunos navegadores bloquean el redirect si no hay interacción previa o por cookies de terceros
+        if (error.code === 'auth/internal-error' || error.code === 'auth/network-request-failed') {
+          alert("Error de conexión. Intenta de nuevo o usa tu correo.");
+        }
+      });
+  }, [navigate]);
+
   const handleGoogleSignIn = async () => {
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      const additionalInfo = getAdditionalUserInfo(result);
-      
-      if (additionalInfo?.isNewUser) {
-        // Redirigir a registro si es nuevo para que complete sus datos (País, Región, etc)
-        navigate("/register", { state: { isGoogleUser: true, user: result.user } });
-      } else {
-        navigate("/home");
-      }
+      await signInWithRedirect(auth, googleProvider);
     } catch (error) {
-      console.error("Error en Google Auth:", error);
-      if (error.code === 'auth/popup-closed-by-user') {
-        return; // No mostramos error si el usuario simplemente cerró la ventana
-      }
-      alert("No se pudo iniciar sesión con Google. Por favor, intenta de nuevo.");
+      console.error("Error iniciando Google Auth:", error);
+      alert("No se pudo iniciar el login con Google. Intenta de nuevo.");
     }
   };
 

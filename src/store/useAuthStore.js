@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 import { 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword,
-  signInWithPopup,
+  signInWithRedirect,
   signOut,
   onAuthStateChanged,
   updateProfile,
@@ -54,8 +54,7 @@ export const useAuthStore = create((set) => ({
   loginWithGoogle: async () => {
     set({ loading: true, error: null });
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      set({ user: result.user, loading: false });
+      await signInWithRedirect(auth, googleProvider);
       return { success: true };
     } catch (err) {
       set({ error: err.message, loading: false });

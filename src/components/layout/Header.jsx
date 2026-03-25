@@ -37,7 +37,7 @@ const Header = forwardRef((props, ref) => {
   const categoriesRef = useRef(null);
   const { scrollY } = useScroll();
 
-  const { user, userData, userAvatar } = useAuth();
+  const { currentUser: user, userData, userAvatar } = useAuth();
   const [userName, setUserName] = useState('');
   const [dbCategories, setDbCategories] = useState(DEFAULT_CATEGORIES);
 
