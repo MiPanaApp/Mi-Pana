@@ -57,6 +57,25 @@ service cloud.firestore {
       }
     }
 
+    // Categories Collection
+    // Read: Public (needed for browse filters and header)
+    // Write: Admin only
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Conversations Collection (Marketplace Chat)
+    // Read/Write: Only participants can access their private chats
+    match /conversations/{conversationId} {
+      allow read, write: if isAuthenticated() && request.auth.uid in resource.data.participants;
+      
+      // Messages subcollection
+      match /messages/{messageId} {
+        allow read, write: if isAuthenticated() && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
+      }
+    }
+
     // Banners Collection
     // Read: Public
     // Write: Admin only

@@ -15,5 +15,11 @@
   "firestore": {
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
-  }
+  },
+  "storage": [
+    {
+      "bucket": "app-mi-pana.firebasestorage.app",
+      "rules": "storage.rules"
+    }
+  ]
 }

@@ -249,7 +249,7 @@ const Header = forwardRef((props, ref) => {
                     onClick={() => setIsRegionOpen(!isRegionOpen)}
                     className="flex items-center gap-1 cursor-pointer active:scale-95 transition-transform opacity-90 group"
                   >
-                    <span className="text-[7px] sm:text-[8px] md:text-[11px] font-bold text-[#003366] tracking-widest uppercase truncate block">
+                    <span className="text-[7px] sm:text-[8px] md:text-[11px] font-bold text-[#003366] tracking-tight md:tracking-widest uppercase leading-[1.1] max-w-[60px] sm:max-w-[70px] md:max-w-[120px] whitespace-normal block">
                       {filters?.location?.level1 || selectedRegion || 'Ubicación'}
                     </span>
                     <LucideChevronDown className={`w-3 h-3 md:w-4 md:h-4 text-[#003366] transition-transform duration-300 ${isRegionOpen ? 'rotate-180' : ''}`} />
@@ -310,9 +310,9 @@ const Header = forwardRef((props, ref) => {
                         addRecentSearch(filters.searchQuery.trim());
                       }
                     }}
-                    className="w-full h-11 md:h-14 pl-14 md:pl-20 pr-12 bg-[#FFCC00] rounded-xl md:rounded-2xl text-sm md:text-lg text-[#1A1A3A] font-bold placeholder:text-[#1A1A3A]/70 shadow-[inset_4px_4px_8px_rgba(204,163,0,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] focus:outline-none focus:ring-2 focus:ring-[#0056B3]/40 transition-all"
+                    className="w-full h-11 md:h-14 pl-11 md:pl-16 pr-12 bg-[#FFCC00] rounded-xl md:rounded-2xl text-sm md:text-lg text-[#1A1A3A] font-bold placeholder:text-[#1A1A3A] shadow-[inset_4px_4px_8px_rgba(204,163,0,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] focus:outline-none focus:ring-2 focus:ring-[#0056B3]/40 transition-all"
                   />
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#1A1A3A]/80 w-5 h-5 md:w-7 md:h-7" />
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white w-5 h-5 md:w-7 md:h-7" />
                   
                   {filters.searchQuery && (
                     <button 
