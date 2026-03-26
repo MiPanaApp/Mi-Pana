@@ -401,6 +401,12 @@ export default function CreateListing() {
       return;
     }
 
+    const keywordsArray = form.keywords.split(',').map(k => k.trim()).filter(Boolean);
+    if (keywordsArray.length < 3 || keywordsArray.length > 10) {
+      setError('Debes incluir entre 3 y 10 palabras claves, separadas por coma.');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
@@ -647,9 +653,10 @@ export default function CreateListing() {
 
           {/* KEYWORDS */}
           <div className="flex flex-col gap-2">
-            <span className="text-sm font-bold text-[#1A1A3A]/70 ml-2">Palabras Clave (opcional)</span>
+            <span className="text-sm font-bold text-[#1A1A3A]/70 ml-2">Palabras Clave <span className="text-red-500">*</span></span>
             <input 
               type="text" 
+              required
               disabled={loading}
               value={form.keywords}
               onChange={(e) => setForm({ ...form, keywords: e.target.value })}

@@ -7,6 +7,7 @@ import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { doc, setDoc } from "firebase/firestore";
 import { updateEmail, updatePassword, EmailAuthProvider, linkWithCredential } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
+import { translateFirebaseError } from "../../utils/authErrors";
 
 export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
   const [showCropper, setShowCropper] = useState(false);
@@ -114,11 +115,15 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
           console.error("Linking error:", linkErr);
           // If already linked or other error, try direct updates as fallback
           if (linkErr.code === 'auth/operation-not-allowed') {
-             throw new Error("El método de Email/Contraseña no está habilitado en Firebase Console. Por favor, actívalo.");
+             throw linkErr;
           }
           if (linkErr.code !== 'auth/credential-already-in-use') {
-            await updateEmail(userToUpdate, formData.email);
-            await updatePassword(userToUpdate, formData.password);
+            try {
+              await updateEmail(userToUpdate, formData.email);
+              await updatePassword(userToUpdate, formData.password);
+            } catch (fallbackErr) {
+              throw fallbackErr;
+            }
           }
         }
       }
@@ -150,7 +155,11 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
       onClose();
       navigate("/home");
     } catch (err) {
-      setErrorMsg(err.message || "Error guardando el perfil. Intenta de nuevo.");
+      if (err.code) {
+        setErrorMsg(translateFirebaseError(err.code));
+      } else {
+        setErrorMsg(err.message || "Error guardando el perfil. Intenta de nuevo.");
+      }
       console.error(err);
     }
   };
@@ -431,7 +440,13 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
             </div>
           </div>
           
-          {errorMsg && <p className="text-[#D90429] text-[11px] font-bold text-center">{errorMsg}</p>}
+          {errorMsg && (
+            <div className="mt-4 p-4 rounded-2xl bg-[#FFE5E5] border border-[#FFCCCC] shadow-[inset_2px_2px_5px_rgba(255,0,0,0.1)] transition-all animate-in fade-in zoom-in duration-300 mb-2">
+              <p className="text-sm font-bold text-[#D90429] text-center leading-tight">
+                {errorMsg}
+              </p>
+            </div>
+          )}
 
           <button 
             onClick={handleSubmit} 

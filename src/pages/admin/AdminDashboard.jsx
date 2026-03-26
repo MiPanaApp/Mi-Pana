@@ -6,6 +6,8 @@ import {
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { db } from '../../services/firebase';
 import { collection, getDocs, query, limit } from 'firebase/firestore';
+import AdminUsersTab from '../../components/admin/AdminUsersTab';
+import AdminAdsTab from '../../components/admin/AdminAdsTab';
 
 const METRICS = [
   { id: 1, label: "Panas Activos", val: "1,248", trend: "+5.2%", isPositive: true },
@@ -31,6 +33,7 @@ const COLORS = ['#8B5CF6', '#06B6D4', '#F43F5E', '#10B981', '#F59E0B'];
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
+  const [globalSearch, setGlobalSearch] = useState('');
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalProducts: 0,
@@ -75,7 +78,29 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F4F7FE] flex p-4 lg:p-6 font-sans overflow-hidden">
+    <div className="min-h-screen bg-[#F4F7FE] flex p-3 pb-24 lg:p-6 lg:pb-6 font-sans overflow-hidden">
+
+      {/* Mobile Bottom Navigation */}
+      <div className="lg:hidden fixed bottom-6 left-4 right-4 bg-white/90 backdrop-blur-xl shadow-[0_15px_40px_rgba(0,0,0,0.1)] z-[100] flex items-center justify-around p-4 rounded-3xl border border-white/50">
+        <button onClick={() => setActiveTab('overview')} className={`flex flex-col items-center ${activeTab === 'overview' ? 'text-blue-600 scale-110' : 'text-gray-400 hover:text-gray-600'} transition-all`}>
+          <Home className="w-6 h-6" />
+        </button>
+        <button onClick={() => setActiveTab('usuarios')} className={`flex flex-col items-center ${activeTab === 'usuarios' ? 'text-blue-600 scale-110' : 'text-gray-400 hover:text-gray-600'} transition-all`}>
+          <Users className="w-6 h-6" />
+        </button>
+        <button onClick={() => setActiveTab('anuncios')} className={`flex flex-col items-center ${activeTab === 'anuncios' ? 'text-blue-600 scale-110' : 'text-gray-400 hover:text-gray-600'} transition-all`}>
+          <ShoppingBag className="w-6 h-6" />
+        </button>
+        <button onClick={() => setActiveTab('reportes')} className={`flex flex-col items-center ${activeTab === 'reportes' ? 'text-blue-600 scale-110' : 'text-gray-400 hover:text-gray-600'} transition-all`}>
+            <div className="relative">
+              <AlertCircle className="w-6 h-6" />
+              <div className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white" />
+            </div>
+        </button>
+        <button onClick={() => setActiveTab('estadisticas')} className={`flex flex-col items-center ${activeTab === 'estadisticas' ? 'text-blue-600 scale-110' : 'text-gray-400 hover:text-gray-600'} transition-all`}>
+          <BarChart2 className="w-6 h-6" />
+        </button>
+      </div>
 
       {/* Floating Sidebar */}
       <div className="hidden lg:flex flex-col items-center py-8 w-24 bg-white rounded-[2rem] shadow-[0_10px_40px_rgba(0,0,0,0.04)] h-[calc(100vh-3rem)] mr-6 sticky top-6">
@@ -91,6 +116,10 @@ export default function AdminDashboard() {
           <button onClick={() => setActiveTab('usuarios')} className={`relative w-full flex justify-center ${activeTab === 'usuarios' ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600 transition-colors'}`}>
             <Users className="w-6 h-6" />
             {activeTab === 'usuarios' && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-blue-600 rounded-r-md" />}
+          </button>
+          <button onClick={() => setActiveTab('anuncios')} className={`relative w-full flex justify-center ${activeTab === 'anuncios' ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600 transition-colors'}`}>
+            <ShoppingBag className="w-6 h-6" />
+            {activeTab === 'anuncios' && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-blue-600 rounded-r-md" />}
           </button>
           <button onClick={() => setActiveTab('reportes')} className={`relative w-full flex justify-center ${activeTab === 'reportes' ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600 transition-colors'}`}>
             <AlertCircle className="w-6 h-6" />
@@ -108,28 +137,34 @@ export default function AdminDashboard() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col h-[calc(100vh-3rem)] overflow-y-auto hide-scrollbar">
+      <div className="flex-1 flex flex-col h-[calc(100vh-2rem)] lg:h-[calc(100vh-3rem)] overflow-y-auto hide-scrollbar">
 
         {/* Top Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 pt-2">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 md:mb-8 gap-3 pt-2">
           <div>
-            <h1 className="text-3xl font-black text-gray-800 tracking-tight">Panel Dinámico</h1>
-            <p className="text-sm font-bold text-gray-400 mt-1">Mostrando datos en tiempo real de Mi Pana</p>
+            <h1 className="text-2xl md:text-3xl font-black text-gray-800 tracking-tight">Panel Dinámico</h1>
+            <p className="text-xs md:text-sm font-bold text-gray-400 mt-0.5">Mostrando datos en tiempo real de Mi Pana</p>
           </div>
 
-          <div className="flex items-center gap-4 w-full md:w-auto">
+          <div className="flex items-center gap-3 w-full md:w-auto">
             {/* Search Bar */}
-            <div className="bg-white rounded-[1.2rem] flex items-center px-4 py-3 shadow-[0_10px_30px_rgba(0,0,0,0.03)] w-full md:w-64 border border-gray-50">
-              <Search className="w-5 h-5 text-gray-400 mr-2" />
-              <input type="text" placeholder="Buscar..." className="bg-transparent border-none outline-none text-sm font-bold text-gray-600 w-full placeholder:text-gray-400" />
+            <div className="bg-white rounded-2xl md:rounded-[1.2rem] flex items-center px-4 py-3 shadow-[0_10px_30px_rgba(0,0,0,0.03)] flex-1 md:w-64 border border-gray-50">
+              <Search className="w-4 h-4 md:w-5 md:h-5 text-gray-400 mr-2 shrink-0" />
+              <input 
+                type="text" 
+                value={globalSearch}
+                onChange={(e) => setGlobalSearch(e.target.value)}
+                placeholder="Buscar usuarios, anuncios..." 
+                className="bg-transparent border-none outline-none text-xs md:text-sm font-bold text-gray-600 w-full placeholder:text-gray-400" 
+              />
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-2">
-              <button className="w-[48px] h-[48px] shrink-0 bg-white rounded-[1.2rem] flex items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.03)] text-gray-400 hover:text-blue-600 border border-gray-50 transition-colors">
+            <div className="flex gap-2 shrink-0">
+              <button className="w-[44px] h-[44px] md:w-[48px] md:h-[48px] bg-white rounded-2xl md:rounded-[1.2rem] flex items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.03)] text-gray-400 hover:text-blue-600 border border-gray-50 transition-colors">
                 <Bell className="w-5 h-5" />
               </button>
-              <button className="w-[48px] h-[48px] shrink-0 bg-[#8B5CF6] rounded-[1.2rem] flex items-center justify-center shadow-[0_10px_30px_rgba(139,92,246,0.3)] text-white hover:bg-[#7C3AED] transition-colors">
+              <button className="w-[44px] h-[44px] md:w-[48px] md:h-[48px] bg-[#8B5CF6] rounded-2xl md:rounded-[1.2rem] flex items-center justify-center shadow-[0_10px_30px_rgba(139,92,246,0.3)] text-white hover:bg-[#7C3AED] transition-colors">
                 <ShieldCheck className="w-5 h-5" />
               </button>
             </div>
@@ -141,16 +176,16 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 pb-6">
 
             {/* Top Metrics Row */}
-            <div className="xl:col-span-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="xl:col-span-12 grid grid-cols-3 md:grid-cols-3 gap-3 md:gap-6">
               {metrics.map(m => (
-                <div key={m.id} className="bg-white p-6 rounded-[2rem] shadow-[0_15px_40px_rgba(0,0,0,0.03)] flex flex-col justify-between border border-gray-50">
-                  <div className="flex justify-between items-start">
-                    <span className="text-gray-800 font-black text-[28px] tracking-tight">{m.val}</span>
-                    <span className={`text-[11px] font-black px-2.5 py-1 rounded-full ${m.isPositive ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                <div key={m.id} className="bg-white p-3 md:p-6 rounded-2xl md:rounded-[2rem] shadow-[0_15px_40px_rgba(0,0,0,0.03)] flex flex-col justify-between border border-gray-50">
+                  <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center">
+                    <span className="text-gray-800 font-black text-xl md:text-[28px] tracking-tight">{m.val}</span>
+                    <span className={`text-[9px] md:text-[11px] font-black px-1.5 md:px-2.5 py-0.5 md:py-1 rounded-full mt-1 lg:mt-0 ${m.isPositive ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
                       {m.trend}
                     </span>
                   </div>
-                  <span className="text-gray-400 text-sm font-bold mt-4">{m.label}</span>
+                  <span className="text-gray-400 text-[9px] min-[370px]:text-[10px] md:text-sm font-bold mt-2 md:mt-4 leading-tight">{m.label}</span>
                 </div>
               ))}
             </div>
@@ -186,11 +221,11 @@ export default function AdminDashboard() {
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
-                  <div className="flex flex-wrap gap-x-4 gap-y-2 mt-4 justify-center">
+                  <div className="flex flex-wrap gap-x-2 md:gap-x-4 gap-y-2 mt-4 justify-center">
                     {stats.categories.map((cat, i) => (
                       <div key={cat.name} className="flex items-center gap-1.5">
                         <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }}></div>
-                        <span className="text-[10px] text-gray-500 font-bold">{cat.name}</span>
+                        <span className="text-[9px] md:text-[10px] text-gray-500 font-bold">{cat.name}</span>
                       </div>
                     ))}
                   </div>
@@ -247,7 +282,7 @@ export default function AdminDashboard() {
                 <h3 className="font-bold mb-2 text-xl">Revisión de Seguridad</h3>
                 <p className="text-sm text-white/80 font-medium mb-8 leading-relaxed">Hay 15 reportes pendientes de revisión el día de hoy.</p>
                 <div className="flex gap-3 w-full">
-                  <button onClick={() => setActiveTab('reportes')} className="flex-1 bg-white text-indigo-600 font-bold py-3.5 rounded-xl hover:bg-gray-50 transition-colors shadow-sm active:scale-95">Revisar Casos</button>
+                  <button onClick={() => setActiveTab('reportes')} className="flex-1 bg-white text-indigo-600 text-sm md:text-base font-bold py-3 md:py-3.5 rounded-xl hover:bg-gray-50 transition-colors shadow-sm active:scale-95">Revisar Casos</button>
                 </div>
               </div>
             </div>
@@ -306,7 +341,11 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {(activeTab === 'usuarios' || activeTab === 'estadisticas') && (
+        {activeTab === 'usuarios' && <AdminUsersTab searchQuery={globalSearch} />}
+        
+        {activeTab === 'anuncios' && <AdminAdsTab searchQuery={globalSearch} />}
+
+        {activeTab === 'estadisticas' && (
           <div className="bg-white p-10 rounded-[2rem] shadow-[0_15px_40px_rgba(0,0,0,0.04)] flex flex-col items-center justify-center h-full mb-6 text-center border border-gray-50">
             <div className="w-24 h-24 bg-gray-50 rounded-3xl flex items-center justify-center border border-gray-100 mb-6 drop-shadow-sm">
               <Layers className="w-10 h-10 text-gray-300" />

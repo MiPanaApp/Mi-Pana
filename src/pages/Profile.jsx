@@ -1,9 +1,13 @@
 import { useState, useRef } from 'react';
-import { User, Mail, Phone, MapPin, Calendar, UserCircle2, LogOut, ChevronRight, Edit2, ShieldCheck, Star, Loader2, Camera } from 'lucide-react';
+import { 
+  User, Mail, Phone, MapPin, LogOut, ChevronDown, 
+  ShieldCheck, Loader2, Camera, Lock, Info, 
+  HelpCircle, Cookie, ShieldAlert, Instagram, Facebook, Youtube, Twitter, UserCircle2 
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { db, storage } from '../lib/firebase';
 
 export default function Profile() {
@@ -11,6 +15,7 @@ export default function Profile() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [openMenu, setOpenMenu] = useState(null); // Para controlar desplegables
 
   const handleLogout = async () => {
     try {
@@ -21,160 +26,156 @@ export default function Profile() {
     }
   };
 
-  const handleEditAvatar = () => {
-    fileInputRef.current?.click();
-  };
+  const handleEditAvatar = () => fileInputRef.current?.click();
 
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file || !currentUser) return;
-
-    // Validar tipo de archivo
-    if (!file.type.startsWith('image/')) {
-      alert('Por favor, selecciona una imagen válida.');
-      return;
-    }
-
-    // Validar tamaño (máximo 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      alert('La imagen es demasiado grande. Máximo 5MB.');
-      return;
-    }
+    if (!file.type.startsWith('image/')) return alert('Selecciona una imagen válida.');
+    if (file.size > 5 * 1024 * 1024) return alert('Máximo 5MB.');
 
     setIsUploading(true);
     try {
-      // 1. Subir a Firebase Storage
-      const fileExtension = file.name.split('.').pop() || 'jpg';
-      const fileName = `avatar_${Date.now()}.${fileExtension}`;
+      const fileName = `avatar_${Date.now()}.${file.name.split('.').pop()}`;
       const storageRef = ref(storage, `avatars/${currentUser.uid}/${fileName}`);
-      
       const snapshot = await uploadBytes(storageRef, file);
       const downloadURL = await getDownloadURL(snapshot.ref);
-
-      // 2. Actualizar Firestore
-      const userRef = doc(db, 'users', currentUser.uid);
-      await updateDoc(userRef, {
-        avatar: downloadURL,
-        updatedAt: new Date()
-      });
-
-      // No hace falta actualizar estado local, ya que AuthContext escucha Firestore (onSnapshot)
+      await setDoc(doc(db, 'users', currentUser.uid), { avatar: downloadURL, updatedAt: new Date() }, { merge: true });
     } catch (error) {
-      console.error("Error al subir avatar:", error);
-      alert('No se pudo subir la foto. Intenta de nuevo.');
+      console.error(error);
+      alert('Error al subir foto.');
     } finally {
       setIsUploading(false);
     }
   };
 
-  const ProfileItem = ({ icon: Icon, label, value, color }) => (
-    <div className="flex items-center gap-4 p-4 bg-[#E0E5EC] rounded-2xl shadow-[4px_4px_10px_rgba(163,177,198,0.5),-4px_-4px_10px_rgba(255,255,255,0.95)] border border-white/40 group active:scale-[0.98] transition-all">
-      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-[inset_2px_2px_5px_rgba(163,177,198,0.4),inset_-2px_-2px_5px_rgba(255,255,255,0.8)] ${color || 'text-[#1A1A3A]'}`}>
-        <Icon size={20} />
+  const toggleMenu = (menuName) => {
+    setOpenMenu(openMenu === menuName ? null : menuName);
+  };
+
+  // Sub-componente para los items de la cabecera
+  const HeaderInfoItem = ({ icon: Icon, label, value, actionLabel, onAction, isPassword }) => (
+    <div className="w-full flex items-center justify-between py-3 border-b border-white/20 last:border-0">
+      <div className="flex items-center gap-3 overflow-hidden">
+        <div className="min-w-[36px] h-[36px] rounded-xl flex items-center justify-center bg-[#E0E5EC] shadow-[inset_2px_2px_5px_rgba(163,177,198,0.4),inset_-2px_-2px_5px_rgba(255,255,255,0.8)] text-[#1A1A3A]">
+          <Icon size={18} />
+        </div>
+        <div className="flex flex-col overflow-hidden">
+          <span className="text-[10px] font-black text-[#8888AA] uppercase">{label}</span>
+          <span className="text-sm font-bold text-[#1A1A3A] truncate">
+            {isPassword ? '••••••••' : (value || 'No especificado')}
+          </span>
+        </div>
       </div>
-      <div className="flex-1">
-        <p className="text-[10px] font-black text-[#8888AA] uppercase tracking-wider">{label}</p>
-        <p className="text-sm font-bold text-[#1A1A3A] truncate">{value || 'No especificado'}</p>
-      </div>
+      {actionLabel && (
+        <button 
+          onClick={onAction}
+          className="ml-2 px-3 py-1.5 text-[10px] font-black uppercase rounded-lg bg-[#E0E5EC] text-[#0056B3] shadow-[3px_3px_6px_rgba(163,177,198,0.5),-3px_-3px_6px_rgba(255,255,255,0.9)] active:shadow-[inset_2px_2px_4px_rgba(163,177,198,0.5)] transition-all"
+        >
+          {actionLabel}
+        </button>
+      )}
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-[#E0E5EC] pb-24 pt-safe safe-area-pt px-6">
-      {/* Header Profile */}
-      <div className="flex flex-col items-center pt-8 pb-10">
-        <div className="relative group">
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            onChange={handleFileChange} 
-            accept="image/*" 
-            className="hidden" 
-          />
-          <div 
-            onClick={handleEditAvatar}
-            className={`w-28 h-28 bg-[#E0E5EC] rounded-full p-1 shadow-[8px_8px_20px_rgba(163,177,198,0.7),-8px_-8px_20px_rgba(255,255,255,0.95)] border-4 border-white overflow-hidden cursor-pointer relative ${isUploading ? 'opacity-50' : 'active:scale-95 transition-transform'}`}
-          >
-            {isUploading ? (
-              <div className="w-full h-full flex items-center justify-center">
-                <Loader2 size={32} className="text-[#1A1A3A] animate-spin" />
+    <div className="min-h-screen bg-[#E0E5EC] pb-32 md:pb-0 pt-[20px] px-6 font-sans">
+      <div className="max-w-md mx-auto">
+        
+        {/* Cabecera Soft UI Principal */}
+        <div className="bg-[#E0E5EC] rounded-[40px] p-6 shadow-[20px_20px_60px_#bebebe,-20px_-20px_60px_#ffffff] flex flex-col items-center mb-10">
+          
+          {/* Avatar Section */}
+          <div className="relative mb-6">
+            <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
+            <div 
+              onClick={handleEditAvatar}
+              className="w-32 h-32 rounded-full p-1.5 bg-[#E0E5EC] shadow-[8px_8px_16px_rgba(163,177,198,0.8),-8px_-8px_16px_rgba(255,255,255,1)] border-4 border-white cursor-pointer overflow-hidden flex items-center justify-center group"
+            >
+              {isUploading ? <Loader2 className="animate-spin text-[#0056B3]" /> : 
+               userAvatar ? <img src={userAvatar} className="w-full h-full object-cover rounded-full" /> : 
+               <User size={60} className="text-gray-300" />}
+              <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-full">
+                <Camera size={24} className="text-white" />
               </div>
-            ) : userAvatar ? (
-              <img src={userAvatar} alt="Avatar" className="w-full h-full object-cover rounded-full" referrerPolicy="no-referrer" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-full">
-                <UserCircle2 size={64} className="text-[#1A1A3A]/20" />
+            </div>
+          </div>
+
+          <h1 className="text-2xl font-black text-[#1A1A3A] mb-1">
+            {userData?.name ? `${userData.name} ${userData?.lastName || ''}` : 'Pana Dev'}
+          </h1>
+          
+          <div className="flex items-center gap-1 mb-6 px-4 py-1.5 bg-[#0056B3]/10 rounded-full border border-[#0056B3]/20 text-[#0056B3] text-[10px] font-black uppercase tracking-wider">
+            <ShieldCheck size={14} /> Pana Verificado Nivel {userData?.verificationLevel || 1}
+          </div>
+
+          {/* User Data List */}
+          <div className="w-full space-y-1">
+            <HeaderInfoItem icon={Mail} label="Correo Electrónico" value={userData?.email} actionLabel="Verificar" onAction={() => alert('Email enviado')} />
+            <HeaderInfoItem icon={MapPin} label="Ubicación" value={userData?.region} />
+            <HeaderInfoItem icon={Lock} label="Contraseña" isPassword actionLabel="Cambiar" onAction={() => alert('Link enviado')} />
+            <HeaderInfoItem icon={User} label="Sexo" value={userData?.gender} />
+          </div>
+        </div>
+
+        {/* Desplegables (Claymorphism Style) - Solo visibles en Móvil */}
+        <div className="md:hidden space-y-6">
+          {/* Plataforma Mi Pana */}
+          <div className="group">
+            <button 
+              onClick={() => toggleMenu('plataforma')}
+              className="w-full flex items-center justify-between p-5 bg-[#E0E5EC] rounded-2xl shadow-[6px_6px_12px_#b8b9be,-6px_-6px_12px_#ffffff] text-[#1A1A3A] font-bold active:scale-[0.98] transition-all"
+            >
+              <span>Plataforma Mi Pana</span>
+              <ChevronDown size={20} className={`transition-transform duration-300 ${openMenu === 'plataforma' ? 'rotate-180' : ''}`} />
+            </button>
+            {openMenu === 'plataforma' && (
+              <div className="mt-2 mx-2 p-2 bg-white/30 rounded-2xl shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3)] flex flex-col gap-1">
+                <button className="flex items-center gap-3 p-3 text-sm font-bold text-[#555577] hover:bg-white/50 rounded-xl transition-colors"><Info size={16}/> ¿Cómo Funciona?</button>
+                <button className="flex items-center gap-3 p-3 text-sm font-bold text-[#555577] hover:bg-white/50 rounded-xl transition-colors"><User size={16}/> Sobre Mi Pana</button>
+                <button className="flex items-center gap-3 p-3 text-sm font-bold text-[#555577] hover:bg-white/50 rounded-xl transition-colors"><ShieldCheck size={16}/> Verificación Mi Pana</button>
               </div>
             )}
-            
-            {/* Overlay al hacer hover (Desktop) */}
-            {!isUploading && (
-              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-full">
-                <Camera size={24} className="text-white" />
+          </div>
+
+          {/* Soporte Mi Pana */}
+          <div className="group">
+            <button 
+              onClick={() => toggleMenu('soporte')}
+              className="w-full flex items-center justify-between p-5 bg-[#E0E5EC] rounded-2xl shadow-[6px_6px_12px_#b8b9be,-6px_-6px_12px_#ffffff] text-[#1A1A3A] font-bold active:scale-[0.98] transition-all"
+            >
+              <span>Soporte Mi Pana</span>
+              <ChevronDown size={20} className={`transition-transform duration-300 ${openMenu === 'soporte' ? 'rotate-180' : ''}`} />
+            </button>
+            {openMenu === 'soporte' && (
+              <div className="mt-2 mx-2 p-2 bg-white/30 rounded-2xl shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3)] flex flex-col gap-1">
+                <button className="flex items-center gap-3 p-3 text-sm font-bold text-[#555577] hover:bg-white/50 rounded-xl transition-colors"><Phone size={16}/> Contactar</button>
+                <button className="flex items-center gap-3 p-3 text-sm font-bold text-[#555577] hover:bg-white/50 rounded-xl transition-colors"><HelpCircle size={16}/> Centro de Ayuda</button>
+                <button className="flex items-center gap-3 p-3 text-sm font-bold text-[#555577] hover:bg-white/50 rounded-xl transition-colors"><Lock size={16}/> Políticas de Privacidad</button>
+                <button className="flex items-center gap-3 p-3 text-sm font-bold text-[#555577] hover:bg-white/50 rounded-xl transition-colors"><Cookie size={16}/> Gestión de Cookies</button>
+                <button className="flex items-center gap-3 p-3 text-sm font-bold text-[#555577] hover:bg-white/50 rounded-xl transition-colors"><ShieldAlert size={16}/> Seguridad</button>
               </div>
             )}
           </div>
         </div>
-        
-        <h1 className="mt-4 text-2xl font-black text-[#1A1A3A] tracking-tight">
-          {userData?.name 
-            ? `${userData.name} ${userData?.lastName || ''}`.trim()
-            : (currentUser?.displayName || 'Mi Pana')}
-        </h1>
-        <div className="flex items-center gap-1 mt-1 text-[#0056B3] font-bold text-xs bg-[#0056B3]/10 px-3 py-1 rounded-full border border-[#0056B3]/20">
-          <ShieldCheck size={14} /> Pana Verificado Nivel {userData?.verificationLevel || 1}
+
+        {/* Redes Sociales Footer - Solo visibles en Móvil */}
+        <div className="md:hidden flex justify-center gap-4 mt-12 mb-8">
+          {[Twitter, Instagram, Facebook, Youtube, UserCircle2].map((Icon, i) => (
+            <button key={i} className="w-12 h-12 flex items-center justify-center rounded-full bg-[#E0E5EC] shadow-[5px_5px_10px_#b8b9be,-5px_-5px_10px_#ffffff] text-[#1A1A3A] active:shadow-[inset_3px_3px_6px_#b8b9be,inset_-3px_-3px_6px_#ffffff] transition-all">
+              <Icon size={20} />
+            </button>
+          ))}
         </div>
-      </div>
 
-      {/* Profile Details Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
-        <ProfileItem 
-          icon={Mail} 
-          label="Correo Electrónico" 
-          value={userData?.email} 
-          color="text-[#0056B3]"
-        />
-        <ProfileItem 
-          icon={Phone} 
-          label="Teléfono" 
-          value={userData?.phone} 
-          color="text-[#2D2D5E]"
-        />
-        <ProfileItem 
-          icon={MapPin} 
-          label="País y Ciudad" 
-          value={`${userData?.country?.split(' ').slice(1).join(' ') || ''}${userData?.region ? `, ${userData.region}` : ''}`} 
-          color="text-[#D90429]"
-        />
-        <ProfileItem 
-          icon={Calendar} 
-          label="Fecha de Nacimiento" 
-          value={userData?.birthDate ? userData.birthDate.split('-').reverse().join('/') : ''} 
-          color="text-[#FFB400]"
-        />
-        <ProfileItem 
-          icon={User} 
-          label="Sexo" 
-          value={userData?.gender} 
-          color="text-purple-600"
-        />
-        <ProfileItem 
-          icon={Star} 
-          label="Rol en Mi Pana" 
-          value={userData?.role === 'buyer' ? 'Comprador' : 'Vendedor'} 
-          color="text-green-600"
-        />
-      </div>
-
-      {/* Logout Button */}
-      <div className="max-w-4xl mx-auto mt-12 pb-10">
+        {/* Logout Button */}
         <button 
           onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-3 py-5 px-6 bg-[#E0E5EC] text-[#D90429] font-black rounded-3xl shadow-[8px_8px_16px_rgba(163,177,198,0.5),-8px_-8px_16px_rgba(255,255,255,0.9)] hover:shadow-[inset_6px_6px_12px_rgba(163,177,198,0.5),inset_-6px_-6px_12px_rgba(255,255,255,0.9)] transition-all active:scale-95 group border border-white/40"
+          className="w-full flex items-center justify-center gap-3 py-5 px-6 mb-10 md:mb-[20px] bg-[#E0E5EC] text-[#D90429] font-black rounded-3xl shadow-[8px_8px_16px_rgba(163,177,198,0.5),-8px_-8px_16px_rgba(255,255,255,0.9)] active:shadow-[inset_6px_6px_12px_rgba(163,177,198,0.5)] transition-all border border-white/40"
         >
-          <LogOut size={22} className="group-hover:translate-x-1 transition-transform" />
-          Cerrar Sesión
+          <LogOut size={22} /> Cerrar Sesión
         </button>
+
       </div>
     </div>
   );
