@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Sliders, Meh, ArrowUpDown, Pin, Star, Clock, Euro } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ProductCard from '../components/ProductCard';
@@ -34,9 +35,29 @@ export default function Home() {
     setIsFilterOpen, 
     isSortOpen, 
     setIsSortOpen,
-    selectedCountry 
+    selectedCountry,
+    setActiveCategory
   } = useStore();
   const sortRef = useRef(null);
+  const { categoryId } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Sync route param with global store category
+  useEffect(() => {
+    if (categoryId) {
+      // decodificar en caso de espacios/caracteres especiales
+      const decodedCat = decodeURIComponent(categoryId);
+      if (activeCategory !== decodedCat) {
+        setActiveCategory(decodedCat);
+      }
+    } else if (location.pathname === '/home' || location.pathname === '/') {
+      // Si estamos en home sin param, la categoría es "Todas"
+      if (activeCategory !== 'Todas') {
+        setActiveCategory('Todas');
+      }
+    }
+  }, [categoryId, setActiveCategory, activeCategory]);
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);

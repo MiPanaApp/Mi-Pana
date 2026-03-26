@@ -123,6 +123,16 @@ const Header = forwardRef((props, ref) => {
     }
   };
 
+  const handleCategoryClick = (categoryId) => {
+    setActiveCategory(categoryId);
+    if (categoryId === 'Todas') {
+      navigate('/home');
+    } else {
+      // Usar encodeURIComponent por si el nombre de categoría tiene espacios o caracteres especiales
+      navigate(`/category/${encodeURIComponent(categoryId)}`);
+    }
+  };
+
   const handleRegionChange = (newRegion) => {
     setRegion(newRegion);
     setFilters({ 
@@ -411,7 +421,7 @@ const Header = forwardRef((props, ref) => {
                   return (
                     <motion.button
                       key={cat.id}
-                      onClick={() => setActiveCategory(cat.id)}
+                      onClick={() => handleCategoryClick(cat.id)}
                       whileTap={{ scale: 0.95 }}
                       className={`
                         flex items-center gap-2 px-4 py-2 rounded-full flex-shrink-0 transition-all duration-300

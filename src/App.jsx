@@ -51,6 +51,7 @@ function App() {
         <Route element={<Layout />}>
           {/* Rutas públicas */}
           <Route path="/home" element={<Home />} />
+          <Route path="/category/:categoryId" element={<Home />} />
           <Route path="/perfil-producto" element={<ProductDetail />} />
 
           {/* Rutas protegidas (requieren login) */}
