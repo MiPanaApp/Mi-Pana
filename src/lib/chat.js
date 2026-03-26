@@ -3,7 +3,7 @@ import {
   query, where, orderBy, onSnapshot, serverTimestamp,
   arrayUnion, setDoc, increment, deleteDoc, writeBatch
 } from 'firebase/firestore';
-import { db } from './firebase';
+import { db } from '../services/firebase';
 
 // ─── Crear o recuperar conversación ───────────────────────────────────────────
 export async function getOrCreateConversation({ 

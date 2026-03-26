@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, SlidersHorizontal, Star } from 'lucide-react';
-import { db } from '../../lib/firebase';
+import { db } from '../../services/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 
 const DEFAULT_CATEGORIES = ["Comida", "Envios", "Inmobiliaria", "Formación", "Deporte", "Empleo", "Servicios", "Ventas", "Legal", "Salud", "Otros"];

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { collection, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
-import { ShoppingBag, Ban, Trash2, CheckCircle, EyeOff, Filter } from 'lucide-react';
+import { ShoppingBag, Ban, Trash2, CheckCircle, EyeOff, Eye, Filter } from 'lucide-react';
 
 export default function AdminAdsTab({ searchQuery = '' }) {
   const [ads, setAds] = useState([]);
@@ -107,15 +107,21 @@ export default function AdminAdsTab({ searchQuery = '' }) {
               </div>
             </div>
             <div className="flex gap-1.5 shrink-0 ml-1">
-              {ad.status === 'suspended' || ad.status === 'hidden' ? (
+              {ad.status === 'suspended' ? (
                 <button onClick={() => handleUpdateStatus(ad.id, 'active')} className="p-2 bg-green-100 text-green-600 rounded-xl hover:bg-green-200 transition-colors shadow-sm" title="Reactivar">
                   <CheckCircle className="w-4 h-4" />
                 </button>
               ) : (
                 <>
-                  <button onClick={() => handleUpdateStatus(ad.id, 'hidden')} className="p-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors shadow-sm" title="Ocultar Anuncio">
-                    <EyeOff className="w-4 h-4" />
-                  </button>
+                  {ad.status === 'hidden' ? (
+                    <button onClick={() => handleUpdateStatus(ad.id, 'active')} className="p-2 bg-blue-100 text-blue-600 rounded-xl hover:bg-blue-200 transition-colors shadow-sm" title="Mostrar Anuncio">
+                      <Eye className="w-4 h-4" />
+                    </button>
+                  ) : (
+                    <button onClick={() => handleUpdateStatus(ad.id, 'hidden')} className="p-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors shadow-sm" title="Ocultar Anuncio">
+                      <EyeOff className="w-4 h-4" />
+                    </button>
+                  )}
                   <button onClick={() => handleUpdateStatus(ad.id, 'suspended')} className="p-2 bg-orange-100 text-orange-600 rounded-xl hover:bg-orange-200 transition-colors shadow-sm" title="Suspender Anuncio">
                     <Ban className="w-4 h-4" />
                   </button>

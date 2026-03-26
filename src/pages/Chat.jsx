@@ -12,7 +12,7 @@ import {
   setTyping,
 } from '../lib/chat';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { db } from '../services/firebase';
 import { getCategoryIcon } from '../data/categories';
 import { FiPlus } from 'react-icons/fi';
 

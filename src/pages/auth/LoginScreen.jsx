@@ -2,14 +2,21 @@ import { useEffect, useState } from "react";
 import { signInWithRedirect, getRedirectResult, getAdditionalUserInfo } from "firebase/auth";
 import { auth, googleProvider } from "../../services/firebase";
 import { useNavigate } from "react-router-dom";
-import { Mail, Lock, Eye, EyeOff, Rocket, ArrowRight } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, Rocket, ArrowRight, Loader2 } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
+import { translateFirebaseError } from "../../utils/authErrors";
 import logoFull from "../../assets/Logo_Mi_pana.png";
 import "../../styles/auth.css";
 
 export default function LoginScreen() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   useEffect(() => {
     // Escuchar el resultado de la redirección al volver del login de Google
@@ -38,7 +45,26 @@ export default function LoginScreen() {
       await signInWithRedirect(auth, googleProvider);
     } catch (error) {
       console.error("Error iniciando Google Auth:", error);
-      alert("No se pudo iniciar el login con Google. Intenta de nuevo.");
+      setError("No se pudo iniciar el login con Google. Intenta de nuevo.");
+    }
+  };
+
+  const handleEmailLogin = async (e) => {
+    e.preventDefault();
+    if (!email || !password) {
+      setError("Por favor completa todos los campos, pana.");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      await login(email, password);
+      navigate("/home");
+    } catch (err) {
+      setError(translateFirebaseError(err.code));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -54,13 +80,19 @@ export default function LoginScreen() {
           <p className="font-sans text-[24px] font-bold text-black -mt-4">Juntos somos más</p>
         </div>
 
-        <div className="clay-card-auth w-full max-w-sm">
+        <form onSubmit={handleEmailLogin} className="clay-card-auth w-full max-w-sm">
           <div className="mb-4 relative">
             <div className="relative">
               <span className="absolute left-[14px] top-1/2 -translate-y-1/2 opacity-50 text-[#1A1A3A]">
                 <Mail size={18} />
               </span>
-              <input type="email" placeholder="tu@correo.com" className="clay-input-auth w-full py-[13.5px] pr-[14px] pl-[44px] text-[14px] font-bold text-[#1A1A3A] outline-none" />
+              <input 
+                type="email" 
+                placeholder="tu@correo.com" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="clay-input-auth w-full py-[13.5px] pr-[14px] pl-[44px] text-[14px] font-bold text-[#1A1A3A] outline-none" 
+              />
             </div>
           </div>
 
@@ -69,7 +101,13 @@ export default function LoginScreen() {
               <span className="absolute left-[14px] top-1/2 -translate-y-1/2 opacity-50 text-[#1A1A3A]">
                 <Lock size={18} />
               </span>
-              <input type={showPassword ? "text" : "password"} placeholder="••••••••" className="clay-input-auth w-full py-[13.5px] pr-[44px] pl-[44px] text-[14px] font-bold text-[#1A1A3A] outline-none" />
+              <input 
+                type={showPassword ? "text" : "password"} 
+                placeholder="••••••••" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="clay-input-auth w-full py-[13.5px] pr-[44px] pl-[44px] text-[14px] font-bold text-[#1A1A3A] outline-none" 
+              />
               <button 
                 type="button"
                 onClick={() => setShowPassword(!showPassword)} 
@@ -102,7 +140,11 @@ export default function LoginScreen() {
             <div className="h-[1px] flex-1 bg-[#b4b4d2]" />
           </div>
 
-          <button onClick={handleGoogleSignIn} className="clay-btn-google w-full flex items-center justify-center gap-[10px] text-[13px] font-bold text-[#1A1A3A] mb-5">
+          <button 
+            type="button" 
+            onClick={handleGoogleSignIn} 
+            className="clay-btn-google w-full flex items-center justify-center gap-[10px] text-[13px] font-bold text-[#1A1A3A] mb-5"
+          >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
               <path fillRule="evenodd" clipRule="evenodd" d="M23.52 12.2727C23.52 11.4218 23.4436 10.6036 23.3018 9.81816H12V14.4545H18.4582C18.18 15.9545 17.3345 17.2363 16.0527 18.0927V21.1036H19.9364C22.2055 19.0145 23.52 15.9272 23.52 12.2727Z" fill="#4285F4"/>
               <path fillRule="evenodd" clipRule="evenodd" d="M12.0001 24.0001C15.2401 24.0001 17.9674 22.9256 19.9365 21.1037L16.0528 18.0928C14.9892 18.8074 13.6146 19.2274 12.0001 19.2274C8.87464 19.2274 6.22373 17.1165 5.27464 14.2801H1.26013V17.3946C3.23467 21.3165 7.28195 24.0001 12.0001 24.0001Z" fill="#34A853"/>
@@ -112,10 +154,22 @@ export default function LoginScreen() {
             Continuar con Google
           </button>
 
-          <button onClick={() => navigate("/home")} className="clay-btn-auth w-full py-[15px] font-black text-[15px] flex items-center justify-center gap-2">
-            ¡Entrar, pana! <Rocket size={20} />
+          {error && (
+            <p className="text-[#D90429] text-[12px] font-bold text-center mb-4">{error}</p>
+          )}
+
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="clay-btn-auth w-full py-[15px] font-black text-[15px] flex items-center justify-center gap-2 disabled:opacity-70"
+          >
+            {loading ? (
+              <>Entrando... <Loader2 size={18} className="animate-spin" /></>
+            ) : (
+              <>¡Entrar, pana! <Rocket size={20} /></>
+            )}
           </button>
-        </div>
+        </form>
 
         <div className="mt-5 text-center h-20">
           <p className="text-[12px] font-bold text-[#1A1A3A] opacity-50 mb-3">¿Aún no tienes cuenta?</p>

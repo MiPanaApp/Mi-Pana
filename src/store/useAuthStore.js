@@ -8,7 +8,7 @@ import {
   onAuthStateChanged,
   updateProfile,
 } from 'firebase/auth';
-import { auth, googleProvider } from '../lib/firebase';
+import { auth, googleProvider } from '../services/firebase';
 
 export const useAuthStore = create((set) => ({
   user: null,

@@ -1,7 +1,8 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, RecaptchaVerifier, signInWithPhoneNumber, signInWithPopup, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, RecaptchaVerifier, signInWithPhoneNumber, signInWithPopup, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, signOut } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
+import { getAnalytics, isSupported } from 'firebase/analytics';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -24,6 +25,20 @@ export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({
   prompt: 'select_account'
 });
+
+// Inicializar Analytics solo si es soportado y hay appId
+let analytics = null;
+if (typeof window !== 'undefined' && firebaseConfig.appId) {
+  isSupported().then(yes => {
+    if (yes) {
+      analytics = getAnalytics(app);
+    }
+  }).catch(err => {
+    console.warn("Firebase Analytics no disponible:", err);
+  });
+}
+
+export { analytics };
 
 // Bypass para testing (VITE_AUTH_BYPASS=true en .env)
 export const TEST_USER = {

@@ -5,7 +5,7 @@ import { Geolocation } from '@capacitor/geolocation';
 import CustomSelect from './CustomSelect';
 import { useStore } from '../../store/useStore';
 import { LOCATION_DATA } from '../../data/locations';
-import { db } from '../../lib/firebase';
+import { db } from '../../services/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { CATEGORIES as DEFAULT_CATEGORIES, getCategoryIcon, sortCategories } from '../../data/categories';
 

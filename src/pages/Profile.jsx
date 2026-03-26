@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { doc, setDoc } from 'firebase/firestore';
-import { db, storage } from '../lib/firebase';
+import { db, storage } from '../services/firebase';
 
 export default function Profile() {
   const { userData, currentUser, userAvatar, logout } = useAuth();

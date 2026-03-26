@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronDown, Share2, Heart, ShieldCheck, MessageCircle, AlertCircle, Star, MapPin, Flag, X } from 'lucide-react';
-import { db } from '../lib/firebase';
+import { db } from '../services/firebase';
 import { doc, getDoc, collection, query, where, getDocs, limit, addDoc } from 'firebase/firestore';
 import { useStore } from '../store/useStore';
 import ProductCard from '../components/ProductCard';

@@ -33,12 +33,18 @@ export default function Onboarding() {
 
   useEffect(() => {
     if (step === 'transition') {
+      // Cálculo dinámico del tiempo de lectura
+      // Tiempo base: 2000ms. Por cada palabra extra sumamos 300ms.
+      const quoteText = countryData[localCountry].quote;
+      const wordCount = quoteText.split(/\s+/).length;
+      const readingTimeMs = 2000 + (wordCount * 300);
+
       const timer = setTimeout(() => {
         navigate('/home');
-      }, 3000);
+      }, readingTimeMs);
       return () => clearTimeout(timer);
     }
-  }, [step, navigate]);
+  }, [step, navigate, localCountry]);
 
   return (
     <div 

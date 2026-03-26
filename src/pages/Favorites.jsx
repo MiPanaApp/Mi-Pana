@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, Search, X, MapPin, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
-import { db } from '../lib/firebase';
+import { db } from '../services/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { MOCK_PRODUCTS } from '../data/mockProducts';
 import emptyHammock from '../assets/empty_hammock.png';

@@ -5,203 +5,13 @@ import { Camera, ImagePlus, ChevronLeft, CheckCircle2, Loader2, X, MapPin } from
 import { useAuthStore } from '../store/useAuthStore';
 import { useAuth } from '../context/AuthContext';
 import { useStore } from '../store/useStore';
-import { db, storage } from '../lib/firebase';
+import { db, storage } from '../services/firebase';
 import { collection, addDoc, getDoc, getDocs, doc, serverTimestamp, query, orderBy, where } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { ChevronDown, Tag } from 'lucide-react';
 import { getCategoryIcon, getBrandColor, sortCategories } from '../data/categories';
+import { LOCATION_DATA } from '../data/locations';
 import panaExito from '../assets/pana_exito.png';
-
-// Mapa de datos por país: { label (nombre del nivel), level1: [{ name, cities }] }
-const LOCATION_DATA = {
-  ES: {
-    level1Label: 'Comunidad Autónoma',
-    level2Label: 'Ciudad / Municipio',
-    regions: [
-      { name: 'Andalucía', cities: ['Sevilla', 'Málaga', 'Córdoba', 'Granada', 'Almería', 'Cádiz', 'Huelva', 'Jaén'] },
-      { name: 'Aragón', cities: ['Zaragoza', 'Huesca', 'Teruel'] },
-      { name: 'Asturias', cities: ['Oviedo', 'Gijón', 'Avilés'] },
-      { name: 'Baleares', cities: ['Palma', 'Ibiza', 'Mahón', 'Ciutadella'] },
-      { name: 'Canarias', cities: ['Las Palmas de G.C.', 'Santa Cruz de Tenerife', 'La Laguna', 'Arrecife'] },
-      { name: 'Cantabria', cities: ['Santander', 'Torrelavega'] },
-      { name: 'Castilla-La Mancha', cities: ['Toledo', 'Albacete', 'Ciudad Real', 'Cuenca', 'Guadalajara'] },
-      { name: 'Castilla y León', cities: ['Valladolid', 'Burgos', 'Salamanca', 'León', 'Ávila', 'Segovia', 'Soria', 'Zamora', 'Palencia'] },
-      { name: 'Cataluña', cities: ['Barcelona', 'Hospitalet', 'Badalona', 'Tarragona', 'Lérida', 'Girona'] },
-      { name: 'Comunidad Valenciana', cities: ['Valencia', 'Alicante', 'Elche', 'Castellón', 'Torrevieja'] },
-      { name: 'Extremadura', cities: ['Badajoz', 'Cáceres', 'Mérida'] },
-      { name: 'Galicia', cities: ['Vigo', 'La Coruña', 'Ponteveda', 'Santiago de Compostela', 'Ourense', 'Lugo'] },
-      { name: 'La Rioja', cities: ['Logroño', 'Calahorra'] },
-      { name: 'Madrid', cities: ['Madrid', 'Móstoles', 'Alcázar de San Juan', 'Alcalá de Henares', 'Getafe', 'Leganés', 'Alcorcon', 'Fuenlabrada', 'Torrejón de Ardoz', 'Pozuelo', 'Parla'] },
-      { name: 'Murcia', cities: ['Murcia', 'Cartagena', 'Lorca'] },
-      { name: 'Navarra', cities: ['Pamplona', 'Tudela', 'Barañáin'] },
-      { name: 'País Vasco', cities: ['Bilbao', 'Vitoria', 'San Sebastián'] },
-      { name: 'Ceuta', cities: ['Ceuta'] },
-      { name: 'Melilla', cities: ['Melilla'] },
-    ]
-  },
-  CO: {
-    level1Label: 'Departamento',
-    level2Label: 'Ciudad / Municipio',
-    regions: [
-      { name: 'Antioquia', cities: ['Medellín', 'Bello', 'Itagüí', 'Envigado', 'Rionegro', 'Turbo'] },
-      { name: 'Bogotá D.C.', cities: ['Bogotá'] },
-      { name: 'Bolívar', cities: ['Cartagena', 'Magangué', 'Turbaco'] },
-      { name: 'Boyacá', cities: ['Tunja', 'Duitama', 'Sogamoso'] },
-      { name: 'Caldas', cities: ['Manizales', 'La Dorada', 'Chinchiía'] },
-      { name: 'Córdoba', cities: ['Montería', 'Lorica', 'Sahagún'] },
-      { name: 'Cundinamarca', cities: ['Soacha', 'Facatativá', 'Zipaquirá', 'Chia', 'Madrid', 'Fusagasugá'] },
-      { name: 'Magdalena', cities: ['Santa Marta', 'Ciénaga', 'Fundación'] },
-      { name: 'Meta', cities: ['Villavicencio', 'Acacias', 'Granada'] },
-      { name: 'Nariño', cities: ['San Juan de Pasto', 'Ipiales', 'Tumaco'] },
-      { name: 'Norte de Santander', cities: ['Cúcuta', 'Ocã±a', 'Pamplona'] },
-      { name: 'Risaralda', cities: ['Pereira', 'Dosquebradas', 'Santa Rosa de Cabal'] },
-      { name: 'Santander', cities: ['Bucaramanga', 'Floridablanca', 'Girón', 'Piedecuesta'] },
-      { name: 'Sucre', cities: ['Sincelejo', 'Corozal', 'San Marcos'] },
-      { name: 'Tolima', cities: ['Ibagué', 'Espinal', 'Melgar'] },
-      { name: 'Valle del Cauca', cities: ['Cali', 'Buenaventura', 'Palmira', 'Tuluá', 'Buga'] },
-    ]
-  },
-  VE: {
-    level1Label: 'Estado',
-    level2Label: 'Ciudad / Municipio',
-    regions: [
-      { name: 'Amazonas', cities: ['Puerto Ayacucho'] },
-      { name: 'Anzoátegui', cities: ['Barcelona', 'Puerto La Cruz', 'El Tigre'] },
-      { name: 'Apure', cities: ['San Fernando de Apure', 'Biruaca'] },
-      { name: 'Aragua', cities: ['Maracay', 'La Victoria', 'Turmero', 'Cagua'] },
-      { name: 'Barinas', cities: ['Barinas', 'Barinas ciudad'] },
-      { name: 'Bolívar', cities: ['Ciudad Bolívar', 'Puerto Ordaz', 'Ciudad Guayana'] },
-      { name: 'Carabobo', cities: ['Valencia', 'Maracay', 'Guácamo'] },
-      { name: 'Cojedes', cities: ['San Carlos', 'Tinaco'] },
-      { name: 'Delta Amacuro', cities: ['Tucupita'] },
-      { name: 'Distrito Capital', cities: ['Caracas'] },
-      { name: 'Falcon', cities: ['Coro', 'La Vela', 'Punto Fijo'] },
-      { name: 'Guárico', cities: ['San Juan de Los Morros', 'Altagracia de Orituco'] },
-      { name: 'Lara', cities: ['Barquisimeto', 'Cabudare', 'Carora'] },
-      { name: 'Miranda', cities: ['Los Teques', 'Guátere', 'Ocumare del Tuy', 'Charallave', 'Púas'] },
-      { name: 'Merida', cities: ['Mérida', 'El Vigía', 'Tovar'] },
-      { name: 'Monagas', cities: ['Maturín', 'Caripito', 'Temblador'] },
-      { name: 'Nueva Esparta', cities: ['La Asunción', 'Porlamar', 'Pampatar'] },
-      { name: 'Portuguesa', cities: ['Acarigua', 'Araure', 'Guanare'] },
-      { name: 'Sucre', cities: ['Cumaná', 'Cariaco', 'Carúpano'] },
-      { name: 'Táchira', cities: ['San Cristóbal', 'Rubio', 'Táriba'] },
-      { name: 'Trujillo', cities: ['Trujillo', 'Valera', 'Motatán'] },
-      { name: 'Vargas', cities: ['La Guaira', 'Naiguatá'] },
-      { name: 'Yaracuy', cities: ['San Felipe', 'Yaritagua', 'Chivacoa'] },
-      { name: 'Zulia', cities: ['Maracaibo', 'Cabimas', 'Ciudad Ojeda'] },
-    ]
-  },
-  US: {
-    level1Label: 'Estado',
-    level2Label: 'Ciudad',
-    regions: [
-      { name: 'California', cities: ['Los Ángeles', 'San Francisco', 'San Diego', 'Sacramento', 'Fresno'] },
-      { name: 'Florida', cities: ['Miami', 'Orlando', 'Tampa', 'Jacksonville', 'Fort Lauderdale'] },
-      { name: 'Texas', cities: ['Houston', 'Dallas', 'San Antonio', 'Austin', 'El Paso'] },
-      { name: 'New York', cities: ['Nueva York', 'Buffalo', 'Rochester', 'Syracuse'] },
-      { name: 'Georgia', cities: ['Atlanta', 'Augusta', 'Columbus', 'Savannah'] },
-      { name: 'Illinois', cities: ['Chicago', 'Aurora', 'Rockford', 'Joliet'] },
-      { name: 'New Jersey', cities: ['Newark', 'Jersey City', 'Paterson', 'Elizabeth'] },
-      { name: 'Virginia', cities: ['Virginia Beach', 'Norfolk', 'Chesapeake', 'Richmond'] },
-      { name: 'Carolina del Norte', cities: ['Charlotte', 'Raleigh', 'Greensboro', 'Durham'] },
-      { name: 'Nevada', cities: ['Las Vegas', 'Henderson', 'Reno', 'North Las Vegas'] },
-    ]
-  },
-  CL: {
-    level1Label: 'Región',
-    level2Label: 'Ciudad / Municipio',
-    regions: [
-      { name: 'Arica y Parinacota', cities: ['Arica', 'Putre'] },
-      { name: 'Tarapacá', cities: ['Iquique', 'Alto Hospicio'] },
-      { name: 'Antofagasta', cities: ['Antofagasta', 'Calama', 'Tocopilla'] },
-      { name: 'Atacama', cities: ['Copiapó', 'Valledén', 'Caldera'] },
-      { name: 'Coquimbo', cities: ['La Serena', 'Coquimbo', 'Ovalle'] },
-      { name: 'Valparaíso', cities: ['Valparaíso', 'Viña del Mar', 'Quilpué', 'San Antonio'] },
-      { name: 'Metropolitana', cities: ['Santiago', 'Puente Alto', 'Las Condes', 'Maipú', 'La Florida'] },
-      { name: "O'Higgins", cities: ['Rancagua', 'San Fernando', 'Machalí'] },
-      { name: 'Maule', cities: ['Talca', 'Curicó', 'Linares'] },
-      { name: 'Ñuble', cities: ['Chillán', 'San Carlos', 'Quirihue'] },
-      { name: 'Biobío', cities: ['Concepción', 'Talcahuano', 'Los Ángeles'] },
-      { name: 'Araucanía', cities: ['Temuco', 'Angol', 'Victoria'] },
-      { name: 'Los Ríos', cities: ['Valdivia', 'La Unión', 'Panguipulli'] },
-      { name: 'Los Lagos', cities: ['Puerto Montt', 'Osorno', 'Castro'] },
-      { name: 'Aysén', cities: ['Coihaique', 'Chile Chico'] },
-      { name: 'Magallanes', cities: ['Punta Arenas', 'Puerto Natales'] },
-    ]
-  },
-  PA: {
-    level1Label: 'Provincia',
-    level2Label: 'Distrito / Ciudad',
-    regions: [
-      { name: 'Panamá', cities: ['Ciudad de Panamá', 'San Miguelito', 'Tocumen'] },
-      { name: 'Panamá Oeste', cities: ['La Chorrera', 'Arraiján', 'Capira'] },
-      { name: 'Colón', cities: ['Colón', 'Portobelo'] },
-      { name: 'Coclé', cities: ['Penanomé', 'Aguadulce', 'Natá'] },
-      { name: 'Herrera', cities: ['Chitré', 'Las Minas', 'Paríta'] },
-      { name: 'Los Santos', cities: ['Las Tablas', 'Guárare'] },
-      { name: 'Veraguas', cities: ['Santiago', 'La Mesa', 'Calobre'] },
-      { name: 'Bocas del Toro', cities: ['Bocas del Toro', 'Changuinola'] },
-      { name: 'Chiriqui', cities: ['David', 'Boquete', 'La Concepción'] },
-      { name: 'Darién', cities: ['La Palma', 'Metetí'] },
-    ]
-  },
-  PE: {
-    level1Label: 'Departamento',
-    level2Label: 'Ciudad / Distrito',
-    regions: [
-      { name: 'Lima', cities: ['Lima', 'Miraflores', 'San Isidro', 'Callao', 'San Martin de Porres'] },
-      { name: 'Arequipa', cities: ['Arequipa', 'Cayma', 'Hunter'] },
-      { name: 'La Libertad', cities: ['Trujillo', 'Virú', 'Chepen'] },
-      { name: 'Lambayeque', cities: ['Chiclayo', 'Ferreñafe', 'Lambayeque'] },
-      { name: 'Piura', cities: ['Piura', 'Sullana', 'Talara'] },
-      { name: 'Cusco', cities: ['Cusco', 'San Sebastián', 'Wanchaq'] },
-      { name: 'Iquitos', cities: ['Iquitos', 'Nauta', 'Requena'] },
-      { name: 'Ucayali', cities: ['Pucallpa', 'Yarinacocha', 'Coronel Portillo'] },
-    ]
-  },
-  EC: {
-    level1Label: 'Provincia',
-    level2Label: 'Ciudad / Cantón',
-    regions: [
-      { name: 'Pichincha', cities: ['Quito', 'Cayambe', 'Rumiñahui'] },
-      { name: 'Guayas', cities: ['Guayaquil', 'Samborondón', 'Daule'] },
-      { name: 'Azuay', cities: ['Cuenca', 'Gualaceo', 'Santa Isabel'] },
-      { name: 'Manabí', cities: ['Portoviejo', 'Manta', 'Chone'] },
-      { name: 'El Oro', cities: ['Machala', 'Pasaje', 'Santa Rosa'] },
-      { name: 'Loja', cities: ['Loja', 'Catamayo', 'Macará'] },
-      { name: 'Imbabura', cities: ['Ibarra', 'Otavalo', 'Cotacachi'] },
-      { name: 'Tungurahua', cities: ['Ambato', 'Pelileo', 'Baños'] },
-    ]
-  },
-  DO: {
-    level1Label: 'Provincia',
-    level2Label: 'Municipio',
-    regions: [
-      { name: 'Distrito Nacional', cities: ['Santo Domingo'] },
-      { name: 'Santiago', cities: ['Santiago de los Caballeros', 'Villa Bisono'] },
-      { name: 'Santo Domingo', cities: ['Santo Domingo Este', 'Santo Domingo Norte', 'Boca Chica'] },
-      { name: 'La Vega', cities: ['La Vega', 'Jarabacoa', 'Constanza'] },
-      { name: 'San Cristóbal', cities: ['San Cristóbal', 'Baní', 'Palenque'] },
-      { name: 'La Romana', cities: ['La Romana', 'San Pedro de Macorís', 'Higüey'] },
-      { name: 'Puerto Plata', cities: ['Puerto Plata', 'Sosúa', 'Cabarete'] },
-    ]
-  },
-  AR: {
-    level1Label: 'Provincia',
-    level2Label: 'Ciudad / Municipio',
-    regions: [
-      { name: 'Buenos Aires', cities: ['Buenos Aires', 'La Plata', 'Mar del Plata', 'Quilmes', 'Morón'] },
-      { name: 'CABA', cities: ['Ciudad Autónoma de Buenos Aires'] },
-      { name: 'Córdoba', cities: ['Córdoba', 'Villa María', 'Río Cuarto'] },
-      { name: 'Santa Fe', cities: ['Rosario', 'Santa Fe', 'Rafaela', 'Venado Tuerto'] },
-      { name: 'Mendoza', cities: ['Mendoza', 'San Rafael', 'Godoy Cruz', 'Luján de Cuyo'] },
-      { name: 'Tucumán', cities: ['San Miguel de Tucumán', 'Tafí Viejo', 'Bandía'] },
-      { name: 'Salta', cities: ['Salta', 'Orán', 'Tartagal'] },
-      { name: 'Neuquén', cities: ['Neuquén', 'San Martín de los Andes', 'Plottier'] },
-      { name: 'Chubut', cities: ['Rawson', 'Comodoro Rivadavia', 'Puerto Madryn'] },
-    ]
-  },
-};
 
 // Mapeo: código del store -> clave de LOCATION_DATA
 const COUNTRY_TO_LOC = { ES: 'ES', CO: 'CO', VE: 'VE', US: 'US', CL: 'CL', PA: 'PA', PE: 'PE', EC: 'EC', DO: 'DO', AR: 'AR' };
@@ -772,8 +582,8 @@ export default function CreateListing() {
           {(() => {
             const locKey = COUNTRY_TO_LOC[selectedCountry] || 'ES';
             const locData = LOCATION_DATA[locKey];
-            const selectedRegionObj = locData.regions.find(r => r.name === location.level1);
-            const cities = selectedRegionObj ? selectedRegionObj.cities : [];
+            const level1Options = Object.keys(locData.data);
+            const cities = location.level1 ? Object.keys(locData.data[location.level1] || {}) : [];
 
             return (
               <div className="flex flex-col gap-3">
@@ -808,21 +618,21 @@ export default function CreateListing() {
                           className="absolute left-0 right-0 top-full z-[60] mt-1 bg-[#E0E5EC] rounded-2xl shadow-[8px_8px_16px_rgba(163,177,198,0.8),-8px_-8px_16px_rgba(255,255,255,1)] border border-white/40 overflow-hidden"
                         >
                           <div className="max-h-56 overflow-y-auto custom-scrollbar p-2 flex flex-col gap-1">
-                            {locData.regions.map((region) => (
+                            {level1Options.map((regionName) => (
                               <button
-                                key={region.name}
+                                key={regionName}
                                 type="button"
                                 onClick={() => {
-                                  setLocation({ level1: region.name, level2: '' });
+                                  setLocation({ level1: regionName, level2: '' });
                                   setIsLocationDropdownOpen(false);
                                 }}
                                 className={`w-full px-4 py-2.5 rounded-xl text-left font-bold text-sm transition-all ${
-                                  location.level1 === region.name
+                                  location.level1 === regionName
                                     ? 'bg-[#1A1A3A] text-white'
                                     : 'text-[#1A1A3A]/70 hover:bg-white/50'
                                 }`}
                               >
-                                {region.name}
+                                {regionName}
                               </button>
                             ))}
                           </div>

@@ -5,7 +5,7 @@ import ProductCard from '../components/ProductCard';
 import FilterPanel from '../components/ui/FilterPanel';
 import { useStore } from '../store/useStore';
 import { collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { db } from '../services/firebase';
 import { normalizeText } from '../utils/textUtils';
 import { MOCK_PRODUCTS } from '../data/mockProducts';
 import emptyHammock from '../assets/empty_hammock.png';
@@ -262,10 +262,14 @@ export default function Home() {
                   No hay panas con estos filtros
                 </h3>
                 <button
-                  onClick={() => { setFilters({ price: { min: '', max: '' }, distance: 50, searchQuery: '' }); setSortBy('relevance'); }}
+                  onClick={() => { 
+                    setFilters({ price: { min: '', max: '' }, distance: 50, searchQuery: '' }); 
+                    setSortBy('relevance'); 
+                    setIsFilterOpen(true);
+                  }}
                   className="mt-5 text-[#1A1A3A] font-black hover:text-[#D90429] transition-colors bg-[#EDEDF5] px-6 py-2.5 rounded-xl shadow-[4px_4px_8px_rgba(180,180,210,0.6),-4px_-4px_8px_rgba(255,255,255,0.8)] active:scale-95 transition-all text-[12px] uppercase tracking-wider"
                 >
-                  Limpiar filtros
+                  Limpiar filtros y buscar
                 </button>
               </div>
             )}

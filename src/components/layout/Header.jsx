@@ -9,7 +9,9 @@ import { useAuth } from '../../context/AuthContext';
 import { db } from '../../services/firebase';
 import { doc, getDoc, updateDoc, collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { CATEGORIES as DEFAULT_CATEGORIES, getCategoryIcon, sortCategories } from '../../data/categories';
+import { LOCATION_DATA } from '../../data/locations';
 import { FiPlus } from 'react-icons/fi';
+import { ChevronDown as LucideChevronDown } from 'lucide-react';
 
 // Las categorías se cargan dinámicamente desde Firestore en el useEffect del componente
 
@@ -31,8 +33,10 @@ const Header = forwardRef((props, ref) => {
   
   const [hidden, setHidden] = useState(false);
   const [isCountryOpen, setIsCountryOpen] = useState(false);
+  const [isRegionOpen, setIsRegionOpen] = useState(false);
   const [isDesktopMenuOpen, setIsDesktopMenuOpen] = useState(false);
   const countryRef = useRef(null);
+  const regionRef = useRef(null);
   const desktopMenuRef = useRef(null);
   const categoriesRef = useRef(null);
   const { scrollY } = useScroll();
@@ -100,9 +104,12 @@ const Header = forwardRef((props, ref) => {
         const countryNames = {
           'ES': '🇪🇸 España',
           'CO': '🇨🇴 Colombia',
+          'VE': '🇻🇪 Venezuela',
           'US': '🇺🇸 Estados Unidos',
           'CL': '🇨🇱 Chile',
           'PA': '🇵🇦 Panamá',
+          'PE': '🇵🇪 Perú',
+          'EC': '🇪🇨 Ecuador',
           'DO': '🇩🇴 República Dominicana',
           'AR': '🇦🇷 Argentina'
         };
@@ -116,23 +123,35 @@ const Header = forwardRef((props, ref) => {
     }
   };
 
+  const handleRegionChange = (newRegion) => {
+    setRegion(newRegion);
+    setFilters({ 
+      ...filters, 
+      location: { level1: newRegion, level2: '', level3: '' } 
+    });
+    setIsRegionOpen(false);
+  };
+
   // Close country dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (countryRef.current && !countryRef.current.contains(event.target)) {
         setIsCountryOpen(false);
       }
+      if (regionRef.current && !regionRef.current.contains(event.target)) {
+        setIsRegionOpen(false);
+      }
       if (desktopMenuRef.current && !desktopMenuRef.current.contains(event.target)) {
         setIsDesktopMenuOpen(false);
       }
     };
-    if (isCountryOpen || isDesktopMenuOpen) {
+    if (isCountryOpen || isRegionOpen || isDesktopMenuOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isCountryOpen, isDesktopMenuOpen]);
+  }, [isCountryOpen, isRegionOpen, isDesktopMenuOpen]);
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     const previous = scrollY.getPrevious();
@@ -214,15 +233,45 @@ const Header = forwardRef((props, ref) => {
                   </AnimatePresence>
                 </div>
 
-                {/* 2. Botón Región / Municipio (Abre Modal Filtros de Ubicación) */}
-                <button 
-                  onClick={() => setIsFilterOpen(true)}
-                  className="cursor-pointer active:scale-95 transition-transform opacity-90"
-                >
-                  <span className="text-[10px] sm:text-[11px] md:text-[15px] font-black text-[#003366] tracking-widest uppercase truncate block">
-                    {filters?.location?.level2 || filters?.location?.level1 || selectedRegion || 'Ubicación'}
-                  </span>
-                </button>
+                {/* 2. Botón Región Dropdown */}
+                <div className="relative" ref={regionRef}>
+                  <button 
+                    onClick={() => setIsRegionOpen(!isRegionOpen)}
+                    className="flex items-center gap-1 cursor-pointer active:scale-95 transition-transform opacity-90 group"
+                  >
+                    <span className="text-[7px] sm:text-[8px] md:text-[11px] font-bold text-[#003366] tracking-widest uppercase truncate block">
+                      {filters?.location?.level1 || selectedRegion || 'Ubicación'}
+                    </span>
+                    <LucideChevronDown className={`w-3 h-3 md:w-4 md:h-4 text-[#003366] transition-transform duration-300 ${isRegionOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  <AnimatePresence>
+                    {isRegionOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 5, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 5, scale: 0.95 }}
+                        className="absolute top-full left-0 mt-4 bg-[#E0E5EC] rounded-3xl shadow-[8px_8px_16px_rgba(163,177,198,0.7),-8px_-8px_16px_rgba(255,255,255,0.9)] border-[0.5px] border-white/60 p-2 z-[1001] w-48 sm:w-56 overflow-hidden"
+                      >
+                        <div className="max-h-64 overflow-y-auto custom-scrollbar p-1 flex flex-col gap-1">
+                          {Object.keys((LOCATION_DATA[selectedCountry] || LOCATION_DATA['ES']).data).map((regionName) => (
+                            <button
+                              key={regionName}
+                              onClick={() => handleRegionChange(regionName)}
+                              className={`w-full px-4 py-2.5 rounded-2xl text-left font-bold text-xs sm:text-sm transition-all flex items-center justify-between ${
+                                (filters?.location?.level1 || selectedRegion) === regionName
+                                  ? 'bg-[#1A1A3A] text-white shadow-lg'
+                                  : 'text-[#1A1A3A]/70 hover:bg-white/50'
+                              }`}
+                            >
+                              {regionName}
+                            </button>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
             </div>
 

@@ -35,7 +35,12 @@ export default function SplashScreen() {
         </div>
       </div>
 
-      {/* Botón eliminado a petición del usuario */}
+      {/* Loading Indicator */}
+      <div className="mb-12 flex items-center justify-center gap-2">
+        <div className="w-3 h-3 bg-black/30 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+        <div className="w-3 h-3 bg-black/30 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+        <div className="w-3 h-3 bg-black/30 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+      </div>
     </div>
   );
 }

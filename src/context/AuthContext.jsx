@@ -73,6 +73,11 @@ export function AuthProvider({ children }) {
     return unsubscribe;
   }, [isBypassMode]);
 
+  const login = (email, password) => {
+    if (isBypassMode) return Promise.resolve();
+    return signInWithEmailAndPassword(auth, email, password);
+  };
+
   const loginWithGoogle = () => {
     if (isBypassMode) return Promise.resolve();
     return signInWithRedirect(auth, googleProvider);
@@ -91,6 +96,7 @@ export function AuthProvider({ children }) {
     userData,
     // Avatar dinámico: prioriza el guardado en Firestore, luego el de Google/Auth
     userAvatar: userData?.avatar || currentUser?.photoURL || null,
+    login,
     loginWithGoogle,
     logout
   };
