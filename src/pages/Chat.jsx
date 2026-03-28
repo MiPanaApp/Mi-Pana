@@ -15,6 +15,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { getCategoryIcon } from '../data/categories';
 import { FiPlus } from 'react-icons/fi';
+import panaExito from '../assets/pana_exito.png';
 
 // ─── Status icons ─────────────────────────────────────────────────────────────
 function MessageStatus({ status, isMine }) {
@@ -251,13 +252,24 @@ export default function Chat() {
               <div className="w-8 h-8 border-[3px] border-[#1A1A3A]/20 border-t-[#1A1A3A] rounded-full animate-spin" />
             </div>
           ) : messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 gap-3">
-              <div className="p-6 bg-[#E0E5EC] rounded-[2rem] shadow-[6px_6px_12px_rgba(163,177,198,0.6),-6px_-6px_12px_rgba(255,255,255,0.8)]">
-                <Smile size={32} className="text-[#FFC200]" />
+            <div className="flex flex-col items-center justify-center py-10 gap-6">
+              <motion.div 
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="relative w-40 h-40"
+              >
+                <img 
+                  src={panaExito} 
+                  alt="Mi Pana" 
+                  className="w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.15)]"
+                />
+              </motion.div>
+              <div className="text-center">
+                <p className="text-lg font-black text-[#1A1A3A] mb-1">¡Inicia la conversación!</p>
+                <p className="text-sm font-bold text-[#1A1A3A]/40">
+                  Pregunta lo que necesites al pana.
+                </p>
               </div>
-              <p className="text-sm font-bold text-[#1A1A3A]/40 text-center">
-                ¡Inicia la conversación!<br/>Pregunta lo que necesites al pana.
-              </p>
             </div>
           ) : (
             <div className="max-w-3xl mx-auto w-full">
