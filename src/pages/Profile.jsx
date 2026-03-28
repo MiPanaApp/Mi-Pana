@@ -6,6 +6,7 @@ import {
   Package, Edit2, Trash2, PlusCircle, ExternalLink
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useAuthStore } from '../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { doc, setDoc, collection, query, where, onSnapshot, deleteDoc } from 'firebase/firestore';
@@ -13,6 +14,7 @@ import { db, storage } from '../services/firebase';
 
 export default function Profile() {
   const { userData, currentUser, userAvatar, logout, isAdmin } = useAuth();
+  const storeUser = useAuthStore((s) => s.user); // Fuente de verdad del UID real
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -22,15 +24,22 @@ export default function Profile() {
 
   // Cargar Anuncios del Usuario
   useEffect(() => {
-    if (!currentUser) return;
-    const q = query(collection(db, 'products'), where('sellerId', '==', currentUser.uid));
+    // Usamos el UID del store (fuente de verdad) o del currentUser como fallback
+    const uid = storeUser?.uid || currentUser?.uid;
+    if (!uid) return;
+    console.log('[Profile] Buscando productos para UID:', uid);
+    const q = query(collection(db, 'products'), where('sellerId', '==', uid));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const prods = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const prods = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      console.log('[Profile] Productos encontrados:', prods.length);
       setMyProducts(prods);
+      setProductsLoading(false);
+    }, (err) => {
+      console.error('[Profile] Error en query de productos:', err);
       setProductsLoading(false);
     });
     return () => unsubscribe();
-  }, [currentUser]);
+  }, [storeUser?.uid, currentUser?.uid]);
 
   const activeProducts = myProducts.filter(p => !p.status || p.status === 'active');
   const inactiveProducts = myProducts.filter(p => p.status === 'inactive' || p.status === 'sold');
