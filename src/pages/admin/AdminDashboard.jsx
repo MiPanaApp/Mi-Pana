@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
 import {
   Users, ShoppingBag, MessageSquare, Star, ShieldCheck, AlertCircle,
-  Home, BarChart2, Layers, Activity, Search, Bell, Settings, LogOut
+  Home, BarChart2, Layers, Activity, Search, Bell, Settings, LogOut, ArrowLeft
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { db } from '../../services/firebase';
@@ -131,9 +131,17 @@ export default function AdminDashboard() {
 
         {/* Top Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 pt-10 lg:pt-2">
-          <div>
-            <h1 className="text-3xl font-black text-gray-800 tracking-tight">Panel Mi Pana</h1>
-            <p className="text-sm font-bold text-gray-400">Gestión centralizada de la comunidad</p>
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => navigate('/perfil')}
+              className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-gray-100 text-gray-400 hover:text-blue-600 transition-colors"
+            >
+              <ArrowLeft size={20} />
+            </button>
+            <div>
+              <h1 className="text-3xl font-black text-gray-800 tracking-tight">Panel Mi Pana</h1>
+              <p className="text-sm font-bold text-gray-400">Gestión centralizada de la comunidad</p>
+            </div>
           </div>
 
           <div className="flex items-center gap-3 w-full md:w-auto">
