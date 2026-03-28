@@ -155,7 +155,7 @@ export default function AdminDashboard() {
         </div>
 
         {activeTab === 'overview' && (
-          <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 pb-6">
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 pb-44 lg:pb-6">
 
             {/* Metrics con Efecto Neumórfico Suave */}
             <div className="xl:col-span-12 grid grid-cols-1 md:grid-cols-3 gap-6">
