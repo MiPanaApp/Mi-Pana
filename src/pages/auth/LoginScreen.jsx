@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
-import { signInWithRedirect, getRedirectResult, getAdditionalUserInfo } from "firebase/auth";
-import { auth, googleProvider } from "../../services/firebase";
+import { getAdditionalUserInfo } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, Rocket, ArrowRight, Loader2 } from "lucide-react";
-import { useAuth } from "../../context/AuthContext";
+import { useAuthStore } from "../../store/useAuthStore";
 import { translateFirebaseError } from "../../utils/authErrors";
 import logoFull from "../../assets/Logo_Mi_pana.png";
 import "../../styles/auth.css";
@@ -16,36 +15,34 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth();
 
-  useEffect(() => {
-    // Escuchar el resultado de la redirección al volver del login de Google
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result) {
-          const additionalInfo = getAdditionalUserInfo(result);
-          if (additionalInfo?.isNewUser) {
-            navigate("/register", { state: { isGoogleUser: true, user: result.user } });
-          } else {
-            navigate("/home");
-          }
-        }
-      })
-      .catch((error) => {
-        console.error("Error en Google Auth Redirect:", error);
-        // Algunos navegadores bloquean el redirect si no hay interacción previa o por cookies de terceros
-        if (error.code === 'auth/internal-error' || error.code === 'auth/network-request-failed') {
-          alert("Error de conexión. Intenta de nuevo o usa tu correo.");
-        }
-      });
-  }, [navigate]);
+  // Usamos el store Zustand directamente (fuente de verdad)
+  const login = useAuthStore((s) => s.login);
+  const loginWithGoogle = useAuthStore((s) => s.loginWithGoogle);
 
   const handleGoogleSignIn = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      await signInWithRedirect(auth, googleProvider);
-    } catch (error) {
-      console.error("Error iniciando Google Auth:", error);
-      setError("No se pudo iniciar el login con Google. Intenta de nuevo.");
+      const { result } = await loginWithGoogle();
+      // Verificar si es un usuario nuevo
+      if (result) {
+        const additionalInfo = getAdditionalUserInfo(result);
+        if (additionalInfo?.isNewUser) {
+          navigate("/register", { state: { isGoogleUser: true, user: result.user } });
+          return;
+        }
+      }
+      navigate("/home");
+    } catch (err) {
+      console.error("Error Google Auth:", err);
+      if (err.code === 'auth/popup-closed-by-user') {
+        // El usuario cerró la ventana, no mostrar error
+        return;
+      }
+      setError("No se pudo iniciar sesión con Google. Intenta de nuevo.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -62,6 +59,7 @@ export default function LoginScreen() {
       await login(email, password);
       navigate("/home");
     } catch (err) {
+      console.error("Login error:", err);
       setError(translateFirebaseError(err.code));
     } finally {
       setLoading(false);
@@ -143,7 +141,8 @@ export default function LoginScreen() {
           <button 
             type="button" 
             onClick={handleGoogleSignIn} 
-            className="clay-btn-google w-full flex items-center justify-center gap-[10px] text-[13px] font-bold text-[#1A1A3A] mb-5"
+            disabled={loading}
+            className="clay-btn-google w-full flex items-center justify-center gap-[10px] text-[13px] font-bold text-[#1A1A3A] mb-5 disabled:opacity-50"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
               <path fillRule="evenodd" clipRule="evenodd" d="M23.52 12.2727C23.52 11.4218 23.4436 10.6036 23.3018 9.81816H12V14.4545H18.4582C18.18 15.9545 17.3345 17.2363 16.0527 18.0927V21.1036H19.9364C22.2055 19.0145 23.52 15.9272 23.52 12.2727Z" fill="#4285F4"/>

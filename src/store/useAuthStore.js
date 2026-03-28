@@ -1,22 +1,36 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import { 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword,
-  signInWithRedirect,
+  signInWithPopup,
   signOut,
   onAuthStateChanged,
   updateProfile,
 } from 'firebase/auth';
 import { auth, googleProvider } from '../services/firebase';
 
-export const useAuthStore = create((set) => ({
-  user: null,
-  loading: true,
+const isBypass = import.meta.env.VITE_AUTH_BYPASS === 'true';
+
+const BYPASS_USER = {
+  uid: 'dev-user-123',
+  email: 'pana@mipana.com',
+  displayName: 'Pana Dev',
+  role: 'admin',
+  verified: true,
+};
+
+export const useAuthStore = create((set, get) => ({
+  user: isBypass ? BYPASS_USER : null,
+  loading: !isBypass, // Si es bypass, no hay loading
   error: null,
 
   // Inicializa el listener de Firebase Auth (llamar una sola vez en App.jsx)
   init: () => {
+    if (isBypass) {
+      set({ user: BYPASS_USER, loading: false });
+      return () => {}; // noop unsubscribe
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       set({ user, loading: false });
     });
@@ -30,7 +44,7 @@ export const useAuthStore = create((set) => ({
       const result = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(result.user, { displayName: name });
       set({ user: result.user, loading: false });
-      return { success: true };
+      return { success: true, user: result.user };
     } catch (err) {
       set({ error: err.message, loading: false });
       return { success: false, error: err.message };
@@ -39,6 +53,10 @@ export const useAuthStore = create((set) => ({
 
   // Login con Email y Contraseña
   login: async (email, password) => {
+    if (isBypass) {
+      set({ user: BYPASS_USER, loading: false });
+      return { success: true };
+    }
     set({ loading: true, error: null });
     try {
       const result = await signInWithEmailAndPassword(auth, email, password);
@@ -46,24 +64,33 @@ export const useAuthStore = create((set) => ({
       return { success: true };
     } catch (err) {
       set({ error: err.message, loading: false });
-      return { success: false, error: err.message };
+      throw err; // Re-throw para que LoginScreen pueda capturar el error code
     }
   },
 
-  // Login con Google
+  // Login con Google (usando Popup, más fiable en localhost y web)
   loginWithGoogle: async () => {
+    if (isBypass) {
+      set({ user: BYPASS_USER, loading: false });
+      return { success: true, isNewUser: false };
+    }
     set({ loading: true, error: null });
     try {
-      await signInWithRedirect(auth, googleProvider);
-      return { success: true };
+      const result = await signInWithPopup(auth, googleProvider);
+      set({ user: result.user, loading: false });
+      return { success: true, result };
     } catch (err) {
       set({ error: err.message, loading: false });
-      return { success: false, error: err.message };
+      throw err;
     }
   },
 
   // Cerrar Sesión
   logout: async () => {
+    if (isBypass) {
+      set({ user: null });
+      return;
+    }
     await signOut(auth);
     set({ user: null });
   },

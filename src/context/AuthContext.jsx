@@ -1,8 +1,9 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { auth, googleProvider, db } from '../services/firebase';
-import { onAuthStateChanged, signInWithRedirect, getRedirectResult, signOut, signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { auth, db } from '../services/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { useStore } from '../store/useStore';
+import { useAuthStore } from '../store/useAuthStore';
 
 const AuthContext = createContext();
 
@@ -11,30 +12,32 @@ export function useAuth() {
 }
 
 export function AuthProvider({ children }) {
-  const [currentUser, setCurrentUser] = useState(null);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const { setCountry, setRegion, setFilters } = useStore();
 
-  // Testing bypass mode per PRD
+  // Escuchamos el usuario desde useAuthStore (la fuente de verdad)
+  const storeUser = useAuthStore((s) => s.user);
+
   const isBypassMode = import.meta.env.VITE_AUTH_BYPASS === 'true';
 
   useEffect(() => {
     if (isBypassMode) {
-      setCurrentUser({
-        uid: 'dev-user-123',
+      // En modo bypass, userData simulado
+      setUserData({
+        name: 'Pana Dev',
+        lastName: 'Test',
         email: 'pana@mipana.com',
-        displayName: 'Pana Dev',
-        role: 'admin', // For testing admin dashboard
-        verified: true
+        avatar: null,
+        role: 'admin',
+        verificationLevel: 3,
       });
       setLoading(false);
       return;
     }
 
+    // Escuchar cambios de auth reales para sincronizar userData de Firestore
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-      
       if (user) {
         // Real-time listener for user profile
         const userDocRef = doc(db, "users", user.uid);
@@ -60,6 +63,8 @@ export function AuthProvider({ children }) {
               }
               sessionStorage.setItem('country_initialized', 'true');
             }
+          } else {
+            setUserData(null);
           }
         });
         setLoading(false);
@@ -73,32 +78,18 @@ export function AuthProvider({ children }) {
     return unsubscribe;
   }, [isBypassMode]);
 
-  const login = (email, password) => {
-    if (isBypassMode) return Promise.resolve();
-    return signInWithEmailAndPassword(auth, email, password);
-  };
-
-  const loginWithGoogle = () => {
-    if (isBypassMode) return Promise.resolve();
-    return signInWithRedirect(auth, googleProvider);
-  };
-
-  const logout = () => {
-    if (isBypassMode) {
-      setCurrentUser(null);
-      return Promise.resolve();
-    }
-    return signOut(auth);
-  };
+  // Funciones delegadas al store Zustand (fuente de verdad única)
+  const { login, loginWithGoogle, logout } = useAuthStore.getState();
 
   const value = {
-    currentUser,
+    // Usuario: leemos del store Zustand (fuente de verdad)
+    currentUser: storeUser,
     userData,
     // Avatar dinámico: prioriza el guardado en Firestore, luego el de Google/Auth
-    userAvatar: userData?.avatar || currentUser?.photoURL || null,
+    userAvatar: userData?.avatar || storeUser?.photoURL || null,
     login,
     loginWithGoogle,
-    logout
+    logout,
   };
 
   return (
