@@ -33,13 +33,13 @@ export default function SplashScreen() {
             <span className="font-black">Juntos</span> <span className="font-semibold">Somos</span> <span className="font-black">Más</span>
           </h1>
         </div>
-      </div>
 
-      {/* Loading Indicator */}
-      <div className="mb-12 flex items-center justify-center gap-2">
-        <div className="w-3 h-3 bg-black/30 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-        <div className="w-3 h-3 bg-black/30 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-        <div className="w-3 h-3 bg-black/30 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+        {/* Loading Indicator - Ahora a 40px del texto */}
+        <div className="mt-10 flex items-center justify-center gap-2">
+          <div className="w-2.5 h-2.5 bg-black/20 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+          <div className="w-2.5 h-2.5 bg-black/20 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+          <div className="w-2.5 h-2.5 bg-black/20 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+        </div>
       </div>
     </div>
   );
