@@ -130,7 +130,7 @@ export default function AdminDashboard() {
       <div className="flex-1 flex flex-col h-[calc(100vh-2rem)] lg:h-[calc(100vh-3rem)] overflow-y-auto hide-scrollbar">
 
         {/* Top Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 pt-2">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 pt-10 lg:pt-2">
           <div>
             <h1 className="text-3xl font-black text-gray-800 tracking-tight">Panel Mi Pana</h1>
             <p className="text-sm font-bold text-gray-400">Gestión centralizada de la comunidad</p>
