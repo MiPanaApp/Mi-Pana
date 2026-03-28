@@ -85,6 +85,7 @@ export function AuthProvider({ children }) {
     // Usuario: leemos del store Zustand (fuente de verdad)
     currentUser: storeUser,
     userData,
+    isAdmin: userData?.role === 'admin' || isBypassMode, // En bypass asumimos admin si está cargado
     // Avatar dinámico: prioriza el guardado en Firestore, luego el de Google/Auth
     userAvatar: userData?.avatar || storeUser?.photoURL || null,
     login,

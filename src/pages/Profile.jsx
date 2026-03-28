@@ -11,7 +11,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import { db, storage } from '../services/firebase';
 
 export default function Profile() {
-  const { userData, currentUser, userAvatar, logout } = useAuth();
+  const { userData, currentUser, userAvatar, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -117,6 +117,25 @@ export default function Profile() {
             <HeaderInfoItem icon={User} label="Sexo" value={userData?.gender} />
           </div>
         </div>
+
+        {/* ACCESO AL DASHBOARD (Solo si es Admin) */}
+        {isAdmin && (
+          <button 
+            onClick={() => navigate('/admin')}
+            className="w-full mb-8 p-5 bg-[#1A1A3A] text-white rounded-[2rem] flex items-center justify-between group active:scale-[0.98] transition-all shadow-[0_15px_30px_rgba(26,26,58,0.2)]"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-[#FFD700] rounded-2xl flex items-center justify-center shadow-[0_5px_15px_rgba(255,215,0,0.3)]">
+                <ShieldAlert className="text-[#1A1A3A] w-6 h-6" />
+              </div>
+              <div className="text-left">
+                <span className="block font-black text-sm uppercase tracking-widest text-[#FFD700]">Staff Mi Pana</span>
+                <span className="text-xs font-bold text-white/60">Acceder al Panel de Control</span>
+              </div>
+            </div>
+            <ChevronDown className="w-6 h-6 text-white/40 -rotate-90 group-hover:text-[#FFD700] transition-colors" />
+          </button>
+        )}
 
         {/* Desplegables (Claymorphism Style) - Solo visibles en Móvil */}
         <div className="md:hidden space-y-6">

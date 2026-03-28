@@ -10,6 +10,7 @@ import RegisterScreen from './pages/auth/RegisterScreen';
 import CompleteProfile from './pages/auth/CompleteProfile';
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import AdminRoute from './components/auth/AdminRoute';
 
 // Core App Pages
 import Home from './pages/Home';
@@ -69,7 +70,7 @@ function App() {
         <Route path="/chat/:conversationId" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
         
         {/* Admin Flow */}
-        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
         
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
