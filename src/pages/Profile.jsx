@@ -1,13 +1,14 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { 
   User, Mail, Phone, MapPin, LogOut, ChevronDown, 
   ShieldCheck, Loader2, Camera, Lock, Info, 
-  HelpCircle, Cookie, ShieldAlert, Instagram, Facebook, Youtube, Twitter, UserCircle2 
+  HelpCircle, Cookie, ShieldAlert, Instagram, Facebook, Youtube, Twitter, UserCircle2,
+  Package, Edit2, Trash2, PlusCircle, ExternalLink
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, collection, query, where, onSnapshot, deleteDoc } from 'firebase/firestore';
 import { db, storage } from '../services/firebase';
 
 export default function Profile() {
@@ -15,7 +16,34 @@ export default function Profile() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [openMenu, setOpenMenu] = useState(null); // Para controlar desplegables
+  const [openMenu, setOpenMenu] = useState(null); 
+  const [myProducts, setMyProducts] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(true);
+
+  // Cargar Anuncios del Usuario
+  useEffect(() => {
+    if (!currentUser) return;
+    const q = query(collection(db, 'products'), where('sellerId', '==', currentUser.uid));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const prods = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setMyProducts(prods);
+      setProductsLoading(false);
+    });
+    return () => unsubscribe();
+  }, [currentUser]);
+
+  const activeProducts = myProducts.filter(p => !p.status || p.status === 'active');
+  const inactiveProducts = myProducts.filter(p => p.status === 'inactive' || p.status === 'sold');
+
+  const handleDeleteProduct = async (id) => {
+    if (window.confirm('¿Estás seguro de que quieres borrar este anuncio?')) {
+      try {
+        await deleteDoc(doc(db, 'products', id));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -139,6 +167,107 @@ export default function Profile() {
 
         {/* Desplegables (Claymorphism Style) - Solo visibles en Móvil */}
         <div className="md:hidden space-y-6">
+          
+          {/* MIS ANUNCIOS */}
+          <div className="group">
+            <button 
+              onClick={() => toggleMenu('mis-anuncios')}
+              className="w-full flex items-center justify-between p-5 bg-[#E0E5EC] rounded-2xl shadow-[6px_6px_12px_#b8b9be,-6px_-6px_12px_#ffffff] text-[#1A1A3A] font-bold active:scale-[0.98] transition-all"
+            >
+              <div className="flex items-center gap-3">
+                <Package size={20} className="text-[#0056B3]" />
+                <span>Mis Anuncios</span>
+                <span className="ml-2 px-2 py-0.5 bg-[#0056B3]/10 text-[#0056B3] text-[10px] rounded-full">
+                  {myProducts.length}
+                </span>
+              </div>
+              <ChevronDown size={20} className={`transition-transform duration-300 ${openMenu === 'mis-anuncios' ? 'rotate-180' : ''}`} />
+            </button>
+            
+            {openMenu === 'mis-anuncios' && (
+              <div className="mt-2 mx-2 p-4 bg-white/30 rounded-2xl shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3)] space-y-6">
+                
+                {/* Categoría: ACTIVOS */}
+                <div>
+                  <h3 className="text-[10px] font-black text-[#0056B3] uppercase tracking-widest mb-3 flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                    Activos ({activeProducts.length})
+                  </h3>
+                  <div className="space-y-3">
+                    {activeProducts.length === 0 ? (
+                      <p className="text-[11px] text-gray-400 italic">No tienes anuncios activos.</p>
+                    ) : (
+                      activeProducts.map(product => (
+                        <div key={product.id} className="bg-[#E0E5EC] p-3 rounded-xl shadow-[4px_4px_8px_#b8b9be,-4px_-4px_8px_#ffffff] flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-3 overflow-hidden">
+                            <img 
+                              src={product.images?.[0] || 'https://via.placeholder.com/150'} 
+                              className="w-12 h-12 rounded-lg object-cover bg-gray-200"
+                            />
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-xs font-bold text-[#1A1A3A] truncate">{product.title}</span>
+                              <span className="text-[11px] font-black text-[#0056B3]">${product.price}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button onClick={() => navigate(`/editar-anuncio/${product.id}`)} className="p-2 bg-white/50 rounded-lg text-gray-600 hover:text-blue-600 transition-colors shadow-sm">
+                              <Edit2 size={14} />
+                            </button>
+                            <button onClick={() => handleDeleteProduct(product.id)} className="p-2 bg-white/50 rounded-lg text-red-400 hover:text-red-600 transition-colors shadow-sm">
+                              <Trash2 size={14} />
+                            </button>
+                            <button onClick={() => alert('¡Post creado!')} className="p-2 bg-[#FFD700] rounded-lg text-[#1A1A3A] hover:bg-[#FFC200] transition-colors shadow-sm">
+                              <ExternalLink size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {/* Categoría: NO ACTIVOS */}
+                <div>
+                  <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">
+                    No Activos ({inactiveProducts.length})
+                  </h3>
+                  <div className="space-y-3">
+                    {inactiveProducts.map(product => (
+                      <div key={product.id} className="bg-[#E0E5EC]/50 p-3 rounded-xl border border-dashed border-gray-300 flex items-center justify-between gap-3 opacity-70">
+                        <div className="flex items-center gap-3 overflow-hidden">
+                          <img 
+                            src={product.images?.[0] || 'https://via.placeholder.com/150'} 
+                            className="w-12 h-12 rounded-lg object-cover grayscale"
+                          />
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-xs font-bold text-gray-500 truncate">{product.title}</span>
+                            <span className="text-[11px] font-black text-gray-400">${product.price}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => handleDeleteProduct(product.id)} className="p-2 rounded-lg text-red-300 hover:text-red-600 transition-colors">
+                            <Trash2 size={14} />
+                          </button>
+                          <button onClick={() => alert('Anuncio reactivado')} className="p-2 bg-white/80 rounded-lg text-gray-600 text-[10px] font-black uppercase">
+                            Reactivar
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Botón rápido Crear Anuncio */}
+                <button 
+                  onClick={() => navigate('/anunciar')}
+                  className="w-full py-3 flex items-center justify-center gap-2 text-[11px] font-black text-[#0056B3] bg-[#E0E5EC] rounded-xl shadow-[inset_3px_3px_6px_#b8b9be,inset_-3px_-3px_6px_#ffffff] uppercase tracking-wider"
+                >
+                  <PlusCircle size={16} /> Crear Nuevo Post
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* Plataforma Mi Pana */}
           <div className="group">
             <button 
