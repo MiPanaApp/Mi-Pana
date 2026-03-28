@@ -73,17 +73,17 @@ export default function Onboarding() {
                     onClick={() => {
                       setIsCountryOpen(!isCountryOpen);
                     }}
-                    className="w-full h-14 clay-card flex items-center justify-between px-5 text-[#1A1A3A] font-bold text-lg"
+                    className="w-full min-h-[3.5rem] py-2 clay-card flex items-center justify-between px-5 text-[#1A1A3A] font-bold text-lg text-left"
                   >
                     {localCountry ? (
-                      <span className="flex items-center gap-3">
-                        <span>{countryData[localCountry].flag}</span>
+                      <span className="flex items-center gap-3 leading-tight">
+                        <span className="flex-shrink-0">{countryData[localCountry].flag}</span>
                         <span>{countryData[localCountry].name}</span>
                       </span>
                     ) : (
                       <span className="opacity-40">Selecciona tu país...</span>
                     )}
-                    <ChevronDown className={`w-6 h-6 transition-transform duration-300 ${isCountryOpen ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`w-6 h-6 transition-transform duration-300 flex-shrink-0 ${isCountryOpen ? 'rotate-180' : ''}`} />
                   </button>
 
                   <AnimatePresence>
@@ -101,11 +101,11 @@ export default function Onboarding() {
                               setLocalCountry(code);
                               setIsCountryOpen(false);
                             }}
-                            className={`w-full h-12 flex items-center gap-3 px-4 rounded-xl transition-all font-bold ${localCountry === code ? 'bg-[#1A1A3A] text-white shadow-lg' : 'hover:bg-[#1A1A3A]/5 text-[#1A1A3A]'}`}
+                            className={`w-full min-h-[3rem] py-2 flex items-center gap-3 px-4 rounded-xl transition-all font-bold text-left ${localCountry === code ? 'bg-[#1A1A3A] text-white shadow-lg' : 'hover:bg-[#1A1A3A]/5 text-[#1A1A3A]'}`}
                           >
-                            <span className="text-xl">{data.flag}</span>
-                            <span>{data.name}</span>
-                            {!data.active && <span className="text-[10px] ml-auto opacity-50 px-2 py-0.5 border border-current rounded-full">Próximamente</span>}
+                            <span className="text-xl flex-shrink-0">{data.flag}</span>
+                            <span className="leading-tight">{data.name}</span>
+                            {!data.active && <span className="text-[10px] ml-auto opacity-50 px-2 py-0.5 border border-current rounded-full flex-shrink-0">Próximamente</span>}
                           </button>
                         ))}
                       </motion.div>

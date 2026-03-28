@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Sliders, Check, Coffee, Package, Smile, Monitor, Wrench, ShoppingBag, Briefcase, Heart, Navigation, MapPin, Building, Home as HomeIcon } from 'lucide-react';
 import { Geolocation } from '@capacitor/geolocation';
@@ -12,7 +13,18 @@ import { CATEGORIES as DEFAULT_CATEGORIES, getCategoryIcon, sortCategories } fro
 // Las categorías se cargan dinámicamente desde Firestore
 
 export default function FilterPanel() {
-  const { isFilterOpen, setIsFilterOpen, filters, setFilters, activeCategory, setActiveCategory, selectedCountry } = useStore();
+  const navigate = useNavigate();
+  const { 
+    isFilterOpen, 
+    setIsFilterOpen, 
+    filters, 
+    setFilters, 
+    activeCategory, 
+    setActiveCategory, 
+    selectedCountry,
+    setCountry,
+    setRegion 
+  } = useStore();
   const [isLocating, setIsLocating] = useState(false);
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
 
@@ -42,8 +54,8 @@ export default function FilterPanel() {
   // Opciones derivadas para los selectores
   const level1Options = Object.keys(countryData.data);
   const level2Options = locationOptions.level1 ? Object.keys(countryData.data[locationOptions.level1] || {}) : [];
-  const level3Options = (locationOptions.level1 && locationOptions.level2) 
-    ? (countryData.data[locationOptions.level1]?.[locationOptions.level2] || []) 
+  const level3Options = (locationOptions.location?.level1 && locationOptions.location?.level2) 
+    ? (countryData.data[locationOptions.location.level1]?.[locationOptions.location.level2] || []) 
     : [];
 
   useEffect(() => {
@@ -84,21 +96,34 @@ export default function FilterPanel() {
            return;
         }
       } catch (e) {
-        // En entorno web, checkPermissions/requestPermissions puede no estar implementado
-        // El navegador lanzará el prompt automáticamente al llamar a getCurrentPosition
         console.warn('Chequeo de permisos omitido en web:', e);
       }
 
       await Geolocation.getCurrentPosition();
       
-      // Simulación de Geocodificación Inversa
+      // Simulación de Geocodificación Inversa Inteligente
+      const detectedCountry = selectedCountry; // Por ahora mantenemos el actual o uno detectado
+      const detectedRegion = detectedCountry === 'ES' ? 'Madrid' : 'Bogotá';
+
+      // 1. Actualizar el País en el Store
+      setCountry(detectedCountry);
+      
+      // 2. Actualizar la Región en el Store
+      setRegion(detectedRegion);
+
+      // 3. Aplicar Filtros de Ubicación
       setFilters({
         location: {
-          level1: selectedCountry === 'ES' ? 'Madrid' : 'Bogotá', 
-          level2: selectedCountry === 'ES' ? 'Madrid' : 'Bogotá',
+          level1: detectedRegion, 
+          level2: detectedRegion,
           level3: '',
         }
       });
+
+      // 4. Cerrar el panel y navegar al Home
+      setIsFilterOpen(false);
+      navigate('/home');
+
     } catch (error) {
       console.error('Error getting location', error);
       alert("No se pudo obtener la ubicación. Asegúrate de tener el GPS activado y dar permisos al navegador.");
