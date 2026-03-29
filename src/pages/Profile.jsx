@@ -3,13 +3,13 @@ import {
   User, Mail, Phone, MapPin, LogOut, ChevronDown, 
   ShieldCheck, Loader2, Camera, Lock, Info, 
   HelpCircle, Cookie, ShieldAlert, Instagram, Facebook, Youtube, Twitter, UserCircle2,
-  Package, Edit2, Trash2, PlusCircle, ExternalLink
+  Package, Edit2, Trash2, PlusCircle, ExternalLink, Eye, EyeOff
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { doc, setDoc, collection, query, where, onSnapshot, deleteDoc } from 'firebase/firestore';
+import { doc, setDoc, collection, query, where, onSnapshot, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db, storage } from '../services/firebase';
 
 export default function Profile() {
@@ -45,12 +45,24 @@ export default function Profile() {
   const inactiveProducts = myProducts.filter(p => p.status === 'inactive' || p.status === 'sold');
 
   const handleDeleteProduct = async (id) => {
-    if (window.confirm('¿Estás seguro de que quieres borrar este anuncio?')) {
+    if (window.confirm('¿Estás seguro de que quieres borrar este anuncio definitivamente?')) {
       try {
         await deleteDoc(doc(db, 'products', id));
       } catch (e) {
-        console.error(e);
+        console.error("Error al borrar el producto:", e);
+        alert("No se pudo borrar el anuncio.");
       }
+    }
+  };
+
+  const handleToggleStatus = async (id, currentStatus) => {
+    const newStatus = currentStatus === 'inactive' ? 'active' : 'inactive';
+    try {
+      await updateDoc(doc(db, 'products', id), {
+        status: newStatus
+      });
+    } catch (e) {
+      console.error("Error al cambiar el estado:", e);
     }
   };
 
@@ -206,24 +218,38 @@ export default function Profile() {
                       <p className="text-[11px] text-gray-400 italic">No tienes anuncios activos.</p>
                     ) : (
                       activeProducts.map(product => (
-                        <div key={product.id} className="bg-[#E0E5EC] p-3 rounded-xl shadow-[4px_4px_8px_#b8b9be,-4px_-4px_8px_#ffffff] flex items-center justify-between gap-3">
-                          <div className="flex items-center gap-3 overflow-hidden">
+                        <div key={product.id} className="bg-[#E0E5EC] p-3.5 rounded-[1.5rem] shadow-[4px_4px_8px_#b8b9be,-4px_-4px_8px_#ffffff] flex flex-col gap-3">
+                          <div className="flex items-center gap-4">
                             <img 
                               src={product.image || product.images?.[0] || 'https://via.placeholder.com/150'} 
                               alt={product.name}
-                              className="w-12 h-12 rounded-lg object-cover bg-gray-200 flex-shrink-0"
+                              className="w-14 h-14 rounded-2xl object-cover bg-white shadow-sm flex-shrink-0"
                             />
-                            <div className="flex flex-col min-w-0">
-                              <span className="text-xs font-bold text-[#1A1A3A] truncate">{product.name || product.title}</span>
-                              <span className="text-[11px] font-black text-[#0056B3]">{Number(product.price).toLocaleString('es-ES', { minimumFractionDigits: 2 })} €</span>
+                            <div className="flex flex-col min-w-0 flex-1">
+                              <span className="text-sm font-black text-[#1A1A3A] truncate">{product.name || product.title}</span>
+                              <span className="text-[13px] font-black text-[#0056B3]">{Number(product.price).toLocaleString('es-ES', { minimumFractionDigits: 2 })} €</span>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            <button onClick={() => navigate(`/perfil-producto?id=${product.id}`)} className="p-2 bg-white/50 rounded-lg text-gray-600 hover:text-blue-600 transition-colors shadow-sm" title="Ver anuncio">
-                              <ExternalLink size={14} />
+                          
+                          {/* Botones Debajo */}
+                          <div className="flex items-center gap-3 pt-1">
+                            <button 
+                              onClick={() => navigate(`/perfil-producto?id=${product.id}`)} 
+                              className="flex-1 py-2 bg-white/60 rounded-xl text-[#1A1A3A] font-bold text-[10px] uppercase shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+                            >
+                              <ExternalLink size={14} /> Ver
                             </button>
-                            <button onClick={() => handleDeleteProduct(product.id)} className="p-2 bg-white/50 rounded-lg text-red-400 hover:text-red-600 transition-colors shadow-sm" title="Eliminar">
-                              <Trash2 size={14} />
+                            <button 
+                              onClick={() => handleToggleStatus(product.id, 'active')} 
+                              className="flex-1 py-2 bg-white/60 rounded-xl text-amber-600 font-bold text-[10px] uppercase shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+                            >
+                              <EyeOff size={14} /> Suspender
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteProduct(product.id)} 
+                              className="flex-1 py-2 bg-white/60 rounded-xl text-red-500 font-bold text-[10px] uppercase shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+                            >
+                              <Trash2 size={14} /> Borrar
                             </button>
                           </div>
                         </div>
@@ -239,21 +265,33 @@ export default function Profile() {
                   </h3>
                   <div className="space-y-3">
                     {inactiveProducts.map(product => (
-                      <div key={product.id} className="bg-[#E0E5EC]/50 p-3 rounded-xl border border-dashed border-gray-300 flex items-center justify-between gap-3 opacity-70">
-                        <div className="flex items-center gap-3 overflow-hidden">
+                      <div key={product.id} className="bg-[#E0E5EC] p-3.5 rounded-[1.5rem] shadow-[4px_4px_8px_#b8b9be,-4px_-4px_8px_#ffffff] flex flex-col gap-3 opacity-80 backdrop-grayscale-[0.5]">
+                        <div className="flex items-center gap-4">
                           <img 
                             src={product.image || product.images?.[0] || 'https://via.placeholder.com/150'} 
                             alt={product.name}
-                            className="w-12 h-12 rounded-lg object-cover grayscale flex-shrink-0"
+                            className="w-14 h-14 rounded-2xl object-cover grayscale shadow-sm flex-shrink-0"
                           />
-                          <div className="flex flex-col min-w-0">
-                            <span className="text-xs font-bold text-gray-500 truncate">{product.name || product.title}</span>
-                            <span className="text-[11px] font-black text-gray-400">{Number(product.price).toLocaleString('es-ES', { minimumFractionDigits: 2 })} €</span>
+                          <div className="flex flex-col min-w-0 flex-1">
+                            <span className="text-sm font-bold text-gray-500 truncate">{product.name || product.title}</span>
+                            <span className="text-[13px] font-black text-gray-400">{Number(product.price).toLocaleString('es-ES', { minimumFractionDigits: 2 })} €</span>
                           </div>
+                          <span className="px-2 py-0.5 rounded-full bg-gray-200 text-[9px] font-black text-gray-500 uppercase tracking-tighter">Suspendido</span>
                         </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <button onClick={() => handleDeleteProduct(product.id)} className="p-2 rounded-lg text-red-300 hover:text-red-600 transition-colors">
-                            <Trash2 size={14} />
+
+                        {/* Botones Debajo En Inactivos */}
+                        <div className="flex items-center gap-3 pt-1">
+                          <button 
+                            onClick={() => handleToggleStatus(product.id, 'inactive')} 
+                            className="flex-1 py-2 bg-[#0056B3] rounded-xl text-white font-bold text-[10px] uppercase shadow-md flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+                          >
+                            <Eye size={14} /> Mostrar
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteProduct(product.id)} 
+                            className="flex-1 py-2 bg-white/60 rounded-xl text-red-500 font-bold text-[10px] uppercase shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+                          >
+                            <Trash2 size={14} /> Borrar
                           </button>
                         </div>
                       </div>
