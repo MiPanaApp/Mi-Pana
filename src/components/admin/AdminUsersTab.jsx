@@ -133,14 +133,17 @@ export default function AdminUsersTab({ searchQuery = '' }) {
                     </div>
                   )}
                 </div>
-                <div>
-                  <h4 className="text-2xl font-black leading-tight truncate max-w-[200px]">{selectedUser.name} {selectedUser.lastName}</h4>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-2xl font-bold leading-tight break-words">{selectedUser.name} {selectedUser.lastName}</h4>
                   <div className="flex items-center gap-2 mt-1">
                     <p className="text-xs font-bold opacity-80 font-mono bg-black/10 px-2 py-0.5 rounded-md truncate max-w-[150px]" title={selectedUser.id}>
                       ID: {selectedUser.id}
                     </p>
                     <button 
-                      onClick={() => navigator.clipboard.writeText(selectedUser.id)} 
+                      onClick={() => {
+                        navigator.clipboard.writeText(selectedUser.id);
+                        alert('ID Copiado!');
+                      }} 
                       className="p-1.5 bg-black/10 hover:bg-black/20 rounded-md transition-colors text-black/70 hover:text-black shrink-0"
                       title="Copiar ID"
                     >
