@@ -4,8 +4,10 @@ import { MessageCircle, Search, Trash2, X } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, useTransform, useAnimation } from 'framer-motion';
 import { useAuthStore } from '../store/useAuthStore';
 import { subscribeToConversations, deleteConversation, deleteAllConversations } from '../lib/chat';
+import { getUserInteractions } from '../lib/reviews';
 import { getCategoryIcon } from '../data/categories';
 import { FiPlus } from 'react-icons/fi';
+import { Star, CheckCircle } from 'lucide-react';
 import panaSelfie from '../assets/pana_selfie.png';
 
 function timeAgo(timestamp) {
@@ -24,7 +26,7 @@ function timeAgo(timestamp) {
 }
 
 // Componente para cada item con Swipe-to-delete
-const SwipeableChat = ({ chat, user, onDelete, onNavigate }) => {
+const SwipeableChat = ({ chat, user, userInteractions, onDelete, onNavigate }) => {
   const x = useMotionValue(0);
   const controls = useAnimation();
   
@@ -136,7 +138,7 @@ const SwipeableChat = ({ chat, user, onDelete, onNavigate }) => {
                 <p className={`text-xs truncate flex-1 ${unread > 0 ? 'font-bold text-[#1A1A3A]' : 'text-[#1A1A3A]/50 font-medium'}`}>
                   {chat.lastMessage || 'Conversación iniciada'}
                 </p>
-                
+
                 {/* Botón borrar visible en Desktop */}
                 {!isMobile && (
                   <button 
@@ -144,13 +146,49 @@ const SwipeableChat = ({ chat, user, onDelete, onNavigate }) => {
                       e.stopPropagation();
                       onDelete(chat.id, true);
                     }}
-                    className="ml-2 p-1.5 text-[#D90429] hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="ml-2 p-1.5 text-[#D90429] hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
                     title="Eliminar chat"
                   >
                     <Trash2 size={14} />
                   </button>
                 )}
               </div>
+                
+              {/* ── Fila de Valoración (Solo si aplica) ── */}
+              {!isMeSeller && (() => {
+                const interaction = userInteractions?.find(i => i.productId === chat.productId);
+                if (!interaction) return null;
+
+                if (interaction.canReview && !interaction.reviewed) {
+                   return (
+                      <div className="mt-2 flex items-center justify-end gap-2 pr-1">
+                         <span className="text-[10px] font-black text-[#1A1A3A]/50 uppercase tracking-tighter">
+                            ¿Estás listo para
+                         </span>
+                         <button 
+                           onClick={(e) => { e.stopPropagation(); onNavigate(chat.id); }}
+                           className="bg-gradient-to-r from-[#FFC200] to-[#FFAA00] text-[#1A1A3A] text-[10px] font-black uppercase px-3 py-1.5 rounded-lg shadow-[0_4px_10px_rgba(255,194,0,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center gap-1"
+                         >
+                           <Star size={11} className="fill-[#1A1A3A]" /> Valorar
+                         </button>
+                      </div>
+                   );
+                }
+                
+                if (interaction.reviewed) {
+                   return (
+                      <div className="mt-2 flex items-center justify-end gap-1.5 pr-1">
+                         <span className="text-[10px] font-black text-green-700/70 uppercase tracking-tighter">
+                            Valoraste
+                         </span>
+                         <div className="flex items-center justify-center p-1 bg-green-100 rounded-full border border-green-200 shadow-sm">
+                            <Star size={10} className="fill-green-600 text-green-600" />
+                         </div>
+                      </div>
+                   );
+                }
+                return null;
+              })()}
             </div>
           </div>
 
@@ -170,6 +208,7 @@ export default function ChatList() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const [conversations, setConversations] = useState([]);
+  const [userInteractions, setUserInteractions] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -179,6 +218,11 @@ export default function ChatList() {
 
   useEffect(() => {
     if (!user) return;
+    
+    // 1. Fetch interacciones
+    getUserInteractions(user.uid).then(setUserInteractions).catch(console.warn);
+
+    // 2. Suscribir a conversaciones
     const unsub = subscribeToConversations(user.uid, (convs) => {
       setConversations(convs);
       setLoading(false);
@@ -284,6 +328,7 @@ export default function ChatList() {
                   key={chat.id}
                   chat={chat}
                   user={user}
+                  userInteractions={userInteractions}
                   onDelete={handleDeleteOne}
                   onNavigate={(id) => navigate(`/chat/${id}`)}
                 />

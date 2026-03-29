@@ -110,3 +110,11 @@ export async function getPendingReviews(buyerId) {
   ));
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
+
+export async function getUserInteractions(buyerId) {
+  const snap = await getDocs(query(
+    collection(db, 'interactions'),
+    where('buyerId', '==', buyerId)
+  ));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}

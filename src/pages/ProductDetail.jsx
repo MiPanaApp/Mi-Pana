@@ -10,20 +10,11 @@ import { useTimeAgo } from '../hooks/useTimeAgo';
 import { useAuthStore } from '../store/useAuthStore';
 import { useAuth } from '../context/AuthContext';
 import { getOrCreateConversation } from '../lib/chat';
-import { registerInteraction } from '../lib/reviews';
+import { registerInteraction, getProductReviews } from '../lib/reviews';
 import { MOCK_PRODUCTS } from '../data/mockProducts';
 import panaLengua from '../assets/pana_lengua.png';
 
 // Los productos relacionados se cargan ahora dinámicamente desde Firestore.
-
-// Mock reviews for the UI (Comunidad)
-const MOCK_REVIEWS = [
-   { id: 1, user: "María G.", rating: 5, date: "Hace 2 días", text: "Excelente atención y muy rápido. Lo recomiendo 100%." },
-   { id: 2, user: "José L.", rating: 4, date: "Hace 1 semana", text: "Muy buen servicio, llegó todo a tiempo." },
-   { id: 3, user: "Ana C.", rating: 5, date: "Hace 2 semanas", text: "Súper confiable. El pana es muy amable." },
-   { id: 4, user: "Ricardo M.", rating: 5, date: "Hace 1 mes", text: "Me salvó la vida con la reparación de la laptop. Muy profesional." },
-   { id: 5, user: "Elena P.", rating: 4, date: "Hace 1 mes", text: "Todo perfecto, aunque tardó un poco más de lo esperado." },
-];
 
 export default function ProductDetail() {
    const navigate = useNavigate();
@@ -33,8 +24,16 @@ export default function ProductDetail() {
    const { favorites, toggleFavorite } = useStore();
    const [product, setProduct] = useState(null);
    const [relatedProducts, setRelatedProducts] = useState([]);
+   const [reviews, setReviews] = useState([]);
    const [loading, setLoading] = useState(true);
    const [error, setError] = useState('');
+
+   // Helper para fechas de las reseñas
+   const formatReviewDate = (timestamp) => {
+      if (!timestamp) return 'Reciente';
+      const d = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
+      return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+   };
 
    // Reporting State
    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
@@ -283,12 +282,13 @@ export default function ProductDetail() {
             const docRef = doc(db, 'products', productId);
             const docSnap = await getDoc(docRef);
 
-            if (docSnap.exists()) {
+               if (docSnap.exists()) {
                const productData = { id: docSnap.id, ...docSnap.data() };
                setProduct(productData);
 
-               // Fetch related
+               // Fetch related & reviews
                fetchRelated(productData.category, productData.id);
+               getProductReviews(productData.id).then(setReviews).catch(err => console.warn('Error fetching reviews:', err));
             } else {
                // --- FALLBACK TO MOCK PRODUCTS ---
                const mock = MOCK_PRODUCTS.find(p => p.id.toString() === productId);
@@ -684,34 +684,38 @@ tlfno contacto: 672 593 950`}
                         transition={{ duration: 0.5, ease: [0.25, 1, 0.5, 1] }}
                         className="flex flex-col overflow-hidden"
                      >
-                        {MOCK_REVIEWS.map((rw, index) => (
-                           <div key={rw.id} className="py-4 flex flex-col gap-1.5 transition-all">
-                              <div className="flex justify-between items-start">
-                                 <div>
-                                    <span className="font-black text-[#1A1A3A] text-[15px] leading-none mb-1">{rw.user}</span>
-                                    <div className="flex drop-shadow-sm">
-                                       {[...Array(5)].map((_, i) => <Star key={i} className={`w-3 h-3 ${i < rw.rating ? 'fill-[#FFC200] text-[#FFC200]' : 'fill-[#1A1A3A]/10 text-transparent'}`} />)}
+                        {reviews.length === 0 ? (
+                           <div className="py-6 text-center text-[#1A1A3A]/40 font-semibold italic">Este Pana aún no tiene valoraciones, ¡sé el primero!</div>
+                        ) : (
+                           reviews.map((rw, index) => (
+                              <div key={rw.id} className="py-4 flex flex-col gap-1.5 transition-all">
+                                 <div className="flex justify-between items-start">
+                                    <div>
+                                       <span className="font-black text-[#1A1A3A] text-[15px] leading-none mb-1">{rw.buyerName || 'Un Pana'}</span>
+                                       <div className="flex drop-shadow-sm">
+                                          {[...Array(5)].map((_, i) => <Star key={i} className={`w-3 h-3 ${i < (rw.rating||5) ? 'fill-[#FFC200] text-[#FFC200]' : 'fill-[#1A1A3A]/10 text-transparent'}`} />)}
+                                       </div>
                                     </div>
+                                    <span className="text-[10px] text-[#1A1A3A]/50 font-bold uppercase tracking-wider">{formatReviewDate(rw.createdAt)}</span>
                                  </div>
-                                 <span className="text-[10px] text-[#1A1A3A]/50 font-bold uppercase tracking-wider">{rw.date}</span>
-                              </div>
-                              <p className="text-[14px] text-[#1A1A3A]/80 font-semibold leading-snug pr-4">{rw.text}</p>
+                                 <p className="text-[14px] text-[#1A1A3A]/80 font-semibold leading-snug pr-4">{rw.comment}</p>
 
-                              {/* Línea tricolor divisoria */}
-                              {index < MOCK_REVIEWS.length - 1 && (
-                                 <div className="flex w-full h-[2px] mt-4 opacity-20">
-                                    <div className="flex-1 bg-[#FFCC00]"></div>
-                                    <div className="flex-1 bg-[#003366]"></div>
-                                    <div className="flex-1 bg-[#D90429]"></div>
-                                 </div>
-                              )}
-                           </div>
-                        ))}
+                                 {/* Línea tricolor divisoria */}
+                                 {index < reviews.length - 1 && (
+                                    <div className="flex w-full h-[2px] mt-4 opacity-20">
+                                       <div className="flex-1 bg-[#FFCC00]"></div>
+                                       <div className="flex-1 bg-[#003366]"></div>
+                                       <div className="flex-1 bg-[#D90429]"></div>
+                                    </div>
+                                 )}
+                              </div>
+                           ))
+                        )}
                      </motion.div>
 
                      {/* Gradiente fade inferior — visible solo cuando está colapsado */}
                      <AnimatePresence>
-                        {!showAllReviews && (
+                        {!showAllReviews && reviews.length > 2 && (
                            <motion.div
                               initial={{ opacity: 0 }}
                               animate={{ opacity: 1 }}
@@ -726,16 +730,18 @@ tlfno contacto: 672 593 950`}
                   </div>
 
                   {/* Botón expandir / colapsar */}
-                  <motion.button
-                     whileTap={{ scale: 0.97 }}
-                     onClick={() => setShowAllReviews(v => !v)}
-                     className="w-full mt-3 py-3 flex items-center justify-center gap-2 bg-[#E0E5EC] rounded-2xl shadow-[4px_4px_8px_rgba(163,177,198,0.6),-4px_-4px_8px_rgba(255,255,255,0.8)] text-[#1A1A3A] font-bold text-sm tracking-wide transition-all active:shadow-[inset_3px_3px_6px_rgba(163,177,198,0.6),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]"
-                  >
-                     <motion.span animate={{ rotate: showAllReviews ? 180 : 0 }} transition={{ duration: 0.3 }}>
-                        <ChevronDown className="w-4 h-4" />
-                     </motion.span>
-                     {showAllReviews ? 'Ocultar valoraciones' : `Ver las ${MOCK_REVIEWS.length} valoraciones`}
-                  </motion.button>
+                  {reviews.length > 2 && (
+                     <motion.button
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => setShowAllReviews(v => !v)}
+                        className="w-full mt-3 py-3 flex items-center justify-center gap-2 bg-[#E0E5EC] rounded-2xl shadow-[4px_4px_8px_rgba(163,177,198,0.6),-4px_-4px_8px_rgba(255,255,255,0.8)] text-[#1A1A3A] font-bold text-sm tracking-wide transition-all active:shadow-[inset_3px_3px_6px_rgba(163,177,198,0.6),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]"
+                     >
+                        <motion.span animate={{ rotate: showAllReviews ? 180 : 0 }} transition={{ duration: 0.3 }}>
+                           <ChevronDown className="w-4 h-4" />
+                        </motion.span>
+                        {showAllReviews ? 'Ocultar valoraciones' : `Ver las ${product.reviewCount || reviews.length} valoraciones`}
+                     </motion.button>
+                  )}
                </div>
 
                {/* Botones de Acción integrados al final del flujo del contenido */}
@@ -825,67 +831,69 @@ tlfno contacto: 672 593 950`}
                   transition={{ duration: 0.6, ease: [0.25, 1, 0.5, 1] }}
                   className="overflow-hidden relative"
                >
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-10 gap-y-4">
-                     {MOCK_REVIEWS.map((rw) => (
-                        <div key={rw.id} className="py-6 flex flex-col gap-4 group transition-all bg-white/30 rounded-3xl p-6 border border-white/40 shadow-sm hover:shadow-md hover:bg-white/50">
-                           <div className="flex justify-between items-start">
-                              <div className="flex items-center gap-3">
-                                 <div className="w-11 h-11 rounded-full bg-white border-2 border-white shadow-sm overflow-hidden flex-shrink-0 bg-gradient-to-br from-white to-[#E0E5EC]">
-                                    <img src={`https://api.dicebear.com/7.x/micah/svg?seed=${rw.user}&backgroundColor=E0E5EC`} alt={rw.user} />
-                                 </div>
-                                 <div className="flex flex-col">
-                                    <span className="font-black text-[#1A1A3A] text-[15px] leading-tight">{rw.user}</span>
-                                    <div className="flex drop-shadow-sm mt-0.5">
-                                       {[...Array(5)].map((_, i) => <Star key={i} className={`w-3 h-3 ${i < rw.rating ? 'fill-[#FFC200] text-[#FFC200]' : 'fill-[#1A1A3A]/10 text-transparent'}`} />)}
+                  {reviews.length === 0 ? (
+                     <div className="py-12 text-center text-[#1A1A3A]/40 font-semibold italic">Aún no hay valoraciones publicadas.</div>
+                  ) : (
+                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-10 gap-y-4">
+                        {reviews.map((rw) => (
+                           <div key={rw.id} className="py-6 flex flex-col gap-4 group transition-all bg-white/30 rounded-3xl p-6 border border-white/40 shadow-sm hover:shadow-md hover:bg-white/50">
+                              <div className="flex justify-between items-start">
+                                 <div className="flex items-center gap-3">
+                                    <div className="w-11 h-11 rounded-full bg-white border-2 border-white shadow-sm overflow-hidden flex-shrink-0 bg-gradient-to-br from-white to-[#E0E5EC]">
+                                       <img src={`https://api.dicebear.com/7.x/micah/svg?seed=${rw.buyerName || 'Pana'}&backgroundColor=E0E5EC`} alt={rw.buyerName} />
+                                    </div>
+                                    <div className="flex flex-col">
+                                       <span className="font-black text-[#1A1A3A] text-[15px] leading-tight">{rw.buyerName || 'Un Pana'}</span>
+                                       <div className="flex drop-shadow-sm mt-0.5">
+                                          {[...Array(5)].map((_, i) => <Star key={i} className={`w-3 h-3 ${i < (rw.rating||5) ? 'fill-[#FFC200] text-[#FFC200]' : 'fill-[#1A1A3A]/10 text-transparent'}`} />)}
+                                       </div>
                                     </div>
                                  </div>
+                                 <span className="text-[10px] text-[#1A1A3A]/40 font-bold uppercase tracking-widest">{formatReviewDate(rw.createdAt)}</span>
                               </div>
-                              <span className="text-[10px] text-[#1A1A3A]/40 font-bold uppercase tracking-widest">{rw.date}</span>
-                           </div>
-                           <p className="text-[14px] text-[#1A1A3A]/80 font-semibold leading-relaxed italic">"{rw.text}"</p>
+                              <p className="text-[14px] text-[#1A1A3A]/80 font-semibold leading-relaxed italic">"{rw.comment}"</p>
 
-                           {/* Línea tricolor divisoria suave */}
-                           <div className="flex w-full h-[1.5px] mt-2 opacity-10">
-                              <div className="flex-1 bg-[#FFCC00]"></div>
-                              <div className="flex-1 bg-[#003366]"></div>
-                              <div className="flex-1 bg-[#D90429]"></div>
+                              {/* Línea tricolor divisoria suave */}
+                              <div className="flex w-full h-[1.5px] mt-2 opacity-10">
+                                 <div className="flex-1 bg-[#FFCC00]"></div>
+                                 <div className="flex-1 bg-[#003366]"></div>
+                                 <div className="flex-1 bg-[#D90429]"></div>
+                              </div>
                            </div>
-                        </div>
-                     ))}
-                  </div>
-
-                  {/* Gradiente fade inferior para Escritorio */}
-                  <AnimatePresence>
-                     {!showAllReviewsDesktop && MOCK_REVIEWS.length > 3 && (
-                        <motion.div
-                           initial={{ opacity: 0 }}
-                           animate={{ opacity: 1 }}
-                           exit={{ opacity: 0 }}
-                           className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none"
-                           style={{
-                              background: 'linear-gradient(to bottom, transparent, #E0E5EC)'
-                           }}
-                        />
-                     )}
-                  </AnimatePresence>
+                        ))}
+                     </div>
+                  )}
                </motion.div>
 
-               {/* Botón expandir / colapsar Escritorio */}
-               {MOCK_REVIEWS.length > 3 && (
-                  <div className="flex justify-center mt-8">
-                     <motion.button
-                        whileTap={{ scale: 0.97 }}
-                        onClick={() => setShowAllReviewsDesktop(v => !v)}
-                        className="px-10 py-4 flex items-center justify-center gap-3 bg-[#E0E5EC] rounded-2xl shadow-[6px_6px_12px_rgba(163,177,198,0.6),-6px_-6px_12px_rgba(255,255,255,0.8)] text-[#1A1A3A] font-black text-xs uppercase tracking-widest transition-all hover:scale-105 active:shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)]"
-                     >
-                        <motion.span animate={{ rotate: showAllReviewsDesktop ? 180 : 0 }} transition={{ duration: 0.3 }}>
-                           <ChevronDown className="w-4 h-4" />
-                        </motion.span>
-                        {showAllReviewsDesktop ? 'Ocultar valoraciones' : `Ver todas las valoraciones (${MOCK_REVIEWS.length})`}
-                     </motion.button>
-                  </div>
-               )}
+               {/* Gradiente de difuminado inferior en desktop */}
+               <AnimatePresence>
+                  {!showAllReviewsDesktop && reviews.length > 3 && (
+                     <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute bottom-0 left-0 right-0 h-40 pointer-events-none"
+                        style={{ background: 'linear-gradient(to bottom, transparent, #D1D9E6)' }}
+                     />
+                  )}
+               </AnimatePresence>
             </div>
+
+            {/* Expander de desktop */}
+            {reviews.length > 3 && (
+               <div className="mt-6 flex justify-center">
+                  <motion.button
+                     whileTap={{ scale: 0.95 }}
+                     onClick={() => setShowAllReviewsDesktop(v => !v)}
+                     className="px-8 py-3.5 bg-white/40 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-md border border-white/50 flex items-center gap-3 text-[#1A1A3A] font-black text-sm tracking-widest uppercase transition-all hover:bg-white/60 focus:outline-none"
+                  >
+                     <motion.span animate={{ rotate: showAllReviewsDesktop ? 180 : 0 }} transition={{ duration: 0.4 }}>
+                        <ChevronDown className="w-5 h-5 text-[#FFC200] drop-shadow-sm" />
+                     </motion.span>
+                     {showAllReviewsDesktop ? 'OCULTAR RESEÑAS' : 'LEER MÁS RESEÑAS'}
+                  </motion.button>
+               </div>
+            )}
          </div>
 
          {/* 5. SECCIÓN DE RELACIONADOS (Carrusel Horizontal) */}

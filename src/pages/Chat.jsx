@@ -246,15 +246,6 @@ export default function Chat() {
             {otherIsTyping && (
               <span className="text-[11px] text-[#FFC200] font-bold italic animate-pulse whitespace-nowrap hidden sm:inline">escribiendo...</span>
             )}
-            
-            {reviewStatus?.can && (
-              <button 
-                onClick={() => setShowReviewModal(true)}
-                className="bg-[#FFC200] text-[#1A1A3A] text-[10px] font-black uppercase px-2 py-1.5 rounded-lg shadow-[0_4px_10px_rgba(255,194,0,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center gap-1"
-              >
-                <Star size={12} className="fill-[#1A1A3A]" /> Valorar
-              </button>
-            )}
 
             <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-[0_4px_10px_rgba(0,0,0,0.3)] border-2 border-white/10 bg-white/5 flex-shrink-0">
               <img 
@@ -338,6 +329,26 @@ export default function Chat() {
             </div>
           )}
         </div>
+
+        {/* ── Botón flotante de Valorar ── */}
+        <AnimatePresence>
+          {reviewStatus?.can && (
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 16 }}
+              className="px-4 pb-2 flex justify-center flex-shrink-0"
+            >
+              <button
+                onClick={() => setShowReviewModal(true)}
+                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#FFC200] to-[#FFAA00] text-[#1A1A3A] font-black text-sm rounded-2xl shadow-[0_8px_20px_rgba(255,194,0,0.4)] hover:shadow-[0_12px_28px_rgba(255,194,0,0.5)] hover:-translate-y-0.5 active:scale-95 transition-all"
+              >
+                <Star size={16} className="fill-[#1A1A3A]" />
+                ¿Cómo fue el servicio de {otherName}? Valóralo ahora
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* ── Reply preview ── */}
         <AnimatePresence>
