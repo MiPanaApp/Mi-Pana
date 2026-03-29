@@ -134,7 +134,8 @@ export default function ProductDetail() {
 
    // Carousel tracking (unificado)
    const carouselRef = useRef(null);
-   const [showAllReviews, setShowAllReviews] = useState(false); // valoraciones expandidas
+   const [showAllReviews, setShowAllReviews] = useState(false); // valoraciones expandidas movil
+   const [showAllReviewsDesktop, setShowAllReviewsDesktop] = useState(false); // valoraciones expandidas desktop
    const [activeIndex, setActiveIndex] = useState(0);
 
    const isFavorite = (favorites || []).some(id => String(id) === String(productId));
@@ -443,76 +444,7 @@ tlfno contacto: 672 593 950`}
                   )}
                </div>
 
-               {/* Valoraciones de la Comunidad — SOLO TABLET/ESCRITORIO (Columna izquierda) */}
-               <div className="hidden md:block w-full mt-[100px]">
-                  <h3 className="text-2xl font-black text-[#1A1A3A] mb-8">
-                     Valoraciones de la Comunidad{" "}
-                     <span className="inline-block h-1.5 w-6 bg-gradient-to-r from-[#FFC200] to-[#FFAA00] rounded-full translate-y-[-4px] ml-1"></span>
-                  </h3>
-
-                  {/* Tarjeta de Resumen - Ancha para ocupar el espacio horizontal */}
-                  <div className="mb-10 bg-[#E0E5EC] rounded-[2.5rem] p-10 border border-white/40 shadow-[6px_6px_12px_rgba(163,177,198,0.6),-6px_-6px_12px_rgba(255,255,255,0.8)] flex items-center justify-between gap-20">
-                     {/* Izquierda: Promedio de Valoración */}
-                     <div className="flex flex-col items-center justify-center border-r border-[#1A1A3A]/10 pr-20">
-                        <span className="text-7xl font-black text-[#1A1A3A] tracking-tighter">{product.rating || "4.8"}</span>
-                        <div className="flex text-white drop-shadow-md mt-2 mb-3">
-                           {[...Array(5)].map((_, i) => <Star key={i} className="w-5 h-5 fill-[#FFC200] text-[#FFC200]" />)}
-                        </div>
-                        <span className="text-[12px] uppercase font-bold text-[#1A1A3A]/50 tracking-[0.25em] leading-none text-center">
-                           {product.reviewCount || "124"} VALORACIONES
-                        </span>
-                     </div>
-
-                     {/* Derecha: Barras Estadísticas */}
-                     <div className="flex-1 flex flex-col gap-3.5 max-w-lg">
-                        {[
-                           { s: 5, p: 85 }, { s: 4, p: 10 }, { s: 3, p: 3 }, { s: 2, p: 2 }, { s: 1, p: 0 }
-                        ].map(bar => (
-                           <div key={bar.s} className="flex items-center gap-4">
-                              <div className="flex items-center gap-1 w-[34px] justify-end">
-                                 <span className="text-[14px] font-black text-[#1A1A3A]">{bar.s}</span>
-                                 <Star className="w-3.5 h-3.5 text-[#1A1A3A] fill-[#1A1A3A]" />
-                              </div>
-                              <div className="flex-1 h-2.5 bg-[#1A1A3A]/10 rounded-full overflow-hidden border border-white/20 shadow-inner">
-                                 <div className="h-full bg-[#1A1A3A] rounded-full" style={{ width: `${bar.p}%` }}></div>
-                              </div>
-                              <span className="w-10 text-[12px] font-bold text-[#1A1A3A]/40 text-right">{bar.p}%</span>
-                           </div>
-                        ))}
-                     </div>
-                  </div>
-
-                  {/* Lista de Comentarios - Organizada en 2 columnas debajo del resumen */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-2">
-                     {MOCK_REVIEWS.map((rw, index) => (
-                        <div key={rw.id} className="py-6 flex flex-col gap-4 group transition-all">
-                           <div className="flex justify-between items-start">
-                              <div className="flex items-center gap-3">
-                                 <div className="w-11 h-11 rounded-full bg-white border-2 border-white shadow-sm overflow-hidden flex-shrink-0 bg-gradient-to-br from-white to-[#E0E5EC]">
-                                    <img src={`https://api.dicebear.com/7.x/micah/svg?seed=${rw.user}&backgroundColor=E0E5EC`} alt={rw.user} />
-                                 </div>
-                                 <div className="flex flex-col">
-                                    <span className="font-black text-[#1A1A3A] text-[15px] leading-tight">{rw.user}</span>
-                                    <div className="flex drop-shadow-sm mt-0.5">
-                                       {[...Array(5)].map((_, i) => <Star key={i} className={`w-3 h-3 ${i < rw.rating ? 'fill-[#FFC200] text-[#FFC200]' : 'fill-[#1A1A3A]/10 text-transparent'}`} />)}
-                                    </div>
-                                 </div>
-                              </div>
-                              <span className="text-[10px] text-[#1A1A3A]/40 font-bold uppercase tracking-widest">{rw.date}</span>
-                           </div>
-                           <p className="text-[14px] text-[#1A1A3A]/80 font-semibold leading-relaxed pl-1 italic">"{rw.text}"</p>
-
-                           {/* Línea tricolor divisoria */}
-                           <div className="flex w-full h-[2px] mt-2 opacity-20">
-                              <div className="flex-1 bg-[#FFCC00]"></div>
-                              <div className="flex-1 bg-[#003366]"></div>
-                              <div className="flex-1 bg-[#D90429]"></div>
-                           </div>
-                        </div>
-                     ))}
-                  </div>
-               </div>
-            </div>  {/* Fin columna izquierda */}
+            </div>  {/* Fin columna izquierda carrusel/descripción */}
 
             {/* Content Slide-up - Right Column on Desktop */}
             <motion.div
@@ -769,8 +701,117 @@ tlfno contacto: 672 593 950`}
             </motion.div>
          </div> {/* Final grid wrapper */}
 
+         {/* Valoraciones de la Comunidad — SOLO TABLET/ESCRITORIO (Alineado con el ancho total) */}
+         <div className="hidden md:block max-w-7xl mx-auto px-8 relative z-10 mb-20">
+            <h3 className="text-2xl font-black text-[#1A1A3A] mb-8">
+               Valoraciones de la Comunidad{" "}
+               <span className="inline-block h-1.5 w-6 bg-gradient-to-r from-[#FFC200] to-[#FFAA00] rounded-full translate-y-[-4px] ml-1"></span>
+            </h3>
+
+            {/* Tarjeta de Resumen - Ancha para ocupar el espacio horizontal */}
+            <div className="mb-10 bg-[#E0E5EC] rounded-[2.5rem] p-10 border border-white/40 shadow-[6px_6px_12px_rgba(163,177,198,0.6),-6px_-6px_12px_rgba(255,255,255,0.8)] flex items-center justify-between gap-20">
+               {/* Izquierda: Promedio de Valoración */}
+               <div className="flex flex-col items-center justify-center border-r border-[#1A1A3A]/10 pr-20">
+                  <span className="text-7xl font-black text-[#1A1A3A] tracking-tighter">{product.rating || "4.8"}</span>
+                  <div className="flex text-white drop-shadow-md mt-2 mb-3">
+                     {[...Array(5)].map((_, i) => <Star key={i} className="w-5 h-5 fill-[#FFC200] text-[#FFC200]" />)}
+                  </div>
+                  <span className="text-[12px] uppercase font-bold text-[#1A1A3A]/50 tracking-[0.25em] leading-none text-center">
+                     {product.reviewCount || "124"} VALORACIONES
+                  </span>
+               </div>
+
+               {/* Derecha: Barras Estadísticas */}
+               <div className="flex-1 flex flex-col gap-3.5 max-w-lg">
+                  {[
+                     { s: 5, p: 85 }, { s: 4, p: 10 }, { s: 3, p: 3 }, { s: 2, p: 2 }, { s: 1, p: 0 }
+                  ].map(bar => (
+                     <div key={bar.s} className="flex items-center gap-4">
+                        <div className="flex items-center gap-1 w-[34px] justify-end">
+                           <span className="text-[14px] font-black text-[#1A1A3A]">{bar.s}</span>
+                           <Star className="w-3.5 h-3.5 text-[#1A1A3A] fill-[#1A1A3A]" />
+                        </div>
+                        <div className="flex-1 h-2.5 bg-[#1A1A3A]/10 rounded-full overflow-hidden border border-white/20 shadow-inner">
+                           <div className="h-full bg-[#1A1A3A] rounded-full" style={{ width: `${bar.p}%` }}></div>
+                        </div>
+                        <span className="w-10 text-[12px] font-bold text-[#1A1A3A]/40 text-right">{bar.p}%</span>
+                     </div>
+                  ))}
+               </div>
+            </div>
+
+            {/* Lista de Comentarios - Organizada en columnas con colapso para no saturar */}
+            <div className="relative">
+               <motion.div
+                  animate={{ maxHeight: showAllReviewsDesktop ? 5000 : 450 }}
+                  transition={{ duration: 0.6, ease: [0.25, 1, 0.5, 1] }}
+                  className="overflow-hidden relative"
+               >
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-10 gap-y-4">
+                     {MOCK_REVIEWS.map((rw) => (
+                        <div key={rw.id} className="py-6 flex flex-col gap-4 group transition-all bg-white/30 rounded-3xl p-6 border border-white/40 shadow-sm hover:shadow-md hover:bg-white/50">
+                           <div className="flex justify-between items-start">
+                              <div className="flex items-center gap-3">
+                                 <div className="w-11 h-11 rounded-full bg-white border-2 border-white shadow-sm overflow-hidden flex-shrink-0 bg-gradient-to-br from-white to-[#E0E5EC]">
+                                    <img src={`https://api.dicebear.com/7.x/micah/svg?seed=${rw.user}&backgroundColor=E0E5EC`} alt={rw.user} />
+                                 </div>
+                                 <div className="flex flex-col">
+                                    <span className="font-black text-[#1A1A3A] text-[15px] leading-tight">{rw.user}</span>
+                                    <div className="flex drop-shadow-sm mt-0.5">
+                                       {[...Array(5)].map((_, i) => <Star key={i} className={`w-3 h-3 ${i < rw.rating ? 'fill-[#FFC200] text-[#FFC200]' : 'fill-[#1A1A3A]/10 text-transparent'}`} />)}
+                                    </div>
+                                 </div>
+                              </div>
+                              <span className="text-[10px] text-[#1A1A3A]/40 font-bold uppercase tracking-widest">{rw.date}</span>
+                           </div>
+                           <p className="text-[14px] text-[#1A1A3A]/80 font-semibold leading-relaxed italic">"{rw.text}"</p>
+
+                           {/* Línea tricolor divisoria suave */}
+                           <div className="flex w-full h-[1.5px] mt-2 opacity-10">
+                              <div className="flex-1 bg-[#FFCC00]"></div>
+                              <div className="flex-1 bg-[#003366]"></div>
+                              <div className="flex-1 bg-[#D90429]"></div>
+                           </div>
+                        </div>
+                     ))}
+                  </div>
+
+                  {/* Gradiente fade inferior para Escritorio */}
+                  <AnimatePresence>
+                     {!showAllReviewsDesktop && MOCK_REVIEWS.length > 3 && (
+                        <motion.div
+                           initial={{ opacity: 0 }}
+                           animate={{ opacity: 1 }}
+                           exit={{ opacity: 0 }}
+                           className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none"
+                           style={{
+                              background: 'linear-gradient(to bottom, transparent, #E0E5EC)'
+                           }}
+                        />
+                     )}
+                  </AnimatePresence>
+               </motion.div>
+
+               {/* Botón expandir / colapsar Escritorio */}
+               {MOCK_REVIEWS.length > 3 && (
+                  <div className="flex justify-center mt-8">
+                     <motion.button
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => setShowAllReviewsDesktop(v => !v)}
+                        className="px-10 py-4 flex items-center justify-center gap-3 bg-[#E0E5EC] rounded-2xl shadow-[6px_6px_12px_rgba(163,177,198,0.6),-6px_-6px_12px_rgba(255,255,255,0.8)] text-[#1A1A3A] font-black text-xs uppercase tracking-widest transition-all hover:scale-105 active:shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)]"
+                     >
+                        <motion.span animate={{ rotate: showAllReviewsDesktop ? 180 : 0 }} transition={{ duration: 0.3 }}>
+                           <ChevronDown className="w-4 h-4" />
+                        </motion.span>
+                        {showAllReviewsDesktop ? 'Ocultar valoraciones' : `Ver todas las valoraciones (${MOCK_REVIEWS.length})`}
+                     </motion.button>
+                  </div>
+               )}
+            </div>
+         </div>
+
          {/* 5. SECCIÓN DE RELACIONADOS (Carrusel Horizontal) */}
-         <div className="max-w-7xl mx-auto px-5 md:px-8 mb-2">
+         <div className="max-w-7xl mx-auto px-5 md:px-8 mb-20 md:mb-24">
             <h3 className="text-2xl font-black text-[#1A1A3A] mb-8 pt-10 border-t border-[#1A1A3A]/5">
                Anuncios relacionados{" "}
                <span className="inline-block h-1.5 w-6 bg-gradient-to-r from-[#FFC200] to-[#FFAA00] rounded-full translate-y-[-4px] ml-1"></span>
