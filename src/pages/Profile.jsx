@@ -3,15 +3,16 @@ import {
   User, Mail, Phone, MapPin, LogOut, ChevronDown, 
   ShieldCheck, Loader2, Camera, Lock, Info, 
   HelpCircle, Cookie, ShieldAlert, Instagram, Facebook, Youtube, Twitter, UserCircle2,
-  Package, Edit2, Trash2, PlusCircle, ExternalLink, Eye, EyeOff, X
+  Package, Edit2, Trash2, PlusCircle, ExternalLink, Eye, EyeOff, X, Calendar, Globe
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, getDownloadURL } from 'firebase/storage';
 import { doc, setDoc, collection, query, where, onSnapshot, deleteDoc, updateDoc } from 'firebase/firestore';
-import { db, storage } from '../services/firebase';
+import { db, storage, auth } from '../services/firebase';
+import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { FcGoogle } from 'react-icons/fc';
 import { useStore } from '../store/useStore';
 import { LOCATION_DATA } from '../data/locations';
@@ -33,8 +34,15 @@ export default function Profile() {
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [showSexModal, setShowSexModal] = useState(false);
   const [showNameModal, setShowNameModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [newName, setNewName] = useState('');
   const [newLastName, setNewLastName] = useState('');
+  const [pwdForm, setPwdForm] = useState({ current: '', next: '', confirm: '' });
+  const [pwdError, setPwdError] = useState('');
+  const [pwdSuccess, setPwdSuccess] = useState(false);
+  const [pwdLoading, setPwdLoading] = useState(false);
+  const [showPwdCurrent, setShowPwdCurrent] = useState(false);
+  const [showPwdNext, setShowPwdNext] = useState(false);
   
   const [showCropper, setShowCropper] = useState(false);
   const [photoPreview, setPhotoPreview] = useState(null);
@@ -62,11 +70,13 @@ export default function Profile() {
   };
 
   const handleSexSelect = async (sexValue) => {
+    const uid = currentUser?.uid || auth.currentUser?.uid;
+    if (!uid) { alert('No hay sesión activa.'); return; }
     try {
-      await updateDoc(doc(db, 'users', currentUser.uid), {
+      await setDoc(doc(db, 'users', uid), {
         gender: sexValue,
         updatedAt: new Date()
-      });
+      }, { merge: true });
       setShowSexModal(false);
     } catch (error) {
       console.error("Error al actualizar sexo:", error);
@@ -75,15 +85,52 @@ export default function Profile() {
   };
 
   const handleRegionSelect = async (regionName) => {
+    const uid = currentUser?.uid || auth.currentUser?.uid;
+    if (!uid) { alert('No hay sesión activa.'); return; }
     try {
-      await updateDoc(doc(db, 'users', currentUser.uid), {
+      await setDoc(doc(db, 'users', uid), {
         region: regionName,
         updatedAt: new Date()
-      });
+      }, { merge: true });
       setShowLocationModal(false);
     } catch (error) {
-      console.error("Error al actualizar:", error);
+      console.error("Error al actualizar ubicación:", error);
       alert('Hubo un error al actualizar la ubicación.');
+    }
+  };
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    setPwdError('');
+    const user = auth.currentUser;
+    if (!user) { setPwdError('No hay sesión activa.'); return; }
+    if (pwdForm.next.length < 8) { setPwdError('La nueva contraseña debe tener al menos 8 caracteres.'); return; }
+    if (pwdForm.next !== pwdForm.confirm) { setPwdError('Las contraseñas no coinciden.'); return; }
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+    if (!passwordRegex.test(pwdForm.next)) {
+      setPwdError('Debe tener mínimo 8 caracteres, una mayúscula, una minúscula y un número.');
+      return;
+    }
+    setPwdLoading(true);
+    try {
+      const email = user.email || userData?.email;
+      const credential = EmailAuthProvider.credential(email, pwdForm.current);
+      await reauthenticateWithCredential(user, credential);
+      await updatePassword(user, pwdForm.next);
+      setPwdSuccess(true);
+      setPwdForm({ current: '', next: '', confirm: '' });
+      setTimeout(() => { setShowPasswordModal(false); setPwdSuccess(false); }, 1500);
+    } catch (err) {
+      console.error('Error cambiando contraseña:', err);
+      if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        setPwdError('La contraseña actual es incorrecta.');
+      } else if (err.code === 'auth/requires-recent-login') {
+        setPwdError('Por seguridad, cierra sesión e inicia de nuevo antes de cambiar la contraseña.');
+      } else {
+        setPwdError('Error al cambiar la contraseña. Inténtalo de nuevo.');
+      }
+    } finally {
+      setPwdLoading(false);
     }
   };
 
@@ -283,22 +330,23 @@ export default function Profile() {
               icon={Mail} 
               label="Correo Electrónico" 
               value={displayEmail} 
-              actionLabel={isGoogleLogin ? null : "Verificar"} 
-              onAction={() => alert('Email enviado')} 
+            />
+            <HeaderInfoItem 
+              icon={Globe} 
+              label="País" 
+              value={userData?.country || 'No especificado'} 
             />
             <HeaderInfoItem 
               icon={MapPin} 
-              label="Ubicación" 
+              label="Comunidad / Región" 
               value={userData?.region} 
               actionLabel="Editar"
               onAction={() => setShowLocationModal(true)} 
             />
             <HeaderInfoItem 
-              icon={Lock} 
-              label="Contraseña" 
-              isPassword 
-              actionLabel={isGoogleLogin ? null : "Cambiar"} 
-              onAction={() => alert('Link enviado para cambiar contraseña')} 
+              icon={Calendar} 
+              label="Fecha de Nacimiento" 
+              value={userData?.birthDate} 
             />
             <HeaderInfoItem 
               icon={User} 
@@ -306,6 +354,13 @@ export default function Profile() {
               value={userData?.gender} 
               actionLabel="Editar"
               onAction={() => setShowSexModal(true)} 
+            />
+            <HeaderInfoItem 
+              icon={Lock} 
+              label="Contraseña" 
+              isPassword 
+              actionLabel={isGoogleLogin ? null : "Cambiar"} 
+              onAction={() => { setPwdError(''); setPwdSuccess(false); setPwdForm({ current: '', next: '', confirm: '' }); setShowPasswordModal(true); }} 
             />
           </div>
         </div>
@@ -691,6 +746,106 @@ export default function Profile() {
                   </button>
                 ))}
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal Cambio de Contraseña */}
+      <AnimatePresence>
+        {showPasswordModal && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4 overflow-hidden">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowPasswordModal(false)}
+              className="absolute inset-0 bg-[#E0E5EC]/80 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="w-full max-w-sm bg-[#E0E5EC] rounded-[2rem] p-6 shadow-[20px_20px_60px_#bebebe,-20px_-20px_60px_#ffffff] relative z-10 flex flex-col"
+            >
+              <button 
+                onClick={() => setShowPasswordModal(false)}
+                className="absolute right-4 top-4 w-10 h-10 flex items-center justify-center rounded-full bg-[#E0E5EC] text-[#1A1A3A] hover:text-[#D90429] shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.8)] active:shadow-[inset_2px_2px_4px_rgba(163,177,198,0.4)] transition-all"
+              >
+                <X size={20} />
+              </button>
+              
+              <h2 className="text-xl font-black text-[#1A1A3A] mb-1 pl-1">Cambiar Contraseña</h2>
+              <p className="text-xs font-bold text-[#8888AA] mb-5 pl-1">Introduce tu contraseña actual y la nueva.</p>
+              
+              {pwdSuccess ? (
+                <div className="py-6 flex flex-col items-center gap-3">
+                  <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center">
+                    <ShieldCheck size={28} className="text-green-600" />
+                  </div>
+                  <p className="font-black text-green-700 text-center">¡Contraseña actualizada!</p>
+                </div>
+              ) : (
+                <form onSubmit={handlePasswordChange} className="space-y-4">
+                  {/* Contraseña actual */}
+                  <div>
+                    <label className="text-[10px] font-black tracking-widest uppercase text-[#1A1A3A] ml-2 mb-1 block">Contraseña actual</label>
+                    <div className="relative">
+                      <input
+                        type={showPwdCurrent ? 'text' : 'password'}
+                        value={pwdForm.current}
+                        onChange={(e) => setPwdForm({ ...pwdForm, current: e.target.value })}
+                        required
+                        className="w-full p-4 pr-12 bg-[#E0E5EC] rounded-2xl shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.7)] text-[#1A1A3A] font-bold outline-none focus:ring-2 focus:ring-[#0056B3]/40 transition-all placeholder:text-[#1A1A3A]/30"
+                        placeholder="••••••••"
+                      />
+                      <button type="button" onClick={() => setShowPwdCurrent(!showPwdCurrent)} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1A1A3A]/40">
+                        {showPwdCurrent ? <Eye size={18} /> : <EyeOff size={18} />}
+                      </button>
+                    </div>
+                  </div>
+                  {/* Nueva contraseña */}
+                  <div>
+                    <label className="text-[10px] font-black tracking-widest uppercase text-[#1A1A3A] ml-2 mb-1 block">Nueva contraseña</label>
+                    <div className="relative">
+                      <input
+                        type={showPwdNext ? 'text' : 'password'}
+                        value={pwdForm.next}
+                        onChange={(e) => setPwdForm({ ...pwdForm, next: e.target.value })}
+                        required
+                        minLength={8}
+                        className="w-full p-4 pr-12 bg-[#E0E5EC] rounded-2xl shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.7)] text-[#1A1A3A] font-bold outline-none focus:ring-2 focus:ring-[#0056B3]/40 transition-all placeholder:text-[#1A1A3A]/30"
+                        placeholder="Mín. 8 caracteres"
+                      />
+                      <button type="button" onClick={() => setShowPwdNext(!showPwdNext)} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1A1A3A]/40">
+                        {showPwdNext ? <Eye size={18} /> : <EyeOff size={18} />}
+                      </button>
+                    </div>
+                  </div>
+                  {/* Confirmar */}
+                  <div>
+                    <label className="text-[10px] font-black tracking-widest uppercase text-[#1A1A3A] ml-2 mb-1 block">Confirmar nueva contraseña</label>
+                    <input
+                      type="password"
+                      value={pwdForm.confirm}
+                      onChange={(e) => setPwdForm({ ...pwdForm, confirm: e.target.value })}
+                      required
+                      className="w-full p-4 bg-[#E0E5EC] rounded-2xl shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.7)] text-[#1A1A3A] font-bold outline-none focus:ring-2 focus:ring-[#0056B3]/40 transition-all placeholder:text-[#1A1A3A]/30"
+                      placeholder="Repite la nueva contraseña"
+                    />
+                  </div>
+                  {pwdError && (
+                    <p className="text-[#D90429] text-xs font-bold text-center px-2">{pwdError}</p>
+                  )}
+                  <button 
+                    type="submit"
+                    disabled={pwdLoading}
+                    className="w-full mt-2 py-4 rounded-full bg-[#1A1A3A] text-white font-black uppercase text-sm shadow-[0_10px_20px_rgba(26,26,58,0.3)] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+                  >
+                    {pwdLoading ? <><Loader2 size={18} className="animate-spin" /> Cambiando...</> : 'Guardar Nueva Contraseña'}
+                  </button>
+                </form>
+              )}
             </motion.div>
           </div>
         )}
