@@ -15,6 +15,8 @@ import { db, storage } from '../services/firebase';
 import { FcGoogle } from 'react-icons/fc';
 import { useStore } from '../store/useStore';
 import { LOCATION_DATA } from '../data/locations';
+import AvatarCropper from '../components/auth/AvatarCropper';
+import { uploadString } from 'firebase/storage';
 
 export default function Profile() {
   const { userData, currentUser, userAvatar, logout, isAdmin } = useAuth();
@@ -31,6 +33,9 @@ export default function Profile() {
   const [showNameModal, setShowNameModal] = useState(false);
   const [newName, setNewName] = useState('');
   const [newLastName, setNewLastName] = useState('');
+  
+  const [showCropper, setShowCropper] = useState(false);
+  const [photoPreview, setPhotoPreview] = useState(null);
 
   const { selectedCountry } = useStore();
 
@@ -139,16 +144,34 @@ export default function Profile() {
     if (!file.type.startsWith('image/')) return alert('Selecciona una imagen válida.');
     if (file.size > 5 * 1024 * 1024) return alert('Máximo 5MB.');
 
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setPhotoPreview(e.target.result);
+      setShowCropper(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropApply = async (croppedDataUrl) => {
     setIsUploading(true);
+    setShowCropper(false);
     try {
-      const fileName = `avatar_${Date.now()}.${file.name.split('.').pop()}`;
+      const fileName = `avatar_${Date.now()}.jpg`;
       const storageRef = ref(storage, `avatars/${currentUser.uid}/${fileName}`);
-      const snapshot = await uploadBytes(storageRef, file);
-      const downloadURL = await getDownloadURL(snapshot.ref);
-      await setDoc(doc(db, 'users', currentUser.uid), { avatar: downloadURL, updatedAt: new Date() }, { merge: true });
+      
+      // Upload base64 string
+      await uploadString(storageRef, croppedDataUrl, 'data_url');
+      const downloadURL = await getDownloadURL(storageRef);
+      
+      await setDoc(doc(db, 'users', currentUser.uid), { 
+        avatar: downloadURL, 
+        updatedAt: new Date() 
+      }, { merge: true });
+      
+      setPhotoPreview(null);
     } catch (error) {
-      console.error(error);
-      alert('Error al subir foto.');
+      console.error("Error al subir avatar recortado:", error);
+      alert('Error al guardar la foto recortada.');
     } finally {
       setIsUploading(false);
     }
@@ -200,7 +223,7 @@ export default function Profile() {
         <div className="bg-[#E0E5EC] rounded-[40px] p-6 shadow-[20px_20px_60px_#bebebe,-20px_-20px_60px_#ffffff] flex flex-col items-center mb-10">
           
           {/* Avatar Section */}
-          <div className="relative mb-6">
+          <div className="relative mb-6 flex flex-col items-center">
             <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
             <div 
               onClick={handleEditAvatar}
@@ -209,10 +232,22 @@ export default function Profile() {
               {isUploading ? <Loader2 className="animate-spin text-[#0056B3]" /> : 
                userAvatar ? <img src={userAvatar} className="w-full h-full object-cover rounded-full" /> : 
                <User size={60} className="text-gray-300" />}
-              <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-full">
-                <Camera size={24} className="text-white" />
-              </div>
+              {!showCropper && (
+                <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-full">
+                  <Camera size={24} className="text-white" />
+                </div>
+              )}
             </div>
+
+            {showCropper && photoPreview && (
+              <div className="w-full mt-4">
+                <AvatarCropper 
+                  image={photoPreview} 
+                  onApply={handleCropApply} 
+                  onCancel={() => { setShowCropper(false); setPhotoPreview(null); }}
+                />
+              </div>
+            )}
           </div>
 
           <h1 className="text-2xl font-black text-[#1A1A3A] mb-1 flex items-center justify-center gap-2 group cursor-pointer" onClick={() => { 
