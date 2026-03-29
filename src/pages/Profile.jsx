@@ -27,23 +27,41 @@ export default function Profile() {
   const [productsLoading, setProductsLoading] = useState(true);
   
   const [showLocationModal, setShowLocationModal] = useState(false);
+  const [showSexModal, setShowSexModal] = useState(false);
+  const [showNameModal, setShowNameModal] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newLastName, setNewLastName] = useState('');
+
   const { selectedCountry } = useStore();
 
   const isGoogleLogin = currentUser?.providerData?.some(provider => provider.providerId === 'google.com');
 
-  const handleEditField = async (field, currentValue, label) => {
-    const newValue = window.prompt(`Ingresa tu nuevo ${label}:`, currentValue || '');
-    if (newValue !== null && newValue.trim() !== '' && newValue !== currentValue) {
-      try {
-        await updateDoc(doc(db, 'users', currentUser.uid), {
-          [field]: newValue.trim(),
-          updatedAt: new Date()
-        });
-        if (field === 'region') setShowLocationModal(false);
-      } catch (error) {
-        console.error("Error al actualizar:", error);
-        alert('Hubo un error al actualizar tus datos.');
-      }
+  const handleNameSubmit = async (e) => {
+    e.preventDefault();
+    if (!newName.trim()) return;
+    try {
+      await updateDoc(doc(db, 'users', currentUser.uid), {
+        name: newName.trim(),
+        lastName: newLastName.trim(),
+        updatedAt: new Date()
+      });
+      setShowNameModal(false);
+    } catch (error) {
+      console.error("Error al actualizar nombre:", error);
+      alert('Hubo un error al actualizar tu nombre.');
+    }
+  };
+
+  const handleSexSelect = async (sexValue) => {
+    try {
+      await updateDoc(doc(db, 'users', currentUser.uid), {
+        gender: sexValue,
+        updatedAt: new Date()
+      });
+      setShowSexModal(false);
+    } catch (error) {
+      console.error("Error al actualizar sexo:", error);
+      alert('Hubo un error al actualizar el sexo.');
     }
   };
 
@@ -189,10 +207,10 @@ export default function Profile() {
             </div>
           </div>
 
-          <h1 className="text-2xl font-black text-[#1A1A3A] mb-1 flex items-center justify-center gap-2 group cursor-pointer" onClick={() => handleEditField('name', userData?.name, 'Nombre')}>
+          <h1 className="text-2xl font-black text-[#1A1A3A] mb-1 flex items-center justify-center gap-2 group cursor-pointer" onClick={() => { setNewName(userData?.name || ''); setNewLastName(userData?.lastName || ''); setShowNameModal(true); }}>
             {userData?.name ? `${userData.name} ${userData?.lastName || ''}` : 'Pana Dev'}
             {isGoogleLogin && <FcGoogle size={18} className="translate-y-[1px]" title="Conectado con Google" />}
-            <Edit2 size={14} className="text-[#1A1A3A]/30 opacity-0 group-hover:opacity-100 transition-opacity ml-1" />
+            <Edit2 size={16} className="text-[#1A1A3A]/40 transition-colors hover:text-[#0056B3] ml-1" />
           </h1>
           
           <div className="flex items-center gap-1 mb-6 px-4 py-1.5 bg-[#0056B3]/10 rounded-full border border-[#0056B3]/20 text-[#0056B3] text-[10px] font-black uppercase tracking-wider">
@@ -227,7 +245,7 @@ export default function Profile() {
               label="Sexo" 
               value={userData?.gender} 
               actionLabel="Editar"
-              onAction={() => handleEditField('gender', userData?.gender, 'Sexo')} 
+              onAction={() => setShowSexModal(true)} 
             />
           </div>
         </div>
@@ -471,6 +489,116 @@ export default function Profile() {
                     className="w-full flex items-center justify-between p-4 bg-[#E0E5EC] rounded-2xl shadow-[5px_5px_10px_#b8b9be,-5px_-5px_10px_#ffffff] active:shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.7)] text-[#1A1A3A] font-bold transition-all text-sm group"
                   >
                     {regionName}
+                    <div className="w-2 h-2 rounded-full bg-[#0056B3] opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal Neumórfico para Nombre y Apellido */}
+      <AnimatePresence>
+        {showNameModal && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4 overflow-hidden">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowNameModal(false)}
+              className="absolute inset-0 bg-[#E0E5EC]/80 backdrop-blur-sm"
+            />
+            
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="w-full max-w-sm bg-[#E0E5EC] rounded-[2rem] p-6 shadow-[20px_20px_60px_#bebebe,-20px_-20px_60px_#ffffff] relative z-10 flex flex-col"
+            >
+              <button 
+                onClick={() => setShowNameModal(false)}
+                className="absolute right-4 top-4 w-10 h-10 flex items-center justify-center rounded-full bg-[#E0E5EC] text-[#1A1A3A] hover:text-[#D90429] shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.8)] active:shadow-[inset_2px_2px_4px_rgba(163,177,198,0.4)] transition-all"
+              >
+                <X size={20} />
+              </button>
+              
+              <h2 className="text-xl font-black text-[#1A1A3A] mb-1 pl-1">Actualizar Nombre</h2>
+              <p className="text-xs font-bold text-[#8888AA] mb-5 pl-1">¿Cómo quieres que te llamen los Panas?</p>
+              
+              <form onSubmit={handleNameSubmit} className="space-y-4">
+                <div>
+                  <label className="text-[10px] font-black tracking-widest uppercase text-[#1A1A3A] ml-2 mb-1 block">Nombre</label>
+                  <input
+                    type="text"
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    required
+                    className="w-full p-4 bg-[#E0E5EC] rounded-2xl shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.7)] text-[#1A1A3A] font-bold outline-none focus:ring-2 focus:ring-[#0056B3]/40 transition-all placeholder:text-[#1A1A3A]/30"
+                    placeholder="Tu nombre..."
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black tracking-widest uppercase text-[#1A1A3A] ml-2 mb-1 block">Apellido (Opcional)</label>
+                  <input
+                    type="text"
+                    value={newLastName}
+                    onChange={(e) => setNewLastName(e.target.value)}
+                    className="w-full p-4 bg-[#E0E5EC] rounded-2xl shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.7)] text-[#1A1A3A] font-bold outline-none focus:ring-2 focus:ring-[#0056B3]/40 transition-all placeholder:text-[#1A1A3A]/30"
+                    placeholder="Tu apellido..."
+                  />
+                </div>
+                
+                <button 
+                  type="submit"
+                  className="w-full mt-2 py-4 rounded-full bg-[#1A1A3A] text-white font-black uppercase text-sm shadow-[0_10px_20px_rgba(26,26,58,0.3)] active:scale-95 transition-all"
+                >
+                  Guardar Cambios
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal Neumórfico para Selector de Sexo */}
+      <AnimatePresence>
+        {showSexModal && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4 overflow-hidden">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowSexModal(false)}
+              className="absolute inset-0 bg-[#E0E5EC]/80 backdrop-blur-sm"
+            />
+            
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="w-full max-w-sm bg-[#E0E5EC] rounded-[2rem] p-6 shadow-[20px_20px_60px_#bebebe,-20px_-20px_60px_#ffffff] relative z-10 flex flex-col"
+            >
+              <button 
+                onClick={() => setShowSexModal(false)}
+                className="absolute right-4 top-4 w-10 h-10 flex items-center justify-center rounded-full bg-[#E0E5EC] text-[#1A1A3A] hover:text-[#D90429] shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.8)] active:shadow-[inset_2px_2px_4px_rgba(163,177,198,0.4)] transition-all"
+              >
+                <X size={20} />
+              </button>
+              
+              <h2 className="text-xl font-black text-[#1A1A3A] mb-1 pl-1">Identidad de Sexo</h2>
+              <p className="text-xs font-bold text-[#8888AA] mb-5 pl-1">
+                Completa tu perfil
+              </p>
+              
+              <div className="flex-1 overflow-y-auto space-y-3 pb-2">
+                {['Hombre', 'Mujer', 'Otro'].map((genderOption) => (
+                  <button
+                    key={genderOption}
+                    onClick={() => handleSexSelect(genderOption)}
+                    className="w-full flex items-center justify-between p-4 bg-[#E0E5EC] rounded-2xl shadow-[5px_5px_10px_#b8b9be,-5px_-5px_10px_#ffffff] active:shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.7)] text-[#1A1A3A] font-bold transition-all text-sm group"
+                  >
+                    {genderOption}
                     <div className="w-2 h-2 rounded-full bg-[#0056B3] opacity-0 group-hover:opacity-100 transition-opacity" />
                   </button>
                 ))}
