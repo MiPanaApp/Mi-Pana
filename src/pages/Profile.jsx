@@ -478,10 +478,23 @@ export default function Profile() {
               
               <h2 className="text-xl font-black text-[#1A1A3A] mb-1 pl-1">Selecciona Ubicación</h2>
               <p className="text-xs font-bold text-[#8888AA] mb-5 pl-1">
-                Según el país seleccionado ({selectedCountry})
+                Según el país seleccionado ({
+                  {
+                    'ES': '🇪🇸 España',
+                    'CO': '🇨🇴 Colombia',
+                    'VE': '🇻🇪 Venezuela',
+                    'US': '🇺🇸 Estados Unidos',
+                    'CL': '🇨🇱 Chile',
+                    'PA': '🇵🇦 Panamá',
+                    'PE': '🇵🇪 Perú',
+                    'EC': '🇪🇨 Ecuador',
+                    'DO': '🇩🇴 República Dominicana',
+                    'AR': '🇦🇷 Argentina'
+                  }[selectedCountry] || selectedCountry
+                })
               </p>
               
-              <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-3 pb-2">
+              <div className="flex-1 overflow-y-auto custom-scrollbar px-2 -mx-2 space-y-3 pb-4 pt-1">
                 {Object.keys((LOCATION_DATA[selectedCountry] || LOCATION_DATA['ES']).data).map((regionName) => (
                   <button
                     key={regionName}
@@ -591,7 +604,7 @@ export default function Profile() {
                 Completa tu perfil
               </p>
               
-              <div className="flex-1 overflow-y-auto space-y-3 pb-2">
+              <div className="flex-1 overflow-y-auto custom-scrollbar px-2 -mx-2 space-y-3 pb-4 pt-1">
                 {['Hombre', 'Mujer', 'Otro'].map((genderOption) => (
                   <button
                     key={genderOption}
