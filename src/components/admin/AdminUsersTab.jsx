@@ -116,12 +116,6 @@ export default function AdminUsersTab({ searchQuery = '' }) {
           <div className="bg-white rounded-[2.5rem] w-full max-w-md shadow-2xl overflow-hidden relative animate-in zoom-in-95">
             {/* Header del Modal */}
             <div className="bg-gradient-to-br from-[#FFD700] to-yellow-400 p-8 text-black relative">
-              <button 
-                onClick={() => setSelectedUser(null)}
-                className="absolute top-6 right-6 p-2 bg-black/10 hover:bg-black/20 rounded-full transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
               
               <div className="flex items-center gap-5">
                 <div className="w-20 h-20 bg-white rounded-3xl p-1 shadow-lg shrink-0 overflow-hidden">
