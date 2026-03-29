@@ -28,7 +28,7 @@ export default function Profile() {
     const uid = storeUser?.uid || currentUser?.uid;
     if (!uid) return;
     console.log('[Profile] Buscando productos para UID:', uid);
-    const q = query(collection(db, 'products'), where('sellerId', '==', uid));
+    const q = query(collection(db, 'products'), where('userId', '==', uid));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const prods = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       console.log('[Profile] Productos encontrados:', prods.length);
@@ -210,23 +210,21 @@ export default function Profile() {
                         <div key={product.id} className="bg-[#E0E5EC] p-3 rounded-xl shadow-[4px_4px_8px_#b8b9be,-4px_-4px_8px_#ffffff] flex items-center justify-between gap-3">
                           <div className="flex items-center gap-3 overflow-hidden">
                             <img 
-                              src={product.images?.[0] || 'https://via.placeholder.com/150'} 
-                              className="w-12 h-12 rounded-lg object-cover bg-gray-200"
+                              src={product.image || product.images?.[0] || 'https://via.placeholder.com/150'} 
+                              alt={product.name}
+                              className="w-12 h-12 rounded-lg object-cover bg-gray-200 flex-shrink-0"
                             />
                             <div className="flex flex-col min-w-0">
-                              <span className="text-xs font-bold text-[#1A1A3A] truncate">{product.title}</span>
-                              <span className="text-[11px] font-black text-[#0056B3]">${product.price}</span>
+                              <span className="text-xs font-bold text-[#1A1A3A] truncate">{product.name || product.title}</span>
+                              <span className="text-[11px] font-black text-[#0056B3]">{Number(product.price).toLocaleString('es-ES', { minimumFractionDigits: 2 })} €</span>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <button onClick={() => navigate(`/editar-anuncio/${product.id}`)} className="p-2 bg-white/50 rounded-lg text-gray-600 hover:text-blue-600 transition-colors shadow-sm">
-                              <Edit2 size={14} />
-                            </button>
-                            <button onClick={() => handleDeleteProduct(product.id)} className="p-2 bg-white/50 rounded-lg text-red-400 hover:text-red-600 transition-colors shadow-sm">
-                              <Trash2 size={14} />
-                            </button>
-                            <button onClick={() => alert('¡Post creado!')} className="p-2 bg-[#FFD700] rounded-lg text-[#1A1A3A] hover:bg-[#FFC200] transition-colors shadow-sm">
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <button onClick={() => navigate(`/perfil-producto?id=${product.id}`)} className="p-2 bg-white/50 rounded-lg text-gray-600 hover:text-blue-600 transition-colors shadow-sm" title="Ver anuncio">
                               <ExternalLink size={14} />
+                            </button>
+                            <button onClick={() => handleDeleteProduct(product.id)} className="p-2 bg-white/50 rounded-lg text-red-400 hover:text-red-600 transition-colors shadow-sm" title="Eliminar">
+                              <Trash2 size={14} />
                             </button>
                           </div>
                         </div>
@@ -245,20 +243,18 @@ export default function Profile() {
                       <div key={product.id} className="bg-[#E0E5EC]/50 p-3 rounded-xl border border-dashed border-gray-300 flex items-center justify-between gap-3 opacity-70">
                         <div className="flex items-center gap-3 overflow-hidden">
                           <img 
-                            src={product.images?.[0] || 'https://via.placeholder.com/150'} 
-                            className="w-12 h-12 rounded-lg object-cover grayscale"
+                            src={product.image || product.images?.[0] || 'https://via.placeholder.com/150'} 
+                            alt={product.name}
+                            className="w-12 h-12 rounded-lg object-cover grayscale flex-shrink-0"
                           />
                           <div className="flex flex-col min-w-0">
-                            <span className="text-xs font-bold text-gray-500 truncate">{product.title}</span>
-                            <span className="text-[11px] font-black text-gray-400">${product.price}</span>
+                            <span className="text-xs font-bold text-gray-500 truncate">{product.name || product.title}</span>
+                            <span className="text-[11px] font-black text-gray-400">{Number(product.price).toLocaleString('es-ES', { minimumFractionDigits: 2 })} €</span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-shrink-0">
                           <button onClick={() => handleDeleteProduct(product.id)} className="p-2 rounded-lg text-red-300 hover:text-red-600 transition-colors">
                             <Trash2 size={14} />
-                          </button>
-                          <button onClick={() => alert('Anuncio reactivado')} className="p-2 bg-white/80 rounded-lg text-gray-600 text-[10px] font-black uppercase">
-                            Reactivar
                           </button>
                         </div>
                       </div>
