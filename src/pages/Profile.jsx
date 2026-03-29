@@ -184,7 +184,6 @@ export default function Profile() {
               className="w-full flex items-center justify-between p-5 bg-[#E0E5EC] rounded-2xl shadow-[6px_6px_12px_#b8b9be,-6px_-6px_12px_#ffffff] text-[#1A1A3A] font-bold active:scale-[0.98] transition-all"
             >
               <div className="flex items-center gap-3">
-                <Package size={20} className="text-[#0056B3]" />
                 <span>Mis Anuncios</span>
                 <span className="ml-2 px-2 py-0.5 bg-[#0056B3]/10 text-[#0056B3] text-[10px] rounded-full">
                   {myProducts.length}
