@@ -128,6 +128,7 @@ export default function AdminDashboard() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col h-[calc(100vh-2rem)] lg:h-[calc(100vh-3rem)] overflow-y-auto hide-scrollbar">
+        <div className="w-full max-w-7xl mx-auto flex flex-col flex-1 px-4 lg:px-8">
 
         {/* Top Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 pt-10 lg:pt-2">
@@ -295,6 +296,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        </div>
       </div>
 
       <style dangerouslySetInnerHTML={{

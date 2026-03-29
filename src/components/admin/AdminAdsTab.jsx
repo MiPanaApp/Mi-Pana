@@ -1,7 +1,21 @@
 import { useState, useEffect, useMemo } from 'react';
 import { collection, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
-import { ShoppingBag, Trash2, EyeOff, Eye, Filter, Search, X } from 'lucide-react';
+import { ShoppingBag, Trash2, EyeOff, Eye, Filter, Search, X, Info, Copy, Check, ChevronDown } from 'lucide-react';
+import { CATEGORIES } from '../../data/categories';
+
+const countryData = {
+  ES: { name: 'España', flag: '🇪🇸' },
+  US: { name: 'Estados Unidos', flag: '🇺🇸' },
+  CO: { name: 'Colombia', flag: '🇨🇴' },
+  EC: { name: 'Ecuador', flag: '🇪🇨' },
+  PA: { name: 'Panamá', flag: '🇵🇦' },
+  PE: { name: 'Perú', flag: '🇵🇪' },
+  DO: { name: 'República Dominicana', flag: '🇩🇴' },
+  CL: { name: 'Chile', flag: '🇨🇱' },
+  AR: { name: 'Argentina', flag: '🇦🇷' },
+  VE: { name: 'Venezuela', flag: '🇻🇪' }
+};
 
 export default function AdminAdsTab({ searchQuery = '' }) {
   const [ads, setAds] = useState([]);
@@ -15,6 +29,13 @@ export default function AdminAdsTab({ searchQuery = '' }) {
     country: '',
     keyword: ''
   });
+
+  // Controls custom dropdowns
+  const [openSelect, setOpenSelect] = useState(null); // 'category' | 'country' | null
+
+  // States for Info Modal
+  const [infoAd, setInfoAd] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'products'), (snap) => {
@@ -52,24 +73,11 @@ export default function AdminAdsTab({ searchQuery = '' }) {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
-  const uniqueCategories = useMemo(() => {
-    const cats = ads.map(ad => ad.category || 'Otros');
-    return [...new Set(cats)].sort();
-  }, [ads]);
-
-  const uniqueCountries = useMemo(() => {
-    const countries = ads.map(ad => {
-      if (typeof ad.location === 'object' && ad.location?.country) {
-        return ad.location.country;
-      }
-      if (typeof ad.location === 'string') {
-        const parts = ad.location.split(',');
-        return parts[parts.length - 1]?.trim() || '';
-      }
-      return '';
-    }).filter(c => c !== '');
-    return [...new Set(countries)].sort();
-  }, [ads]);
+  const handleCopy = (text) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(text);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
   if (loading) return <div className="p-8 text-center text-gray-500 font-bold">Cargando anuncios...</div>;
 
@@ -99,7 +107,17 @@ export default function AdminAdsTab({ searchQuery = '' }) {
         const parts = ad.location.split(',');
         adCountry = parts[parts.length - 1]?.trim() || '';
       }
-      if (adCountry !== filters.country) return false;
+      
+      // Since filters.country uses the short code (ES, US...), we need to match it
+      // if adCountry is 'ES' it matches 'ES'. If adCountry is 'España', we match name.
+      const selectedObj = countryData[filters.country];
+      if (selectedObj) {
+         if (adCountry !== filters.country && adCountry !== selectedObj.name) {
+             return false;
+         }
+      } else {
+         if (adCountry !== filters.country) return false;
+      }
     }
 
     return true;
@@ -142,41 +160,96 @@ export default function AdminAdsTab({ searchQuery = '' }) {
 
         {/* Advanced Filters Panel */}
         {showFilters && (
-          <div className="bg-gray-50 p-5 rounded-2xl mb-6 border border-gray-100 animate-in fade-in slide-in-from-top-4">
+          <div className="bg-gray-50 p-5 rounded-2xl mb-6 border border-gray-100 animate-in fade-in slide-in-from-top-4 relative z-10">
             <div className="flex justify-between items-center mb-4">
               <h4 className="text-sm font-black text-gray-800 uppercase tracking-wider">Filtros Avanzados</h4>
               <button onClick={() => {
                 setFilters({ status: 'all', category: '', country: '', keyword: '' });
                 setShowFilters(false);
+                setOpenSelect(null);
               }} className="text-xs font-bold text-gray-400 hover:text-red-500 flex items-center gap-1">
                 <X className="w-3 h-3" /> Limpiar Todo
               </button>
             </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Category */}
-              <div>
+              {/* Custom Category Select */}
+              <div className="relative">
                 <label className="block text-xs font-bold text-gray-500 mb-1.5 ml-1">Categoría</label>
-                <select 
-                  value={filters.category} 
-                  onChange={(e) => handleFilterChange('category', e.target.value)}
-                  className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-700 outline-none focus:border-blue-500 transition-colors"
+                <div 
+                  onClick={() => setOpenSelect(openSelect === 'category' ? null : 'category')}
+                  className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 flex items-center justify-between cursor-pointer hover:border-gray-300 transition-colors"
                 >
-                  <option value="">Todas las categorías</option>
-                  {uniqueCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                </select>
+                  <span className="text-sm font-bold text-gray-700 select-none flex items-center gap-2">
+                    {filters.category ? (
+                      <>
+                        {(() => {
+                           const catObj = CATEGORIES.find(c => c.name === filters.category);
+                           if (!catObj) return filters.category;
+                           const IconTag = catObj.icon;
+                           return <><IconTag className="w-4 h-4 text-blue-500" /> {catObj.name}</>;
+                        })()}
+                      </>
+                    ) : 'Todas las categorías'}
+                  </span>
+                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${openSelect === 'category' ? 'rotate-180' : ''}`} />
+                </div>
+                {openSelect === 'category' && (
+                  <div className="absolute top-full mt-2 left-0 right-0 bg-white border border-gray-100 rounded-xl shadow-xl z-50 max-h-56 overflow-y-auto py-2 custom-scrollbar animate-in fade-in slide-in-from-top-1">
+                    <button 
+                      onClick={() => { handleFilterChange('category', ''); setOpenSelect(null); }}
+                      className="w-full px-4 py-3 text-left text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      Todas las categorías
+                    </button>
+                    {CATEGORIES.map(cat => (
+                      <button 
+                        key={cat.id}
+                        onClick={() => { handleFilterChange('category', cat.name); setOpenSelect(null); }}
+                        className="w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-gray-50 transition-colors"
+                      >
+                        <cat.icon className="w-4 h-4 text-gray-500" />
+                        <span className="text-sm font-bold text-gray-700">{cat.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
               
-              {/* Country / Nivel 1 */}
-              <div>
+              {/* Custom Country / Nivel 1 Select */}
+              <div className="relative">
                 <label className="block text-xs font-bold text-gray-500 mb-1.5 ml-1">País / Región</label>
-                <select 
-                  value={filters.country} 
-                  onChange={(e) => handleFilterChange('country', e.target.value)}
-                  className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-700 outline-none focus:border-blue-500 transition-colors"
+                <div 
+                  onClick={() => setOpenSelect(openSelect === 'country' ? null : 'country')}
+                  className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 flex items-center justify-between cursor-pointer hover:border-gray-300 transition-colors"
                 >
-                  <option value="">Todos los países</option>
-                  {uniqueCountries.map(country => <option key={country} value={country}>{country}</option>)}
-                </select>
+                  <span className="text-sm font-bold text-gray-700 select-none flex items-center gap-2">
+                    {filters.country && countryData[filters.country] ? (
+                      <><span className="text-base">{countryData[filters.country].flag}</span> {countryData[filters.country].name}</>
+                    ) : filters.country ? filters.country : 'Todos los países'}
+                  </span>
+                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${openSelect === 'country' ? 'rotate-180' : ''}`} />
+                </div>
+                {openSelect === 'country' && (
+                  <div className="absolute top-full mt-2 left-0 right-0 bg-white border border-gray-100 rounded-xl shadow-xl z-50 max-h-56 overflow-y-auto py-2 custom-scrollbar animate-in fade-in slide-in-from-top-1">
+                    <button 
+                      onClick={() => { handleFilterChange('country', ''); setOpenSelect(null); }}
+                      className="w-full px-4 py-3 text-left text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      Todos los países
+                    </button>
+                    {Object.entries(countryData).map(([code, data]) => (
+                      <button 
+                        key={code}
+                        onClick={() => { handleFilterChange('country', code); setOpenSelect(null); }}
+                        className="w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-gray-50 transition-colors"
+                      >
+                        <span className="text-base">{data.flag}</span>
+                        <span className="text-sm font-bold text-gray-700">{data.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Keywords */}
@@ -191,16 +264,24 @@ export default function AdminAdsTab({ searchQuery = '' }) {
                     placeholder="Ej. iPhone, Moto..." 
                     value={filters.keyword}
                     onChange={(e) => handleFilterChange('keyword', e.target.value)}
-                    className="w-full bg-white border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 text-sm font-bold text-gray-700 outline-none focus:border-blue-500 transition-colors"
+                    className="w-full bg-white border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 text-sm font-bold text-gray-700 outline-none focus:border-blue-500 transition-colors placeholder:font-medium"
                   />
                 </div>
               </div>
             </div>
+            
+            {/* Click Outside overlay to close selects quickly */}
+            {openSelect && (
+              <div 
+                className="fixed inset-0 z-40" 
+                onClick={() => setOpenSelect(null)}
+              />
+            )}
           </div>
         )}
 
         {/* List of Ads */}
-        <div className="space-y-3 overflow-y-auto max-h-[60vh] pr-2 custom-scrollbar">
+        <div className="space-y-3 overflow-y-auto max-h-[60vh] pr-2 custom-scrollbar relative z-0">
           {filteredAds.length === 0 && (
             <div className="p-10 text-center text-gray-400 font-bold bg-gray-50 rounded-2xl border border-dashed border-gray-200">
               No se encontraron anuncios que coincidan con la búsqueda.
@@ -221,8 +302,16 @@ export default function AdminAdsTab({ searchQuery = '' }) {
                     }`}>
                       {ad.status === 'hidden' ? 'Oculto' : 'Activo'}
                     </span>
-                    <span className="text-[10px] min-w-max font-bold text-gray-500 uppercase bg-white border border-gray-200 px-2 py-0.5 rounded-lg">
-                      {ad.category || 'Otros'}
+                    <span className="text-[10px] min-w-max font-bold text-gray-500 uppercase bg-white border border-gray-200 px-2 py-0.5 rounded-lg flex items-center gap-1">
+                      {ad.category ? (
+                         <>
+                           {CATEGORIES.find(c => c.name === ad.category)?.icon && (() => {
+                              const IconType = CATEGORIES.find(c => c.name === ad.category).icon;
+                              return <IconType className="w-3 h-3" />;
+                           })()}
+                           {ad.category}
+                         </>
+                      ) : 'Otros'}
                     </span>
                     <span className="text-[10px] min-w-max font-bold text-gray-400 uppercase bg-transparent px-1 py-0.5 flex items-center">
                       ID: {String(ad.id).substring(0,6)}...
@@ -244,6 +333,11 @@ export default function AdminAdsTab({ searchQuery = '' }) {
                   </button>
                 )}
                 
+                <button onClick={() => setInfoAd(ad)} className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-100 transition-colors shadow-sm flex items-center gap-2" title="ID de Producto">
+                  <Info className="w-4 h-4" />
+                  <span className="text-xs font-black sm:hidden">IDs</span>
+                </button>
+                
                 <button onClick={() => handleDelete(ad.id)} className="p-2.5 bg-red-100 text-red-600 rounded-xl hover:bg-red-200 transition-colors shadow-sm flex items-center gap-2" title="Eliminar Permanentemente">
                   <Trash2 className="w-4 h-4" />
                   <span className="text-xs font-black sm:hidden">Borrar</span>
@@ -253,6 +347,40 @@ export default function AdminAdsTab({ searchQuery = '' }) {
           ))}
         </div>
       </div>
+
+      {/* Info Modal */}
+      {infoAd && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-[2rem] p-6 shadow-2xl w-full max-w-sm relative animate-in zoom-in-95">
+            <button onClick={() => setInfoAd(null)} className="absolute top-4 right-4 text-gray-400 hover:text-black">
+              <X className="w-5 h-5" />
+            </button>
+            <h4 className="font-black text-xl mb-4 text-gray-800">Detalles de IDs</h4>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-bold text-gray-500 mb-1 block">ID de Anuncio</label>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 bg-gray-50 px-3 py-2 rounded-xl text-sm border border-gray-100 font-mono text-gray-700 break-all">{infoAd.id}</code>
+                  <button onClick={() => handleCopy(infoAd.id)} className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center hover:bg-[#FFD700] hover:text-black transition-colors shrink-0">
+                    {copiedId === infoAd.id ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-gray-500 mb-1 block">ID de Vendedor</label>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 bg-gray-50 px-3 py-2 rounded-xl text-sm border border-gray-100 font-mono text-gray-700 break-all">{infoAd.sellerId || infoAd.userId || 'N/A'}</code>
+                  <button onClick={() => handleCopy(infoAd.sellerId || infoAd.userId || '')} className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center hover:bg-[#FFD700] hover:text-black transition-colors shrink-0">
+                    {copiedId === (infoAd.sellerId || infoAd.userId) ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

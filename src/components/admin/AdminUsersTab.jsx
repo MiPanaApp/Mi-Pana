@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { collection, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
-import { Users, Ban, Trash2, CheckCircle, Filter } from 'lucide-react';
+import { Users, Ban, Trash2, CheckCircle, Filter, Info, X, Phone, Mail, Globe, User, Shield, Calendar } from 'lucide-react';
 
 export default function AdminUsersTab({ searchQuery = '' }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('all');
+  const [selectedUser, setSelectedUser] = useState(null);
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'users'), (snap) => {
@@ -48,7 +49,8 @@ export default function AdminUsersTab({ searchQuery = '' }) {
   });
 
   return (
-    <div className="bg-white p-6 md:p-8 rounded-[2rem] shadow-[0_15px_40px_rgba(0,0,0,0.04)] h-full mb-6 border border-gray-50">
+    <div className="w-full max-w-5xl mx-auto">
+      <div className="bg-white p-6 md:p-8 rounded-[2rem] shadow-[0_15px_40px_rgba(0,0,0,0.04)] h-full mb-6 border border-gray-50">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
           <h3 className="font-black text-2xl text-gray-800">Usuarios Registrados</h3>
@@ -97,13 +99,137 @@ export default function AdminUsersTab({ searchQuery = '' }) {
                   <Ban className="w-4 h-4" />
                 </button>
               )}
+              <button onClick={() => setSelectedUser(u)} className="p-2 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-100 transition-colors shadow-sm" title="Ver Detalles">
+                <Info className="w-4 h-4" />
+              </button>
               <button onClick={() => handleDelete(u.id)} className="p-2 bg-red-100 text-red-600 rounded-xl hover:bg-red-200 transition-colors shadow-sm" title="Eliminar Permanentemente">
                 <Trash2 className="w-4 h-4" />
               </button>
             </div>
           </div>
         ))}
-      </div>
+        </div>
+
+      {/* Modal de Detalles del Usuario */}
+      {selectedUser && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in transition-all">
+          <div className="bg-white rounded-[2.5rem] w-full max-w-md shadow-2xl overflow-hidden relative animate-in zoom-in-95">
+            {/* Header del Modal */}
+            <div className="bg-gradient-to-br from-[#FFD700] to-yellow-400 p-8 text-black relative">
+              <button 
+                onClick={() => setSelectedUser(null)}
+                className="absolute top-6 right-6 p-2 bg-black/10 hover:bg-black/20 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              
+              <div className="flex items-center gap-5">
+                <div className="w-20 h-20 bg-white rounded-3xl p-1 shadow-lg shrink-0 overflow-hidden">
+                  {selectedUser.avatar ? (
+                    <img src={selectedUser.avatar} alt={selectedUser.name} className="w-full h-full object-cover rounded-[1.2rem]" />
+                  ) : (
+                    <div className="w-full h-full bg-gray-100 flex items-center justify-center rounded-[1.2rem]">
+                      <Users className="w-10 h-10 text-gray-300" />
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <h4 className="text-2xl font-black leading-tight">{selectedUser.name} {selectedUser.lastName}</h4>
+                  <p className="text-sm font-bold opacity-70">@{selectedUser.username || 'sin_usuario'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Contenido del Modal */}
+            <div className="p-8 space-y-6 max-h-[60vh] overflow-y-auto hide-scrollbar">
+              <div className="grid grid-cols-1 gap-6">
+                
+                {/* Información de Contacto */}
+                <div className="space-y-4">
+                  <h5 className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1">Información de Contacto</h5>
+                  
+                  <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-2xl border border-gray-100">
+                    <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-blue-500 shrink-0">
+                      <Mail className="w-5 h-5" />
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-[10px] font-bold text-gray-400 uppercase">Correo Electrónico</span>
+                      <span className="text-sm font-bold text-gray-700 truncate">{selectedUser.email || 'No disponible'}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-2xl border border-gray-100">
+                    <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-green-500 shrink-0">
+                      <Phone className="w-5 h-5" />
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-[10px] font-bold text-gray-400 uppercase">Teléfono</span>
+                      <span className="text-sm font-bold text-gray-700">{selectedUser.phone || 'No disponible'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Detalles del Perfil */}
+                <div className="space-y-4">
+                  <h5 className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1">Detalles del Perfil</h5>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex flex-col gap-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Globe className="w-4 h-4 text-orange-500" />
+                        <span className="text-[10px] font-black uppercase text-gray-400">País</span>
+                      </div>
+                      <span className="text-sm font-bold text-gray-700">{selectedUser.country || 'No definido'}</span>
+                    </div>
+
+                    <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex flex-col gap-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <User className="w-4 h-4 text-purple-500" />
+                        <span className="text-[10px] font-black uppercase text-gray-400">Sexo</span>
+                      </div>
+                      <span className="text-sm font-bold text-gray-700">{selectedUser.gender || 'No definido'}</span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex flex-col gap-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Shield className="w-4 h-4 text-indigo-500" />
+                        <span className="text-[10px] font-black uppercase text-gray-400">Rol</span>
+                      </div>
+                      <span className="text-sm font-bold text-gray-700 capitalize">{selectedUser.role || 'Usuario'}</span>
+                    </div>
+
+                    <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex flex-col gap-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Calendar className="w-4 h-4 text-teal-500" />
+                        <span className="text-[10px] font-black uppercase text-gray-400">Estado</span>
+                      </div>
+                      <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-lg w-fit ${
+                        selectedUser.status === 'suspended' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'
+                      }`}>
+                        {selectedUser.status === 'suspended' ? 'Suspendido' : 'Activo'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* Footer con Acción */}
+            <div className="p-6 bg-gray-50 border-t border-gray-100 flex justify-center">
+              <button 
+                onClick={() => setSelectedUser(null)}
+                className="w-full max-w-[200px] py-3 bg-black text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg"
+              >
+                Cerrar Detalles
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
     </div>
   );
 }

@@ -74,7 +74,7 @@ export default function Home() {
         let q = query(productsRef);
 
         const snap = await getDocs(q);
-        const firestoreData = snap.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+        const firestoreData = snap.docs.map(doc => ({ ...doc.data(), id: doc.id })).filter(p => p.status !== 'hidden');
         
         let mocks = MOCK_PRODUCTS;
         if (hasSearch) {
