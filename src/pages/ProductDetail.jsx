@@ -172,10 +172,8 @@ export default function ProductDetail() {
             setTimeout(() => setCopied(false), 3000);
          }).catch(err => {
             console.error('Copy to clipboard failed:', err);
-            window.prompt("Copia este mensaje para compartir:", text);
+            // Ya no usamos window.prompt por petición del usuario para evitar ventanas emergentes molestas
          });
-      } else {
-         window.prompt("Copia este mensaje para compartir:", text);
       }
    };
 
