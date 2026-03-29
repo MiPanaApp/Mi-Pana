@@ -34,11 +34,11 @@ export default function SplashScreen() {
           </h1>
         </div>
 
-        {/* Loading Indicator - Ahora a 40px del texto */}
+        {/* Loading Indicator - Ahora con los colores del tricolor */}
         <div className="mt-10 flex items-center justify-center gap-2">
-          <div className="w-2.5 h-2.5 bg-black/20 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-          <div className="w-2.5 h-2.5 bg-black/20 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-          <div className="w-2.5 h-2.5 bg-black/20 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+          <div className="w-2.5 h-2.5 rounded-full animate-bounce shadow-sm" style={{ backgroundColor: '#FFC200', animationDelay: '0ms' }}></div>
+          <div className="w-2.5 h-2.5 rounded-full animate-bounce shadow-sm" style={{ backgroundColor: '#003366', animationDelay: '150ms' }}></div>
+          <div className="w-2.5 h-2.5 rounded-full animate-bounce shadow-sm" style={{ backgroundColor: '#D90429', animationDelay: '300ms' }}></div>
         </div>
       </div>
     </div>
