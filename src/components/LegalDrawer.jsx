@@ -48,12 +48,7 @@ export default function LegalDrawer({ isOpen, onClose, title, content }) {
           </motion.div>
 
           {/* Desktop: centered modal */}
-          <motion.div
-            key="drawer-desktop"
-            initial={{ opacity: 0, scale: 0.92 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.92 }}
-            transition={{ duration: 0.25 }}
+          <div
             className="hidden md:flex fixed flex-col font-sans bg-white rounded-[2rem]"
             style={{
               zIndex: 9999,
@@ -67,7 +62,7 @@ export default function LegalDrawer({ isOpen, onClose, title, content }) {
             }}
           >
             <DrawerContent contentRef={contentRef} title={title} content={content} onClose={onClose} />
-          </motion.div>
+          </div>
         </>
       )}
     </AnimatePresence>,
