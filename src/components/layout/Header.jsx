@@ -175,7 +175,7 @@ const Header = forwardRef((props, ref) => {
   return (
     <header ref={ref} className="fixed top-0 left-0 right-0 w-full z-50 overflow-visible">
       {/* 1. TOP HEADER FIJO (Logo + Buscador) - Neumorphism */}
-      <div className="bg-[#E0E5EC] pt-safe safe-area-pt shadow-[0_5px_15px_rgba(163,177,198,0.3)]">
+      <div className="bg-[#1A1A3A] pt-safe safe-area-pt shadow-[0_5px_15px_rgba(0,0,0,0.2)]">
         <div className="max-w-7xl mx-auto px-4 pt-3 pb-3">
           <div className="flex items-center gap-4">
                         {/* Logo y Ubicación */}
@@ -184,7 +184,7 @@ const Header = forwardRef((props, ref) => {
                 src={logoTexto} 
                 alt="miPana" 
                 style={{ objectFit: 'contain' }} 
-                className="h-10 md:h-[72px] header-logo cursor-pointer active:scale-95 transition-transform"
+                className="h-10 md:h-[72px] header-logo cursor-pointer active:scale-95 transition-transform brightness-0 invert"
                 onClick={() => navigate('/')}
               />
               
@@ -249,10 +249,10 @@ const Header = forwardRef((props, ref) => {
                     onClick={() => setIsRegionOpen(!isRegionOpen)}
                     className="flex items-center gap-1.5 cursor-pointer active:scale-95 transition-transform opacity-90 group"
                   >
-                    <span className="text-[10px] sm:text-[11px] md:text-[14px] font-bold text-[#003366] tracking-tight md:tracking-wide uppercase leading-[1.1] max-w-[80px] sm:max-w-[90px] md:max-w-[150px] whitespace-normal block">
+                    <span className="text-[10px] sm:text-[11px] md:text-[14px] font-bold text-white tracking-tight md:tracking-wide uppercase leading-[1.1] max-w-[80px] sm:max-w-[90px] md:max-w-[150px] whitespace-normal block">
                       {filters?.location?.level1 || selectedRegion || 'Ubicación'}
                     </span>
-                    <LucideChevronDown className={`w-3 h-3 md:w-5 md:h-5 text-[#003366] transition-transform duration-300 ${isRegionOpen ? 'rotate-180' : ''}`} />
+                    <LucideChevronDown className={`w-3 h-3 md:w-5 md:h-5 text-white transition-transform duration-300 ${isRegionOpen ? 'rotate-180' : ''}`} />
                   </button>
 
                   <AnimatePresence>
@@ -380,7 +380,7 @@ const Header = forwardRef((props, ref) => {
                 >
                   <p 
                     onClick={() => navigate('/perfil')}
-                    className="text-[12px] md:text-[14px] font-medium text-[#1A1A3A]/80 tracking-tight cursor-pointer hover:text-[#0056B3] transition-colors"
+                    className="text-[12px] md:text-[14px] font-medium text-white/80 tracking-tight cursor-pointer hover:text-white transition-colors"
                   >
                     Hola, <span className="font-bold underline underline-offset-2">{userName}</span>
                   </p>
