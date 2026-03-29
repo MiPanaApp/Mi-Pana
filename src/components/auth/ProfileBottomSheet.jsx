@@ -150,7 +150,6 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
         phone: user.phoneNumber || "",
         verificationLevel: 1,
         createdAt: new Date(),
-        role: "buyer"
       }, { merge: true });
 
       onClose();
