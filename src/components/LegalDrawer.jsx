@@ -74,7 +74,7 @@ function DrawerContent({ contentRef, title, content, onClose }) {
   return (
     <>
       {/* Header */}
-      <div className="flex items-center gap-4 px-6 pt-8 pb-5 border-b border-gray-100 shrink-0">
+      <div className="flex items-center gap-4 px-6 md:pt-8 pt-16 pb-5 border-b border-gray-100 shrink-0">
         <button
           onClick={onClose}
           className="w-10 h-10 flex items-center justify-center rounded-2xl bg-[#F4F4F8] text-[#1A1A3A] shrink-0 transition-all active:scale-95"
