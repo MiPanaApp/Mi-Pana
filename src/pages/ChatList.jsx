@@ -219,11 +219,13 @@ export default function ChatList() {
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="sticky top-0 z-10 bg-[#E0E5EC]/90 backdrop-blur-xl px-5 pt-0 pb-3">
-          <div className="flex items-center justify-between mb-4 pt-4">
+          <div className="flex items-center justify-between mb-8 pt-0 md:pt-6">
             <div>
-              <h1 className="text-2xl font-black text-[#1A1A3A] -mt-1 md:mt-0">Mensajes</h1>
+              <h1 className="text-3xl md:text-4xl font-black text-[#1A1A3A] mb-0 drop-shadow-sm px-1 -mt-1 md:mt-0">
+                Tus Mensajes
+              </h1>
               {totalUnread > 0 && (
-                <p className="text-xs font-bold text-[#D90429]">{totalUnread} sin leer</p>
+                <p className="text-[11px] font-bold text-[#D90429] opacity-80 mt-1 px-1">{totalUnread} sin leer</p>
               )}
             </div>
             <div className="flex items-center gap-3">
@@ -256,17 +258,25 @@ export default function ChatList() {
               <div className="w-8 h-8 border-3 border-[#1A1A3A]/20 border-t-[#1A1A3A] rounded-full animate-spin" />
             </div>
           ) : filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-4">
-              <div className="relative w-48 h-48 mb-2 drop-shadow-[0_20px_40px_rgba(0,0,0,0.1)]">
-                <img src={panaSelfie} alt="Pana" className="w-full h-full object-contain" />
-              </div>
-              <p className="text-lg font-black text-[#1A1A3A]/40 tracking-wide">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex flex-col items-center justify-center pt-2 pb-10 px-6 text-center"
+            >
+              <img 
+                src={panaSelfie} 
+                alt="Sin chats" 
+                className="w-[240px] h-auto object-contain mb-2 drop-shadow-[0_10px_15px_rgba(0,0,0,0.05)]" 
+              />
+              <h3 className="text-[22px] font-black text-[#1A1A3A] mb-2 leading-none uppercase">
                 {search ? 'Sin resultados' : 'Aún no tienes chats'}
+              </h3>
+              <p className="text-[#1A1A3A]/40 font-bold text-sm leading-relaxed max-w-[250px] mt-2">
+                {search 
+                  ? 'Prueba con otros términos de búsqueda.' 
+                  : 'Inicia una conversación desde un anuncio tocando "Chat Pana"'}
               </p>
-              <p className="text-sm text-[#1A1A3A]/30 font-medium text-center px-8">
-                {!search && 'Inicia una conversación desde un anuncio tocando "Chat Pana"'}
-              </p>
-            </div>
+            </motion.div>
           ) : (
             <AnimatePresence mode="popLayout text-left">
               {filtered.map((chat) => (

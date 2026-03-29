@@ -817,9 +817,9 @@ tlfno contacto: 672 593 950`}
                <span className="inline-block h-1.5 w-6 bg-gradient-to-r from-[#FFC200] to-[#FFAA00] rounded-full translate-y-[-4px] ml-1"></span>
             </h3>
 
-            <div className="flex overflow-x-auto gap-6 pb-4 hide-scrollbar snap-x snap-mandatory -mx-5 px-5 md:mx-0 md:px-0">
+            <div className="flex overflow-x-auto gap-4 md:gap-6 pb-4 hide-scrollbar snap-x snap-mandatory -mx-5 px-5 md:mx-0 md:px-0">
                {relatedProducts.map((relatedProd) => (
-                  <div key={relatedProd.id} className="min-w-[240px] md:min-w-[280px] snap-center">
+                  <div key={relatedProd.id} className="min-w-[170px] md:min-w-[280px] snap-center">
                      <ProductCard product={relatedProd} />
                   </div>
                ))}
