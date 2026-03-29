@@ -44,6 +44,7 @@ export default function ProductDetail() {
    const { user } = useAuthStore();
    const { userData, userAvatar } = useAuth();
    const [startingChat, setStartingChat] = useState(false);
+   const [copied, setCopied] = useState(false);
 
    const handleStartChat = async () => {
       if (!user) { navigate('/login'); return; }
@@ -107,29 +108,53 @@ export default function ProductDetail() {
    };
 
    const handleShare = async () => {
-      const shareData = {
-         title: product.name,
-         text: `Mira lo que encontré en Mi Pana: ${product.name}`,
-         url: window.location.href,
-      };
+      const productUrl = `https://app-mi-pana.vercel.app/perfil-producto?id=${productId}`;
+      
+      const locationName = typeof product.location === 'object' 
+         ? (product.location.level2 || product.location.level1 || 'Madrid') 
+         : (product.location || 'Madrid');
+         
+      const shareText = `🤝 ¡Mira lo que encontré en Mi Pana!\n\n📦 ${product.name}\n💰 ${product.price}€\n📍 ${locationName}\n\n👉 ${productUrl}`;
 
       if (navigator.share) {
          try {
-            await navigator.share(shareData);
-         } catch (err) {
-            if (err.name !== 'AbortError') {
-               console.error('Error al compartir:', err);
+            // Intentar con imagen primero
+            if (navigator.canShare && product.image) {
+               const response = await fetch(product.image);
+               const blob = await response.blob();
+               const imageFile = new File([blob], `mipana-${productId}.jpg`, { type: blob.type || 'image/jpeg' });
+               const shareDataWithImage = { title: `Mi Pana — ${product.name}`, text: shareText, files: [imageFile] };
+               
+               if (navigator.canShare(shareDataWithImage)) {
+                  await navigator.share(shareDataWithImage);
+                  return;
+               }
             }
+            
+            // Fallback: compartir sin imagen pero con texto mejorado
+            await navigator.share({ title: `Mi Pana — ${product.name}`, text: shareText, url: productUrl });
+            
+         } catch (error) {
+            // Usuario canceló el share — no mostrar error
+            if (error.name === 'AbortError') return;
+            // Fallback final: copiar al portapapeles
+            fallbackCopyToClipboard(productUrl, shareText);
          }
       } else {
-         try {
-            await navigator.clipboard.writeText(window.location.href);
-            // Podríamos usar un toast, por ahora un alert sencillo
-            alert('¡Enlace copiado al portapapeles, Pana!');
-         } catch (err) {
-            console.error('Error al copiar:', err);
-         }
+         // Desktop sin Web Share API → copiar al portapapeles
+         fallbackCopyToClipboard(productUrl, shareText);
       }
+   };
+
+   // Fallback para desktop o navegadores sin Web Share API
+   const fallbackCopyToClipboard = (url, text) => {
+      const fullText = `${text}`;
+      navigator.clipboard.writeText(fullText).then(() => {
+         setCopied(true);
+         setTimeout(() => setCopied(false), 2500);
+      }).catch(() => {
+         window.prompt("Copia este enlace:", url);
+      });
    };
 
    // Carousel tracking (unificado)
@@ -336,7 +361,12 @@ export default function ProductDetail() {
                      <span className="text-[15px] tracking-wide">Volver</span>
                   </button>
                   <div className="flex md:hidden items-center gap-5">
-                     <button onClick={handleShare} className="text-[#1A1A3A] hover:opacity-70 transition-all active:scale-95">
+                     <button onClick={handleShare} className="text-[#1A1A3A] hover:opacity-70 transition-all active:scale-95 relative">
+                        {copied ? (
+                           <span className="text-[11px] font-black text-[#00C97A] absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                              ¡Copiado!
+                           </span>
+                        ) : null}
                         <Share2 className="w-5 h-5" />
                      </button>
                      <button onClick={() => toggleFavorite(product.id)} className="transition-all active:scale-90 group">
@@ -487,7 +517,12 @@ tlfno contacto: 672 593 950`}
 
                      {/* Botones de Acción: Solo Desktop (sin fondos, alineados con el nombre) */}
                      <div className="hidden md:flex items-center gap-5 pr-1">
-                        <button onClick={handleShare} className="text-[#1A1A3A] hover:opacity-70 transition-all active:scale-95">
+                        <button onClick={handleShare} className="text-[#1A1A3A] hover:opacity-70 transition-all active:scale-95 relative">
+                           {copied ? (
+                              <span className="text-[11px] font-black text-[#00C97A] absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                                 ¡Copiado!
+                              </span>
+                           ) : null}
                            <Share2 className="w-5 h-5 md:w-6 md:h-6" />
                         </button>
                         <button onClick={() => toggleFavorite(product.id)} className="transition-all active:scale-90 group">
