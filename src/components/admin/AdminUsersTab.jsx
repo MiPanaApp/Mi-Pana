@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { collection, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
-import { Users, Ban, Trash2, CheckCircle, Filter, Info, X, Phone, Mail, Globe, User, Shield, Calendar } from 'lucide-react';
+import { Users, Ban, Trash2, CheckCircle, Filter, Info, X, Phone, Mail, Globe, User, Shield, Calendar, Copy } from 'lucide-react';
 
 export default function AdminUsersTab({ searchQuery = '' }) {
   const [users, setUsers] = useState([]);
@@ -134,8 +134,19 @@ export default function AdminUsersTab({ searchQuery = '' }) {
                   )}
                 </div>
                 <div>
-                  <h4 className="text-2xl font-black leading-tight">{selectedUser.name} {selectedUser.lastName}</h4>
-                  <p className="text-sm font-bold opacity-70">@{selectedUser.username || 'sin_usuario'}</p>
+                  <h4 className="text-2xl font-black leading-tight truncate max-w-[200px]">{selectedUser.name} {selectedUser.lastName}</h4>
+                  <div className="flex items-center gap-2 mt-1">
+                    <p className="text-xs font-bold opacity-80 font-mono bg-black/10 px-2 py-0.5 rounded-md truncate max-w-[150px]" title={selectedUser.id}>
+                      ID: {selectedUser.id}
+                    </p>
+                    <button 
+                      onClick={() => navigator.clipboard.writeText(selectedUser.id)} 
+                      className="p-1.5 bg-black/10 hover:bg-black/20 rounded-md transition-colors text-black/70 hover:text-black shrink-0"
+                      title="Copiar ID"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
