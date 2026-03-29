@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { doc, setDoc, collection, query, where, onSnapshot, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db, storage } from '../services/firebase';
+import { FcGoogle } from 'react-icons/fc';
 
 export default function Profile() {
   const { userData, currentUser, userAvatar, logout, isAdmin } = useAuth();
@@ -21,6 +22,23 @@ export default function Profile() {
   const [openMenu, setOpenMenu] = useState(null); 
   const [myProducts, setMyProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(true);
+
+  const isGoogleLogin = currentUser?.providerData?.some(provider => provider.providerId === 'google.com');
+
+  const handleEditField = async (field, currentValue, label) => {
+    const newValue = window.prompt(`Ingresa tu nuevo ${label}:`, currentValue || '');
+    if (newValue !== null && newValue.trim() !== '' && newValue !== currentValue) {
+      try {
+        await updateDoc(doc(db, 'users', currentUser.uid), {
+          [field]: newValue.trim(),
+          updatedAt: new Date()
+        });
+      } catch (error) {
+        console.error("Error al actualizar:", error);
+        alert('Hubo un error al actualizar tus datos.');
+      }
+    }
+  };
 
   // Cargar Anuncios del Usuario
   useEffect(() => {
@@ -119,8 +137,9 @@ export default function Profile() {
       {actionLabel && (
         <button 
           onClick={onAction}
-          className="ml-2 px-3 py-1.5 text-[10px] font-black uppercase rounded-lg bg-[#E0E5EC] text-[#0056B3] shadow-[3px_3px_6px_rgba(163,177,198,0.5),-3px_-3px_6px_rgba(255,255,255,0.9)] active:shadow-[inset_2px_2px_4px_rgba(163,177,198,0.5)] transition-all"
+          className="ml-2 px-3 py-1.5 text-[10px] font-black uppercase rounded-lg bg-[#E0E5EC] text-[#0056B3] shadow-[3px_3px_6px_rgba(163,177,198,0.5),-3px_-3px_6px_rgba(255,255,255,0.9)] active:shadow-[inset_2px_2px_4px_rgba(163,177,198,0.5)] transition-all flex items-center gap-1"
         >
+          {actionLabel === 'Editar' && <Edit2 size={10} />}
           {actionLabel}
         </button>
       )}
@@ -150,8 +169,10 @@ export default function Profile() {
             </div>
           </div>
 
-          <h1 className="text-2xl font-black text-[#1A1A3A] mb-1">
+          <h1 className="text-2xl font-black text-[#1A1A3A] mb-1 flex items-center justify-center gap-2 group cursor-pointer" onClick={() => handleEditField('name', userData?.name, 'Nombre')}>
             {userData?.name ? `${userData.name} ${userData?.lastName || ''}` : 'Pana Dev'}
+            {isGoogleLogin && <FcGoogle size={18} className="translate-y-[1px]" title="Conectado con Google" />}
+            <Edit2 size={14} className="text-[#1A1A3A]/30 opacity-0 group-hover:opacity-100 transition-opacity ml-1" />
           </h1>
           
           <div className="flex items-center gap-1 mb-6 px-4 py-1.5 bg-[#0056B3]/10 rounded-full border border-[#0056B3]/20 text-[#0056B3] text-[10px] font-black uppercase tracking-wider">
@@ -160,10 +181,34 @@ export default function Profile() {
 
           {/* User Data List */}
           <div className="w-full space-y-1">
-            <HeaderInfoItem icon={Mail} label="Correo Electrónico" value={userData?.email} actionLabel="Verificar" onAction={() => alert('Email enviado')} />
-            <HeaderInfoItem icon={MapPin} label="Ubicación" value={userData?.region} />
-            <HeaderInfoItem icon={Lock} label="Contraseña" isPassword actionLabel="Cambiar" onAction={() => alert('Link enviado')} />
-            <HeaderInfoItem icon={User} label="Sexo" value={userData?.gender} />
+            <HeaderInfoItem 
+              icon={Mail} 
+              label="Correo Electrónico" 
+              value={userData?.email} 
+              actionLabel={isGoogleLogin ? null : "Verificar"} 
+              onAction={() => alert('Email enviado')} 
+            />
+            <HeaderInfoItem 
+              icon={MapPin} 
+              label="Ubicación" 
+              value={userData?.region} 
+              actionLabel="Editar"
+              onAction={() => handleEditField('region', userData?.region, 'Ubicación')} 
+            />
+            <HeaderInfoItem 
+              icon={Lock} 
+              label="Contraseña" 
+              isPassword 
+              actionLabel={isGoogleLogin ? null : "Cambiar"} 
+              onAction={() => alert('Link enviado para cambiar contraseña')} 
+            />
+            <HeaderInfoItem 
+              icon={User} 
+              label="Sexo" 
+              value={userData?.gender} 
+              actionLabel="Editar"
+              onAction={() => handleEditField('gender', userData?.gender, 'Sexo')} 
+            />
           </div>
         </div>
 
