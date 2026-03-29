@@ -5,7 +5,7 @@ import AvatarCropper from "./AvatarCropper";
 import { auth, storage, db } from "../../services/firebase";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { doc, setDoc } from "firebase/firestore";
-import { updatePassword, EmailAuthProvider, linkWithCredential } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile, updateEmail } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { translateFirebaseError } from "../../utils/authErrors";
 
@@ -105,50 +105,39 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
     setErrorMsg("");
 
     try {
-      const userToUpdate = auth.currentUser;
-      if (!userToUpdate) {
-        setErrorMsg("No hay sesión activa. Por favor, inicia sesión de nuevo.");
-        return;
-      }
+      let user = auth.currentUser;
 
-      // Forzar refresco del token antes de operar — evita auth/user-token-expired
-      try {
-        await userToUpdate.getIdToken(true);
-      } catch (tokenErr) {
-        console.error("Token refresh error:", tokenErr);
-        setErrorMsg(translateFirebaseError(tokenErr.code || 'auth/user-token-expired'));
-        return;
-      }
-
-      // Vincular email/contraseña a la cuenta de teléfono
-      try {
-        const credential = EmailAuthProvider.credential(formData.email, formData.password);
-        await linkWithCredential(userToUpdate, credential);
-      } catch (linkErr) {
-        console.error("Linking error:", linkErr);
-        // Token expirado a pesar del refresco → abortar
-        if (linkErr.code === 'auth/user-token-expired') {
-          setErrorMsg(translateFirebaseError(linkErr.code));
-          return;
-        }
-        // Operación no permitida → abortar
-        if (linkErr.code === 'auth/operation-not-allowed') {
-          throw linkErr;
-        }
-        // Si ya estaba vinculado, ignorar y continuar
-        if (linkErr.code !== 'auth/credential-already-in-use' && linkErr.code !== 'auth/email-already-in-use') {
-          throw linkErr;
+      // Si ya hay sesión (ej: Google), usamos ese usuario
+      // Si NO hay sesión, creamos una cuenta nueva con email/password
+      if (!user) {
+        const result = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+        user = result.user;
+      } else {
+        // Usuario existente (Google) — actualizar email si es diferente
+        if (user.email !== formData.email) {
+          try {
+            await updateEmail(user, formData.email);
+          } catch (emailErr) {
+            console.warn("No se pudo actualizar el email:", emailErr.code);
+          }
         }
       }
 
+      // Actualizar displayName en Firebase Auth
+      await updateProfile(user, { displayName: `${formData.name} ${formData.lastName}` });
+
+      // Subir avatar
       let avatarUrl = "";
-      const uid = authUser?.uid || auth.currentUser?.uid || "test-001";
+      const uid = user.uid;
       if (photoPreview) {
         const storageRef = ref(storage, `avatars/${uid}/profile.jpg`);
         await uploadString(storageRef, photoPreview, "data_url");
         avatarUrl = await getDownloadURL(storageRef);
+        // Actualizar photoURL en Auth también
+        await updateProfile(user, { photoURL: avatarUrl });
       }
 
+      // Guardar datos completos en Firestore
       await setDoc(doc(db, "users", uid), {
         name: formData.name,
         lastName: formData.lastName,
@@ -158,8 +147,7 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
         birthDate: formData.birthDate,
         gender: formData.gender,
         avatar: avatarUrl,
-        phone: authUser?.phoneNumber || "",
-        phoneVerified: true,
+        phone: user.phoneNumber || "",
         verificationLevel: 1,
         createdAt: new Date(),
         role: "buyer"
