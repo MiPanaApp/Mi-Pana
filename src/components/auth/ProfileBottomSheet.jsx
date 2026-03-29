@@ -5,7 +5,7 @@ import AvatarCropper from "./AvatarCropper";
 import { auth, storage, db } from "../../services/firebase";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { doc, setDoc } from "firebase/firestore";
-import { updateEmail, updatePassword, EmailAuthProvider, linkWithCredential } from "firebase/auth";
+import { updatePassword, EmailAuthProvider, linkWithCredential } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { translateFirebaseError } from "../../utils/authErrors";
 
@@ -106,25 +106,38 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
 
     try {
       const userToUpdate = auth.currentUser;
-      if (userToUpdate) {
-        // Correct way to add email/password to an existing phone account
-        try {
-          const credential = EmailAuthProvider.credential(formData.email, formData.password);
-          await linkWithCredential(userToUpdate, credential);
-        } catch (linkErr) {
-          console.error("Linking error:", linkErr);
-          // If already linked or other error, try direct updates as fallback
-          if (linkErr.code === 'auth/operation-not-allowed') {
-             throw linkErr;
-          }
-          if (linkErr.code !== 'auth/credential-already-in-use') {
-            try {
-              await updateEmail(userToUpdate, formData.email);
-              await updatePassword(userToUpdate, formData.password);
-            } catch (fallbackErr) {
-              throw fallbackErr;
-            }
-          }
+      if (!userToUpdate) {
+        setErrorMsg("No hay sesión activa. Por favor, inicia sesión de nuevo.");
+        return;
+      }
+
+      // Forzar refresco del token antes de operar — evita auth/user-token-expired
+      try {
+        await userToUpdate.getIdToken(true);
+      } catch (tokenErr) {
+        console.error("Token refresh error:", tokenErr);
+        setErrorMsg(translateFirebaseError(tokenErr.code || 'auth/user-token-expired'));
+        return;
+      }
+
+      // Vincular email/contraseña a la cuenta de teléfono
+      try {
+        const credential = EmailAuthProvider.credential(formData.email, formData.password);
+        await linkWithCredential(userToUpdate, credential);
+      } catch (linkErr) {
+        console.error("Linking error:", linkErr);
+        // Token expirado a pesar del refresco → abortar
+        if (linkErr.code === 'auth/user-token-expired') {
+          setErrorMsg(translateFirebaseError(linkErr.code));
+          return;
+        }
+        // Operación no permitida → abortar
+        if (linkErr.code === 'auth/operation-not-allowed') {
+          throw linkErr;
+        }
+        // Si ya estaba vinculado, ignorar y continuar
+        if (linkErr.code !== 'auth/credential-already-in-use' && linkErr.code !== 'auth/email-already-in-use') {
+          throw linkErr;
         }
       }
 

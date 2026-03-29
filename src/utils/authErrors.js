@@ -20,6 +20,8 @@ export const translateFirebaseError = (errorCode) => {
       return "Esta cuenta ha sido desactivada. Contacta a soporte para más información.";
     case 'auth/requires-recent-login':
       return "Por seguridad, debes volver a iniciar sesión para hacer este cambio.";
+    case 'auth/user-token-expired':
+      return "Tu sesión ha expirado. Vuelve a verificar tu número de teléfono e intenta de nuevo.";
     case 'auth/popup-closed-by-user':
       return "Se cerró la ventana de inicio de sesión. Inténtalo de nuevo.";
     case 'auth/network-request-failed':
