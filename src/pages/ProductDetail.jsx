@@ -108,53 +108,72 @@ export default function ProductDetail() {
    };
 
    const handleShare = async () => {
-      const productUrl = `https://app-mi-pana.vercel.app/perfil-producto?id=${productId}`;
+      // Usar window.location.origin para que funcione en cualquier entorno (Dev, Vercel, etc.)
+      const shareUrl = `${window.location.origin}/perfil-producto?id=${productId}`;
       
-      const locationName = typeof product.location === 'object' 
-         ? (product.location.level2 || product.location.level1 || 'Madrid') 
-         : (product.location || 'Madrid');
-         
-      const shareText = `🤝 ¡Mira lo que encontré en Mi Pana!\n\n📦 ${product.name}\n💰 ${product.price}€\n📍 ${locationName}\n\n👉 ${productUrl}`;
+      // Formato profesional acordado: Título y Enlace (Sin precio/ubicación extra en el texto según PRD previo)
+      const shareText = `🤝 ¡Mira lo que encontré en Mi Pana!\n\n📦 ${product.name}\n\n👉 ${shareUrl}`;
 
       if (navigator.share) {
          try {
-            // Intentar con imagen primero
-            if (navigator.canShare && product.image) {
-               const response = await fetch(product.image);
-               const blob = await response.blob();
-               const imageFile = new File([blob], `mipana-${productId}.jpg`, { type: blob.type || 'image/jpeg' });
-               const shareDataWithImage = { title: `Mi Pana — ${product.name}`, text: shareText, files: [imageFile] };
-               
-               if (navigator.canShare(shareDataWithImage)) {
-                  await navigator.share(shareDataWithImage);
-                  return;
+            const shareData = {
+               title: `Mi Pana — ${product.name}`,
+               text: shareText
+            };
+
+            // Intentar adjuntar la imagen principal si el navegador lo soporta
+            if (product.image && navigator.canShare && navigator.canShare({ files: [new File([], 'a.jpg', { type: 'image/jpeg' })] })) {
+               try {
+                  const response = await fetch(product.image, { mode: 'cors' });
+                  if (!response.ok) throw new Error('Network response was not ok');
+                  const blob = await response.blob();
+                  const imageFile = new File([blob], `mipana-${productId}.jpg`, { type: blob.type || 'image/jpeg' });
+                  
+                  if (navigator.canShare({ files: [imageFile] })) {
+                     shareData.files = [imageFile];
+                  }
+               } catch (imageError) {
+                  console.warn("No se pudo descargar la imagen para compartir (posible CORS). Compartiendo solo texto.");
+                  // No lanzamos error para que siga el flujo de texto
                }
             }
-            
-            // Fallback: compartir sin imagen pero con texto mejorado
-            await navigator.share({ title: `Mi Pana — ${product.name}`, text: shareText, url: productUrl });
+
+            // Si tiene archivos, compartimos todo el bulto. Si no, compartimos con URL estándar
+            if (shareData.files) {
+               await navigator.share(shareData);
+            } else {
+               await navigator.share({
+                  title: shareData.title,
+                  text: shareData.text,
+                  url: shareUrl
+               });
+            }
+            return;
             
          } catch (error) {
-            // Usuario canceló el share — no mostrar error
             if (error.name === 'AbortError') return;
-            // Fallback final: copiar al portapapeles
-            fallbackCopyToClipboard(productUrl, shareText);
+            console.error("Error al compartir:", error);
          }
-      } else {
-         // Desktop sin Web Share API → copiar al portapapeles
-         fallbackCopyToClipboard(productUrl, shareText);
       }
+
+      // Fallback final: copiar al portapapeles
+      fallbackCopyToClipboard(shareUrl, shareText);
    };
 
    // Fallback para desktop o navegadores sin Web Share API
    const fallbackCopyToClipboard = (url, text) => {
-      const fullText = `${text}`;
-      navigator.clipboard.writeText(fullText).then(() => {
-         setCopied(true);
-         setTimeout(() => setCopied(false), 2500);
-      }).catch(() => {
-         window.prompt("Copia este enlace:", url);
-      });
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+         navigator.clipboard.writeText(text).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 3000);
+         }).catch(err => {
+            console.error('Error copying to clipboard:', err);
+            // Si falla el API moderno, intentamos el prompt pero intentamos que sea útil
+            window.prompt("Copia este mensaje para compartir:", text);
+         });
+      } else {
+         window.prompt("Copia este mensaje para compartir:", text);
+      }
    };
 
    // Carousel tracking (unificado)
