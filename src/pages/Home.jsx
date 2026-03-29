@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ProductCard from '../components/ProductCard';
 import FilterPanel from '../components/ui/FilterPanel';
 import { useStore } from '../store/useStore';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { normalizeText } from '../utils/textUtils';
 import { MOCK_PRODUCTS } from '../data/mockProducts';
@@ -190,6 +190,20 @@ export default function Home() {
 
     return result;
   }, [products, filters, activeCategory, sortBy, selectedCountry]);
+
+  useEffect(() => {
+    if (!filters.searchQuery || filteredProducts.length === 0) return;
+    const timer = setTimeout(() => {
+      filteredProducts.forEach(prod => {
+        if (prod.id && typeof prod.id === 'string') {
+          updateDoc(doc(db, 'products', prod.id), {
+            searchCount: increment(1)
+          }).catch(() => {});
+        }
+      });
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [filters.searchQuery, filteredProducts.length]);
 
   return (
     <div className="max-w-7xl mx-auto pb-10 transition-all overflow-x-clip">

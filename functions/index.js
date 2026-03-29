@@ -91,3 +91,32 @@ exports.onProductDeleted = onDocumentDeleted(
     console.log("🗑️ Eliminado de Algolia:", event.params.productId);
   }
 );
+
+const { onSchedule } = require("firebase-functions/v2/scheduler");
+const { getFirestore } = require("firebase-admin/firestore");
+
+exports.updateBadges = onSchedule(
+  { schedule: "every 24 hours", region: "us-central1" },
+  async () => {
+    const db = getFirestore();
+    const productsSnap = await db.collection("products").get();
+    const byCategory = {};
+    productsSnap.docs.forEach(doc => {
+      const data = doc.data();
+      const cat = data.category || "otros";
+      if (!byCategory[cat]) byCategory[cat] = [];
+      byCategory[cat].push({ id: doc.id, rating: data.rating || 0, searchCount: data.searchCount || 0 });
+    });
+    const batch = db.batch();
+    Object.values(byCategory).forEach(products => {
+      const topRated = [...products].sort((a, b) => b.rating - a.rating).slice(0, 20).map(p => p.id);
+      const topSearched = [...products].sort((a, b) => b.searchCount - a.searchCount).slice(0, 20).map(p => p.id);
+      products.forEach(p => {
+        const ref = db.collection("products").doc(p.id);
+        batch.update(ref, { isTop: topRated.includes(p.id), isPopular: topSearched.includes(p.id) });
+      });
+    });
+    await batch.commit();
+    console.log("✅ Badges actualizados");
+  }
+);

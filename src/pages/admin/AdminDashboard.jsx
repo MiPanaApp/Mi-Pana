@@ -11,6 +11,7 @@ import { db } from '../../services/firebase';
 import { collection, getDocs, query, limit, getCountFromServer } from 'firebase/firestore';
 import AdminUsersTab from '../../components/admin/AdminUsersTab';
 import AdminAdsTab from '../../components/admin/AdminAdsTab';
+import AdminStatsTab from '../../components/admin/AdminStatsTab';
 
 // Colores alineados a la marca: Amarillo Mi Pana, Morado Admin y acentos
 const COLORS = ['#FFD700', '#8B5CF6', '#06B6D4', '#F43F5E', '#10B981'];
@@ -289,12 +290,7 @@ export default function AdminDashboard() {
         )}
         {activeTab === 'usuarios' && <AdminUsersTab searchQuery={globalSearch} />}
         {activeTab === 'anuncios' && <AdminAdsTab searchQuery={globalSearch} />}
-        {activeTab === 'estadisticas' && (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <Layers className="w-16 h-16 text-gray-200 mb-4" />
-            <h3 className="font-black text-xl text-gray-400">Próximamente</h3>
-          </div>
-        )}
+        {activeTab === 'estadisticas' && <AdminStatsTab />}
 
         </div>
       </div>
