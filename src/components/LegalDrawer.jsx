@@ -38,19 +38,19 @@ export default function LegalDrawer({ isOpen, onClose, title, content }) {
           {/* Drawer panel */}
           <motion.div
             key="drawer"
-            initial={{ opacity: 0, x: '100%' }}
+            initial={{ opacity: 0, scale: 0.9, x: '50%' }}
             animate={{ 
               opacity: 1, 
+              scale: 1, 
               x: 0,
-              // Centramos en desktop usando el margen auto y el inset-0
             }}
-            exit={{ opacity: 0, x: '100%' }}
+            exit={{ opacity: 0, scale: 0.9, x: '50%' }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="fixed z-[1000] flex flex-col font-sans
+            className="fixed z-[1000] flex flex-col font-sans bg-white
                        inset-y-0 right-0 w-[90vw] rounded-l-[40px]
-                       md:inset-0 md:m-auto md:w-[60vw] md:h-[85vh] md:rounded-[3rem]"
+                       md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 
+                       md:w-[60vw] md:max-w-4xl md:h-[80vh] md:rounded-[3rem] shadow-2xl"
             style={{
-              background: '#FFFFFF',
               boxShadow: '-20px 0 60px rgba(0,0,0,0.15), inset 4px 0 20px rgba(255,215,0,0.06)'
             }}
           >
