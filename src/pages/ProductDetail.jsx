@@ -274,7 +274,7 @@ export default function ProductDetail() {
             const relatedSnap = await getDocs(q);
             const relatedList = relatedSnap.docs
                .map(doc => ({ id: doc.id, ...doc.data() }))
-               .filter(p => p.id !== currentId);
+               .filter(p => p.id !== currentId && p.status !== 'inactive' && p.status !== 'hidden');
 
             // Si hay pocos de la misma categoría, traer unos genéricos
             if (relatedList.length < 4) {
@@ -282,7 +282,7 @@ export default function ProductDetail() {
                const genSnap = await getDocs(qGeneral);
                const genList = genSnap.docs
                   .map(doc => ({ id: doc.id, ...doc.data() }))
-                  .filter(p => p.id !== currentId);
+                  .filter(p => p.id !== currentId && p.status !== 'inactive' && p.status !== 'hidden');
 
                // Mezclar y eliminar duplicados por ID
                const merged = [...relatedList, ...genList];

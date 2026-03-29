@@ -48,7 +48,7 @@ export default function Favorites() {
           .filter(docSnap => docSnap.exists())
           .map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
 
-        const allProducts = [...firestoreProducts, ...mockFavorites];
+        const allProducts = [...firestoreProducts, ...mockFavorites].filter(p => p.status !== 'inactive' && p.status !== 'hidden');
         
         // Mantener orden y asegurar unicidad
         const uniqueProductsMap = new Map();
