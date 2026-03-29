@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Send, Smile, X, CornerUpLeft, Check, CheckCheck } from 'lucide-react';
+import { ArrowLeft, Send, Smile, X, CornerUpLeft, Check, CheckCheck, Star } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import EmojiPicker from 'emoji-picker-react';
 import { useAuthStore } from '../store/useAuthStore';
@@ -16,6 +16,8 @@ import { db } from '../services/firebase';
 import { getCategoryIcon } from '../data/categories';
 import { FiPlus } from 'react-icons/fi';
 import panaExito from '../assets/pana_exito.png';
+import ReviewModal from '../components/ReviewModal';
+import { canUserReview } from '../lib/reviews';
 
 // ─── Status icons ─────────────────────────────────────────────────────────────
 function MessageStatus({ status, isMine }) {
@@ -110,6 +112,9 @@ export default function Chat() {
   const [showEmoji, setShowEmoji] = useState(false);
   const [otherIsTyping, setOtherIsTyping] = useState(false);
   const [loading, setLoading] = useState(true);
+  
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewStatus, setReviewStatus] = useState({ can: false, interactionId: null });
 
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -142,6 +147,18 @@ export default function Chat() {
     });
     return () => unsub();
   }, [conversationId, user]);
+
+  // ─── Verificar si puede valorar ─────────────────────────────────────────────
+  useEffect(() => {
+    if (user && conversation?.productId && conversation?.participants) {
+       const isMeSeller = conversation.participants[1] === user.uid || conversation.sellerId === user.uid;
+       if (!isMeSeller) {
+         canUserReview({ buyerId: user.uid, productId: conversation.productId })
+           .then(res => setReviewStatus(res))
+           .catch(err => console.error(err));
+       }
+    }
+  }, [user, conversation]);
 
   // ─── Typing indicator ───────────────────────────────────────────────────────
   const handleInputChange = (e) => {
@@ -224,11 +241,21 @@ export default function Chat() {
             </div>
           </div>
 
-          {/* Thumbnail del Producto */}
+          {/* Thumbnail del Producto y Botón Valorar */}
           <div className="flex-shrink-0 flex items-center gap-3">
             {otherIsTyping && (
               <span className="text-[11px] text-[#FFC200] font-bold italic animate-pulse whitespace-nowrap hidden sm:inline">escribiendo...</span>
             )}
+            
+            {reviewStatus?.can && (
+              <button 
+                onClick={() => setShowReviewModal(true)}
+                className="bg-[#FFC200] text-[#1A1A3A] text-[10px] font-black uppercase px-2 py-1.5 rounded-lg shadow-[0_4px_10px_rgba(255,194,0,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center gap-1"
+              >
+                <Star size={12} className="fill-[#1A1A3A]" /> Valorar
+              </button>
+            )}
+
             <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-[0_4px_10px_rgba(0,0,0,0.3)] border-2 border-white/10 bg-white/5 flex-shrink-0">
               <img 
                 src={conversation?.productImage || 'https://images.unsplash.com/photo-1599566150163-29194dcaad36'} 
@@ -395,6 +422,22 @@ export default function Chat() {
             </motion.button>
           </div>
         </div>
+        
+        {/* ── Modal de Valoración ── */}
+        <ReviewModal 
+           isOpen={showReviewModal}
+           onClose={() => setShowReviewModal(false)}
+           interaction={{
+             id: reviewStatus?.interactionId,
+             sellerId: otherId,
+             productId: conversation?.productId,
+             productName: conversation?.productName,
+           }}
+           onSuccess={() => {
+             setShowReviewModal(false);
+             setReviewStatus({ can: false, interactionId: null });
+           }}
+        />
       </div>
     </div>
   );

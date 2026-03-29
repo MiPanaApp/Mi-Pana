@@ -120,3 +120,31 @@ exports.updateBadges = onSchedule(
     console.log("✅ Badges actualizados");
   }
 );
+
+exports.checkPendingReviews = onSchedule(
+  { schedule: "every 15 minutes", region: "us-central1" },
+  async () => {
+    const db = getFirestore();
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    
+    // Buscar interacciones de hace más de una hora que aún no se pueden valorar
+    const snap = await db.collection("interactions")
+      .where("canReview", "==", false)
+      .where("contactedAt", "<=", oneHourAgo)
+      .limit(500)
+      .get();
+
+    if (snap.empty) {
+      console.log("✅ No hay interacciones nuevas para habilitar reseñas.");
+      return;
+    }
+
+    const batch = db.batch();
+    snap.docs.forEach(doc => {
+      batch.update(doc.ref, { canReview: true });
+    });
+
+    await batch.commit();
+    console.log(`✅ ${snap.size} interacciones habilitadas para reseña.`);
+  }
+);

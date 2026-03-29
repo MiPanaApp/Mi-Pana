@@ -10,6 +10,7 @@ import { useTimeAgo } from '../hooks/useTimeAgo';
 import { useAuthStore } from '../store/useAuthStore';
 import { useAuth } from '../context/AuthContext';
 import { getOrCreateConversation } from '../lib/chat';
+import { registerInteraction } from '../lib/reviews';
 import { MOCK_PRODUCTS } from '../data/mockProducts';
 import panaLengua from '../assets/pana_lengua.png';
 
@@ -63,6 +64,15 @@ export default function ProductDetail() {
             buyerName: userData?.name || user?.displayName || 'Pana',
             buyerAvatar: userAvatar || '',
          });
+
+         await registerInteraction({
+           buyerId: user.uid,
+           sellerId: product.userId || 'mock-pana-seller',
+           productId: product.id,
+           productName: product.name,
+           via: 'chat'
+         }).catch(err => console.warn('Error registrando interaccion:', err));
+
          navigate(`/chat/${conversationId}`);
       } catch (err) {
          console.error('Error iniciando chat:', err);
@@ -175,6 +185,19 @@ export default function ProductDetail() {
             // Ya no usamos window.prompt por petición del usuario para evitar ventanas emergentes molestas
          });
       }
+   };
+
+   const handleWhatsAppClick = async () => {
+      if (user && product.userId && user.uid !== product.userId) {
+         await registerInteraction({
+           buyerId: user.uid,
+           sellerId: product.userId,
+           productId: product.id,
+           productName: product.name,
+           via: 'whatsapp'
+         }).catch(err => console.warn('Error registrando interaccion de WA:', err));
+      }
+      window.open(`https://wa.me/${product.whatsapp || '34600000000'}?text=Hola%20${product.userName || 'Pana'},%20vi%20tu%20anuncio`);
    };
 
    // Carousel tracking (unificado)
@@ -718,7 +741,7 @@ tlfno contacto: 672 593 950`}
                {/* Botones de Acción integrados al final del flujo del contenido */}
                <div className="flex gap-4 mt-10 mb-6">
                   <button
-                     onClick={() => window.open(`https://wa.me/${product.whatsapp || '34600000000'}?text=Hola%20${product.userName || 'Pana'},%20vi%20tu%20anuncio`)}
+                     onClick={handleWhatsAppClick}
                      className="flex-1 h-[56px] px-4 bg-gradient-to-br from-[#25D366] to-[#1DA851] rounded-2xl flex items-center justify-center gap-1.5 shadow-[0_8px_16px_rgba(37,211,102,0.4),inset_2px_4px_10px_rgba(255,255,255,0.4)] hover:-translate-y-1 transition-all outline-none"
                   >
                      <svg width="20" height="20" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-sm flex-shrink-0">
