@@ -282,16 +282,7 @@ export default function Home() {
                 <h3 className="text-[22px] font-black text-[#1A1A3A] tracking-tight uppercase leading-none">
                   No hay panas con estos filtros
                 </h3>
-                <button
-                  onClick={() => { 
-                    setFilters({ price: { min: '', max: '' }, distance: 50, searchQuery: '' }); 
-                    setSortBy('relevance'); 
-                    setIsFilterOpen(true);
-                  }}
-                  className="mt-5 text-[#1A1A3A] font-black hover:text-[#D90429] transition-colors bg-[#EDEDF5] px-6 py-2.5 rounded-xl shadow-[4px_4px_8px_rgba(180,180,210,0.6),-4px_-4px_8px_rgba(255,255,255,0.8)] active:scale-95 transition-all text-[12px] uppercase tracking-wider"
-                >
-                  Limpiar filtros y buscar
-                </button>
+
               </div>
             )}
           </div>
