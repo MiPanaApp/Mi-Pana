@@ -266,7 +266,7 @@ export default function ChatList() {
               <img 
                 src={panaSelfie} 
                 alt="Sin chats" 
-                className="w-[240px] h-auto object-contain mb-2 drop-shadow-[0_10px_15px_rgba(0,0,0,0.05)]" 
+                className="w-[192px] h-auto object-contain mb-2 drop-shadow-[0_10px_15px_rgba(0,0,0,0.05)]" 
               />
               <h3 className="text-[22px] font-black text-[#1A1A3A] mb-2 leading-none uppercase">
                 {search ? 'Sin resultados' : 'Aún no tienes chats'}
