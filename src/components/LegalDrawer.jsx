@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-
 export default function LegalDrawer({ isOpen, onClose, title, content }) {
   const contentRef = useRef(null);
 
@@ -19,7 +19,7 @@ export default function LegalDrawer({ isOpen, onClose, title, content }) {
     return () => window.removeEventListener('keydown', handleKey);
   }, [onClose]);
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <>
@@ -44,9 +44,14 @@ export default function LegalDrawer({ isOpen, onClose, title, content }) {
             transition={{ duration: 0.3 }}
             className="fixed z-[1000] flex flex-col font-sans bg-white shadow-[0_20px_60px_rgba(0,0,0,0.2)]
                        inset-y-0 right-0 w-[90vw] rounded-l-[40px]
-                       md:inset-0 md:m-auto md:w-[65vw] md:max-w-4xl md:h-[85vh] md:rounded-[3rem]"
+                       md:inset-auto md:fixed md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[65vw] md:max-w-4xl md:h-[85vh] md:rounded-[3rem]"
             style={{
-              boxShadow: '0 20px 60px rgba(0,0,0,0.2), inset 4px 0 20px rgba(255,215,0,0.06)'
+              boxShadow: '0 20px 60px rgba(0,0,0,0.2), inset 4px 0 20px rgba(255,215,0,0.06)',
+              ...(window.innerWidth >= 768 && {
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+              })
             }}
           >
             {/* Header */}
@@ -97,6 +102,7 @@ export default function LegalDrawer({ isOpen, onClose, title, content }) {
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
