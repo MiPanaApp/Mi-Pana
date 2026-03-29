@@ -6,6 +6,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { subscribeToConversations, deleteConversation, deleteAllConversations } from '../lib/chat';
 import { getCategoryIcon } from '../data/categories';
 import { FiPlus } from 'react-icons/fi';
+import panaSelfie from '../assets/pana_selfie.png';
 
 function timeAgo(timestamp) {
   if (!timestamp) return '';
@@ -255,9 +256,9 @@ export default function ChatList() {
               <div className="w-8 h-8 border-3 border-[#1A1A3A]/20 border-t-[#1A1A3A] rounded-full animate-spin" />
             </div>
           ) : filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-24 gap-4">
-              <div className="p-8 bg-[#E0E5EC] rounded-[3rem] shadow-[9px_9px_16px_rgba(163,177,198,0.6),-9px_-9px_16px_rgba(255,255,255,0.8)]">
-                <MessageCircle size={40} className="text-[#FFC200]" />
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <div className="relative w-48 h-48 mb-2 drop-shadow-[0_20px_40px_rgba(0,0,0,0.1)]">
+                <img src={panaSelfie} alt="Pana" className="w-full h-full object-contain" />
               </div>
               <p className="text-lg font-black text-[#1A1A3A]/40 tracking-wide">
                 {search ? 'Sin resultados' : 'Aún no tienes chats'}
