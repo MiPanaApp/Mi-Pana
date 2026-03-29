@@ -472,7 +472,7 @@ export default function Profile() {
             {openMenu === 'soporte' && (
               <div className="mt-2 mx-2 p-2 bg-white/30 rounded-2xl shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3)] flex flex-col gap-1">
                 <button className="flex items-center gap-3 p-3 text-sm font-bold text-[#555577] hover:bg-white/50 rounded-xl transition-colors"><Phone size={16}/> Contactar</button>
-                <button className="flex items-center gap-3 p-3 text-sm font-bold text-[#555577] hover:bg-white/50 rounded-xl transition-colors"><HelpCircle size={16}/> Centro de Ayuda</button>
+                <button className="flex items-center gap-3 p-3 text-sm font-bold text-[#555577] hover:bg-white/50 rounded-xl transition-colors"><HelpCircle size={16}/> Condiciones de Contratación</button>
                 <button className="flex items-center gap-3 p-3 text-sm font-bold text-[#555577] hover:bg-white/50 rounded-xl transition-colors"><Lock size={16}/> Políticas de Privacidad</button>
                 <button className="flex items-center gap-3 p-3 text-sm font-bold text-[#555577] hover:bg-white/50 rounded-xl transition-colors"><Cookie size={16}/> Gestión de Cookies</button>
                 <button className="flex items-center gap-3 p-3 text-sm font-bold text-[#555577] hover:bg-white/50 rounded-xl transition-colors"><ShieldAlert size={16}/> Seguridad</button>

@@ -41,7 +41,7 @@ const Footer = () => {
             <h4 className="font-black text-pana-blue uppercase text-xs tracking-widest mb-8 text-nowrap">Soporte Mi Pana</h4>
             <ul className="space-y-4 text-gray-500 font-bold text-sm">
               <li><a href="#" className="hover:text-pana-yellow transition-colors">Contactar</a></li>
-              <li><a href="#" className="hover:text-pana-yellow transition-colors">Centro de Ayuda</a></li>
+              <li><a href="#" className="hover:text-pana-yellow transition-colors">Condiciones de Contratación</a></li>
               <li><a href="#" className="hover:text-pana-yellow transition-colors">Políticas de Privacidad</a></li>
               <li><a href="#" className="hover:text-pana-yellow transition-colors">Gestión de Cookies</a></li>
               <li><a href="#" className="hover:text-pana-yellow transition-colors">Seguridad</a></li>
