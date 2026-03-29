@@ -184,6 +184,14 @@ export default function Profile() {
     </div>
   );
 
+  const displayEmail = userData?.email || currentUser?.email;
+  let displayName = 'Pana Dev';
+  if (userData?.name) {
+    displayName = `${userData.name} ${userData.lastName || ''}`.trim();
+  } else if (currentUser?.displayName) {
+    displayName = currentUser.displayName;
+  }
+
   return (
     <div className="min-h-screen bg-[#E0E5EC] pb-32 md:pb-0 pt-[20px] px-6 font-sans">
       <div className="max-w-md mx-auto">
@@ -207,8 +215,14 @@ export default function Profile() {
             </div>
           </div>
 
-          <h1 className="text-2xl font-black text-[#1A1A3A] mb-1 flex items-center justify-center gap-2 group cursor-pointer" onClick={() => { setNewName(userData?.name || ''); setNewLastName(userData?.lastName || ''); setShowNameModal(true); }}>
-            {userData?.name ? `${userData.name} ${userData?.lastName || ''}` : 'Pana Dev'}
+          <h1 className="text-2xl font-black text-[#1A1A3A] mb-1 flex items-center justify-center gap-2 group cursor-pointer" onClick={() => { 
+            const defaultName = userData?.name || (currentUser?.displayName ? currentUser.displayName.split(' ')[0] : '');
+            const defaultLastName = userData?.lastName || (currentUser?.displayName ? currentUser.displayName.substring(currentUser.displayName.indexOf(' ') + 1) : '');
+            setNewName(defaultName); 
+            setNewLastName(defaultLastName === defaultName ? '' : defaultLastName); 
+            setShowNameModal(true); 
+          }}>
+            {displayName}
             {isGoogleLogin && <FcGoogle size={18} className="translate-y-[1px]" title="Conectado con Google" />}
             <Edit2 size={16} className="text-[#1A1A3A]/40 transition-colors hover:text-[#0056B3] ml-1" />
           </h1>
@@ -222,7 +236,7 @@ export default function Profile() {
             <HeaderInfoItem 
               icon={Mail} 
               label="Correo Electrónico" 
-              value={userData?.email} 
+              value={displayEmail} 
               actionLabel={isGoogleLogin ? null : "Verificar"} 
               onAction={() => alert('Email enviado')} 
             />
