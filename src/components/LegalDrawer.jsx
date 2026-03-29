@@ -38,20 +38,15 @@ export default function LegalDrawer({ isOpen, onClose, title, content }) {
           {/* Drawer panel */}
           <motion.div
             key="drawer"
-            initial={{ opacity: 0, scale: 0.9, x: '50%' }}
-            animate={{ 
-              opacity: 1, 
-              scale: 1, 
-              x: 0,
-            }}
-            exit={{ opacity: 0, scale: 0.9, x: '50%' }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="fixed z-[1000] flex flex-col font-sans bg-white
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.3 }}
+            className="fixed z-[1000] flex flex-col font-sans bg-white shadow-[0_20px_60px_rgba(0,0,0,0.2)]
                        inset-y-0 right-0 w-[90vw] rounded-l-[40px]
-                       md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 
-                       md:w-[60vw] md:max-w-4xl md:h-[80vh] md:rounded-[3rem] shadow-2xl"
+                       md:inset-0 md:m-auto md:w-[65vw] md:max-w-4xl md:h-[85vh] md:rounded-[3rem]"
             style={{
-              boxShadow: '-20px 0 60px rgba(0,0,0,0.15), inset 4px 0 20px rgba(255,215,0,0.06)'
+              boxShadow: '0 20px 60px rgba(0,0,0,0.2), inset 4px 0 20px rgba(255,215,0,0.06)'
             }}
           >
             {/* Header */}
