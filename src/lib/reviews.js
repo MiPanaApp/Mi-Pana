@@ -93,11 +93,14 @@ export async function submitReview({ interactionId, buyerId, buyerName, sellerId
 export async function getProductReviews(productId, maxCount = 10) {
   const snap = await getDocs(query(
     collection(db, 'reviews'),
-    where('productId', '==', productId),
-    orderBy('createdAt', 'desc'),
-    limit(maxCount)
+    where('productId', '==', productId)
   ));
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  let results = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  
+  // Sort manual por fecha más reciente para evitar el dolor de los Composite Indexes
+  results.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+  
+  return results.slice(0, maxCount);
 }
 
 // ─── Obtener interacciones pendientes de valorar ──────────────────────────────
