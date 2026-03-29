@@ -61,6 +61,21 @@ body {
 .safe-area-pt {
   padding-top: env(safe-area-inset-top);
 }
-.pb-safe-bottom {
-  padding-bottom: env(safe-area-inset-bottom);
+/* Legal Drawer Scrollbar Customization */
+.legal-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.legal-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.legal-scrollbar::-webkit-scrollbar-thumb {
+  background: #FFD700;
+  border-radius: 10px;
+}
+
+.legal-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #FFD700 transparent;
 }

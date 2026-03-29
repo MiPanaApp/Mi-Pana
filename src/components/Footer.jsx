@@ -1,8 +1,20 @@
+import { useState } from 'react';
 import { FaInstagram, FaTwitter, FaFacebookF, FaYoutube, FaTiktok } from 'react-icons/fa';
 import { FaXTwitter } from 'react-icons/fa6';
 import { IconPana } from './ui/IconPana';
+import { LegalData } from '../data/LegalData';
+import LegalDrawer from './LegalDrawer';
 
 const Footer = () => {
+  const [legalDocs, setLegalDocs] = useState({ isOpen: false, title: '', content: '' });
+
+  const openLegal = (key) => {
+    const doc = LegalData[key];
+    if (doc) {
+      setLegalDocs({ isOpen: true, title: doc.title, content: doc.content });
+    }
+  };
+
   return (
     <footer className="relative z-10 w-full pt-16 pb-12 px-6 bg-white/50 backdrop-blur-sm mt-12 md:mt-0">
       <div className="max-w-7xl mx-auto">
@@ -31,20 +43,20 @@ const Footer = () => {
           <div>
             <h4 className="font-black text-pana-blue uppercase text-xs tracking-widest mb-8 text-nowrap">Plataforma Mi Pana</h4>
             <ul className="space-y-4 text-gray-500 font-bold text-sm">
-              <li><a href="#" className="hover:text-pana-yellow transition-colors">Sobre Mi Pana</a></li>
-              <li><a href="#" className="hover:text-pana-yellow transition-colors">¿Cómo funciona?</a></li>
-              <li><a href="#" className="hover:text-pana-yellow transition-colors">Verificación de Pana</a></li>
+              <li><button onClick={() => {}} className="hover:text-pana-yellow transition-colors text-left">Sobre Mi Pana</button></li>
+              <li><button onClick={() => {}} className="hover:text-pana-yellow transition-colors text-left text-nowrap">¿Cómo funciona?</button></li>
+              <li><button onClick={() => {}} className="hover:text-pana-yellow transition-colors text-left text-nowrap">Verificación de Pana</button></li>
             </ul>
           </div>
           
           <div>
             <h4 className="font-black text-pana-blue uppercase text-xs tracking-widest mb-8 text-nowrap">Soporte Mi Pana</h4>
-            <ul className="space-y-4 text-gray-500 font-bold text-sm">
-              <li><a href="#" className="hover:text-pana-yellow transition-colors">Contactar</a></li>
-              <li><a href="#" className="hover:text-pana-yellow transition-colors">Condiciones de Contratación</a></li>
-              <li><a href="#" className="hover:text-pana-yellow transition-colors">Políticas de Privacidad</a></li>
-              <li><a href="#" className="hover:text-pana-yellow transition-colors">Gestión de Cookies</a></li>
-              <li><a href="#" className="hover:text-pana-yellow transition-colors">Seguridad</a></li>
+            <ul className="space-y-4 text-gray-500 font-bold text-sm flex flex-col items-start">
+              <li><button onClick={() => {}} className="hover:text-pana-yellow transition-colors">Contactar</button></li>
+              <li><button onClick={() => openLegal('terms')} className="hover:text-pana-yellow transition-colors text-left">Condiciones de Contratación</button></li>
+              <li><button onClick={() => openLegal('privacy')} className="hover:text-pana-yellow transition-colors text-left">Políticas de Privacidad</button></li>
+              <li><button onClick={() => openLegal('cookies')} className="hover:text-pana-yellow transition-colors text-left">Gestión de Cookies</button></li>
+              <li><button onClick={() => {}} className="hover:text-pana-yellow transition-colors text-left">Seguridad</button></li>
             </ul>
           </div>
         </div>
@@ -57,6 +69,13 @@ const Footer = () => {
           </div>
         </div>
       </div>
+
+      <LegalDrawer 
+        isOpen={legalDocs.isOpen} 
+        onClose={() => setLegalDocs({ ...legalDocs, isOpen: false })} 
+        title={legalDocs.title} 
+        content={legalDocs.content} 
+      />
     </footer>
   )
 }
