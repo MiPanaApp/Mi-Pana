@@ -3,8 +3,9 @@ import {
   User, Mail, Phone, MapPin, LogOut, ChevronDown, 
   ShieldCheck, Loader2, Camera, Lock, Info, 
   HelpCircle, Cookie, ShieldAlert, Instagram, Facebook, Youtube, Twitter, UserCircle2,
-  Package, Edit2, Trash2, PlusCircle, ExternalLink, Eye, EyeOff
+  Package, Edit2, Trash2, PlusCircle, ExternalLink, Eye, EyeOff, X
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
@@ -12,6 +13,8 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { doc, setDoc, collection, query, where, onSnapshot, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db, storage } from '../services/firebase';
 import { FcGoogle } from 'react-icons/fc';
+import { useStore } from '../store/useStore';
+import { LOCATION_DATA } from '../data/locations';
 
 export default function Profile() {
   const { userData, currentUser, userAvatar, logout, isAdmin } = useAuth();
@@ -22,6 +25,9 @@ export default function Profile() {
   const [openMenu, setOpenMenu] = useState(null); 
   const [myProducts, setMyProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(true);
+  
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const { selectedCountry } = useStore();
 
   const isGoogleLogin = currentUser?.providerData?.some(provider => provider.providerId === 'google.com');
 
@@ -33,10 +39,24 @@ export default function Profile() {
           [field]: newValue.trim(),
           updatedAt: new Date()
         });
+        if (field === 'region') setShowLocationModal(false);
       } catch (error) {
         console.error("Error al actualizar:", error);
         alert('Hubo un error al actualizar tus datos.');
       }
+    }
+  };
+
+  const handleRegionSelect = async (regionName) => {
+    try {
+      await updateDoc(doc(db, 'users', currentUser.uid), {
+        region: regionName,
+        updatedAt: new Date()
+      });
+      setShowLocationModal(false);
+    } catch (error) {
+      console.error("Error al actualizar:", error);
+      alert('Hubo un error al actualizar la ubicación.');
     }
   };
 
@@ -193,7 +213,7 @@ export default function Profile() {
               label="Ubicación" 
               value={userData?.region} 
               actionLabel="Editar"
-              onAction={() => handleEditField('region', userData?.region, 'Ubicación')} 
+              onAction={() => setShowLocationModal(true)} 
             />
             <HeaderInfoItem 
               icon={Lock} 
@@ -412,6 +432,53 @@ export default function Profile() {
         </button>
 
       </div>
+
+      {/* Modal Neumórfico para Selector de Ubicación */}
+      <AnimatePresence>
+        {showLocationModal && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4 overflow-hidden">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowLocationModal(false)}
+              className="absolute inset-0 bg-[#E0E5EC]/80 backdrop-blur-sm"
+            />
+            
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="w-full max-w-sm bg-[#E0E5EC] rounded-[2rem] p-6 shadow-[20px_20px_60px_#bebebe,-20px_-20px_60px_#ffffff] relative z-10 flex flex-col max-h-[85vh]"
+            >
+              <button 
+                onClick={() => setShowLocationModal(false)}
+                className="absolute right-4 top-4 w-10 h-10 flex items-center justify-center rounded-full bg-[#E0E5EC] text-[#1A1A3A] hover:text-[#D90429] shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.8)] active:shadow-[inset_2px_2px_4px_rgba(163,177,198,0.4)] transition-all"
+              >
+                <X size={20} />
+              </button>
+              
+              <h2 className="text-xl font-black text-[#1A1A3A] mb-1 pl-1">Selecciona Ubicación</h2>
+              <p className="text-xs font-bold text-[#8888AA] mb-5 pl-1">
+                Según el país seleccionado ({selectedCountry})
+              </p>
+              
+              <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-3 pb-2">
+                {Object.keys((LOCATION_DATA[selectedCountry] || LOCATION_DATA['ES']).data).map((regionName) => (
+                  <button
+                    key={regionName}
+                    onClick={() => handleRegionSelect(regionName)}
+                    className="w-full flex items-center justify-between p-4 bg-[#E0E5EC] rounded-2xl shadow-[5px_5px_10px_#b8b9be,-5px_-5px_10px_#ffffff] active:shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.7)] text-[#1A1A3A] font-bold transition-all text-sm group"
+                  >
+                    {regionName}
+                    <div className="w-2 h-2 rounded-full bg-[#0056B3] opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
