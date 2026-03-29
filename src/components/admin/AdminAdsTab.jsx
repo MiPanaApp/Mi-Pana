@@ -225,7 +225,7 @@ export default function AdminAdsTab({ searchQuery = '' }) {
                       {ad.category || 'Otros'}
                     </span>
                     <span className="text-[10px] min-w-max font-bold text-gray-400 uppercase bg-transparent px-1 py-0.5 flex items-center">
-                      ID: {ad.id.substring(0,6)}...
+                      ID: {String(ad.id).substring(0,6)}...
                     </span>
                   </div>
                 </div>
