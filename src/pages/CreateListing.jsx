@@ -11,6 +11,8 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { ChevronDown, Tag } from 'lucide-react';
 import { getCategoryIcon, getBrandColor, sortCategories } from '../data/categories';
 import { LOCATION_DATA } from '../data/locations';
+import { LegalData } from '../data/LegalData';
+import LegalDrawer from '../components/LegalDrawer';
 import panaExito from '../assets/pana_exito.png';
 
 // Mapeo: código del store -> clave de LOCATION_DATA
@@ -53,6 +55,14 @@ export default function CreateListing() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [legalDocs, setLegalDocs] = useState({ isOpen: false, title: '', content: '' });
+
+  const openLegal = (key) => {
+    const doc = LegalData[key];
+    if (doc) {
+      setLegalDocs({ isOpen: true, title: doc.title, content: doc.content });
+    }
+  };
 
   // Asegurar que abrimos al principio de la página
   useEffect(() => {
@@ -788,9 +798,17 @@ export default function CreateListing() {
         </form>
 
         <p className="mt-8 text-center text-[#1A1A3A]/40 text-xs font-bold leading-relaxed">
-          Al publicar, aceptas nuestros <span className="underline">Términos y Condiciones</span> y confirmas que tu anuncio cumple con las normas de la comunidad.
+          Al publicar, aceptas nuestras <span className="underline cursor-pointer text-[#1A1A3A]/60" onClick={() => openLegal('terms')}>Condiciones de Contratación</span> y confirmas que tu anuncio cumple con las normas de la comunidad.
         </p>
       </div>
+
+      {/* Drawer Legal */}
+      <LegalDrawer 
+        isOpen={legalDocs.isOpen} 
+        onClose={() => setLegalDocs({ ...legalDocs, isOpen: false })} 
+        title={legalDocs.title} 
+        content={legalDocs.content} 
+      />
     </div>
   );
 }
