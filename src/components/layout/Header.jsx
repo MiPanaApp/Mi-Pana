@@ -11,6 +11,7 @@ import { doc, getDoc, updateDoc, collection, getDocs, query, orderBy } from 'fir
 import { CATEGORIES as DEFAULT_CATEGORIES, getCategoryIcon, sortCategories } from '../../data/categories';
 import { LOCATION_DATA } from '../../data/locations';
 import { FiPlus } from 'react-icons/fi';
+import { FcGoogle } from 'react-icons/fc';
 import { ChevronDown as LucideChevronDown } from 'lucide-react';
 
 // Las categorías se cargan dinámicamente desde Firestore en el useEffect del componente
@@ -83,9 +84,12 @@ const Header = forwardRef((props, ref) => {
     fetchCategories();
   }, []);
 
+
+  const isGoogleLogin = user?.providerData?.some(provider => provider.providerId === 'google.com');
+
   useEffect(() => {
     if (userData?.name) {
-      setUserName(userData.name);
+      setUserName(`${userData.name} ${userData.lastName || ''}`.trim());
     } else if (user?.displayName) {
       setUserName(user.displayName.split(' ')[0]);
     } else {
@@ -376,13 +380,13 @@ const Header = forwardRef((props, ref) => {
                 <motion.div 
                   initial={{ opacity: 0, y: -5 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-1.5 self-end mr-0 md:mr-[64px] flex items-center gap-2"
+                  className="mt-1.5 self-end mr-0 md:mr-[64px] flex items-center gap-1.5"
                 >
                   <p 
                     onClick={() => navigate('/perfil')}
-                    className="text-[12px] md:text-[14px] font-medium text-[#1A1A3A]/80 tracking-tight cursor-pointer hover:text-[#0056B3] transition-colors"
+                    className="text-[12px] md:text-[14px] font-medium text-[#1A1A3A]/80 tracking-tight cursor-pointer hover:text-[#0056B3] transition-colors flex items-center gap-1"
                   >
-                    Hola, <span className="font-bold underline underline-offset-2">{userName}</span>
+                    Hola, <span className="font-bold underline underline-offset-2 flex items-center gap-1">{userName} {isGoogleLogin && <FcGoogle size={14} title="Conectado con Google" />}</span>
                   </p>
                 </motion.div>
               )}
