@@ -108,51 +108,55 @@ export default function ProductDetail() {
    };
 
    const handleShare = async () => {
-      // Usar window.location.origin para que funcione en cualquier entorno (Dev, Vercel, etc.)
-      const shareUrl = `${window.location.origin}/perfil-producto?id=${productId}`;
+      if (!product) return;
+
+      const finalId = product.id || productId;
+      const shareUrl = `${window.location.origin}/perfil-producto?id=${finalId}`;
       
-      // Formato profesional acordado: Título y Enlace (Sin precio/ubicación extra en el texto según PRD previo)
-      const shareText = `🤝 ¡Mira lo que encontré en Mi Pana!\n\n📦 ${product.name}\n\n👉 ${shareUrl}`;
+      const locationName = typeof product.location === 'object' 
+         ? (product.location.level2 || product.location.level1 || 'España') 
+         : (product.location || 'España');
+         
+      // Volvemos al formato con precio y ubicación que el usuario prefiere
+      const shareText = `🤝 ¡Mira lo que encontré en Mi Pana!\n\n📦 ${product.name}\n💰 ${product.price}€\n📍 ${locationName}\n\n👉 ${shareUrl}`;
 
       if (navigator.share) {
          try {
-            const shareData = {
-               title: `Mi Pana — ${product.name}`,
-               text: shareText
-            };
-
-            // Intentar adjuntar la imagen principal si el navegador lo soporta
+            // Caso 1: Intentar compartir con ARCHIVO adjunto (imagen)
             if (product.image && navigator.canShare && navigator.canShare({ files: [new File([], 'a.jpg', { type: 'image/jpeg' })] })) {
                try {
                   const response = await fetch(product.image, { mode: 'cors' });
-                  if (!response.ok) throw new Error('Network response was not ok');
-                  const blob = await response.blob();
-                  const imageFile = new File([blob], `mipana-${productId}.jpg`, { type: blob.type || 'image/jpeg' });
-                  
-                  if (navigator.canShare({ files: [imageFile] })) {
-                     shareData.files = [imageFile];
+                  if (response.ok) {
+                     const blob = await response.blob();
+                     const imageFile = new File([blob], `mipana-${finalId}.jpg`, { type: blob.type || 'image/jpeg' });
+                     
+                     if (navigator.canShare({ files: [imageFile] })) {
+                        await navigator.share({
+                           title: `Mi Pana — ${product.name}`,
+                           text: shareText,
+                           files: [imageFile]
+                        });
+                        return; // Exito
+                     }
                   }
-               } catch (imageError) {
-                  console.warn("No se pudo descargar la imagen para compartir (posible CORS). Compartiendo solo texto.");
-                  // No lanzamos error para que siga el flujo de texto
+               } catch (imageShareError) {
+                  // Si falla la descarga de la imagen por CORS o red, no detenemos el proceso
+                  console.warn("No se pudo adjuntar imagen, compartiendo solo texto:", imageShareError);
                }
             }
 
-            // Si tiene archivos, compartimos todo el bulto. Si no, compartimos con URL estándar
-            if (shareData.files) {
-               await navigator.share(shareData);
-            } else {
-               await navigator.share({
-                  title: shareData.title,
-                  text: shareData.text,
-                  url: shareUrl
-               });
-            }
+            // Caso 2: Share estándar de texto/URL (si el de arriba falla o no hay imagen)
+            await navigator.share({
+               title: `Mi Pana — ${product.name}`,
+               text: shareText,
+               url: shareUrl
+            });
             return;
             
-         } catch (error) {
-            if (error.name === 'AbortError') return;
-            console.error("Error al compartir:", error);
+         } catch (shareApiError) {
+            // Usuario canceló o el API de Share falló catastróficamente
+            if (shareApiError.name === 'AbortError') return;
+            console.error("Error en navigator.share:", shareApiError);
          }
       }
 
@@ -167,8 +171,7 @@ export default function ProductDetail() {
             setCopied(true);
             setTimeout(() => setCopied(false), 3000);
          }).catch(err => {
-            console.error('Error copying to clipboard:', err);
-            // Si falla el API moderno, intentamos el prompt pero intentamos que sea útil
+            console.error('Copy to clipboard failed:', err);
             window.prompt("Copia este mensaje para compartir:", text);
          });
       } else {
