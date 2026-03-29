@@ -42,9 +42,8 @@ export default function LegalDrawer({ isOpen, onClose, title, content }) {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', stiffness: 320, damping: 34 }}
-            className="fixed top-0 right-0 bottom-0 z-[1000] flex flex-col font-sans"
+            className="fixed inset-y-0 right-0 z-[1000] flex flex-col font-sans h-full w-[90vw] sm:w-[500px] lg:w-[540px]"
             style={{
-              width: 'min(90vw, 540px)',
               background: '#FFFFFF',
               borderRadius: '40px 0 0 40px',
               boxShadow: '-20px 0 60px rgba(0,0,0,0.15), inset 4px 0 20px rgba(255,215,0,0.06)'
