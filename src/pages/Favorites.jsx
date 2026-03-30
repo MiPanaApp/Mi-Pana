@@ -1,12 +1,153 @@
 import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, Search, X, MapPin, Clock } from 'lucide-react';
+import { motion, AnimatePresence, useMotionValue, useTransform, useAnimation } from 'framer-motion';
+import { Heart, Search, X, MapPin, Clock, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
 import { db } from '../services/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { MOCK_PRODUCTS } from '../data/mockProducts';
 import emptyHammock from '../assets/empty_hammock.png';
+
+const isMobile = () => window.innerWidth < 768;
+
+// ── Swipeable wrapper para tarjetas de Anuncios favoritos ──────────────────
+function SwipeableFavorite({ product, onDelete, onNavigate }) {
+  const x = useMotionValue(0);
+  const controls = useAnimation();
+  const background = useTransform(x, [-150, -50, 0], ['rgba(220,38,38,1)', 'rgba(220,38,38,0.8)', 'rgba(220,38,38,0)']);
+  const trashOpacity = useTransform(x, [-100, -40, 0], [1, 0.5, 0]);
+  const trashScale  = useTransform(x, [-100, -40, 0], [1.2, 0.8, 0.5]);
+
+  const handleDragEnd = async (_, info) => {
+    if (info.offset.x < -(window.innerWidth * 0.4)) {
+      await controls.start({ x: -window.innerWidth, opacity: 0, transition: { duration: 0.25, ease: 'easeOut' } });
+      onDelete(product.id);
+    } else {
+      controls.start({ x: 0, transition: { type: 'spring', stiffness: 400, damping: 30 } });
+    }
+  };
+
+  const mobile = isMobile();
+
+  return (
+    <div className="relative overflow-hidden rounded-[2rem] fav-item">
+      {/* Fondo rojo (solo móvil) */}
+      {mobile && (
+        <motion.div className="absolute inset-0 flex items-center justify-end pr-6 rounded-[2rem]" style={{ background }}>
+          <motion.div style={{ opacity: trashOpacity, scale: trashScale }} className="flex flex-col items-center gap-1">
+            <Trash2 className="text-white w-6 h-6" />
+            <span className="text-white text-[10px] font-bold uppercase tracking-wider">Eliminar</span>
+          </motion.div>
+        </motion.div>
+      )}
+
+      <motion.div
+        style={{ x }}
+        animate={controls}
+        drag={mobile ? 'x' : false}
+        dragConstraints={{ left: -200, right: 0 }}
+        dragElastic={{ left: 0.2, right: 0 }}
+        onDragEnd={handleDragEnd}
+        onClick={() => onNavigate(product.id)}
+        className="relative bg-[#E0E5EC] rounded-[2rem] p-2.5 md:p-3 flex gap-4 overflow-hidden shadow-[6px_6px_12px_rgba(163,177,198,0.6),-6px_-6px_12px_rgba(255,255,255,0.8)] active:shadow-[inset_2px_2px_6px_rgba(163,177,198,0.6),inset_-2px_-2px_6px_rgba(255,255,255,0.8)] transition-shadow cursor-pointer group"
+        whileTap={mobile ? { cursor: 'grabbing' } : {}}
+      >
+        {/* Foto */}
+        <div className="h-[105px] w-[105px] md:h-32 md:w-32 rounded-[1.5rem] overflow-hidden shrink-0 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.1)] relative">
+          <img src={product.image} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+        </div>
+
+        {/* Info */}
+        <div className="flex-1 flex flex-col justify-center py-1.5 pr-3 md:pr-12">
+          <h3 className="font-bold text-[#1A1A3A] text-[14px] md:text-[15px] leading-tight line-clamp-2 md:mb-1 drop-shadow-sm">{product.name}</h3>
+          <div className="text-[18px] md:text-xl font-black text-[#003366] mt-0.5 md:mt-1 mb-1.5 flex items-baseline gap-0.5">
+            <span>{Math.floor(parseFloat(product.price) || 0)}</span>
+            <span className="text-[10px] md:text-xs opacity-80">,{((parseFloat(product.price) || 0) % 1).toFixed(2).split('.')[1]}</span>
+            <span className="text-[10px] opacity-80 ml-0.5">€</span>
+          </div>
+          <div className="mt-auto flex items-center gap-1.5 text-[#1A1A3A]/50">
+            <MapPin className="w-3.5 h-3.5" />
+            <span className="text-[11px] font-bold md:text-xs truncate">
+              {typeof product.location === 'object' ? (product.location.level2 || product.location.level1 || 'Madrid') : (product.location || 'Madrid')}
+            </span>
+          </div>
+        </div>
+
+        {/* Botón X solo en Desktop */}
+        {!mobile && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onDelete(product.id); }}
+            className="absolute top-3 right-3 p-1.5 bg-[#E0E5EC] rounded-full shadow-[2px_2px_4px_rgba(163,177,198,0.5),-2px_-2px_4px_rgba(255,255,255,0.7)] hover:shadow-[inset_2px_2px_4px_rgba(163,177,198,0.4),inset_-2px_-2px_4px_rgba(255,255,255,0.7)] active:scale-90 transition-all z-10 text-[#1A1A3A]/40 hover:text-[#D90429]"
+          >
+            <X size={13} strokeWidth={3} />
+          </button>
+        )}
+      </motion.div>
+    </div>
+  );
+}
+
+// ── Swipeable wrapper para tarjetas de Búsquedas recientes ────────────────
+function SwipeableSearch({ query, onDelete, onNavigate }) {
+  const x = useMotionValue(0);
+  const controls = useAnimation();
+  const background = useTransform(x, [-150, -50, 0], ['rgba(220,38,38,1)', 'rgba(220,38,38,0.8)', 'rgba(220,38,38,0)']);
+  const trashOpacity = useTransform(x, [-100, -40, 0], [1, 0.5, 0]);
+  const trashScale  = useTransform(x, [-100, -40, 0], [1.2, 0.8, 0.5]);
+
+  const handleDragEnd = async (_, info) => {
+    if (info.offset.x < -(window.innerWidth * 0.4)) {
+      await controls.start({ x: -window.innerWidth, opacity: 0, transition: { duration: 0.25, ease: 'easeOut' } });
+      onDelete(query);
+    } else {
+      controls.start({ x: 0, transition: { type: 'spring', stiffness: 400, damping: 30 } });
+    }
+  };
+
+  const mobile = isMobile();
+
+  return (
+    <div className="relative overflow-hidden rounded-2xl fav-item">
+      {/* Fondo rojo (solo móvil) */}
+      {mobile && (
+        <motion.div className="absolute inset-0 flex items-center justify-end pr-6 rounded-2xl" style={{ background }}>
+          <motion.div style={{ opacity: trashOpacity, scale: trashScale }} className="flex flex-col items-center gap-1">
+            <Trash2 className="text-white w-5 h-5" />
+            <span className="text-white text-[10px] font-bold uppercase tracking-wider">Eliminar</span>
+          </motion.div>
+        </motion.div>
+      )}
+
+      <motion.div
+        style={{ x }}
+        animate={controls}
+        drag={mobile ? 'x' : false}
+        dragConstraints={{ left: -200, right: 0 }}
+        dragElastic={{ left: 0.2, right: 0 }}
+        onDragEnd={handleDragEnd}
+        className="relative bg-[#E0E5EC] rounded-2xl p-4 flex items-center justify-between shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.7)]"
+        whileTap={mobile ? { cursor: 'grabbing' } : {}}
+      >
+        <div className="flex items-center gap-3.5 flex-1 cursor-pointer group" onClick={() => onNavigate(query)}>
+          <div className="w-8 h-8 rounded-full bg-white/50 flex flex-shrink-0 items-center justify-center group-hover:bg-[#1A1A3A]/10 transition-colors">
+            <Clock className="w-4 h-4 text-[#1A1A3A]/50 group-hover:text-[#1A1A3A]" />
+          </div>
+          <span className="font-bold text-[#1A1A3A] text-[15px] line-clamp-1">{query}</span>
+        </div>
+
+        {/* Botón X solo en Desktop */}
+        {!mobile && (
+          <button
+            onClick={() => onDelete(query)}
+            className="w-10 h-10 flex shrink-0 items-center justify-center ml-2 text-[#1A1A3A]/40 hover:text-[#D90429] active:scale-90 transition-all bg-[#E0E5EC] rounded-full hover:shadow-[inset_2px_2px_4px_rgba(163,177,198,0.4),inset_-2px_-2px_4px_rgba(255,255,255,0.7)]"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </motion.div>
+    </div>
+  );
+}
 
 export default function Favorites() {
   const navigate = useNavigate();
@@ -150,60 +291,27 @@ export default function Favorites() {
                     Borrar todo
                   </button>
                 </div>
-                {/* Lista de Favoritos Activos */}
+                {/* Lista de Favoritos Activos — Swipeable en móvil */}
+                <AnimatePresence>
                 {products.map((product) => (
-                <motion.div 
-                  key={product.id}
-                  layout
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  onClick={() => navigate(`/perfil-producto?id=${product.id}`)}
-                  className="bg-[#E0E5EC] rounded-[2rem] p-2.5 md:p-3 flex gap-4 overflow-hidden shadow-[6px_6px_12px_rgba(163,177,198,0.6),-6px_-6px_12px_rgba(255,255,255,0.8)] active:shadow-[inset_2px_2px_6px_rgba(163,177,198,0.6),inset_-2px_-2px_6px_rgba(255,255,255,0.8)] transition-all cursor-pointer relative group"
-                >
-                  {/* Foto de producto (Izquierda) */}
-                  <div className="h-[105px] w-[105px] md:h-32 md:w-32 rounded-[1.5rem] overflow-hidden shrink-0 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.1)] relative">
-                    <img 
-                      src={product.image} 
-                      alt={product.name}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                  </div>
-
-                  {/* Info (Derecha) */}
-                  <div className="flex-1 flex flex-col justify-center py-1.5 pr-12">
-                    <h3 className="font-bold text-[#1A1A3A] text-[14px] md:text-[15px] leading-tight line-clamp-2 md:mb-1 drop-shadow-sm">
-                      {product.name}
-                    </h3>
-                    <div className="text-[18px] md:text-xl font-black text-[#003366] mt-0.5 md:mt-1 mb-1.5 flex items-baseline gap-0.5">
-                       <span>{Math.floor(parseFloat(product.price) || 0)}</span>
-                       <span className="text-[10px] md:text-xs opacity-80">,{((parseFloat(product.price) || 0) % 1).toFixed(2).split('.')[1]}</span>
-                       <span className="text-[10px] opacity-80 ml-0.5">€</span>
-                    </div>
-                    <div className="mt-auto flex items-center gap-1.5 text-[#1A1A3A]/50">
-                      <MapPin className="w-3.5 h-3.5" />
-                      <span className="text-[11px] font-bold md:text-xs truncate">
-                        {typeof product.location === 'object' 
-                          ? (product.location.level2 || product.location.level1 || 'Madrid') 
-                          : (product.location || 'Madrid' )
-                        }
-                      </span>
-                    </div>
-                  </div>
-                  
-                  {/* Botón X para quitar de favoritos (más pequeño y sin solapamiento) */}
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleFavorite(product.id);
-                      setProducts(prev => prev.filter(p => String(p.id) !== String(product.id)));
-                    }}
-                    className="absolute top-3 right-3 p-1.5 bg-[#E0E5EC] rounded-full shadow-[2px_2px_4px_rgba(163,177,198,0.5),-2px_-2px_4px_rgba(255,255,255,0.7)] hover:shadow-[inset_2px_2px_4px_rgba(163,177,198,0.4),inset_-2px_-2px_4px_rgba(255,255,255,0.7)] active:scale-90 transition-all z-10 text-[#1A1A3A]/40 hover:text-[#D90429]"
+                  <motion.div
+                    key={product.id}
+                    layout
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, height: 0, marginBottom: 0 }}
                   >
-                    <X size={13} strokeWidth={3} />
-                  </button>
-                </motion.div>
+                    <SwipeableFavorite
+                      product={product}
+                      onDelete={(id) => {
+                        toggleFavorite(id);
+                        setProducts(prev => prev.filter(p => String(p.id) !== String(id)));
+                      }}
+                      onNavigate={(id) => navigate(`/perfil-producto?id=${id}`)}
+                    />
+                  </motion.div>
                 ))}
+                </AnimatePresence>
               </>
             ) : (
               /* Estado Vacío de Anuncios Favoritos */
@@ -246,32 +354,23 @@ export default function Favorites() {
                   </button>
                 </div>
                 
+                <AnimatePresence>
                 {recentSearches.map((query, index) => (
-                  <motion.div 
+                  <motion.div
                     key={`${query}-${index}`}
                     layout
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    className="bg-[#E0E5EC] rounded-2xl p-4 flex items-center justify-between shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.7)]"
+                    exit={{ opacity: 0, height: 0, marginBottom: 0 }}
                   >
-                    <div 
-                      className="flex items-center gap-3.5 flex-1 cursor-pointer group"
-                      onClick={() => handleSearchClick(query)}
-                    >
-                      <div className="w-8 h-8 rounded-full bg-white/50 flex flex-shrink-0 items-center justify-center group-hover:bg-[#1A1A3A]/10 transition-colors">
-                        <Clock className="w-4 h-4 text-[#1A1A3A]/50 group-hover:text-[#1A1A3A]" />
-                      </div>
-                      <span className="font-bold text-[#1A1A3A] text-[15px] line-clamp-1">{query}</span>
-                    </div>
-                    <button 
-                      onClick={() => removeRecentSearch(query)}
-                      className="w-10 h-10 flex shrink-0 items-center justify-center ml-2 text-[#1A1A3A]/40 hover:text-[#D90429] active:scale-90 transition-all bg-[#E0E5EC] rounded-full hover:shadow-[inset_2px_2px_4px_rgba(163,177,198,0.4),inset_-2px_-2px_4px_rgba(255,255,255,0.7)]"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
+                    <SwipeableSearch
+                      query={query}
+                      onDelete={removeRecentSearch}
+                      onNavigate={handleSearchClick}
+                    />
                   </motion.div>
                 ))}
+                </AnimatePresence>
               </>
             ) : (
                /* Estado Vacío de Búsquedas Recientes */
@@ -294,6 +393,10 @@ export default function Favorites() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        .fav-item { user-select: none; -webkit-user-select: none; }
+      `}} />
     </div>
   );
 }
