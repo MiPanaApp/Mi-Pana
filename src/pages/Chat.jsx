@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Send, Smile, X, CornerUpLeft, Check, CheckCheck, Star } from 'lucide-react';
+import { ArrowLeft, Send, Smile, X, CornerUpLeft, Check, CheckCheck, Star, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import EmojiPicker from 'emoji-picker-react';
 import { useAuthStore } from '../store/useAuthStore';
@@ -104,6 +104,12 @@ export default function Chat() {
   const navigate = useNavigate();
   const { conversationId } = useParams();
   const { user } = useAuthStore();
+
+  const goToProduct = () => {
+    if (conversation?.productId) {
+      navigate(`/perfil-producto?id=${conversation.productId}`);
+    }
+  };
 
   const [messages, setMessages] = useState([]);
   const [conversation, setConversation] = useState(null);
@@ -222,7 +228,11 @@ export default function Chat() {
           </button>
 
           {/* Avatar del otro participante */}
-          <div className="w-10 h-10 rounded-full overflow-hidden bg-white/20 shadow-inner flex-shrink-0 border-2 border-white/20">
+          <div 
+            onClick={goToProduct}
+            className="w-10 h-10 rounded-full overflow-hidden bg-white/20 shadow-inner flex-shrink-0 border-2 border-white/20 cursor-pointer active:opacity-70 transition-opacity"
+            title="Ver anuncio"
+          >
             {otherAvatar ? (
               <img src={otherAvatar} className="w-full h-full object-cover" referrerPolicy="no-referrer" alt="" />
             ) : (
@@ -232,12 +242,19 @@ export default function Chat() {
             )}
           </div>
 
-          <div className="flex-1 min-w-0">
+          <div 
+            onClick={goToProduct}
+            className="flex-1 min-w-0 cursor-pointer active:opacity-70 transition-opacity"
+            title="Ver anuncio"
+          >
             <p className="font-black text-base leading-tight truncate">{otherName || '...'}</p>
-            <div className="flex items-center mt-0.5 overflow-hidden">
+            <div className="flex items-center mt-0.5 overflow-hidden gap-1">
               <p className="text-[11px] text-[#FFC200] font-bold truncate">
                 {conversation?.productName || '...'}
               </p>
+              {conversation?.productId && (
+                <ExternalLink size={10} className="text-[#FFC200] opacity-50 flex-shrink-0" />
+              )}
             </div>
           </div>
 

@@ -65,11 +65,11 @@ export default function ProductDetail() {
          });
 
          await registerInteraction({
-           buyerId: user.uid,
-           sellerId: product.userId || 'mock-pana-seller',
-           productId: product.id,
-           productName: product.name,
-           via: 'chat'
+            buyerId: user.uid,
+            sellerId: product.userId || 'mock-pana-seller',
+            productId: product.id,
+            productName: product.name,
+            via: 'chat'
          }).catch(err => console.warn('Error registrando interaccion:', err));
 
          navigate(`/chat/${conversationId}`);
@@ -121,11 +121,11 @@ export default function ProductDetail() {
 
       const finalId = product.id || productId;
       const shareUrl = `${window.location.origin}/perfil-producto?id=${finalId}`;
-      
-      const locationName = typeof product.location === 'object' 
-         ? (product.location.level2 || product.location.level1 || 'España') 
+
+      const locationName = typeof product.location === 'object'
+         ? (product.location.level2 || product.location.level1 || 'España')
          : (product.location || 'España');
-         
+
       // Volvemos al formato con precio y ubicación que el usuario prefiere
       const shareText = `🤝 ¡Mira lo que encontré en Mi Pana!\n\n📦 ${product.name}\n💰 ${product.price}€\n📍 ${locationName}\n\n👉 ${shareUrl}`;
 
@@ -138,7 +138,7 @@ export default function ProductDetail() {
                   if (response.ok) {
                      const blob = await response.blob();
                      const imageFile = new File([blob], `mipana-${finalId}.jpg`, { type: blob.type || 'image/jpeg' });
-                     
+
                      if (navigator.canShare({ files: [imageFile] })) {
                         await navigator.share({
                            title: `Mi Pana — ${product.name}`,
@@ -161,7 +161,7 @@ export default function ProductDetail() {
                url: shareUrl
             });
             return;
-            
+
          } catch (shareApiError) {
             // Usuario canceló o el API de Share falló catastróficamente
             if (shareApiError.name === 'AbortError') return;
@@ -189,11 +189,11 @@ export default function ProductDetail() {
    const handleWhatsAppClick = async () => {
       if (user && product.userId && user.uid !== product.userId) {
          await registerInteraction({
-           buyerId: user.uid,
-           sellerId: product.userId,
-           productId: product.id,
-           productName: product.name,
-           via: 'whatsapp'
+            buyerId: user.uid,
+            sellerId: product.userId,
+            productId: product.id,
+            productName: product.name,
+            via: 'whatsapp'
          }).catch(err => console.warn('Error registrando interaccion de WA:', err));
       }
       window.open(`https://wa.me/${product.whatsapp || '34600000000'}?text=Hola%20${product.userName || 'Pana'},%20vi%20tu%20anuncio`);
@@ -282,7 +282,7 @@ export default function ProductDetail() {
             const docRef = doc(db, 'products', productId);
             const docSnap = await getDoc(docRef);
 
-               if (docSnap.exists()) {
+            if (docSnap.exists()) {
                const productData = { id: docSnap.id, ...docSnap.data() };
                setProduct(productData);
 
@@ -422,66 +422,66 @@ export default function ProductDetail() {
                {/* Wrapper exclusivo para Imágenes y Dots */}
                {/* MÓVIL: sangrado completo (edge-to-edge), sin bordes redondeados en lados */}
                {/* DESKTOP: con padding y bordes redondeados */}
-                <div className="relative w-full overflow-hidden md:rounded-[2.5rem]">
-                   {/* Contenedor del Carrusel Unificado y Responsivo */}
-                   <div
-                      ref={carouselRef}
-                      onScroll={() => handleScroll(carouselRef)}
-                      className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar w-full gap-0"
-                      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                   >
-                      {images.map((img, idx) => (
+               <div className="relative w-full overflow-hidden md:rounded-[2.5rem]">
+                  {/* Contenedor del Carrusel Unificado y Responsivo */}
+                  <div
+                     ref={carouselRef}
+                     onScroll={() => handleScroll(carouselRef)}
+                     className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar w-full gap-0"
+                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                  >
+                     {images.map((img, idx) => (
                         <div key={idx} className="min-w-full flex-shrink-0 snap-center relative overflow-hidden bg-[#E0E5EC] group cursor-zoom-in"
-                             onClick={() => openLightbox(idx)}>
-                          
-                          {/* Capa 0: Fondo Dinámico con Blur (Solo se nota si la foto no llena el espacio) */}
-                          <div 
-                            className="absolute inset-0 z-0 scale-110 blur-[40px] opacity-30 transition-opacity duration-700 group-hover:opacity-50"
-                            style={{ 
-                              backgroundImage: `url(${img})`, 
-                              backgroundSize: 'cover', 
-                              backgroundPosition: 'center' 
-                            }}
-                          />
+                           onClick={() => openLightbox(idx)}>
 
-                          {/* Capa 1: Contenedor de la Foto con Altura Responsiva */}
-                          {/* Móvil: 350px | Tablet: 480px | Desktop: 580px */}
-                          <div className="relative z-10 w-full h-[350px] md:h-[480px] lg:h-[580px] flex items-center justify-center p-2 md:p-6 lg:p-10">
-                            <img 
-                              src={img} 
-                              alt={`${product.name} - foto ${idx + 1}`}
-                              className="max-w-full max-h-full w-auto h-auto object-contain rounded-2xl md:rounded-[2.5rem] shadow-[10px_10px_20px_rgba(0,0,0,0.1)] transition-transform duration-500 group-hover:scale-[1.01]"
-                            />
-                            
-                            {/* Icono de lupa flotante */}
-                            <div className="absolute bottom-4 right-4 bg-black/20 backdrop-blur-md rounded-full p-2 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
-                               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                  <circle cx="11" cy="11" r="8" />
-                                  <path d="m21 21-4.35-4.35" />
-                                  <path d="M11 8v6M8 11h6" />
-                               </svg>
-                            </div>
-                          </div>
+                           {/* Capa 0: Fondo Dinámico con Blur (Solo se nota si la foto no llena el espacio) */}
+                           <div
+                              className="absolute inset-0 z-0 scale-110 blur-[40px] opacity-30 transition-opacity duration-700 group-hover:opacity-50"
+                              style={{
+                                 backgroundImage: `url(${img})`,
+                                 backgroundSize: 'cover',
+                                 backgroundPosition: 'center'
+                              }}
+                           />
+
+                           {/* Capa 1: Contenedor de la Foto con Altura Responsiva */}
+                           {/* Móvil: 350px | Tablet: 480px | Desktop: 580px */}
+                           <div className="relative z-10 w-full h-[350px] md:h-[480px] lg:h-[580px] flex items-center justify-center p-2 md:p-6 lg:p-10">
+                              <img
+                                 src={img}
+                                 alt={`${product.name} - foto ${idx + 1}`}
+                                 className="max-w-full max-h-full w-auto h-auto object-contain rounded-2xl md:rounded-[2.5rem] shadow-[10px_10px_20px_rgba(0,0,0,0.1)] transition-transform duration-500 group-hover:scale-[1.01]"
+                              />
+
+                              {/* Icono de lupa flotante */}
+                              <div className="absolute bottom-4 right-4 bg-black/20 backdrop-blur-md rounded-full p-2 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="11" cy="11" r="8" />
+                                    <path d="m21 21-4.35-4.35" />
+                                    <path d="M11 8v6M8 11h6" />
+                                 </svg>
+                              </div>
+                           </div>
                         </div>
-                      ))}
-                   </div>
+                     ))}
+                  </div>
 
-                   {/* Indicador de posición (Dots flotantes) */}
-                   <div className="absolute bottom-6 left-0 w-full flex justify-center z-20 pointer-events-none">
-                      <div className="bg-white/80 backdrop-blur-xl px-4 py-2 rounded-full flex items-center gap-2 shadow-[0_4px_12px_rgba(0,0,0,0.1)] border border-white/50 pointer-events-auto">
-                         {images.map((_, idx) => (
-                            <button
-                               key={idx}
-                               onClick={() => scrollToIndex(idx)}
-                               className={`h-1.5 rounded-full transition-all duration-500 ease-out outline-none ${idx === activeIndex
-                                  ? 'bg-[#1A1A3A] w-6'
-                                  : 'bg-[#1A1A3A]/20 w-1.5'
-                                  }`}
-                            />
-                         ))}
-                      </div>
-                   </div>
-                </div>
+                  {/* Indicador de posición (Dots flotantes) */}
+                  <div className="absolute bottom-6 left-0 w-full flex justify-center z-20 pointer-events-none">
+                     <div className="bg-white/80 backdrop-blur-xl px-4 py-2 rounded-full flex items-center gap-2 shadow-[0_4px_12px_rgba(0,0,0,0.1)] border border-white/50 pointer-events-auto">
+                        {images.map((_, idx) => (
+                           <button
+                              key={idx}
+                              onClick={() => scrollToIndex(idx)}
+                              className={`h-1.5 rounded-full transition-all duration-500 ease-out outline-none ${idx === activeIndex
+                                 ? 'bg-[#1A1A3A] w-6'
+                                 : 'bg-[#1A1A3A]/20 w-1.5'
+                                 }`}
+                           />
+                        ))}
+                     </div>
+                  </div>
+               </div>
 
                {/* Descripción (SOLO TABLET/ORDENADOR) debajo del carrusel */}
                <div className="hidden md:block w-full relative z-10 mb-[150px] mt-14">
@@ -529,17 +529,17 @@ tlfno contacto: 672 593 950`}
                {/* Fila superior Desktop: Información del Vendedor + Botones Acción alineados */}
                <div className="flex items-center justify-between mb-4 pl-1">
                   <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full overflow-hidden shadow-[inset_2px_2px_4px_rgba(163,177,198,0.5),inset_-2px_-2px_4px_rgba(255,255,255,0.7)] bg-white border-2 border-white flex-shrink-0">
-                         <img 
-                           src={(product.userId === user?.uid ? userAvatar : product.sellerAvatar) || `https://api.dicebear.com/7.x/micah/svg?seed=${product.userName || 'Pana'}&backgroundColor=E0E5EC`} 
-                           className="w-full h-full object-cover" 
+                     <div className="w-12 h-12 rounded-full overflow-hidden shadow-[inset_2px_2px_4px_rgba(163,177,198,0.5),inset_-2px_-2px_4px_rgba(255,255,255,0.7)] bg-white border-2 border-white flex-shrink-0">
+                        <img
+                           src={(product.userId === user?.uid ? userAvatar : product.sellerAvatar) || `https://api.dicebear.com/7.x/micah/svg?seed=${product.userName || 'Pana'}&backgroundColor=E0E5EC`}
+                           className="w-full h-full object-cover"
                            alt="Avatar"
                            referrerPolicy="no-referrer"
                            onError={(e) => {
-                             e.target.src = `https://api.dicebear.com/7.x/micah/svg?seed=${product.userName || 'Pana'}&backgroundColor=E0E5EC`;
+                              e.target.src = `https://api.dicebear.com/7.x/micah/svg?seed=${product.userName || 'Pana'}&backgroundColor=E0E5EC`;
                            }}
-                         />
-                      </div>
+                        />
+                     </div>
                      <div className="flex items-center gap-1.5 pt-0.5">
                         <span className="font-bold text-lg text-[#1A1A3A] truncate max-w-[140px] md:max-w-[180px] lg:max-w-[220px]">{product.userName || "Pana Local"}</span>
                         {(product.verified || true) && <ShieldCheck className="w-5 h-5 text-[#25D366] fill-[#25D366]/10" />}
@@ -693,7 +693,7 @@ tlfno contacto: 672 593 950`}
                                     <div>
                                        <span className="font-black text-[#1A1A3A] text-[15px] leading-none mb-1">{rw.buyerName || 'Un Pana'}</span>
                                        <div className="flex drop-shadow-sm">
-                                          {[...Array(5)].map((_, i) => <Star key={i} className={`w-3 h-3 ${i < (rw.rating||5) ? 'fill-[#FFC200] text-[#FFC200]' : 'fill-[#1A1A3A]/10 text-transparent'}`} />)}
+                                          {[...Array(5)].map((_, i) => <Star key={i} className={`w-3 h-3 ${i < (rw.rating || 5) ? 'fill-[#FFC200] text-[#FFC200]' : 'fill-[#1A1A3A]/10 text-transparent'}`} />)}
                                        </div>
                                     </div>
                                     <span className="text-[10px] text-[#1A1A3A]/50 font-bold uppercase tracking-wider">{formatReviewDate(rw.createdAt)}</span>
@@ -845,7 +845,7 @@ tlfno contacto: 672 593 950`}
                                     <div className="flex flex-col">
                                        <span className="font-black text-[#1A1A3A] text-[15px] leading-tight">{rw.buyerName || 'Un Pana'}</span>
                                        <div className="flex drop-shadow-sm mt-0.5">
-                                          {[...Array(5)].map((_, i) => <Star key={i} className={`w-3 h-3 ${i < (rw.rating||5) ? 'fill-[#FFC200] text-[#FFC200]' : 'fill-[#1A1A3A]/10 text-transparent'}`} />)}
+                                          {[...Array(5)].map((_, i) => <Star key={i} className={`w-3 h-3 ${i < (rw.rating || 5) ? 'fill-[#FFC200] text-[#FFC200]' : 'fill-[#1A1A3A]/10 text-transparent'}`} />)}
                                        </div>
                                     </div>
                                  </div>
@@ -1014,8 +1014,8 @@ tlfno contacto: 672 593 950`}
                                     setZoomed(false);
                                  }}
                                  className={`rounded-full transition-all duration-300 ${idx === lightboxIndex
-                                       ? 'bg-white w-5 h-2'
-                                       : 'bg-white/30 w-2 h-2'
+                                    ? 'bg-white w-5 h-2'
+                                    : 'bg-white/30 w-2 h-2'
                                     }`}
                               />
                            ))}

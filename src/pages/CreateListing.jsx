@@ -13,7 +13,7 @@ import { getCategoryIcon, getBrandColor, sortCategories } from '../data/categori
 import { LOCATION_DATA } from '../data/locations';
 import { LegalData } from '../data/LegalData';
 import LegalDrawer from '../components/LegalDrawer';
-import panaExito from '../assets/pana_exito.png';
+import panaExito from '../assets/pana_exito_v2.png';
 
 // Mapeo: código del store -> clave de LOCATION_DATA
 const COUNTRY_TO_LOC = { ES: 'ES', CO: 'CO', VE: 'VE', US: 'US', CL: 'CL', PA: 'PA', PE: 'PE', EC: 'EC', DO: 'DO', AR: 'AR' };
@@ -292,16 +292,18 @@ export default function CreateListing() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-[#E0E5EC] flex flex-col items-center justify-center px-6 pb-24 text-center">
-        <motion.img 
-          initial={{ scale: 0.5, opacity: 0, y: 20 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          src={panaExito}
-          alt="Éxito"
-          className="w-[280px] h-auto object-contain mb-4 drop-shadow-[0_15px_30px_rgba(0,0,0,0.1)]"
-        />
-        <h2 className="text-3xl font-black text-[#1A1A3A] mb-2">¡Anuncio Publicado!</h2>
-        <p className="text-[#1A1A3A]/60 font-medium">Tu anuncio ya está visible para todos los Panas.</p>
+      <div className="min-h-screen bg-[#E0E5EC] flex flex-col items-center justify-center px-6 pb-32 text-center">
+        <div className="flex flex-col items-center justify-center scale-90">
+          <motion.img 
+            initial={{ scale: 0.5, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            src={panaExito}
+            alt="Éxito"
+            className="w-[224px] h-auto object-contain mb-4 drop-shadow-[0_15px_30px_rgba(0,0,0,0.1)]"
+          />
+          <h2 className="text-2xl font-black text-[#1A1A3A] mb-2 leading-tight">¡Anuncio Publicado!</h2>
+          <p className="text-[#1A1A3A]/60 font-medium text-sm">Tu anuncio ya está visible para todos los Panas.</p>
+        </div>
       </div>
     );
   }
