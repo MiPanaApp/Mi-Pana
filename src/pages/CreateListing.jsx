@@ -13,7 +13,7 @@ import { getCategoryIcon, getBrandColor, sortCategories } from '../data/categori
 import { LOCATION_DATA } from '../data/locations';
 import { LegalData } from '../data/LegalData';
 import LegalDrawer from '../components/LegalDrawer';
-import panaExito from '../assets/pana_exito_v2.png';
+import panaExito from '../assets/Pana_Billetes.png';
 
 // Mapeo: código del store -> clave de LOCATION_DATA
 const COUNTRY_TO_LOC = { ES: 'ES', CO: 'CO', VE: 'VE', US: 'US', CL: 'CL', PA: 'PA', PE: 'PE', EC: 'EC', DO: 'DO', AR: 'AR' };

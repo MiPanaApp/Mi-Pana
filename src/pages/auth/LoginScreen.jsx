@@ -79,6 +79,29 @@ export default function LoginScreen() {
         </div>
 
         <form onSubmit={handleEmailLogin} className="clay-card-auth w-full max-w-sm">
+          {/* BOTÓN GOOGLE ARRIBA DEL TODO */}
+          <button 
+            type="button" 
+            onClick={handleGoogleSignIn} 
+            disabled={loading}
+            className="clay-btn-google w-full flex items-center justify-center gap-[10px] text-[13px] font-bold text-[#1A1A3A] mb-6 disabled:opacity-50"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path fillRule="evenodd" clipRule="evenodd" d="M23.52 12.2727C23.52 11.4218 23.4436 10.6036 23.3018 9.81816H12V14.4545H18.4582C18.18 15.9545 17.3345 17.2363 16.0527 18.0927V21.1036H19.9364C22.2055 19.0145 23.52 15.9272 23.52 12.2727Z" fill="#4285F4"/>
+              <path fillRule="evenodd" clipRule="evenodd" d="M12.0001 24.0001C15.2401 24.0001 17.9674 22.9256 19.9365 21.1037L16.0528 18.0928C14.9892 18.8074 13.6146 19.2274 12.0001 19.2274C8.87464 19.2274 6.22373 17.1165 5.27464 14.2801H1.26013V17.3946C3.23467 21.3165 7.28195 24.0001 12.0001 24.0001Z" fill="#34A853"/>
+              <path fillRule="evenodd" clipRule="evenodd" d="M5.27451 14.2799C5.03451 13.5599 4.89814 12.7908 4.89814 11.9999C4.89814 11.209 5.02906 10.4399 5.27451 9.71992V6.60535H1.26001C0.458195 8.20353 0 9.9981 0 11.9999C0 14.0017 0.458195 15.7963 1.26001 17.3945L5.27451 14.2799Z" fill="#FBBC05"/>
+              <path fillRule="evenodd" clipRule="evenodd" d="M12.0001 4.77273C13.7619 4.77273 15.3382 5.37818 16.5819 6.56727L20.0237 3.12545C17.9619 1.19455 15.2346 0 12.0001 0C7.28195 0 3.23467 2.68364 1.26013 6.60545L5.27464 9.72C6.22373 6.88364 8.87464 4.77273 12.0001 4.77273Z" fill="#EA4335"/>
+            </svg>
+            Continuar con Google
+          </button>
+
+          {/* DIVIDER ENTRE GOOGLE Y CAMPOS */}
+          <div className="flex items-center gap-3 mb-6 opacity-60">
+            <div className="h-[1px] flex-1 bg-[#b4b4d2]" />
+            <span className="text-[12px] font-bold text-[#1a1a3a]">O continúa con</span>
+            <div className="h-[1px] flex-1 bg-[#b4b4d2]" />
+          </div>
+
           <div className="mb-4 relative">
             <div className="relative">
               <span className="absolute left-[14px] top-1/2 -translate-y-1/2 opacity-50 text-[#1A1A3A]">
@@ -132,27 +155,6 @@ export default function LoginScreen() {
             </a>
           </div>
 
-          <div className="flex items-center gap-3 mb-6 opacity-60">
-            <div className="h-[1px] flex-1 bg-[#b4b4d2]" />
-            <span className="text-[12px] font-bold text-[#1a1a3a]">O continúa con</span>
-            <div className="h-[1px] flex-1 bg-[#b4b4d2]" />
-          </div>
-
-          <button 
-            type="button" 
-            onClick={handleGoogleSignIn} 
-            disabled={loading}
-            className="clay-btn-google w-full flex items-center justify-center gap-[10px] text-[13px] font-bold text-[#1A1A3A] mb-5 disabled:opacity-50"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path fillRule="evenodd" clipRule="evenodd" d="M23.52 12.2727C23.52 11.4218 23.4436 10.6036 23.3018 9.81816H12V14.4545H18.4582C18.18 15.9545 17.3345 17.2363 16.0527 18.0927V21.1036H19.9364C22.2055 19.0145 23.52 15.9272 23.52 12.2727Z" fill="#4285F4"/>
-              <path fillRule="evenodd" clipRule="evenodd" d="M12.0001 24.0001C15.2401 24.0001 17.9674 22.9256 19.9365 21.1037L16.0528 18.0928C14.9892 18.8074 13.6146 19.2274 12.0001 19.2274C8.87464 19.2274 6.22373 17.1165 5.27464 14.2801H1.26013V17.3946C3.23467 21.3165 7.28195 24.0001 12.0001 24.0001Z" fill="#34A853"/>
-              <path fillRule="evenodd" clipRule="evenodd" d="M5.27451 14.2799C5.03451 13.5599 4.89814 12.7908 4.89814 11.9999C4.89814 11.209 5.02906 10.4399 5.27451 9.71992V6.60535H1.26001C0.458195 8.20353 0 9.9981 0 11.9999C0 14.0017 0.458195 15.7963 1.26001 17.3945L5.27451 14.2799Z" fill="#FBBC05"/>
-              <path fillRule="evenodd" clipRule="evenodd" d="M12.0001 4.77273C13.7619 4.77273 15.3382 5.37818 16.5819 6.56727L20.0237 3.12545C17.9619 1.19455 15.2346 0 12.0001 0C7.28195 0 3.23467 2.68364 1.26013 6.60545L5.27464 9.72C6.22373 6.88364 8.87464 4.77273 12.0001 4.77273Z" fill="#EA4335"/>
-            </svg>
-            Continuar con Google
-          </button>
-
           {error && (
             <p className="text-[#D90429] text-[12px] font-bold text-center mb-4">{error}</p>
           )}
@@ -170,10 +172,13 @@ export default function LoginScreen() {
           </button>
         </form>
 
-        <div className="mt-5 text-center h-20">
-          <p className="text-[12px] font-bold text-[#1A1A3A] opacity-50 mb-3">¿Aún no tienes cuenta?</p>
-          <button onClick={() => navigate("/register")} className="bg-[#EDEDF5] rounded-[16px] px-[36px] py-[12px] text-[14px] font-bold text-[#1A1A3A] shadow-[6px_6px_14px_rgba(180,180,210,0.7),-6px_-6px_14px_rgba(255,255,255,0.95)] flex items-center gap-2 mx-auto">
-            Registrarse <ArrowRight size={18} />
+        <div className="mt-8 flex items-center justify-center gap-3">
+          <p className="text-[12px] font-bold text-[#1A1A3A] opacity-50">¿Aún no tienes cuenta?</p>
+          <button 
+            onClick={() => navigate("/register")} 
+            className="bg-[#EDEDF5] rounded-[14px] px-[20px] py-[8px] text-[13px] font-bold text-[#1A1A3A] shadow-[4px_4px_10px_rgba(180,180,210,0.5),-4px_-4px_10px_rgba(255,255,255,0.9)] flex items-center gap-2 transition-all active:scale-95"
+          >
+            Registrarse <ArrowRight size={16} />
           </button>
         </div>
 
