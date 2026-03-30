@@ -13,6 +13,7 @@ import { getOrCreateConversation } from '../lib/chat';
 import { registerInteraction, getProductReviews } from '../lib/reviews';
 import { MOCK_PRODUCTS } from '../data/mockProducts';
 import panaLengua from '../assets/pana_lengua.png';
+import { getBadge, BADGE_STYLES } from '../utils/badgeUtils';
 
 // Los productos relacionados se cargan ahora dinámicamente desde Firestore.
 
@@ -600,11 +601,11 @@ tlfno contacto: 672 593 950`}
                         <span className="text-xl md:text-2xl font-black ml-0.5">€</span>
                      </div>
 
-                     {(product.premium || product.id % 2 === 0) && (
-                        <div className={`px-4 py-2 rounded-xl text-white text-[12px] font-black tracking-wider shadow-[0_4px_12px_rgba(0,0,0,0.15)] uppercase ${product.premium ? 'bg-[#0056B3]' : 'bg-[#D90429]'}`}>
-                           {product.premium ? 'TOP' : 'NUEVO'}
-                        </div>
-                     )}
+                     {(() => { const badge = getBadge(product); return badge ? (
+                         <div className={`px-4 py-2 rounded-xl text-white text-[12px] font-black tracking-wider shadow-[0_4px_12px_rgba(0,0,0,0.15)] uppercase ${BADGE_STYLES[badge].bg}`}>
+                            {BADGE_STYLES[badge].label}
+                         </div>
+                      ) : null; })()}
                   </div>
                </div>
 

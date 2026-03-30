@@ -2,25 +2,7 @@ import { Heart, MapPin } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
-
-function getBadge(product) {
-  if (product.createdAt) {
-    const created = product.createdAt?.toDate
-      ? product.createdAt.toDate()
-      : new Date(product.createdAt?.seconds ? product.createdAt.seconds * 1000 : product.createdAt);
-    const diffDays = (Date.now() - created.getTime()) / (1000 * 60 * 60 * 24);
-    if (diffDays <= 30) return 'NUEVO';
-  }
-  if (product.isTop) return 'TOP';
-  if (product.isPopular) return 'POPULAR';
-  return null;
-}
-
-const BADGE_STYLES = {
-  NUEVO:   { bg: 'bg-[#D90429]',  label: 'NUEVO'   },
-  TOP:     { bg: 'bg-[#0056B3]',  label: 'TOP'     },
-  POPULAR: { bg: 'bg-[#FF6B00]',  label: 'POPULAR' },
-};
+import { getBadge, BADGE_STYLES } from '../utils/badgeUtils';
 
 export default function ProductCard({ product }) {
   const navigate = useNavigate();
@@ -59,10 +41,30 @@ export default function ProductCard({ product }) {
       </div>
 
       <div className="px-1 flex flex-col flex-grow">
-        <div className="text-lg font-black text-[#003366] mb-0 flex items-baseline gap-0.5">
-          <span className="text-lg">{Math.floor(parseFloat(product.price) || 0)}</span>
-          <span className="text-[10px]">,{((parseFloat(product.price) || 0) % 1).toFixed(2).split('.')[1]}</span>
-          <span className="text-[10px] ml-0.5">€</span>
+        {/* Fila precio + rating */}
+        <div className="flex items-end justify-between mb-0">
+          <div className="text-lg font-black text-[#003366] flex items-baseline gap-0.5">
+            <span className="text-lg">{Math.floor(parseFloat(product.price) || 0)}</span>
+            <span className="text-[10px]">,{((parseFloat(product.price) || 0) % 1).toFixed(2).split('.')[1]}</span>
+            <span className="text-[10px] ml-0.5">€</span>
+          </div>
+          {product.rating != null && (
+            <div className="flex items-center gap-0.5 pb-0.5">
+              <svg width="11" height="11" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="starGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#FFD700" />
+                    <stop offset="100%" stopColor="#FFA500" />
+                  </linearGradient>
+                </defs>
+                <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"
+                  fill="url(#starGrad)" stroke="none" />
+              </svg>
+              <span className="text-[10px] font-bold text-[#1A1A3A]/50 leading-none">
+                {parseFloat(product.rating).toFixed(1)}
+              </span>
+            </div>
+          )}
         </div>
         <h3 className="font-bold text-gray-700 text-xs line-clamp-2 mb-0.5">{product.name}</h3>
         <div className="mt-auto flex items-center gap-1 text-[#1A1A3A]/70 font-semibold">
