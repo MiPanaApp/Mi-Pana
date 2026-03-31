@@ -27,11 +27,37 @@ function MessageStatus({ status, isMine }) {
   return <Check size={12} className="text-white/50 ml-1 flex-shrink-0" />;
 }
 
-// ─── Formato hora ──────────────────────────────────────────────────────────────
+// ─── Formato inteligente de hora y fecha ────────────────────────────────────────
 function formatTime(timestamp) {
   if (!timestamp) return '';
   const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  
+  const now = new Date();
+  const timeString = date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase();
+  
+  // Es hoy?
+  if (
+    date.getDate() === now.getDate() &&
+    date.getMonth() === now.getMonth() &&
+    date.getFullYear() === now.getFullYear()
+  ) {
+    return timeString;
+  }
+  
+  // Es ayer?
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (
+    date.getDate() === yesterday.getDate() &&
+    date.getMonth() === yesterday.getMonth() &&
+    date.getFullYear() === yesterday.getFullYear()
+  ) {
+    return `Ayer, ${timeString}`;
+  }
+  
+  // Más antiguo
+  const dateString = date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+  return `${dateString}, ${timeString}`;
 }
 
 // ─── Bubble de mensaje ────────────────────────────────────────────────────────
@@ -358,10 +384,15 @@ export default function Chat() {
             >
               <button
                 onClick={() => setShowReviewModal(true)}
-                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#FFC200] to-[#FFAA00] text-[#1A1A3A] font-black text-sm rounded-2xl shadow-[0_8px_20px_rgba(255,194,0,0.4)] hover:shadow-[0_12px_28px_rgba(255,194,0,0.5)] hover:-translate-y-0.5 active:scale-95 transition-all"
+                className="flex items-center justify-center gap-3 w-full max-w-sm px-5 py-3.5 bg-gradient-to-r from-[#FFC200] to-[#FFAA00] text-[#1A1A3A] font-black rounded-2xl shadow-[0_8px_20px_rgba(255,194,0,0.4)] hover:shadow-[0_12px_28px_rgba(255,194,0,0.5)] hover:-translate-y-0.5 active:scale-95 transition-all"
               >
-                <Star size={16} className="fill-[#1A1A3A]" />
-                ¿Cómo fue el servicio de {otherName}? Valóralo ahora
+                <div className="bg-[#1A1A3A]/10 p-2 rounded-full flex-shrink-0 text-[#1A1A3A]">
+                  <Star size={24} className="fill-[#1A1A3A]" />
+                </div>
+                <div className="flex flex-col text-left leading-tight">
+                  <span className="text-sm">¿Cómo fue el servicio de <b>{otherName}</b>?</span>
+                  <span className="text-[12px] opacity-80 mt-0.5 uppercase tracking-wide">Valóralo ahora</span>
+                </div>
               </button>
             </motion.div>
           )}

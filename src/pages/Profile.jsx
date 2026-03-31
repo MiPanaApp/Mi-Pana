@@ -429,25 +429,35 @@ export default function Profile() {
                             </div>
                           </div>
                           
-                          {/* Botones Debajo */}
-                          <div className="flex items-center gap-3 pt-1">
+                          {/* Botones Debajo - Estilo Íconos Neumórficos (Reducidos 20%) */}
+                          <div className="flex items-center gap-2 pt-2">
                             <button 
                               onClick={() => navigate(`/perfil-producto?id=${product.id}`)} 
-                              className="flex-1 py-2 bg-white/60 rounded-xl text-[#1A1A3A] font-bold text-[10px] uppercase shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+                              className="flex-1 h-9 bg-[#0056B3] text-white rounded-xl shadow-[3px_3px_6px_#b8b9be,-3px_-3px_6px_#ffffff] flex items-center justify-center active:scale-95 transition-transform"
+                              title="Ver anuncio"
                             >
-                              <ExternalLink size={14} /> Ver
+                              <ExternalLink size={18} />
+                            </button>
+                            <button 
+                              onClick={() => navigate(`/anunciar?edit=${product.id}`)} 
+                              className="flex-1 h-9 bg-[#FFCC00] text-[#1A1A3A] rounded-xl shadow-[3px_3px_6px_#b8b9be,-3px_-3px_6px_#ffffff] flex items-center justify-center active:scale-95 transition-transform"
+                              title="Editar anuncio"
+                            >
+                              <Edit2 size={18} />
                             </button>
                             <button 
                               onClick={() => handleToggleStatus(product.id, 'active')} 
-                              className="flex-1 py-2 bg-white/60 rounded-xl text-amber-600 font-bold text-[10px] uppercase shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+                              className="flex-1 h-9 bg-[#F59E0B] text-white rounded-xl shadow-[3px_3px_6px_#b8b9be,-3px_-3px_6px_#ffffff] flex items-center justify-center active:scale-95 transition-transform"
+                              title="Suspender anuncio temporalmente"
                             >
-                              <EyeOff size={14} /> Suspender
+                              <EyeOff size={18} />
                             </button>
                             <button 
                               onClick={() => handleDeleteProduct(product.id)} 
-                              className="flex-1 py-2 bg-white/60 rounded-xl text-red-500 font-bold text-[10px] uppercase shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+                              className="flex-1 h-9 bg-[#D90429] text-white rounded-xl shadow-[3px_3px_6px_#b8b9be,-3px_-3px_6px_#ffffff] flex items-center justify-center active:scale-95 transition-transform"
+                              title="Borrar anuncio definitivamente"
                             >
-                              <Trash2 size={14} /> Borrar
+                              <Trash2 size={18} />
                             </button>
                           </div>
                         </div>
@@ -477,19 +487,28 @@ export default function Profile() {
                           <span className="px-2 py-0.5 rounded-full bg-gray-200 text-[9px] font-black text-gray-500 uppercase tracking-tighter">Suspendido</span>
                         </div>
 
-                        {/* Botones Debajo En Inactivos */}
-                        <div className="flex items-center gap-3 pt-1">
+                        {/* Botones Debajo En Inactivos - Estilo Íconos Neumórficos (Reducidos 20%) */}
+                        <div className="flex items-center gap-2 pt-2">
                           <button 
                             onClick={() => handleToggleStatus(product.id, 'inactive')} 
-                            className="flex-1 py-2 bg-[#0056B3] rounded-xl text-white font-bold text-[10px] uppercase shadow-md flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+                            className="flex-1 h-9 bg-[#10B981] text-white rounded-xl shadow-[0_4px_10px_rgba(16,185,129,0.3)] flex items-center justify-center active:scale-95 transition-transform"
+                            title="Reactivar anuncio"
                           >
-                            <Eye size={14} /> Mostrar
+                            <Eye size={18} />
+                          </button>
+                          <button 
+                            onClick={() => navigate(`/anunciar?edit=${product.id}`)} 
+                            className="flex-1 h-9 bg-[#FFCC00] text-[#1A1A3A] rounded-xl shadow-[0_4px_10px_rgba(255,204,0,0.3)] flex items-center justify-center active:scale-95 transition-transform"
+                            title="Editar anuncio"
+                          >
+                            <Edit2 size={18} />
                           </button>
                           <button 
                             onClick={() => handleDeleteProduct(product.id)} 
-                            className="flex-1 py-2 bg-white/60 rounded-xl text-red-500 font-bold text-[10px] uppercase shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+                            className="flex-1 h-9 bg-[#D90429] text-white rounded-xl shadow-[0_4px_10px_rgba(217,4,41,0.3)] flex items-center justify-center active:scale-95 transition-transform"
+                            title="Borrar anuncio definitivamente"
                           >
-                            <Trash2 size={14} /> Borrar
+                            <Trash2 size={18} />
                           </button>
                         </div>
                       </div>

@@ -31,36 +31,72 @@ export async function registerInteraction({ buyerId, sellerId, productId, produc
   return ref.id;
 }
 
-// ─── Verificar si puede valorar ───────────────────────────────────────────────
+// ─── Verificar si puede valorar (Acelerado a 3 minutos para Testing) ───────────
 export async function canUserReview({ buyerId, productId }) {
   const snap = await getDocs(query(
     collection(db, 'interactions'),
     where('buyerId', '==', buyerId),
     where('productId', '==', productId),
-    where('canReview', '==', true),
     where('reviewed', '==', false)
   ));
+  
   if (snap.empty) return { can: false, interactionId: null };
-  return { can: true, interactionId: snap.docs[0].id };
+  
+  // Extraemos el tiempo del primer mensaje
+  const interaction = snap.docs[0].data();
+  const contactTime = interaction.contactedAt?.toMillis 
+    ? interaction.contactedAt.toMillis() 
+    : Date.now();
+    
+  // 3 minutos = 180,000 milisegundos
+  if (Date.now() - contactTime >= 180000) {
+    return { can: true, interactionId: snap.docs[0].id };
+  }
+  
+  return { can: false, interactionId: null };
 }
 
 // ─── Enviar valoración ────────────────────────────────────────────────────────
 export async function submitReview({ interactionId, buyerId, buyerName, sellerId, productId, productName, rating, comment }) {
-  // 1. Crear la review
+  
+  // 1. Seguridad: Rescatar datos duros de la interacción si el frontend falla
+  let safeSellerId = sellerId;
+  let safeProductId = productId;
+  let safeProductName = productName;
+
+  if (interactionId) {
+    const intDoc = await getDoc(doc(db, 'interactions', interactionId));
+    if (intDoc.exists()) {
+      const dbData = intDoc.data();
+      if (!safeSellerId) safeSellerId = dbData.sellerId;
+      if (!safeProductId) safeProductId = dbData.productId;
+      if (!safeProductName) safeProductName = dbData.productName;
+    }
+  }
+
+  if (!safeSellerId) {
+    throw new Error('No se pudo identificar al vendedor para asignarle la valoración.');
+  }
+
+  if (!safeProductId) {
+    throw new Error('No se pudo identificar el anuncio valorado.');
+  }
+
+  // 2. Crear la review
   await addDoc(collection(db, 'reviews'), {
     interactionId,
     buyerId,
     buyerName,
-    sellerId,
-    productId,
-    productName,
+    sellerId: safeSellerId,
+    productId: safeProductId,
+    productName: safeProductName,
     rating,
     comment,
     createdAt: serverTimestamp(),
   });
 
-  // 2. Actualizar rating del producto con transacción
-  const productRef = doc(db, 'products', productId);
+  // 3. Actualizar rating del producto con transacción
+  const productRef = doc(db, 'products', safeProductId);
   await runTransaction(db, async (tx) => {
     const productSnap = await tx.get(productRef);
     if (!productSnap.exists()) return;
@@ -72,8 +108,8 @@ export async function submitReview({ interactionId, buyerId, buyerName, sellerId
     tx.update(productRef, { rating: newRating, reviewCount: newCount });
   });
 
-  // 3. Actualizar score del vendedor con transacción
-  const sellerRef = doc(db, 'users', sellerId);
+  // 4. Actualizar score del vendedor con transacción
+  const sellerRef = doc(db, 'users', safeSellerId);
   await runTransaction(db, async (tx) => {
     const sellerSnap = await tx.get(sellerRef);
     if (!sellerSnap.exists()) return;
@@ -85,7 +121,7 @@ export async function submitReview({ interactionId, buyerId, buyerName, sellerId
     tx.update(sellerRef, { sellerScore: newRating, sellerReviewCount: newCount });
   });
 
-  // 4. Marcar interacción como revisada
+  // 5. Marcar interacción como revisada
   await updateDoc(doc(db, 'interactions', interactionId), { reviewed: true });
 }
 
@@ -103,15 +139,21 @@ export async function getProductReviews(productId, maxCount = 10) {
   return results.slice(0, maxCount);
 }
 
-// ─── Obtener interacciones pendientes de valorar ──────────────────────────────
+// ─── Obtener interacciones pendientes de valorar (Acelerado a 3 min) ───────────
 export async function getPendingReviews(buyerId) {
   const snap = await getDocs(query(
     collection(db, 'interactions'),
     where('buyerId', '==', buyerId),
-    where('canReview', '==', true),
     where('reviewed', '==', false)
   ));
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  
+  const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  
+  // Filtramos localmente los que tengan más de 3 minutos (180000 ms)
+  return docs.filter(d => {
+    const contactTime = d.contactedAt?.toMillis ? d.contactedAt.toMillis() : Date.now();
+    return (Date.now() - contactTime) >= 180000;
+  });
 }
 
 export async function getUserInteractions(buyerId) {

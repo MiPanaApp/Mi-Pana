@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, ImagePlus, ChevronLeft, CheckCircle2, Loader2, X, MapPin } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useAuth } from '../context/AuthContext';
 import { useStore } from '../store/useStore';
 import { db, storage } from '../services/firebase';
-import { collection, addDoc, getDoc, getDocs, doc, serverTimestamp, query, orderBy, where } from 'firebase/firestore';
+import { collection, addDoc, getDoc, getDocs, doc, serverTimestamp, query, orderBy, where, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { ChevronDown, Tag } from 'lucide-react';
 import { getCategoryIcon, getBrandColor, sortCategories } from '../data/categories';
@@ -34,6 +34,12 @@ const COUNTRY_CODES = [
 
 export default function CreateListing() {
   const navigate = useNavigate();
+  const locationObj = useLocation();
+  const editId = new URLSearchParams(locationObj.search).get('edit');
+  const [isEditing, setIsEditing] = useState(false);
+  const [initialMainPhoto, setInitialMainPhoto] = useState(null);
+  const [existingCarousel, setExistingCarousel] = useState([]);
+  
   const { user } = useAuthStore();
   const { userData } = useAuth(); // Avatar y datos del perfil de Firestore
   const { selectedCountry } = useStore();
@@ -147,6 +153,52 @@ export default function CreateListing() {
     fetchUserCountry();
   }, [user]);
 
+  // Handle Edit Mode Data Fetching
+  useEffect(() => {
+    if (editId) {
+      setIsEditing(true);
+      const fetchEditData = async () => {
+        try {
+          const docSnap = await getDoc(doc(db, 'products', editId));
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            setForm({
+              title: data.name || '',
+              category: data.category || '',
+              price: data.price ? data.price.toString() : '',
+              whatsapp: data.whatsapp || '',
+              description: data.description || '',
+              keywords: data.keywords ? data.keywords.join(', ') : '',
+            });
+            if (data.whatsapp) {
+              const matchedPrefix = COUNTRY_CODES.find(c => data.whatsapp.startsWith(c.code));
+              if (matchedPrefix) {
+                setSelectedPrefix(matchedPrefix);
+                setForm(prev => ({...prev, whatsapp: data.whatsapp.slice(matchedPrefix.code.length)}));
+              } else {
+                setForm(prev => ({...prev, whatsapp: data.whatsapp}));
+              }
+            }
+            setLocation({
+              level1: data.location?.level1 || '',
+              level2: data.location?.level2 || ''
+            });
+            if (data.image) {
+              setInitialMainPhoto(data.image);
+              setImagePreview(data.image);
+            }
+            if (data.carouselImages) {
+              setExistingCarousel(data.carouselImages);
+            }
+          }
+        } catch (error) {
+          console.error("Error loading edit data:", error);
+        }
+      };
+      fetchEditData();
+    }
+  }, [editId]);
+
   // Función para obtener icono y color según el nombre
   const getCategoryStyle = (name, index) => {
     return { 
@@ -175,7 +227,7 @@ export default function CreateListing() {
 
   const handleCarouselChange = (e) => {
     const files = Array.from(e.target.files);
-    const totalCount = carouselFiles.length + files.length;
+    const totalCount = existingCarousel.length + carouselFiles.length + files.length;
     
     if (totalCount > 10) {
       setError('Puedes subir hasta un máximo de 10 fotos adicionales.');
@@ -203,6 +255,7 @@ export default function CreateListing() {
     e.stopPropagation();
     setImageFile(null);
     setImagePreview(null);
+    setInitialMainPhoto(null);
   };
 
   const removeCarouselItem = (index) => {
@@ -216,7 +269,7 @@ export default function CreateListing() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!imageFile) {
+    if (!imageFile && !initialMainPhoto) {
       setError('Sube al menos la foto principal para tu anuncio.');
       return;
     }
@@ -241,41 +294,64 @@ export default function CreateListing() {
         return getDownloadURL(snapshot.ref);
       };
 
-      // 2. Subir imagen principal
-      const mainImageURL = await uploadFile(imageFile, 'images');
+      // 2. Subir imagen principal (si hay nueva)
+      let mainImageURL = initialMainPhoto;
+      if (imageFile) {
+        mainImageURL = await uploadFile(imageFile, 'images');
+      }
 
-      // 3. Subir imágenes del carrusel en paralelo
-      const carouselURLs = await Promise.all(
+      // 3. Subir nuevas imágenes del carrusel en paralelo
+      const newCarouselURLs = await Promise.all(
         carouselFiles.map(file => uploadFile(file, 'carousel'))
       );
+      const finalCarouselImages = [...existingCarousel, ...newCarouselURLs];
 
-      // 4. Guardar en Firestore
-      const newProduct = {
-        name: form.title,
-        price: form.price,
-        category: form.category,
-        whatsapp: `${selectedPrefix.code}${form.whatsapp.replace(/\s+/g, '')}`,
-        description: form.description,
-        keywords: form.keywords.split(',').map(k => k.trim()).filter(Boolean),
-        image: mainImageURL,
-        carouselImages: carouselURLs,
-        location: {
-          country: selectedCountry,
-          level1: location.level1,
-          level2: location.level2,
-        },
-        userId: user?.uid || 'test-user-id',
-        userName: user?.displayName || userData?.name || 'Usuario de Prueba',
-        sellerAvatar: user?.photoURL || userData?.avatar || '',
-        sellerEmail: user?.email || '',
-        createdAt: serverTimestamp(),
-        rating: 5.0,
-        reviewCount: 0,
-        premium: false,
-        verified: false,
-      };
-
-      await addDoc(collection(db, 'products'), newProduct);
+      // 4. Guardar o Actualizar en Firestore
+      if (isEditing) {
+        const updateData = {
+          name: form.title,
+          price: form.price,
+          category: form.category,
+          whatsapp: `${selectedPrefix.code}${form.whatsapp.replace(/\s+/g, '')}`,
+          description: form.description,
+          keywords: form.keywords.split(',').map(k => k.trim()).filter(Boolean),
+          image: mainImageURL,
+          carouselImages: finalCarouselImages,
+          location: {
+            country: selectedCountry,
+            level1: location.level1,
+            level2: location.level2,
+          },
+          updatedAt: serverTimestamp(),
+        };
+        await updateDoc(doc(db, 'products', editId), updateData);
+      } else {
+        const newProduct = {
+          name: form.title,
+          price: form.price,
+          category: form.category,
+          whatsapp: `${selectedPrefix.code}${form.whatsapp.replace(/\s+/g, '')}`,
+          description: form.description,
+          keywords: form.keywords.split(',').map(k => k.trim()).filter(Boolean),
+          image: mainImageURL,
+          carouselImages: finalCarouselImages,
+          location: {
+            country: selectedCountry,
+            level1: location.level1,
+            level2: location.level2,
+          },
+          userId: user?.uid || 'test-user-id',
+          userName: user?.displayName || userData?.name || 'Usuario de Prueba',
+          sellerAvatar: user?.photoURL || userData?.avatar || '',
+          sellerEmail: user?.email || '',
+          createdAt: serverTimestamp(),
+          rating: 5.0,
+          reviewCount: 0,
+          premium: false,
+          verified: false,
+        };
+        await addDoc(collection(db, 'products'), newProduct);
+      }
 
       setSuccess(true);
       setTimeout(() => {
@@ -318,7 +394,7 @@ export default function CreateListing() {
         >
           <ChevronLeft className="w-6 h-6 text-[#1A1A3A]" />
         </button>
-        <h1 className="ml-4 text-xl font-black text-[#1A1A3A] tracking-wide">Crear Anuncio</h1>
+        <h1 className="ml-4 text-xl font-black text-[#1A1A3A] tracking-wide">{isEditing ? 'Editar Anuncio' : 'Crear Anuncio'}</h1>
       </div>
 
       <div className="max-w-md mx-auto px-5 mt-6">
@@ -386,11 +462,31 @@ export default function CreateListing() {
             </div>
             
             <div className="grid grid-cols-4 gap-3">
-              {/* Previews del carrusel */}
+              {/* Previews del carrusel (Guardadas y Nuevas) */}
               <AnimatePresence>
+                {existingCarousel.map((url, index) => (
+                  <motion.div
+                    key={`exist-${index}`}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    layout
+                    className="relative aspect-square rounded-2xl overflow-hidden bg-[#E0E5EC] shadow-[4px_4px_8px_rgba(163,177,198,0.6),-4px_-4px_8px_rgba(255,255,255,0.8)] group"
+                  >
+                    <img src={url} alt={`Saved Carousel ${index}`} className="w-full h-full object-cover" />
+                    <button 
+                      type="button"
+                      onClick={() => setExistingCarousel(prev => prev.filter((_, i) => i !== index))}
+                      className="absolute top-1 right-1 p-1.5 bg-red-500/90 rounded-full text-white shadow-md z-10 md:opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X size={12} strokeWidth={3} />
+                    </button>
+                  </motion.div>
+                ))}
+                
                 {carouselPreviews.map((preview, index) => (
                   <motion.div
-                    key={preview}
+                    key={`new-${preview}`}
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.8 }}
@@ -409,8 +505,8 @@ export default function CreateListing() {
                 ))}
               </AnimatePresence>
 
-              {/* Botón para añadir más (Solo si < 10) */}
-              {carouselFiles.length < 10 && (
+              {/* Botón para añadir más (Solo si < 10 combinadas) */}
+              {(existingCarousel.length + carouselFiles.length) < 10 && (
                 <motion.div 
                   whileTap={{ scale: 0.96 }}
                   onClick={handleCarouselClick}
@@ -790,10 +886,10 @@ export default function CreateListing() {
             {loading ? (
               <>
                 <Loader2 className="animate-spin" />
-                <span>Publicando...</span>
+                <span>{isEditing ? 'Actualizando...' : 'Publicando...'}</span>
               </>
             ) : (
-              <span>Publicar Anuncio</span>
+              <span>{isEditing ? 'Actualizar Anuncio' : 'Publicar Anuncio'}</span>
             )}
           </motion.button>
 

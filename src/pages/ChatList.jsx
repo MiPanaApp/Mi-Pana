@@ -155,11 +155,16 @@ const SwipeableChat = ({ chat, user, userInteractions, onDelete, onNavigate }) =
               </div>
                 
               {/* ── Fila de Valoración (Solo si aplica) ── */}
+              {/* ── Fila de Valoración (Solo si aplica) ── */}
               {!isMeSeller && (() => {
                 const interaction = userInteractions?.find(i => i.productId === chat.productId);
                 if (!interaction) return null;
 
-                if (interaction.canReview && !interaction.reviewed) {
+                // Reloj Interno Acelerado (3 Minutos)
+                const contactTime = interaction.contactedAt?.toMillis ? interaction.contactedAt.toMillis() : Date.now();
+                const canReviewNow = (Date.now() - contactTime) >= 180000;
+
+                if (canReviewNow && !interaction.reviewed) {
                    return (
                       <div className="mt-2 flex items-center justify-end gap-2 pr-1">
                          <span className="text-[10px] font-black text-[#1A1A3A]/50 uppercase tracking-tighter">

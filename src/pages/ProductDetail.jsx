@@ -501,13 +501,13 @@ export default function ProductDetail() {
 
                   {/* Indicador de posición (Dots flotantes) */}
                   <div className="absolute bottom-6 left-0 w-full flex justify-center z-20 pointer-events-none">
-                     <div className="bg-white/80 backdrop-blur-xl px-4 py-2 rounded-full flex items-center gap-2 shadow-[0_4px_12px_rgba(0,0,0,0.1)] border border-white/50 pointer-events-auto">
+                     <div className="h-7 bg-white/80 backdrop-blur-xl px-3.5 rounded-full flex items-center justify-center gap-2 shadow-[0_4px_12px_rgba(0,0,0,0.1)] border border-white/50 pointer-events-auto">
                         {images.map((_, idx) => (
                            <button
                               key={idx}
                               onClick={() => scrollToIndex(idx)}
                               className={`h-1.5 rounded-full transition-all duration-500 ease-out outline-none ${idx === activeIndex
-                                 ? 'bg-[#1A1A3A] w-6'
+                                 ? 'bg-[#1A1A3A] w-5'
                                  : 'bg-[#1A1A3A]/20 w-1.5'
                                  }`}
                            />
@@ -516,10 +516,10 @@ export default function ProductDetail() {
                   </div>
 
                   {/* Indicador flotante analíticas — derecha del carrusel, alineado horizontalmente con dots */}
-                  <div className="absolute right-4 bottom-6 z-30 flex items-center gap-2">
+                  <div className="absolute right-4 bottom-6 z-30 flex items-center gap-1">
                      {/* Views */}
-                     <div className="flex items-center bg-black/40 backdrop-blur-md rounded-xl px-2.5 py-1.5 gap-1 border border-white/20 shadow-sm">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                     <div className="h-7 flex items-center bg-black/40 backdrop-blur-md rounded-full px-2.5 gap-1 border border-white/20 shadow-sm">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                            <circle cx="12" cy="12" r="3" />
                         </svg>
@@ -530,10 +530,10 @@ export default function ProductDetail() {
 
                      {/* Likes */}
                      <div 
-                        className="flex items-center bg-black/40 backdrop-blur-md rounded-xl px-2.5 py-1.5 gap-1 border border-white/20 cursor-pointer active:scale-90 transition-transform shadow-sm"
+                        className="h-7 flex items-center bg-black/40 backdrop-blur-md rounded-full px-2.5 gap-1 border border-white/20 cursor-pointer active:scale-90 transition-transform shadow-sm"
                         onClick={handleToggleFavorite}
                      >
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill={isFavorite ? "#ef4444" : "none"} stroke={isFavorite ? "#ef4444" : "white"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill={isFavorite ? "#ef4444" : "none"} stroke={isFavorite ? "#ef4444" : "white"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                         </svg>
                         <span className={`text-[10px] font-black leading-none drop-shadow-sm pt-[1px] ${isFavorite ? 'text-red-400' : 'text-white'}`}>
@@ -641,13 +641,20 @@ tlfno contacto: 672 593 950`}
                      {product.name}
                   </h1>
 
-                  {/* Indicador de tiempo dinámico */}
-                  {timeAgo && (
-                     <p className="text-[13px] font-medium text-[#0056B3] flex items-center gap-1.5 opacity-80">
-                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#D90429] flex-shrink-0 shadow-[0_0_8px_rgba(217,4,41,0.4)]" />
-                        {timeAgo}
-                     </p>
-                  )}
+                  {/* Indicador de tiempo dinámico y Edición */}
+                  <div className="flex flex-col gap-1">
+                     {timeAgo && (
+                        <p className="text-[13px] font-medium text-[#0056B3] flex items-center gap-1.5 opacity-80">
+                           <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#D90429] flex-shrink-0 shadow-[0_0_8px_rgba(217,4,41,0.4)]" />
+                           {timeAgo}
+                        </p>
+                     )}
+                     {product?.updatedAt && (
+                        <p className="text-[11px] font-bold text-[#1A1A3A]/40 flex items-center gap-1.5 ml-[13px] italic">
+                           Editado el {(product.updatedAt.toDate ? product.updatedAt.toDate() : new Date(product.updatedAt)).toLocaleDateString('es-ES')} a las {(product.updatedAt.toDate ? product.updatedAt.toDate() : new Date(product.updatedAt)).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                        </p>
+                     )}
+                  </div>
 
                   <div className="flex items-center gap-4 mt-2">
                      <div className="px-5 pt-3 pb-2.5 rounded-[1.2rem] bg-[#1A1A3A] text-white shadow-[inset_2px_4px_8px_rgba(255,255,255,0.25),_0_8px_16px_rgba(26,26,58,0.3)] flex items-baseline gap-0.5">
