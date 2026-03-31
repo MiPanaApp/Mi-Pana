@@ -79,6 +79,13 @@ export default function AdminAdsTab({ searchQuery = '' }) {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
+  const formatCount = (n) => {
+    if (!n) return '0';
+    if (n >= 1000000) return `${(n/1000000).toFixed(1)}M`;
+    if (n >= 1000) return `${(n/1000).toFixed(1)}k`;
+    return n.toString();
+  };
+
   if (loading) return <div className="p-8 text-center text-gray-500 font-bold">Cargando anuncios...</div>;
 
   const filteredAds = ads.filter((ad) => {
@@ -312,6 +319,13 @@ export default function AdminAdsTab({ searchQuery = '' }) {
                            {ad.category}
                          </>
                       ) : 'Otros'}
+                    </span>
+                    <span className="inline-flex items-center gap-1 bg-blue-50/50 border border-blue-100 px-1.5 py-0.5 rounded-lg text-[11px] font-bold text-blue-600 min-w-max">
+                      <Eye className="w-3 h-3" /> {formatCount(ad.views)}
+                    </span>
+                    <span className="inline-flex items-center gap-1 bg-red-50/50 border border-red-100 px-1.5 py-0.5 rounded-lg text-[11px] font-bold text-red-500 min-w-max">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
+                      {formatCount(ad.likes)}
                     </span>
                     <span className="text-[10px] min-w-max font-bold text-gray-400 uppercase bg-transparent px-1 py-0.5 flex items-center">
                       ID: {String(ad.id).substring(0,6)}...

@@ -33,26 +33,39 @@ export default function AdminDashboard() {
     categories: []
   });
   const [loading, setLoading] = useState(true);
+  const [totalViews, setTotalViews] = useState(0);
+  const [totalLikes, setTotalLikes] = useState(0);
+  const [topViewed, setTopViewed] = useState([]);
 
   useEffect(() => {
     async function fetchStats() {
       try {
-        // OPTIMIZACIÓN: Solo contamos documentos (Costo mínimo en Firebase)
         const usersColl = collection(db, "users");
         const productsColl = collection(db, "products");
 
-        const [usersCount, productsCount] = await Promise.all([
+        const [usersCountSnap, productsSnap] = await Promise.all([
           getCountFromServer(usersColl),
-          getCountFromServer(productsColl)
+          getDocs(productsColl)
         ]);
 
-        // Para las categorías, traemos una muestra limitada para no quemar lecturas
-        const qCategories = query(productsColl, limit(500));
-        const productsSnap = await getDocs(qCategories);
+        const productsList = productsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        const totals = productsList.reduce((acc, p) => ({
+          views: acc.views + (p.views || 0),
+          likes: acc.likes + (p.likes || 0)
+        }), { views: 0, likes: 0 });
+
+        setTotalViews(totals.views);
+        setTotalLikes(totals.likes);
+
+        const topViewedData = [...productsList]
+           .sort((a, b) => (b.views || 0) - (a.views || 0))
+           .slice(0, 5);
+        setTopViewed(topViewedData);
 
         const catMap = {};
-        productsSnap.docs.forEach(doc => {
-          const cat = doc.data().category || 'Otros';
+        productsList.forEach(data => {
+          const cat = data.category || 'Otros';
           catMap[cat] = (catMap[cat] || 0) + 1;
         });
 
@@ -62,8 +75,8 @@ export default function AdminDashboard() {
         })).sort((a, b) => b.value - a.value).slice(0, 5);
 
         setStats({
-          totalUsers: usersCount.data().count,
-          totalProducts: productsCount.data().count,
+          totalUsers: usersCountSnap.data().count,
+          totalProducts: productsList.length,
           categories: catData.length > 0 ? catData : [{ name: 'Sin datos', value: 1 }]
         });
         setLoading(false);
@@ -75,10 +88,18 @@ export default function AdminDashboard() {
     fetchStats();
   }, []);
 
+  const formatCount = (n) => {
+    if (!n) return '0';
+    if (n >= 1000000) return `${(n/1000000).toFixed(1)}M`;
+    if (n >= 1000) return `${(n/1000).toFixed(1)}k`;
+    return n.toString();
+  };
+
   const metrics = [
     { id: 1, label: "Panas Activos", val: stats.totalUsers.toLocaleString(), trend: "+5.2%", isPositive: true },
     { id: 2, label: "Ofertas", val: stats.totalProducts.toLocaleString(), trend: "+1.1%", isPositive: true },
-    { id: 3, label: "Chats", val: "89", trend: "-2.0%", isPositive: false },
+    { id: 3, label: "Vistas Totales", val: formatCount(totalViews), trend: "acumulado", isPositive: true },
+    { id: 4, label: "Favoritos (Likes)", val: formatCount(totalLikes), trend: "acumulado", isPositive: true },
   ];
 
   return (
@@ -168,16 +189,20 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 pb-44 lg:pb-6">
 
             {/* Metrics con Efecto Neumórfico Suave */}
-            <div className="xl:col-span-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-              {metrics.map(m => (
+            <div className="xl:col-span-12 grid grid-cols-1 md:grid-cols-4 gap-6">
+              {metrics.map((m, idx) => (
                 <div key={m.id} className="bg-white p-6 rounded-[2rem] shadow-[10px_10px_20px_#ebebeb,-5px_-5px_15px_#ffffff] border border-white/60">
                   <div className="flex justify-between items-center mb-4">
                     <span className="text-gray-400 text-xs font-black uppercase tracking-widest">{m.label}</span>
-                    <span className={`text-[11px] font-black px-2.5 py-1 rounded-lg ${m.isPositive ? 'bg-green-50 text-green-500' : 'bg-red-50 text-red-500'}`}>
+                    <span className={`text-[11px] font-black px-2.5 py-1 rounded-lg ${m.trend === 'acumulado' ? 'bg-[#FFD700]/20 text-yellow-700' : (m.isPositive ? 'bg-green-50 text-green-500' : 'bg-red-50 text-red-500')}`}>
                       {m.trend}
                     </span>
                   </div>
-                  <span className="text-3xl font-black text-gray-800">{loading ? "..." : m.val}</span>
+                  <span className="text-3xl font-black text-gray-800 flex items-center gap-2">
+                    {idx === 2 && <span className="text-xl">👁</span>}
+                    {idx === 3 && <span className="text-xl">❤️</span>}
+                    {loading ? "..." : m.val}
+                  </span>
                 </div>
               ))}
             </div>
@@ -266,6 +291,30 @@ export default function AdminDashboard() {
                 >
                   Ver todos los reportes
                 </button>
+              </div>
+
+              {/* Anuncios Más Populares (Top 5) */}
+              <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-50">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-gray-800 font-black">Top 5 Anuncios 🔥</h3>
+                </div>
+                <div className="space-y-4">
+                  {topViewed.map((ad, idx) => (
+                    <div key={ad.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-2xl transition-all border border-transparent hover:border-gray-100">
+                      <div className="font-black text-gray-300 w-4 text-center">{idx + 1}</div>
+                      <div className="w-10 h-10 bg-gray-100 rounded-xl overflow-hidden shrink-0 shadow-sm border border-gray-200">
+                        {ad.image ? <img src={ad.image} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center">📷</div>}
+                      </div>
+                      <div className="flex flex-col flex-1 min-w-0">
+                        <span className="text-[13px] font-bold text-gray-800 line-clamp-1 truncate">{ad.name}</span>
+                        <div className="flex gap-2.5 mt-1">
+                          <span className="text-[11px] font-black text-blue-500 flex items-center gap-1"><Eye className="w-3 h-3"/> {formatCount(ad.views)}</span>
+                          <span className="text-[11px] font-black text-red-500 flex items-center gap-1">❤️ {formatCount(ad.likes)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* Card de Acción Claymorphism */}

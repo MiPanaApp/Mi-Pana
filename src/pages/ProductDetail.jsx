@@ -11,6 +11,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { useAuth } from '../context/AuthContext';
 import { getOrCreateConversation } from '../lib/chat';
 import { registerInteraction, getProductReviews } from '../lib/reviews';
+import { registerView, incrementLikes, decrementLikes } from '../lib/analytics';
 import { MOCK_PRODUCTS } from '../data/mockProducts';
 import panaLengua from '../assets/pana_lengua.png';
 import { getBadge, BADGE_STYLES } from '../utils/badgeUtils';
@@ -209,6 +210,37 @@ export default function ProductDetail() {
    const isFavorite = (favorites || []).some(id => String(id) === String(productId));
 
    const timeAgo = useTimeAgo(product?.createdAt);
+
+   const handleToggleFavorite = async () => {
+      if (!product) return;
+      const wasLiked = isFavorite;
+      // Actualiza estado global (Local)
+      toggleFavorite(product.id);
+      
+      // Actualiza cuenta en UI optimísticamente
+      setProduct(prev => ({ 
+         ...prev, 
+         likes: wasLiked ? Math.max(0, (prev.likes || 1) - 1) : (prev.likes || 0) + 1 
+      }));
+
+      // Sincroniza con Firestore (Server)
+      try {
+         if (wasLiked) {
+            await decrementLikes(product.id);
+         } else {
+            await incrementLikes(product.id);
+         }
+      } catch (e) {
+         console.error('Error sincronizando like:', e);
+      }
+   };
+
+   // Registrar vista cuando carga el producto único
+   useEffect(() => {
+      if (product?.id) {
+         registerView(product.id);
+      }
+   }, [product?.id]);
 
    // Construir array de imágenes reales: imagen principal + carrusel de Firestore
    const images = product ? [
@@ -413,7 +445,7 @@ export default function ProductDetail() {
                         ) : null}
                         <Share2 className="w-5 h-5" />
                      </button>
-                     <button onClick={() => toggleFavorite(product.id)} className="transition-all active:scale-90 group">
+                     <button onClick={handleToggleFavorite} className="transition-all active:scale-90 group">
                         <Heart className={`w-5 h-5 transition-all duration-300 ${isFavorite ? 'fill-[#D90429] text-[#D90429]' : 'text-[#1A1A3A] group-hover:text-[#D90429] group-hover:fill-[#D90429]/10'}`} />
                      </button>
                   </div>
@@ -480,6 +512,33 @@ export default function ProductDetail() {
                                  }`}
                            />
                         ))}
+                     </div>
+                  </div>
+
+                  {/* Indicador flotante analíticas — derecha del carrusel, alineado horizontalmente con dots */}
+                  <div className="absolute right-4 bottom-6 z-30 flex items-center gap-2">
+                     {/* Views */}
+                     <div className="flex items-center bg-black/40 backdrop-blur-md rounded-xl px-2.5 py-1.5 gap-1 border border-white/20 shadow-sm">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                           <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                           <circle cx="12" cy="12" r="3" />
+                        </svg>
+                        <span className="text-white text-[10px] font-black leading-none drop-shadow-sm pt-[1px]">
+                           {product?.views >= 1000 ? `${(product.views / 1000).toFixed(1)}k` : product?.views || 1}
+                        </span>
+                     </div>
+
+                     {/* Likes */}
+                     <div 
+                        className="flex items-center bg-black/40 backdrop-blur-md rounded-xl px-2.5 py-1.5 gap-1 border border-white/20 cursor-pointer active:scale-90 transition-transform shadow-sm"
+                        onClick={handleToggleFavorite}
+                     >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill={isFavorite ? "#ef4444" : "none"} stroke={isFavorite ? "#ef4444" : "white"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                           <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                        </svg>
+                        <span className={`text-[10px] font-black leading-none drop-shadow-sm pt-[1px] ${isFavorite ? 'text-red-400' : 'text-white'}`}>
+                           {product?.likes >= 1000 ? `${(product.likes / 1000).toFixed(1)}k` : product?.likes || 0}
+                        </span>
                      </div>
                   </div>
                </div>
@@ -569,7 +628,7 @@ tlfno contacto: 672 593 950`}
                            ) : null}
                            <Share2 className="w-5 h-5 md:w-6 md:h-6" />
                         </button>
-                        <button onClick={() => toggleFavorite(product.id)} className="transition-all active:scale-90 group">
+                        <button onClick={handleToggleFavorite} className="transition-all active:scale-90 group">
                            <Heart className={`w-5 h-5 md:w-6 md:h-6 transition-all duration-300 ${isFavorite ? 'fill-[#D90429] text-[#D90429]' : 'text-[#1A1A3A] group-hover:text-[#D90429] group-hover:fill-[#D90429]/10'}`} />
                         </button>
                      </div>
