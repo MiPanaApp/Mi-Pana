@@ -99,11 +99,29 @@ export default function FilterPanel() {
         console.warn('Chequeo de permisos omitido en web:', e);
       }
 
-      await Geolocation.getCurrentPosition();
+      const pos = await Geolocation.getCurrentPosition();
       
-      // Simulación de Geocodificación Inversa Inteligente
-      const detectedCountry = selectedCountry; // Por ahora mantenemos el actual o uno detectado
-      const detectedRegion = detectedCountry === 'ES' ? 'Madrid' : 'Bogotá';
+      // Geocodificación Inversa Real usando API Nominatim (OpenStreetMap)
+      let detectedCountry = selectedCountry;
+      let detectedRegion = '';
+
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&accept-language=es`);
+        const data = await res.json();
+        
+        if (data && data.address) {
+          detectedCountry = data.address.country_code ? data.address.country_code.toUpperCase() : selectedCountry;
+          detectedRegion = data.address.state || data.address.region || data.address.province || data.address.city || '';
+        }
+      } catch (err) {
+        console.warn("Aviso: No se pudo geocodificar, se usa aproximado.", err);
+      }
+
+      // Fallback a simulación si falla o el usuario bloquea el fetch pero sí dio GPS
+      if (!detectedRegion) {
+        detectedCountry = selectedCountry;
+        detectedRegion = detectedCountry === 'ES' ? 'Madrid' : 'Bogotá';
+      }
 
       // 1. Actualizar el País en el Store
       setCountry(detectedCountry);
@@ -202,16 +220,6 @@ export default function FilterPanel() {
                     onChange={(val) => setFilters({ location: { ...locationOptions, level2: val, level3: '' } })}
                     options={level2Options}
                     disabled={!locationOptions.level1}
-                  />
-
-                  {/* Nivel 3: Barrio / Comuna */}
-                  <CustomSelect
-                    icon={HomeIcon}
-                    placeholder={`${countryData.labels.level3} (Opcional)`}
-                    value={locationOptions.level3}
-                    onChange={(val) => setFilters({ location: { ...locationOptions, level3: val } })}
-                    options={level3Options}
-                    disabled={!locationOptions.level2}
                   />
                 </div>
               </section>

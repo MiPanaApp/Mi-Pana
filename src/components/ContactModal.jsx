@@ -117,7 +117,7 @@ export default function ContactModal({ isOpen, onClose }) {
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="relative w-full max-w-lg bg-white rounded-[22px] overflow-hidden shadow-[20px_20px_60px_rgba(163,177,198,0.5),-20px_-20px_60px_rgba(255,255,255,0.8)] border border-white/40"
+            className="relative w-full md:max-w-2xl bg-white rounded-[22px] overflow-hidden shadow-[20px_20px_60px_rgba(163,177,198,0.5),-20px_-20px_60px_rgba(255,255,255,0.8)] border border-white/40"
           >
             <button
               onClick={onClose}

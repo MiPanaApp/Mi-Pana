@@ -34,7 +34,7 @@ export default function InfoModal({ isOpen, onClose, title, content }) {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0 }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="relative w-full md:max-w-2xl bg-white rounded-t-[35px] md:rounded-[30px] shadow-[0_-20px_40px_rgba(0,0,0,0.05),20px_20px_60px_rgba(0,0,0,0.1)] border border-white/50 overflow-hidden h-[85vh] md:h-auto md:max-h-[80vh] flex flex-col"
+            className="relative w-full md:max-w-4xl bg-white rounded-t-[35px] md:rounded-[30px] shadow-[0_-20px_40px_rgba(0,0,0,0.05),20px_20px_60px_rgba(0,0,0,0.1)] border border-white/50 overflow-hidden h-[85vh] md:h-auto md:max-h-[80vh] flex flex-col"
           >
             {/* Header */}
             <div className="p-6 md:p-8 flex items-center justify-between border-b border-gray-100/50">

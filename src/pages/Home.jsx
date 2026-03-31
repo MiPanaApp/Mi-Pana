@@ -111,22 +111,35 @@ export default function Home() {
     // 1. Filtrar por país seleccionado por defecto si no hay filtro manual de ubicación.
     // 2. Orden default (relevance): Priorizar Capital del país, luego más recientes.
     
-    // Filtrado por País: si no hay un filtro de ubicación específico (level1/level2)
-    const isLocalFilterActive = filters.location?.level1 || filters.location?.level2;
-    if (!isLocalFilterActive) {
+    // Siempre filtramos por país activo
+    result = result.filter(p => {
+      const countryId = p.location?.country || p.country || selectedCountry; 
+      const isSp = ['ES', 'España', 'Spain', 'es'].includes(countryId);
+      const isCo = ['CO', 'Colombia', 'co'].includes(countryId);
+      
+      if (selectedCountry === 'ES') return isSp;
+      if (selectedCountry === 'CO') return isCo;
+      return countryId === selectedCountry;
+    });
+
+    // Filtros de Ubicación Estrictos
+    if (filters.location?.level1) {
+      const targetL1 = normalizeText(filters.location.level1);
       result = result.filter(p => {
-        // Tolerancia para data mock o recién creada sin país exacto
-        // Si no tiene país, permitimos que se vea en el país seleccionado actualmente
-        const countryId = p.location?.country || p.country || selectedCountry; 
-        const isSp = ['ES', 'España', 'Spain', 'es'].includes(countryId);
-        const isCo = ['CO', 'Colombia', 'co'].includes(countryId);
-        
-        if (selectedCountry === 'ES') return isSp;
-        if (selectedCountry === 'CO') return isCo;
-        return countryId === selectedCountry;
+        const pL1 = normalizeText(p.location?.level1 || p.state || '');
+        return pL1 === targetL1 || pL1.includes(targetL1) || targetL1.includes(pL1);
       });
     }
 
+    if (filters.location?.level2) {
+      const targetL2 = normalizeText(filters.location.level2);
+      result = result.filter(p => {
+        const pL2 = normalizeText(p.location?.level2 || p.city || '');
+        return pL2 === targetL2 || pL2.includes(targetL2) || targetL2.includes(pL2);
+      });
+    }
+
+    // Filtro por Categoría
     if (activeCategory && activeCategory !== 'Todas') {
       const activeCatNorm = normalizeText(activeCategory);
       result = result.filter(p => normalizeText(p.category) === activeCatNorm);

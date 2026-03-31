@@ -251,7 +251,7 @@ export default function Favorites() {
           }`}
         >
           <Search className="w-4 h-4 md:w-5 md:h-5" />
-          Búsquedas
+          Búsquedas ({recentSearches.length})
         </button>
       </div>
 
