@@ -10,6 +10,8 @@ export const MOCK_PRODUCTS = [
     verified: true,
     whatsapp: "34600000000",
     category: "Servicios", // Servicios
+    searchCount: 15,
+    createdAt: { seconds: Math.floor(Date.now() / 1000) - 86400 * 2 } // 2 days ago (NUEVO)
   },
   {
     id: 102,
@@ -22,6 +24,8 @@ export const MOCK_PRODUCTS = [
     verified: true,
     whatsapp: "34600000000",
     category: "Comida", // Comida
+    searchCount: 8,
+    createdAt: { seconds: Math.floor(Date.now() / 1000) - 86400 * 40 } // Old (TOP BUSCADO ✅)
   },
   {
     id: 103,

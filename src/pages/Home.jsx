@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Sliders, Meh, ArrowUpDown, Pin, Star, Clock, Euro } from 'lucide-react';
+import { Sliders, Meh, ArrowUpDown, Pin, Star, Clock, Euro, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ProductCard from '../components/ProductCard';
 import FilterPanel from '../components/ui/FilterPanel';
@@ -160,6 +160,9 @@ export default function Home() {
           return dateB - dateA;
         }); 
         break;
+      case 'searches': 
+        result.sort((a, b) => (b.searchCount || 0) - (a.searchCount || 0)); 
+        break;
       case 'distance': 
         result.sort((a, b) => (a.distance || 0) - (b.distance || 0)); 
         break;
@@ -233,6 +236,7 @@ export default function Home() {
                   >
                     {[
                       { id: 'distance', label: 'Más cerca', icon: Pin },
+                      { id: 'searches', label: 'Más buscados', icon: Search },
                       { id: 'rating', label: 'Mejores valorados', icon: Star },
                       { id: 'recent', label: 'Más recientes', icon: Clock },
                       { id: 'price_asc', label: 'Menor precio', icon: Euro },

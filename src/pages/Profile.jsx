@@ -519,25 +519,127 @@ export default function Profile() {
             </button>
             {openMenu === 'plataforma' && (
               <div className="mt-2 mx-2 p-2 bg-white/30 rounded-2xl shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3)] flex flex-col gap-1">
-                <button className="flex items-center gap-3 p-3 text-sm font-bold text-[#555577] hover:bg-white/50 rounded-xl transition-colors"><Info size={16}/> ¿Cómo Funciona?</button>
-                <button className="flex items-center gap-3 p-3 text-sm font-bold text-[#555577] hover:bg-white/50 rounded-xl transition-colors"><User size={16}/> Sobre Mi Pana</button>
+                <button 
+                  onClick={() => window.dispatchEvent(new CustomEvent('open-info', { 
+                    detail: { 
+                      title: '¿Cómo funciona?', 
+                      content: `
+                        <div class="space-y-6">
+                          <p class="text-lg font-black text-[#0056B3]">¡Sácale el jugo a Mi Pana! Guía paso a paso 🚀</p>
+                          <p class="text-sm font-medium text-[#555577] leading-relaxed">Bienvenido a tu nueva herramienta de crecimiento. Usar Mi Pana es tan sencillo como enviar un mensaje, pero aquí te explicamos cómo aprovechar cada rincón de la app.</p>
+
+                          <div class="space-y-4 pt-2">
+                            <div class="bg-gray-50 p-4 rounded-2xl border-l-4 border-[#FFD700] shadow-sm">
+                              <p class="font-black text-[#1A1A3A] flex items-center gap-2 mb-1.5"><span class="text-lg text-[#0056B3]">1.</span> Encuentra lo que buscas 🔍</p>
+                              <p class="text-[13px] leading-relaxed text-[#555577]">En la pantalla de Inicio, verás la barra: <b>“¿Qué necesitas, pana?”</b>.<br/><br/><b>Cómo usarla:</b> Escribe una palabra clave (ej. "Cachapas", "Mecánico") y la app te mostrará las mejores opciones cerca de ti.</p>
+                            </div>
+
+                            <div class="bg-gray-50 p-4 rounded-2xl border-l-4 border-[#0056B3] shadow-sm">
+                              <p class="font-black text-[#1A1A3A] flex items-center gap-2 mb-1.5"><span class="text-lg text-[#0056B3]">2.</span> Publica tu primer anuncio ➕</p>
+                              <p class="text-[13px] leading-relaxed text-[#555577]">¿Tienes un talento o un producto? <b>Dale al botón "+" (ANUNCIAR)</b> en el centro del menú inferior.<br/><br/><i class="text-[#0056B3] font-bold">El secreto: Sube fotos claras y describe tu servicio con honestidad. ¡La confianza es la clave!</i></p>
+                            </div>
+
+                            <div class="bg-gray-50 p-4 rounded-2xl border-l-4 border-[#1A1A3A] shadow-sm">
+                              <p class="font-black text-[#1A1A3A] flex items-center gap-2 mb-1.5"><span class="text-lg text-[#0056B3]">3.</span> Gestiona tu negocio 📋</p>
+                              <p class="text-[13px] leading-relaxed text-[#555577]">Si ya publicaste, busca la sección <b>Mis Anuncios</b> en tu perfil. Allí verás cuántas personas han visto tu publicación y podrás editar el precio o pausarla si te quedaste sin stock.</p>
+                            </div>
+
+                            <div class="bg-gray-50 p-4 rounded-2xl border-l-4 border-red-400 shadow-sm">
+                              <p class="font-black text-[#1A1A3A] flex items-center gap-2 mb-1.5"><span class="text-lg text-[#0056B3]">4.</span> Guarda tus favoritos ❤️</p>
+                              <p class="text-[13px] leading-relaxed text-[#555577]">Pulsando el <b>Corazón</b> en cualquier anuncio, se guardará automáticamente en tu sección de Favoritos del menú inferior.</p>
+                            </div>
+
+                            <div class="bg-gray-50 p-4 rounded-2xl border-l-4 border-green-500 shadow-sm">
+                              <p class="font-black text-[#1A1A3A] flex items-center gap-2 mb-1.5"><span class="text-lg text-[#0056B3]">5.</span> Conecta directo por Mensajes 💬</p>
+                              <p class="text-[13px] leading-relaxed text-[#555577]">Dentro de cualquier anuncio verás un botón para contactar. Se abrirá un <b>Chat Privado</b> donde podrás acordar detalles y entregas de forma segura.</p>
+                            </div>
+
+                            <div class="bg-gray-50 p-4 rounded-2xl border-l-4 border-purple-500 shadow-sm">
+                              <p class="font-black text-[#1A1A3A] flex items-center gap-2 mb-1.5"><span class="text-lg text-[#0056B3]">6.</span> Tu Perfil: Tu carta de presentación 👤</p>
+                              <p class="text-[13px] leading-relaxed text-[#555577]">Mantén tu perfil al día y gestiona tu <b>Verificación</b>. Una cuenta verificada vende hasta 3 veces más.</p>
+                            </div>
+                          </div>
+
+                          <div class="mt-6 p-5 bg-[#FFD700]/10 border border-[#FFD700]/20 rounded-[25px] flex items-start gap-4 shadow-sm">
+                            <span class="text-2xl">💡</span>
+                            <div>
+                              <p class="font-black text-[#1A1A3A] text-sm">Consejo Pro:</p>
+                              <p class="text-[12px] text-[#555577] mt-1 font-bold">¡La rapidez en responder te hace destacar! Revisa tus notificaciones para no perderte clientes.</p>
+                            </div>
+                          </div>
+                        </div>
+                      ` 
+                    } 
+                  }))}
+                  className="flex items-center gap-3 p-3 text-sm font-bold text-[#555577] hover:bg-white/50 rounded-xl transition-colors"
+                >
+                  <Info size={16}/> ¿Cómo Funciona?
+                </button>
+                <button 
+                  onClick={() => window.dispatchEvent(new CustomEvent('open-info', { 
+                    detail: { 
+                      title: 'Sobre Mi Pana', 
+                      content: `
+                        <div class="space-y-4">
+                          <p class="text-lg font-black text-[#0056B3]">Mucho más que una App, somos tu Comunidad 🇻🇪</p>
+                          <p><b>¿Qué es Mi Pana?</b> Es ese abrazo que te da un paisano cuando llegas a una ciudad nueva. Es la respuesta a la pregunta: “¿Dónde puedo conseguir lo que necesito?” y la oportunidad de decir: “Aquí estoy, esto es lo que sé hacer”.</p>
+                          <p>Mi Pana nació de una idea simple pero poderosa: <b>que ningún venezolano en el exterior se sienta solo en su emprendimiento</b>. Somos el punto de encuentro donde el talento que salió de nuestras fronteras se encuentra con quienes quieren apoyarlo.</p>
+                          
+                          <div class="bg-gray-50 p-4 rounded-2xl border-l-4 border-[#FFD700] my-4 shadow-sm">
+                            <p class="font-bold text-[#1A1A3A] mb-1">¿De qué va nuestra plataforma?</p>
+                            <p class="text-sm">Aquí no solo intercambiamos productos o servicios; intercambiamos historias de superación.</p>
+                          </div>
+
+                          <ul class="space-y-4">
+                            <li class="flex gap-3">
+                              <span class="text-[#0056B3]">💎</span>
+                              <span><b>Es tu vitrina al mundo:</b> Si cocinas con sazón de hogar, si eres el mejor reparando lo que otros dan por perdido, o si ofreces servicios profesionales con sello de excelencia, este es tu lugar para brillar.</span>
+                            </li>
+                            <li class="flex gap-3">
+                              <span class="text-[#0056B3]">🤝</span>
+                              <span><b>Es confianza compartida:</b> Creamos un espacio seguro donde saber que, detrás de cada anuncio, hay un "Pana" trabajando duro por sus sueños, igual que tú.</span>
+                            </li>
+                            <li class="flex gap-3">
+                              <span class="text-[#0056B3]">💪</span>
+                              <span><b>Es nuestra red de apoyo:</b> Queremos que prosperes. Por eso, nos esfuerzo en conectar tus manos trabajadoras con las necesidades de nuestra gente y de la comunidad que nos recibe.</span>
+                            </li>
+                          </ul>
+
+                          <div class="mt-8 p-5 bg-[#1A1A3A] rounded-[22px] text-white">
+                            <p class="font-black text-lg mb-2">Nuestra Razón de Ser</p>
+                            <p class="text-sm leading-relaxed opacity-90">Creemos que el venezolano no solo emigra, sino que lleva a Venezuela consigo. En cada rincón del mundo hay un emprendedor echando pa' lante, y Mi Pana existe para ser el impulso que necesitas.</p>
+                          </div>
+
+                          <p class="text-center font-black text-xl text-[#0056B3] mt-8 pt-4 border-t border-gray-100">Mi Pana: ¡Echa pa' lante, aquí estamos contigo!</p>
+                        </div>
+                      `
+                    } 
+                  }))}
+                  className="flex items-center gap-3 p-3 text-sm font-bold text-[#555577] hover:bg-white/50 rounded-xl transition-colors"
+                >
+                  <User size={16}/> Sobre Mi Pana
+                </button>
                 <button className="flex items-center gap-3 p-3 text-sm font-bold text-[#555577] hover:bg-white/50 rounded-xl transition-colors"><ShieldCheck size={16}/> Verificación Mi Pana</button>
               </div>
             )}
           </div>
 
-          {/* Soporte Mi Pana */}
-          <div className="group">
-            <button 
-              onClick={() => toggleMenu('soporte')}
-              className="w-full flex items-center justify-between p-5 bg-[#E0E5EC] rounded-2xl shadow-[6px_6px_12px_#b8b9be,-6px_-6px_12px_#ffffff] text-[#1A1A3A] font-bold active:scale-[0.98] transition-all"
-            >
-              <span>Soporte Mi Pana</span>
-              <ChevronDown size={20} className={`transition-transform duration-300 ${openMenu === 'soporte' ? 'rotate-180' : ''}`} />
-            </button>
-            {openMenu === 'soporte' && (
-              <div className="mt-2 mx-2 p-2 bg-white/30 rounded-2xl shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3)] flex flex-col gap-1">
-                <button className="flex items-center gap-3 p-3 text-sm font-bold text-[#555577] hover:bg-white/50 rounded-xl transition-colors"><Phone size={16}/> Contactar</button>
+        <div className="group">
+          <button 
+            onClick={() => toggleMenu('soporte')}
+            className="w-full flex items-center justify-between p-5 bg-[#E0E5EC] rounded-2xl shadow-[6px_6px_12px_#b8b9be,-6px_-6px_12px_#ffffff] text-[#1A1A3A] font-bold active:scale-[0.98] transition-all"
+          >
+            <span>Soporte Mi Pana</span>
+            <ChevronDown size={20} className={`transition-transform duration-300 ${openMenu === 'soporte' ? 'rotate-180' : ''}`} />
+          </button>
+          {openMenu === 'soporte' && (
+            <div className="mt-2 mx-2 p-2 bg-white/30 rounded-2xl shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3)] flex flex-col gap-1">
+              <button 
+                onClick={() => window.dispatchEvent(new CustomEvent('open-contact'))}
+                className="flex items-center gap-3 p-3 text-sm font-bold text-[#555577] hover:bg-white/50 rounded-xl transition-colors"
+              >
+                <Phone size={16}/> Contactar
+              </button>
                 <button 
                   onClick={() => openLegal('terms')}
                   className="flex items-center gap-3 p-3 text-sm font-bold text-[#555577] hover:bg-white/50 rounded-xl transition-colors"
@@ -556,7 +658,58 @@ export default function Profile() {
                 >
                   <Cookie size={16}/> Gestión de Cookies
                 </button>
-                <button className="flex items-center gap-3 p-3 text-sm font-bold text-[#555577] hover:bg-white/50 rounded-xl transition-colors"><ShieldAlert size={16}/> Seguridad</button>
+                <button 
+                  onClick={() => window.dispatchEvent(new CustomEvent('open-info', { 
+                    detail: { 
+                      title: 'Seguridad Mi Pana', 
+                      content: `
+                        <div class="space-y-6">
+                          <p class="text-lg font-black text-[#D90429] flex items-center gap-2">Tu seguridad es nuestra prioridad 🛡️</p>
+                          <p class="text-sm font-medium text-[#555577] leading-relaxed">En Mi Pana, trabajamos para construir un entorno confiable, pero la seguridad la hacemos entre todos.</p>
+
+                          <div class="space-y-4 pt-2">
+                            <div class="bg-blue-50 p-4 rounded-2xl border-l-4 border-[#0056B3] shadow-sm">
+                              <p class="font-black text-[#1A1A3A] text-sm mb-2">1. Consejos para Compradores</p>
+                              <ul class="space-y-3 text-[12px] text-[#555577] leading-relaxed">
+                                <li><b>Verifica:</b> Prioriza anuncios con el sello de <b>"Verificación Mi Pana"</b>.</li>
+                                <li><b>Desconfía:</b> Si un precio es demasiado bajo, investiga más antes de avanzar.</li>
+                                <li><b>Pagos:</b> Recomendamos no adelantar dinero sin contacto previo claro por chat.</li>
+                              </ul>
+                            </div>
+
+                            <div class="bg-orange-50/50 p-4 rounded-2xl border-l-4 border-orange-500 shadow-sm">
+                              <p class="font-black text-[#1A1A3A] text-sm mb-2">2. Consejos para Emprendedores</p>
+                              <ul class="space-y-3 text-[12px] text-[#555577] leading-relaxed">
+                                <li><b>Protección:</b> Nunca compartas contraseñas o datos bancarios sensibles.</li>
+                                <li><b>Entregas:</b> Procura quedar en lugares concurridos y horarios diurnos.</li>
+                              </ul>
+                            </div>
+
+                            <div class="bg-red-50 p-4 rounded-2xl border-l-4 border-[#D90429] shadow-sm">
+                              <p class="font-black text-[#D90429] text-sm mb-2">3. Comportamientos sospechosos 🚩</p>
+                              <p class="text-[11px] text-[#555577] font-bold italic mb-2">Mantente alerta si alguien:</p>
+                              <ul class="space-y-2 text-[12px] text-[#555577] list-disc ml-4">
+                                <li>Te presiona para cerrar el trato fuera de la app inmediatamente.</li>
+                                <li>Envía enlaces extraños o solicita códigos de tu teléfono.</li>
+                                <li>Su lenguaje es inconsistente o evita preguntas directas.</li>
+                              </ul>
+                            </div>
+                          </div>
+
+                          <div class="mt-6 p-5 bg-[#1A1A3A] rounded-[25px] text-white shadow-clay">
+                            <p class="font-black text-lg mb-2">Nuestro compromiso</p>
+                            <p class="text-[12px] leading-relaxed opacity-90">Detectamos actividades inusuales, pero tu reporte es vital. Usa el botón <b>"Reportar"</b> y revisaremos el caso de inmediato.</p>
+                          </div>
+
+                          <p class="text-center font-black text-xs text-[#8888AA] mt-8 italic px-4 leading-relaxed">Navega con confianza, pero siempre con sentido común. ¡En Mi Pana nos cuidamos!</p>
+                        </div>
+                      ` 
+                    } 
+                  }))}
+                  className="flex items-center gap-3 p-3 text-sm font-bold text-[#555577] hover:bg-white/50 rounded-xl transition-colors"
+                >
+                  <ShieldAlert size={16}/> Seguridad
+                </button>
               </div>
             )}
           </div>

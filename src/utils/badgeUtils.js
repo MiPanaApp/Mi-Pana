@@ -15,8 +15,8 @@ export const BADGE_STYLES = {
 // Umbrales configurables
 const THRESHOLDS = {
   topRating:      4.5,   // rating mínimo para ser TOP
-  popularSearches: 3,    // searchCount mínimo para ser POPULAR
-  newDays:         30,   // días desde creación para ser NUEVO
+  popularSearches: 5,    // searchCount mínimo para ser TOP BUSCADO ✅
+  newDays:         15,   // días desde creación para ser NUEVO (reducido de 30 a 15)
 };
 
 function getMillis(dateObj) {
@@ -47,11 +47,11 @@ export function getBadge(product) {
     }
   }
 
-  // 2️⃣ TOP — tiene rating >= 4.5 (datos reales de valoraciones)
-  if ((product.rating || 0) >= THRESHOLDS.topRating) return 'TOP';
-
-  // 3️⃣ POPULAR — tiene searchCount >= 3 (datos reales de búsquedas)
+  // 2️⃣ POPULAR — tiene searchCount >= 5 (datos reales de búsquedas)
   if ((product.searchCount || 0) >= THRESHOLDS.popularSearches) return 'POPULAR';
+
+  // 3️⃣ TOP — tiene rating >= 4.5
+  if ((product.rating || 0) >= THRESHOLDS.topRating) return 'TOP';
 
   return null;
 }
