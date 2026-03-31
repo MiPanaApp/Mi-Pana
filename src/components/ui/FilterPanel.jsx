@@ -230,16 +230,20 @@ export default function FilterPanel() {
                 <div className="grid grid-cols-4 gap-3">
                   {categories.map((cat) => (
                     <button
-                      key={cat.id}
-                      onClick={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
-                      className={`flex flex-col items-center justify-center p-3 rounded-2xl transition-all duration-300 ${
-                        activeCategory === cat.id 
-                        ? 'bg-[#D90429] text-white shadow-[inset_2px_2px_5px_rgba(0,0,0,0.2)]' 
-                        : 'bg-[#E0E5EC] text-[#1A1A3A] hover:text-[#D90429] shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.8)]'
+                      key={cat.name || cat.id}
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setActiveCategory(activeCategory === cat.name ? 'Todas' : cat.name);
+                      }}
+                      className={`flex flex-col items-center justify-center p-3 rounded-2xl transition-all duration-300 w-full ${
+                        activeCategory === cat.name 
+                        ? 'bg-[#D90429] text-white shadow-[inset_3px_3px_6px_rgba(0,0,0,0.3)] scale-95 border border-transparent' 
+                        : 'bg-[#E0E5EC] text-[#1A1A3A] hover:text-[#D90429] shadow-[5px_5px_10px_rgba(163,177,198,0.6),-5px_-5px_10px_rgba(255,255,255,0.8)] border border-white/50'
                       }`}
                     >
-                      <cat.icon size={18} />
-                      <span className="text-[10px] font-bold mt-1 text-center">{cat.name}</span>
+                      <cat.icon size={18} className="mb-0.5" />
+                      <span className="text-[10px] font-bold mt-1 text-center truncate w-full">{cat.name}</span>
                     </button>
                   ))}
                 </div>

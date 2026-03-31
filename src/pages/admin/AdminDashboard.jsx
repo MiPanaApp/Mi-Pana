@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
 import {
   Users, ShoppingBag, MessageSquare, Star, ShieldCheck, AlertCircle,
-  Home, BarChart2, Layers, Activity, Search, Bell, Settings, LogOut, ArrowLeft
+  Home, BarChart2, Layers, Activity, Search, Bell, Settings, LogOut, ArrowLeft, Eye
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { db } from '../../services/firebase';
