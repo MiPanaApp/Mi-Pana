@@ -7,7 +7,7 @@ import logoTexto from '../../assets/solotexto.png';
 import useAuthFlow from '../../hooks/useAuthFlow';
 import { useAuth } from '../../context/AuthContext';
 import { db } from '../../services/firebase';
-import { doc, getDoc, updateDoc, collection, getDocs, query, orderBy, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, setDoc, collection, getDocs, query, orderBy, serverTimestamp } from 'firebase/firestore';
 import { LOCATION_DATA, getCountryNameFromCode, getLevel1Name } from '../../data/locations';
 import { getCategoryIcon, sortCategories } from '../../data/categories';
 import { useCategoryStore } from '../../store/useCategoryStore';
@@ -93,11 +93,11 @@ const Header = forwardRef((props, ref) => {
 
     if (user?.uid && import.meta.env.VITE_AUTH_BYPASS !== 'true') {
       try {
-        await updateDoc(doc(db, "users", user.uid), {
+        await setDoc(doc(db, "users", user.uid), {
           lastViewedCountry: getCountryNameFromCode(countryCode),
           lastViewedRegion: defaultRegion,
           lastViewedAt: serverTimestamp()
-        });
+        }, { merge: true });
       } catch (err) {
         console.error("Error saving smart country pref:", err);
       }
@@ -124,10 +124,10 @@ const Header = forwardRef((props, ref) => {
 
     if (user?.uid && import.meta.env.VITE_AUTH_BYPASS !== 'true') {
       try {
-        await updateDoc(doc(db, "users", user.uid), {
+        await setDoc(doc(db, "users", user.uid), {
           lastViewedRegion: newRegion,
           lastViewedAt: serverTimestamp()
-        });
+        }, { merge: true });
       } catch (err) {
         console.error("Error persisting region change:", err);
       }
