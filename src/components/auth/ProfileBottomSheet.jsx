@@ -1,14 +1,7 @@
-import { useState, useRef, useEffect } from "react";
-import { Camera as CameraIcon, Image as ImageIcon, Scissors, User, Rocket, PartyPopper, ChevronDown, Calendar, Eye, EyeOff } from "lucide-react";
-import { Camera } from "@capacitor/camera";
-import AvatarCropper from "./AvatarCropper";
-import { auth, storage, db } from "../../services/firebase";
-import { ref, uploadString, getDownloadURL } from "firebase/storage";
-import { doc, setDoc } from "firebase/firestore";
-import { createUserWithEmailAndPassword, updateProfile, updateEmail } from "firebase/auth";
-import { useNavigate } from "react-router-dom";
 import { translateFirebaseError } from "../../utils/authErrors";
-import { getLevel1Name } from "../../data/locations";
+import { LOCATION_DATA } from "../../data/locations";
+import { useLocationStore } from "../../store/useLocationStore";
+import { useStore } from "../../store/useStore";
 
 export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
   const [showCropper, setShowCropper] = useState(false);
@@ -16,33 +9,41 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
 
+  const { selectedCountry } = useStore();
+  const { countries, getCountryConfig, init: initLocations } = useLocationStore();
+
   const [formData, setFormData] = useState({
     name: "",
     lastName: "",
     email: "",
     password: "",
     confirmPassword: "",
-    country: "Seleccionar país",
+    country: selectedCountry || "ES",
     region: "",
     birthDate: "",
     gender: ""
   });
+
+  useEffect(() => {
+    const unsub = initLocations();
+    return () => unsub();
+  }, [initLocations, isOpen]); // Re-init when open to ensure fresh data
+
+  // Si cambia el país seleccionado en el store global ANTES de enviarse, lo reflejamos
+  useEffect(() => {
+    if (selectedCountry && !formData.region) {
+      setFormData(prev => ({ ...prev, country: selectedCountry }));
+    }
+  }, [selectedCountry]);
   const [errorMsg, setErrorMsg] = useState("");
   const [showCountrySelect, setShowCountrySelect] = useState(false);
   const [showRegionSelect, setShowRegionSelect] = useState(false);
-  const countries = [
-    { name: "🇪🇸 España", iso: "ES", regionLabel: "Comunidad", regions: ["Andalucía", "Aragón", "Asturias", "Baleares", "Canarias", "Cantabria", "Castilla-La Mancha", "Castilla y León", "Cataluña", "Comunidad Valenciana", "Extremadura", "Galicia", "Madrid", "Murcia", "Navarra", "País Vasco", "La Rioja", "Ceuta", "Melilla"] },
-    { name: "🇺🇸 Estados Unidos", iso: "US", regionLabel: "Estado", regions: ["Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"] },
-    { name: "🇨🇴 Colombia", iso: "CO", regionLabel: "Departamento", regions: ["Amazonas", "Antioquia", "Arauca", "Atlántico", "Bogotá D.C.", "Bolívar", "Boyacá", "Caldas", "Caquetá", "Casanare", "Cauca", "Cesar", "Chocó", "Córdoba", "Cundinamarca", "Guainía", "Guaviare", "Huila", "La Guajira", "Magdalena", "Meta", "Nariño", "Norte de Santander", "Putumayo", "Quindío", "Risaralda", "San Andrés y Providencia", "Santander", "Sucre", "Tolima", "Valle del Cauca", "Vaupés", "Vichada"] },
-    { name: "🇪🇨 Ecuador", iso: "EC", regionLabel: "Provincia", regions: ["Azuay", "Bolívar", "Cañar", "Carchi", "Chimborazo", "Cotopaxi", "El Oro", "Esmeraldas", "Galápagos", "Guayas", "Imbabura", "Loja", "Los Ríos", "Manabí", "Morona Santiago", "Napo", "Orellana", "Pastaza", "Pichinacha", "Santa Elena", "Santo Domingo de los Tsáchilas", "Sucumbíos", "Tungurahua", "Zamora Chinchipe"] },
-    { name: "🇵🇪 Perú", iso: "PE", regionLabel: "Departamento", regions: ["Amazonas", "Ancash", "Apurímac", "Arequipa", "Ayacucho", "Cajamarca", "Callao", "Cusco", "Huancavelica", "Huánuco", "Ica", "Junín", "La Libertad", "Lambayeque", "Lima", "Loreto", "Madre de Dios", "Moquegua", "Pasco", "Piura", "Puno", "San Martín", "Tacna", "Tumbes", "Ucayali"] },
-    { name: "🇨🇱 Chile", iso: "CL", regionLabel: "Región", regions: ["Arica y Parinacota", "Tarapacá", "Antofagasta", "Atacama", "Coquimbo", "Valparaíso", "Metropolitana de Santiago", "O'Higgins", "Maule", "Ñuble", "Biobío", "La Araucanía", "Los Ríos", "Los Lagos", "Aysén", "Magallanes"] },
-    { name: "🇵🇦 Panamá", iso: "PA", regionLabel: "Provincia", regions: ["Bocas del Toro", "Chiriquí", "Coclé", "Colón", "Darién", "Herrera", "Los Santos", "Panamá", "Veraguas", "Panamá Oeste", "Guna Yala", "Emberá-Wounaan", "Ngäbe-Buglé"] },
-    { name: "🇩🇴 Rep. Dominicana", iso: "DO", regionLabel: "Provincia", regions: ["Azua", "Baoruco", "Barahona", "Dajabón", "Distrito Nacional", "Duarte", "El Seibo", "Elias Piña", "Espaillat", "Hato Mayor", "Hermanas Mirabal", "Independencia", "La Altagracia", "La Romana", "La Vega", "María Trinidad Sánchez", "Monseñor Nouel", "Monte Cristi", "Monte Plata", "Pedernales", "Peravia", "Puerto Plata", "Samaná", "Sánchez Ramírez", "San Cristóbal", "San José de Ocoa", "San Juan", "San Pedro de Macorís", "Santiago", "Santiago Rodríguez", "Santo Domingo", "Valverde"] },
-    { name: "🇦🇷 Argentina", iso: "AR", regionLabel: "Provincia", regions: ["Buenos Aires", "Catamarca", "Chaco", "Chubut", "Ciudad de Buenos Aires", "Córdoba", "Corrientes", "Entre Ríos", "Formosa", "Jujuy", "La Pampa", "La Rioja", "Mendoza", "Misiones", "Neuquén", "Río Negro", "Salta", "San Juan", "San Luis", "Santa Cruz", "Santa Fe", "Santiago del Estero", "Tierra del Fuego", "Tucumán"] }
-  ];
 
-  const selectedCountryData = countries.find(c => c.name === formData.country);
+  const selectedCountryData = countries.find(c => c.id === formData.country);
+  
+  // Obtener regiones de locations.js (que tiene la data pesada) usando el ISO code
+  const countryRegionsArr = LOCATION_DATA[formData.country]?.data ? Object.keys(LOCATION_DATA[formData.country].data) : [];
+  const level1Label = getCountryConfig(formData.country)?.level1 || "Región";
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -88,7 +89,7 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
       setErrorMsg("Por favor, sube una foto de perfil.");
       return;
     }
-    if (!formData.name || !formData.lastName || !formData.email || !formData.password || formData.country === "Seleccionar país" || !formData.region || !formData.birthDate || !formData.gender) {
+    if (!formData.name || !formData.lastName || !formData.email || !formData.password || !formData.country || !formData.region || !formData.birthDate || !formData.gender) {
       setErrorMsg("Por favor, completa todos los campos del formulario.");
       return;
     }
@@ -144,7 +145,7 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
         name: formData.name,
         lastName: formData.lastName,
         email: formData.email,
-        country: formData.country,
+        country: formData.country, // Guardamos CÓDIGO ISO (ej: ES, US)
         region: formData.region,
         // Inicializar memoria de país/región con la de residencia
         lastViewedCountry: formData.country,
@@ -320,15 +321,11 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
                 >
                   <div className="flex items-center gap-2 truncate">
                     {selectedCountryData && (
-                      <div className="w-4 h-4 rounded-full overflow-hidden border border-[#003366]/20 bg-[#E0E5EC] flex-shrink-0 relative">
-                        <img 
-                          src={`https://flagcdn.com/w80/${selectedCountryData.iso.toLowerCase()}.png`} 
-                          alt={selectedCountryData.name}
-                          className="w-full h-full object-cover absolute inset-0" 
-                        />
-                      </div>
+                      <span className="text-lg">{selectedCountryData.flag}</span>
                     )}
-                    <span className="text-[13px] font-bold text-[#1A1A3A] truncate">{formData.country}</span>
+                    <span className="text-[13px] font-bold text-[#1A1A3A] truncate">
+                      {selectedCountryData?.name || "Seleccionar país"}
+                    </span>
                   </div>
                   <ChevronDown size={16} className={`text-[#8888AA] transition-transform flex-shrink-0 ${showCountrySelect ? 'rotate-180' : ''}`} />
                 </div>
@@ -336,20 +333,14 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
                 <div className="absolute top-full left-0 right-0 mt-2 bg-[#EDEDF5] rounded-[18px] shadow-[6px_6px_20px_rgba(180,180,210,0.6),-6px_-6px_20px_rgba(255,255,255,0.9)] z-[250] max-h-[180px] overflow-y-auto p-2 scrollbar-hide border border-white/50 animate-[fadeIn_0.2s_ease-out]">
                     {countries.map((c) => (
                       <div 
-                        key={c.name}
+                        key={c.id}
                         onClick={() => { 
-                          setFormData({...formData, country: c.name, region: ""}); 
+                          setFormData({...formData, country: c.id, region: ""}); 
                           setShowCountrySelect(false); 
                         }}
-                        className="px-4 py-2.5 hover:bg-[#E8E8F0] rounded-[12px] text-[13px] font-bold text-[#1A1A3A] flex items-center gap-3 cursor-pointer transition-colors"
+                        className={`px-4 py-2.5 hover:bg-[#E8E8F0] rounded-[12px] text-[13px] font-bold text-[#1A1A3A] flex items-center gap-3 cursor-pointer transition-colors ${formData.country === c.id ? 'bg-[#1A1A3A]/10' : ''}`}
                       >
-                        <div className="w-5 h-5 rounded-full overflow-hidden border border-[#003366]/20 bg-[#E0E5EC] flex-shrink-0 relative">
-                          <img 
-                            src={`https://flagcdn.com/w80/${c.iso.toLowerCase()}.png`} 
-                            alt={c.name}
-                            className="w-full h-full object-cover absolute inset-0" 
-                          />
-                        </div>
+                        <span className="text-xl">{c.flag}</span>
                         <span>{c.name}</span>
                       </div>
                     ))}
@@ -359,7 +350,7 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
 
             <div className="flex-1 relative">
               <label className="text-[11px] font-bold uppercase text-[#666688] block mb-[5px]">
-                {selectedCountryData ? getLevel1Name(selectedCountryData.iso) : "Ciudad"}
+                {level1Label}
               </label>
               <div 
                 onClick={() => { if(selectedCountryData) setShowRegionSelect(!showRegionSelect); setShowCountrySelect(false); }}
@@ -370,15 +361,19 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
               </div>
               {showRegionSelect && selectedCountryData && (
                 <div className="absolute top-full left-0 right-0 mt-2 bg-[#EDEDF5] rounded-[18px] shadow-[6px_6px_20px_rgba(180,180,210,0.6),-6px_-6px_20px_rgba(255,255,255,0.9)] z-[250] max-h-[180px] overflow-y-auto p-2 scrollbar-hide border border-white/50 animate-[fadeIn_0.2s_ease-out]">
-                  {selectedCountryData.regions.map((r) => (
-                    <div 
-                      key={r}
-                      onClick={() => { setFormData({...formData, region: r}); setShowRegionSelect(false); }}
-                      className="px-4 py-2.5 hover:bg-[#E8E8F0] rounded-[12px] text-[13px] font-bold text-[#1A1A3A] cursor-pointer"
-                    >
-                      {r}
-                    </div>
-                  ))}
+                  {countryRegionsArr.length === 0 ? (
+                    <div className="p-4 text-center text-xs text-gray-400">No hay regiones disponibles</div>
+                  ) : (
+                    countryRegionsArr.map((r) => (
+                      <div 
+                        key={r}
+                        onClick={() => { setFormData({...formData, region: r}); setShowRegionSelect(false); }}
+                        className="px-4 py-2.5 hover:bg-[#E8E8F0] rounded-[12px] text-[13px] font-bold text-[#1A1A3A] cursor-pointer"
+                      >
+                        {r}
+                      </div>
+                    ))
+                  )}
                 </div>
               )}
             </div>

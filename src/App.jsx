@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/useAuthStore';
+import { useCategoryStore } from './store/useCategoryStore';
+import { useLocationStore } from './store/useLocationStore';
 
 import ScrollToTop from './components/ScrollToTop';
 import SplashScreen from './components/ui/SplashScreen';
@@ -30,8 +32,15 @@ function App() {
 
   // Inicializar el listener de Firebase Auth al arrancar la app
   useEffect(() => {
-    const unsubscribe = init();
-    return () => unsubscribe(); // Limpiar al desmontar
+    const unsubAuth = init();
+    const unsubCats = useCategoryStore.getState().init();
+    const unsubLocations = useLocationStore.getState().init();
+    
+    return () => {
+      unsubAuth();
+      unsubCats();
+      unsubLocations();
+    };
   }, [init]);
 
   return (

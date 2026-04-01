@@ -4,19 +4,7 @@ import {
 } from 'react-icons/fi';
 import { Dumbbell, BookCheck, CirclePlus, Scale } from 'lucide-react';
 
-export const CATEGORIES = [
-  { id: "Comida", name: "Comida", icon: FiCoffee },
-  { id: "Envios", name: "Envios", icon: FiPackage },
-  { id: "Inmobiliaria", name: "Inmobiliaria", icon: FiHome },
-  { id: "Formación", name: "Formación", icon: BookCheck },
-  { id: "Deporte", name: "Deporte", icon: Dumbbell },
-  { id: "Empleo", name: "Empleo", icon: FiBriefcase },
-  { id: "Servicios", name: "Servicios", icon: FiTool },
-  { id: "Ventas", name: "Ventas", icon: FiShoppingBag },
-  { id: "Legal", name: "Legal", icon: Scale },
-  { id: "Salud", name: "Salud", icon: FiHeart },
-  { id: "Otros", name: "Otros", icon: CirclePlus },
-];
+export const CATEGORIES = []; // Deprecated: Use useCategoryStore for dynamic categories.
 
 export const getCategoryIcon = (id) => {
   const cat = CATEGORIES.find(c => c.id === id || c.name === id);

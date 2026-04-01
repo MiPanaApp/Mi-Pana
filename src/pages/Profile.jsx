@@ -14,12 +14,11 @@ import { doc, setDoc, collection, query, where, onSnapshot, deleteDoc, updateDoc
 import { db, storage, auth } from '../services/firebase';
 import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { FcGoogle } from 'react-icons/fc';
-import { useStore } from '../store/useStore';
-import { LOCATION_DATA } from '../data/locations';
-import AvatarCropper from '../components/auth/AvatarCropper';
 import { uploadString } from 'firebase/storage';
 import { LegalData } from '../data/LegalData';
 import LegalDrawer from '../components/LegalDrawer';
+import { useLocationStore } from '../store/useLocationStore';
+import { getCountryNameFromCode } from '../data/locations';
 
 export default function Profile() {
   const { userData, currentUser, userAvatar, logout, isAdmin } = useAuth();
@@ -49,7 +48,24 @@ export default function Profile() {
 
   const [legalDocs, setLegalDocs] = useState({ isOpen: false, title: '', content: '' });
 
-  const { selectedCountry } = useStore();
+  const { countries, getCountryConfig, init: initLocations } = useLocationStore();
+
+  useEffect(() => {
+    const unsub = initLocations();
+    return () => unsub();
+  }, [initLocations]);
+
+  // Resolviendo datos de país para mostrar
+  let userCountryCode = userData?.country || 'ES';
+  
+  // Normalizador para migraciones: Si el country guardado es el NOMBRE largo, sacamos el ISO code
+  if (userCountryCode.length > 3 || userCountryCode.includes(' ')) {
+    userCountryCode = getCountryCodeFromName(userCountryCode);
+  }
+
+  const userCountryInfo = countries.find(c => c.id === userCountryCode);
+  const countryDisplayName = userCountryInfo ? `${userCountryInfo.flag} ${userCountryInfo.name}` : getCountryNameFromCode(userCountryCode);
+  const regionLabel = getCountryConfig(userCountryCode)?.level1 || 'Comunidad / Región';
 
   const isGoogleLogin = currentUser?.providerData?.some(provider => provider.providerId === 'google.com');
 
@@ -464,11 +480,11 @@ export default function Profile() {
             <HeaderInfoItem 
               icon={Globe} 
               label="País" 
-              value={userData?.country || 'No especificado'} 
+              value={countryDisplayName} 
             />
             <HeaderInfoItem 
               icon={MapPin} 
-              label="Comunidad / Región" 
+              label={regionLabel} 
               value={userData?.region} 
               actionLabel="Editar"
               onAction={() => setShowLocationModal(true)} 
@@ -797,43 +813,27 @@ export default function Profile() {
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="w-full max-w-sm bg-[#E0E5EC] rounded-[2rem] p-6 shadow-[20px_20px_60px_#bebebe,-20px_-20px_60px_#ffffff] relative z-10 flex flex-col max-h-[85vh]"
+              className="w-full max-w-sm bg-[#E0E5EC] rounded-[2rem] p-6 shadow-[20px_20px_60px_#bebebe,-20px_-20px_60px_#ffffff] relative z-10 flex flex-col max-h-[85vh] overflow-hidden"
             >
-              <button 
-                onClick={() => setShowLocationModal(false)}
-                className="absolute right-4 top-4 w-10 h-10 flex items-center justify-center rounded-full bg-[#E0E5EC] text-[#1A1A3A] hover:text-[#D90429] shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.8)] active:shadow-[inset_2px_2px_4px_rgba(163,177,198,0.4)] transition-all"
-              >
-                <X size={20} />
-              </button>
-              
-              <h2 className="text-xl font-black text-[#1A1A3A] mb-1 pl-1">Selecciona Ubicación</h2>
-              <p className="text-xs font-bold text-[#8888AA] mb-5 pl-1">
-                Según el país seleccionado ({
-                  {
-                    'ES': 'España',
-                    'CO': 'Colombia',
-                    'US': 'Estados Unidos',
-                    'CL': 'Chile',
-                    'PA': 'Panamá',
-                    'PE': 'Perú',
-                    'EC': 'Ecuador',
-                    'DO': 'República Dominicana',
-                    'AR': 'Argentina'
-                  }[selectedCountry] || selectedCountry
-                })
-              </p>
-              
-              <div className="flex-1 overflow-y-auto custom-scrollbar px-2 -mx-2 space-y-3 pb-4 pt-1">
-                {Object.keys((LOCATION_DATA[selectedCountry] || LOCATION_DATA['ES']).data).map((regionName) => (
-                  <button
-                    key={regionName}
-                    onClick={() => handleRegionSelect(regionName)}
-                    className="w-full flex items-center justify-between p-4 bg-[#E0E5EC] rounded-2xl shadow-[5px_5px_10px_#b8b9be,-5px_-5px_10px_#ffffff] active:shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.7)] text-[#1A1A3A] font-bold transition-all text-sm group"
-                  >
-                    {regionName}
-                    <div className="w-2 h-2 rounded-full bg-[#0056B3] opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </button>
-                ))}
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-black text-[#1A1A3A]">{regionLabel}</h3>
+                <button onClick={() => setShowLocationModal(false)} className="w-10 h-10 rounded-full bg-[#E0E5EC] shadow-[4px_4px_8px_#b8b9be,-4px_-4px_8px_#ffffff] flex items-center justify-center text-gray-400"><X size={20} /></button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                <div className="grid grid-cols-1 gap-3">
+                  {LOCATION_DATA[userCountryCode]?.data ? Object.keys(LOCATION_DATA[userCountryCode].data).map((r) => (
+                    <button
+                      key={r}
+                      onClick={() => handleRegionSelect(r)}
+                      className={`w-full p-4 rounded-2xl text-left font-bold transition-all ${userData?.region === r ? 'bg-[#1A1A3A] text-white shadow-lg' : 'bg-[#E0E5EC] text-[#1A1A3A] shadow-[4px_4px_8px_#b8b9be,-4px_-4px_8px_#ffffff] hover:scale-[1.02]'}`}
+                    >
+                      {r}
+                    </button>
+                  )) : (
+                    <p className="text-sm text-center text-gray-400 p-4 font-bold">No hay regiones configuradas para este país.</p>
+                  )}
+                </div>
               </div>
             </motion.div>
           </div>

@@ -3,9 +3,11 @@ import { collection, query, orderBy, limit, getDocs, where } from 'firebase/fire
 import { db } from '../../services/firebase';
 import { Star, TrendingUp, Search, Trophy, Flame } from 'lucide-react';
 
-const CATEGORIES = ['Todas', 'Comida', 'Belleza', 'Tecnología', 'Servicios', 'Envíos', 'Ropa', 'Legal', 'Salud'];
+import { useCategoryStore } from '../../store/useCategoryStore';
 
 export default function AdminStatsTab() {
+  const { categories } = useCategoryStore();
+  const dbCategories = ['Todas', ...categories.map(c => c.label)];
   const [topRated, setTopRated] = useState([]);
   const [topSearched, setTopSearched] = useState([]);
   const [selectedCat, setSelectedCat] = useState('Todas');
@@ -65,7 +67,7 @@ export default function AdminStatsTab() {
       </div>
 
       <div className="flex gap-2 overflow-x-auto pb-2 mb-6 hide-scrollbar">
-        {CATEGORIES.map(cat => (
+        {dbCategories.map(cat => (
           <button key={cat} onClick={() => setSelectedCat(cat)}
             className={`px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap transition-all ${selectedCat === cat ? 'bg-[#FFD700] text-black shadow-md' : 'bg-white text-gray-400 border border-gray-100'}`}>
             {cat}

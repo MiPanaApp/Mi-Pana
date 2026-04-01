@@ -8,9 +8,7 @@ import { useStore } from '../../store/useStore';
 import { LOCATION_DATA } from '../../data/locations';
 import { db } from '../../services/firebase';
 import { collection, getDocs } from 'firebase/firestore';
-import { CATEGORIES as DEFAULT_CATEGORIES, getCategoryIcon, sortCategories } from '../../data/categories';
-
-// Las categorías se cargan dinámicamente desde Firestore
+import { useCategoryStore } from '../../store/useCategoryStore';
 
 export default function FilterPanel() {
   const navigate = useNavigate();
@@ -26,26 +24,7 @@ export default function FilterPanel() {
     setRegion 
   } = useStore();
   const [isLocating, setIsLocating] = useState(false);
-  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
-
-  useEffect(() => {
-    const fetch = async () => {
-      try {
-        const snap = await getDocs(collection(db, 'categories'));
-        if (!snap.empty) {
-          const cats = snap.docs.map(d => ({
-            id: d.data().name,
-            name: d.data().name,
-            icon: getCategoryIcon(d.data().name)
-          }));
-          setCategories(sortCategories(cats));
-        }
-      } catch (err) {
-        console.error("Error fetching categories:", err);
-      }
-    };
-    fetch();
-  }, []);
+  const { categories } = useCategoryStore();
 
   const locationOptions = filters?.location || { level1: '', level2: '', level3: '' };
 
@@ -234,14 +213,14 @@ export default function FilterPanel() {
                 <h3 className="text-sm font-bold text-[#1A1A3A]/60 tracking-widest ml-1 mb-4">Categoría</h3>
                 <div className="grid grid-cols-4 gap-3">
                   {categories.map((cat) => {
-                    const isSelected = activeCategory === cat.name;
+                    const isSelected = activeCategory === cat.label;
                     return (
                       <button
-                        key={cat.name || cat.id}
+                        key={cat.id}
                         type="button"
                         onClick={(e) => {
                           e.preventDefault();
-                          setActiveCategory(isSelected ? 'Todas' : cat.name);
+                          setActiveCategory(isSelected ? 'Todas' : cat.label);
                         }}
                         className={`group flex flex-col items-center justify-center p-3 rounded-2xl transition-all duration-300 w-full border ${
                           isSelected 
@@ -249,8 +228,11 @@ export default function FilterPanel() {
                           : 'bg-[#E0E5EC] text-[#1A1A3A] hover:bg-[#D90429] hover:text-white shadow-[5px_5px_10px_rgba(163,177,198,0.6),-5px_-5px_10px_rgba(255,255,255,0.8)] border-white/50'
                         }`}
                       >
-                        <cat.icon size={18} className={`mb-0.5 transition-colors ${isSelected ? 'text-white' : 'text-[#1A1A3A] group-hover:text-white'}`} />
-                        <span className={`text-[10px] font-bold mt-1 text-center truncate w-full transition-colors ${isSelected ? 'text-white' : 'text-[#1A1A3A] group-hover:text-white'}`}>{cat.name}</span>
+                        {(() => {
+                          const IconComp = cat.iconComponent;
+                          return <IconComp size={18} className={`mb-0.5 transition-colors ${isSelected ? 'text-white' : 'text-[#1A1A3A] group-hover:text-white'}`} />;
+                        })()}
+                        <span className={`text-[10px] font-bold mt-1 text-center truncate w-full transition-colors ${isSelected ? 'text-white' : 'text-[#1A1A3A] group-hover:text-white'}`}>{cat.label}</span>
                       </button>
                     );
                   })}

@@ -1,27 +1,11 @@
 import { db } from '../services/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { sortCategories } from '../data/categories';
-import { getWords, generateSubstrings } from '../utils/textUtils';
-
-const DEFAULT_CATEGORIES = ["Comida", "Envios", "Inmobiliaria", "Formación", "Deporte", "Empleo", "Servicios", "Ventas", "Legal", "Salud", "Otros"];
+import { useCategoryStore } from '../store/useCategoryStore';
 
 export default function OfferForm() {
   const [step, setStep] = useState(1);
-  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
-
-  useEffect(() => {
-    const fetch = async () => {
-      try {
-        const snap = await getDocs(collection(db, 'categories'));
-        if (!snap.empty) {
-          setCategories(sortCategories(snap.docs.map(d => d.data().name)));
-        }
-      } catch (err) {
-        console.error("Error fetching categories:", err);
-      }
-    };
-    fetch();
-  }, []);
+  const { categories } = useCategoryStore();
 
   const { register, handleSubmit, watch, formState: { errors }, setValue } = useForm({
     defaultValues: JSON.parse(localStorage.getItem('mipana-draft')) || {}
@@ -91,11 +75,11 @@ export default function OfferForm() {
             <div className="grid grid-cols-2 gap-3">
               {categories.map(c => (
                 <div 
-                  key={c}
-                  onClick={() => setValue('category', c)}
-                  className={`p-4 rounded-xl border-2 text-center font-bold transition-all cursor-pointer ${formValues.category === c ? 'border-pana-yellow bg-pana-gold/20 text-pana-blue' : 'border-gray-200 text-gray-500 bg-white'}`}
+                   key={c.id}
+                   onClick={() => setValue('category', c.label)}
+                   className={`p-4 rounded-xl border-2 text-center font-bold transition-all cursor-pointer ${formValues.category === c.label ? 'border-pana-yellow bg-pana-gold/20 text-pana-blue' : 'border-gray-200 text-gray-500 bg-white'}`}
                 >
-                  {c}
+                   {c.label}
                 </div>
               ))}
             </div>

@@ -4,10 +4,10 @@ import { X, SlidersHorizontal, Star } from 'lucide-react';
 import { db } from '../../services/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 
-const DEFAULT_CATEGORIES = ["Comida", "Envios", "Inmobiliaria", "Formación", "Deporte", "Empleo", "Servicios", "Ventas", "Legal", "Salud", "Otros"];
+import { useCategoryStore } from '../../store/useCategoryStore';
 
 export default function AdvancedSearchPanel({ isOpen, onClose }) {
-  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
+  const { categories } = useCategoryStore();
   const [filters, setFilters] = useState({
     country: '',
     category: '',
@@ -16,19 +16,6 @@ export default function AdvancedSearchPanel({ isOpen, onClose }) {
     minRating: 0
   });
 
-  useEffect(() => {
-    const fetch = async () => {
-      try {
-        const snap = await getDocs(collection(db, 'categories'));
-        if (!snap.empty) {
-          setCategories(snap.docs.map(d => d.data().name));
-        }
-      } catch (err) {
-        console.error("Error fetching categories:", err);
-      }
-    };
-    fetch();
-  }, []);
 
   return (
     <AnimatePresence>
@@ -91,7 +78,7 @@ export default function AdvancedSearchPanel({ isOpen, onClose }) {
                   >
                     <option value="">Todas las categorías</option>
                     {categories.map(c => (
-                      <option key={c} value={c}>{c}</option>
+                      <option key={c.id} value={c.label}>{c.label}</option>
                     ))}
                   </select>
                </div>

@@ -1,6 +1,6 @@
 import { Search, Menu, X, Home, Heart as LucideHeart, PlusCircle, MessageCircle, User as LucideUser } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion';
-import { useState, useRef, useEffect, forwardRef } from 'react';
+import { useState, useRef, useEffect, forwardRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
 import logoTexto from '../../assets/solotexto.png';
@@ -9,8 +9,9 @@ import { useAuth } from '../../context/AuthContext';
 import { db } from '../../services/firebase';
 import { doc, getDoc, updateDoc, collection, getDocs, query, orderBy, serverTimestamp } from 'firebase/firestore';
 import { LOCATION_DATA, getCountryNameFromCode, getLevel1Name } from '../../data/locations';
-import { CATEGORIES as DEFAULT_CATEGORIES, getCategoryIcon, sortCategories } from '../../data/categories';
-import { FiPlus } from 'react-icons/fi';
+import { getCategoryIcon, sortCategories } from '../../data/categories';
+import { useCategoryStore } from '../../store/useCategoryStore';
+import { FiPlus, FiPlusCircle } from 'react-icons/fi';
 import { FcGoogle } from 'react-icons/fc';
 import { ChevronDown as LucideChevronDown } from 'lucide-react';
 
@@ -26,7 +27,7 @@ const COUNTRY_INFO = {
   'AR': { flag: '🇦🇷', defaultRegion: 'Buenos Aires' }
 };
 
-// Las categorías se cargan dinámicamente desde Firestore en el useEffect del componente
+// Las categorías se cargan dinámicamente desde useCategoryStore
 
 const Header = forwardRef((props, ref) => {
   const navigate = useNavigate();
@@ -56,45 +57,20 @@ const Header = forwardRef((props, ref) => {
 
   const { currentUser: user, userData, userAvatar } = useAuth();
   const [userName, setUserName] = useState('');
-  const [dbCategories, setDbCategories] = useState(DEFAULT_CATEGORIES);
+  
+  const { categories } = useCategoryStore();
 
-  // Scroll categories to left on mount or when categories change
+  const dbCategories = useMemo(() => [
+    { id: 'Todas', name: 'Todas', iconComponent: FiPlusCircle },
+    ...categories.map(c => ({ id: c.label, name: c.label, iconComponent: c.iconComponent }))
+  ], [categories]);
+
+  // Scroll categories to left only when count change or on mount
   useEffect(() => {
     if (categoriesRef.current) {
       categoriesRef.current.scrollLeft = 0;
     }
-  }, [dbCategories]);
-
-  // Fetch categories from Firestore
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const q = query(collection(db, 'categories'), orderBy('name', 'asc'));
-        const querySnapshot = await getDocs(q);
-        if (!querySnapshot.empty) {
-          const cats = querySnapshot.docs.map(doc => ({
-            id: doc.data().name, // Usamos el nombre como ID para el filtro
-            name: doc.data().name,
-            icon: getCategoryIcon(doc.data().name)
-          }));
-          
-          // Prepend "Todas" category
-          setDbCategories([
-            { id: 'Todas', name: 'Todas', icon: FiPlus },
-            ...sortCategories(cats)
-          ]);
-        }
-      } catch (err) {
-        console.error("Error fetching categories for header:", err);
-        // Fallback with "Todas" prepended to default categories
-        setDbCategories([
-          { id: 'Todas', name: 'Todas', icon: FiPlus },
-          ...sortCategories(DEFAULT_CATEGORIES)
-        ]);
-      }
-    };
-    fetchCategories();
-  }, []);
+  }, [dbCategories.length]);
 
 
   const isGoogleLogin = user?.providerData?.some(provider => provider.providerId === 'google.com');
@@ -426,7 +402,7 @@ const Header = forwardRef((props, ref) => {
                   else if (index % 3 === 1) iconColor = '#FFB400'; // Yellow
                   else iconColor = '#D90429';                      // Red
 
-                  const Icon = cat.icon || FiPlus;
+                  const Icon = cat.iconComponent || FiPlusCircle;
 
                   return (
                     <motion.button

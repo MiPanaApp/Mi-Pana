@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
 import {
-  Users, ShoppingBag, MessageSquare, Star, ShieldCheck, AlertCircle,
-  Home, BarChart2, Layers, Activity, Search, Bell, Settings, LogOut, ArrowLeft, Eye
+  Users, ShoppingBag, MessageSquare, Star, ShieldCheck, Heart,
+  Home, BarChart2, Layers, Activity, Search, Bell, Settings, LogOut, ArrowLeft, Eye, Globe
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { db } from '../../services/firebase';
@@ -12,6 +12,8 @@ import { collection, getDocs, query, limit, getCountFromServer } from 'firebase/
 import AdminUsersTab from '../../components/admin/AdminUsersTab';
 import AdminAdsTab from '../../components/admin/AdminAdsTab';
 import AdminStatsTab from '../../components/admin/AdminStatsTab';
+import AdminCategoriesTab from '../../components/admin/AdminCategoriesTab';
+import AdminCountriesTab from '../../components/admin/AdminCountriesTab';
 
 // Colores alineados a la marca: Amarillo Mi Pana, Morado Admin y acentos
 const COLORS = ['#FFD700', '#8B5CF6', '#06B6D4', '#F43F5E', '#10B981'];
@@ -107,7 +109,7 @@ export default function AdminDashboard() {
 
       {/* Mobile Bottom Navigation - Estilo Claymorphism Soft */}
       <div className="lg:hidden fixed bottom-6 left-4 right-4 bg-white/80 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] z-[100] flex items-center justify-around p-4 rounded-[2.5rem] border border-white">
-        {['overview', 'usuarios', 'anuncios', 'reportes', 'estadisticas'].map((tab) => (
+        {['overview', 'usuarios', 'anuncios', 'categorias', 'paises', 'estadisticas'].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -116,7 +118,8 @@ export default function AdminDashboard() {
             {tab === 'overview' && <Home className="w-6 h-6" />}
             {tab === 'usuarios' && <Users className="w-6 h-6" />}
             {tab === 'anuncios' && <ShoppingBag className="w-6 h-6" />}
-            {tab === 'reportes' && <AlertCircle className="w-6 h-6" />}
+            {tab === 'categorias' && <Layers className="w-6 h-6" />}
+            {tab === 'paises' && <Globe className="w-6 h-6" />}
             {tab === 'estadisticas' && <BarChart2 className="w-6 h-6" />}
           </button>
         ))}
@@ -133,7 +136,8 @@ export default function AdminDashboard() {
             { id: 'overview', icon: Home },
             { id: 'usuarios', icon: Users },
             { id: 'anuncios', icon: ShoppingBag },
-            { id: 'reportes', icon: AlertCircle },
+            { id: 'categorias', icon: Layers },
+            { id: 'paises', icon: Globe },
             { id: 'estadisticas', icon: BarChart2 }
           ].map((item) => (
             <button
@@ -178,10 +182,12 @@ export default function AdminDashboard() {
                 className="bg-transparent border-none outline-none text-sm font-bold text-gray-600 w-full"
               />
             </div>
-            <button className="relative w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-gray-100 text-gray-400 hover:text-[#FFD700] transition-colors">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-3 right-3 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-            </button>
+            {activeTab === 'overview' && (
+              <button className="relative w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-gray-100 text-gray-400 hover:text-[#FFD700] transition-colors">
+                <Bell className="w-5 h-5" />
+                <span className="absolute top-3 right-3 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -199,8 +205,8 @@ export default function AdminDashboard() {
                     </span>
                   </div>
                   <span className="text-3xl font-black text-gray-800 flex items-center gap-2">
-                    {idx === 2 && <span className="text-xl">👁</span>}
-                    {idx === 3 && <span className="text-xl">❤️</span>}
+                    {idx === 2 && <Eye className="w-8 h-8 text-blue-500" />}
+                    {idx === 3 && <Heart className="w-8 h-8 text-red-500" fill="currentColor" />}
                     {loading ? "..." : m.val}
                   </span>
                 </div>
@@ -217,7 +223,7 @@ export default function AdminDashboard() {
                     <option>Este mes</option>
                   </select>
                 </div>
-                <div className="h-72 w-full">
+                <div className="h-72 min-h-[288px] w-full min-w-0">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={BARDATA}>
                       <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#A3A8B8', fontSize: 12, fontWeight: 700 }} />
@@ -233,8 +239,8 @@ export default function AdminDashboard() {
                 {/* Categorías (PieChart) */}
                 <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-50 flex flex-col items-center">
                   <h3 className="text-gray-800 font-black w-full mb-4">Top Categorías</h3>
-                  <div className="h-48 w-full">
-                    <ResponsiveContainer>
+                  <div className="h-48 min-h-[192px] w-full min-w-0">
+                    <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie data={stats.categories} innerRadius={60} outerRadius={80} paddingAngle={8} dataKey="value" stroke="none">
                           {stats.categories.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
@@ -262,37 +268,8 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Columna Derecha: Reportes Críticos */}
+            {/* Columna Derecha: Popularidad & Soporte */}
             <div className="xl:col-span-4 space-y-6">
-              <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-50">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-gray-800 font-black">Alertas Recientes</h3>
-                  <div className="w-2 h-2 bg-red-500 rounded-full animate-ping"></div>
-                </div>
-                <div className="space-y-4">
-                  {[
-                    { id: 1, name: "Iphone 13 Pro Max", reason: "Posible Estafa", color: "text-red-500" },
-                    { id: 2, name: "Zapatos Nike", reason: "Duplicado", color: "text-orange-500" },
-                  ].map(r => (
-                    <div key={r.id} className="flex items-center gap-4 p-3 hover:bg-gray-50 rounded-2xl transition-all cursor-pointer border border-transparent hover:border-gray-100">
-                      <div className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center text-red-500">
-                        <AlertCircle className="w-5 h-5" />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-bold text-gray-800">{r.name}</span>
-                        <span className={`text-[11px] font-black uppercase ${r.color}`}>{r.reason}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <button
-                  onClick={() => setActiveTab('reportes')}
-                  className="w-full mt-6 py-4 bg-gray-50 text-gray-400 font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-[#FFD700] hover:text-black transition-all"
-                >
-                  Ver todos los reportes
-                </button>
-              </div>
-
               {/* Anuncios Más Populares (Top 5) */}
               <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-50">
                 <div className="flex justify-between items-center mb-6">
@@ -332,13 +309,10 @@ export default function AdminDashboard() {
         )}
 
         {/* Mantenemos tus condicionales de tabs igual para no romper la lógica */}
-        {activeTab === 'reportes' && (
-          <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-50 h-full">
-            {/* ... Tu lógica de reportes se mantiene igual ... */}
-          </div>
-        )}
         {activeTab === 'usuarios' && <AdminUsersTab searchQuery={globalSearch} />}
         {activeTab === 'anuncios' && <AdminAdsTab searchQuery={globalSearch} />}
+        {activeTab === 'categorias' && <AdminCategoriesTab />}
+        {activeTab === 'paises' && <AdminCountriesTab />}
         {activeTab === 'estadisticas' && <AdminStatsTab />}
 
         </div>
