@@ -5,16 +5,15 @@ import { ShoppingBag, Trash2, EyeOff, Eye, Filter, Search, X, Info, Copy, Check,
 import { CATEGORIES } from '../../data/categories';
 
 const countryData = {
-  ES: { name: 'España', flag: '🇪🇸' },
-  US: { name: 'Estados Unidos', flag: '🇺🇸' },
-  CO: { name: 'Colombia', flag: '🇨🇴' },
-  EC: { name: 'Ecuador', flag: '🇪🇨' },
-  PA: { name: 'Panamá', flag: '🇵🇦' },
-  PE: { name: 'Perú', flag: '🇵🇪' },
-  DO: { name: 'República Dominicana', flag: '🇩🇴' },
-  CL: { name: 'Chile', flag: '🇨🇱' },
-  AR: { name: 'Argentina', flag: '🇦🇷' },
-  VE: { name: 'Venezuela', flag: '🇻🇪' }
+  ES: { name: 'España' },
+  US: { name: 'Estados Unidos' },
+  CO: { name: 'Colombia' },
+  EC: { name: 'Ecuador' },
+  PA: { name: 'Panamá' },
+  PE: { name: 'Perú' },
+  DO: { name: 'República Dominicana' },
+  CL: { name: 'Chile' },
+  AR: { name: 'Argentina' }
 };
 
 export default function AdminAdsTab({ searchQuery = '' }) {
@@ -232,7 +231,16 @@ export default function AdminAdsTab({ searchQuery = '' }) {
                 >
                   <span className="text-sm font-bold text-gray-700 select-none flex items-center gap-2">
                     {filters.country && countryData[filters.country] ? (
-                      <><span className="text-base">{countryData[filters.country].flag}</span> {countryData[filters.country].name}</>
+                      <>
+                        <div className="w-5 h-5 rounded-full overflow-hidden border border-gray-200 bg-gray-50 flex-shrink-0 relative">
+                          <img 
+                            src={`https://flagcdn.com/w80/${filters.country.toLowerCase()}.png`} 
+                            alt={filters.country}
+                            className="w-full h-full object-cover absolute inset-0" 
+                          />
+                        </div>
+                        {countryData[filters.country].name}
+                      </>
                     ) : filters.country ? filters.country : 'Todos los países'}
                   </span>
                   <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${openSelect === 'country' ? 'rotate-180' : ''}`} />
@@ -251,7 +259,13 @@ export default function AdminAdsTab({ searchQuery = '' }) {
                         onClick={() => { handleFilterChange('country', code); setOpenSelect(null); }}
                         className="w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-gray-50 transition-colors"
                       >
-                        <span className="text-base">{data.flag}</span>
+                        <div className="w-6 h-6 rounded-full overflow-hidden border border-gray-200 bg-gray-50 flex-shrink-0 relative">
+                          <img 
+                            src={`https://flagcdn.com/w80/${code.toLowerCase()}.png`} 
+                            alt={code}
+                            className="w-full h-full object-cover absolute inset-0" 
+                          />
+                        </div>
                         <span className="text-sm font-bold text-gray-700">{data.name}</span>
                       </button>
                     ))}

@@ -20,14 +20,15 @@ export default function ContactModal({ isOpen, onClose }) {
   const [isPrefixOpen, setIsPrefixOpen] = useState(false);
 
   const countries = [
-    { code: '+34', flag: '🇪🇸', name: 'España' },
-    { code: '+58', flag: '🇻🇪', name: 'Venezuela' },
-    { code: '+57', flag: '🇨🇴', name: 'Colombia' },
-    { code: '+1', flag: '🇺🇸', name: 'USA' },
-    { code: '+507', flag: '🇵🇦', name: 'Panamá' },
-    { code: '+54', flag: '🇦🇷', name: 'Argentina' },
-    { code: '+56', flag: '🇨🇱', name: 'Chile' },
-    { code: '+51', flag: '🇵🇪', name: 'Perú' },
+    { code: '+34', iso: 'ES', name: 'España' },
+    { code: '+57', iso: 'CO', name: 'Colombia' },
+    { code: '+1', iso: 'US', name: 'USA' },
+    { code: '+593', iso: 'EC', name: 'Ecuador' },
+    { code: '+507', iso: 'PA', name: 'Panamá' },
+    { code: '+51', iso: 'PE', name: 'Perú' },
+    { code: '+1', iso: 'DO', name: 'Rep. Dom.' },
+    { code: '+54', iso: 'AR', name: 'Argentina' },
+    { code: '+56', iso: 'CL', name: 'Chile' },
   ];
 
   useEffect(() => {
@@ -203,7 +204,13 @@ export default function ContactModal({ isOpen, onClose }) {
                             onClick={() => setIsPrefixOpen(!isPrefixOpen)}
                             className="h-full px-3 bg-white rounded-[15px] shadow-[inset_3px_3px_6px_rgba(163,177,198,0.2),inset_-3px_-3px_6px_rgba(255,255,255,0.7)] border border-transparent flex items-center gap-1.5 font-bold text-[#1A1A3A] text-xs"
                           >
-                            <span>{countries.find(c => c.code === formData.phonePrefix)?.flag}</span>
+                            <div className="w-4 h-4 rounded-full overflow-hidden border border-[#003366]/20 bg-[#E0E5EC] flex-shrink-0 relative">
+                              <img 
+                                src={`https://flagcdn.com/w80/${countries.find(c => c.code === formData.phonePrefix)?.iso.toLowerCase() || 'es'}.png`} 
+                                alt="flag"
+                                className="w-full h-full object-cover absolute inset-0" 
+                              />
+                            </div>
                             <span>{formData.phonePrefix}</span>
                           </button>
 
@@ -226,7 +233,13 @@ export default function ContactModal({ isOpen, onClose }) {
                                     className={`w-full text-left px-3 py-2 rounded-xl text-[11px] font-bold transition-all flex items-center justify-between ${formData.phonePrefix === c.code ? 'bg-[#0056B3] text-white' : 'text-[#1A1A3A] hover:bg-black/5'}`}
                                   >
                                     <div className="flex items-center gap-2">
-                                      <span>{c.flag}</span>
+                                      <div className="w-4 h-4 rounded-full overflow-hidden border border-[#003366]/20 bg-[#E0E5EC] flex-shrink-0 relative">
+                                        <img 
+                                          src={`https://flagcdn.com/w80/${c.iso.toLowerCase()}.png`} 
+                                          alt={c.name}
+                                          className="w-full h-full object-cover absolute inset-0" 
+                                        />
+                                      </div>
                                       <span>{c.name}</span>
                                     </div>
                                     <span className="opacity-60">{c.code}</span>

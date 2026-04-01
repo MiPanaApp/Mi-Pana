@@ -5,15 +5,15 @@ import { ChevronDown } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 
 const countryData = {
-  ES: { name: 'España', flag: '🇪🇸', active: true, quote: 'El arroz con pollo es mejor que la paella 😂🤣' },
-  US: { name: 'Estados Unidos', flag: '🇺🇸', active: false, quote: 'El “American Dream” está bien… pero el venezolano ya viene con survival mode activado 😂🤣' },
-  CO: { name: 'Colombia', flag: '🇨🇴', active: false, quote: 'La Arepa es Venezolana 😜' },
-  EC: { name: 'Ecuador', flag: '🇪🇨', active: false, quote: 'En Ecuador tienen volcanes… pero el Roraima es otra cosa 😍' },
-  PA: { name: 'Panamá', flag: '🇵🇦', active: false, quote: 'En Panamá hay plata… pero el venezolano tiene más calle 😜' },
-  PE: { name: 'Perú', flag: '🇵🇪', active: false, quote: 'Perú tiene historia milenaria… pero el venezolano hace historia donde llega 😉' },
-  DO: { name: 'República Dominicana', flag: '🇩🇴', active: false, quote: 'El Caribe es de todos… pero el venezolano tiene el combo completo 😃' },
-  CL: { name: 'Chile', flag: '🇨🇱', active: false, quote: 'En Chile todo funciona… pero el venezolano hace que pase algo 🤭' },
-  AR: { name: 'Argentina', flag: '🇦🇷', active: false, quote: 'Argentina tiene historia en el fútbol… pero el venezolano le pone ganas hasta sin historia 💪' }
+  ES: { name: 'España', active: true, quote: 'El arroz con pollo es mejor que la paella 😂🤣' },
+  US: { name: 'Estados Unidos', active: false, quote: 'El “American Dream” está bien… pero el venezolano ya viene con survival mode activado 😂🤣' },
+  CO: { name: 'Colombia', active: false, quote: 'La Arepa es Venezolana 😜' },
+  EC: { name: 'Ecuador', active: false, quote: 'En Ecuador tienen volcanes… pero el Roraima es otra cosa 😍' },
+  PA: { name: 'Panamá', active: false, quote: 'En Panamá hay plata… pero el venezolano tiene más calle 😜' },
+  PE: { name: 'Perú', active: false, quote: 'Perú tiene historia milenaria… pero el venezolano hace historia donde llega 😉' },
+  DO: { name: 'República Dominicana', active: false, quote: 'El Caribe es de todos… pero el venezolano tiene el combo completo 😃' },
+  CL: { name: 'Chile', active: false, quote: 'En Chile todo funciona… pero el venezolano hace que pase algo 🤭' },
+  AR: { name: 'Argentina', active: false, quote: 'Argentina tiene historia en el fútbol… pero el venezolano le pone ganas hasta sin historia 💪' }
 };
 
 const capitals = {
@@ -97,7 +97,13 @@ export default function Onboarding() {
                   >
                     {localCountry ? (
                       <span className="flex items-center gap-3 leading-tight">
-                        <span className="flex-shrink-0">{countryData[localCountry].flag}</span>
+                        <div className="w-8 h-8 rounded-full overflow-hidden border-[0.5px] border-[#003366]/20 relative shadow-sm flex-shrink-0">
+                          <img 
+                            src={`https://flagcdn.com/w80/${localCountry.toLowerCase()}.png`} 
+                            alt={localCountry}
+                            className="w-full h-full object-cover absolute inset-0" 
+                          />
+                        </div>
                         <span>{countryData[localCountry].name}</span>
                       </span>
                     ) : (
@@ -123,7 +129,13 @@ export default function Onboarding() {
                             }}
                             className={`w-full min-h-[3rem] py-2 flex items-center gap-3 px-4 rounded-xl transition-all font-bold text-left ${localCountry === code ? 'bg-[#1A1A3A] text-white shadow-lg' : 'hover:bg-[#1A1A3A]/5 text-[#1A1A3A]'}`}
                           >
-                            <span className="text-xl flex-shrink-0">{data.flag}</span>
+                            <div className="w-8 h-8 rounded-full overflow-hidden border-[0.5px] border-[#003366]/20 relative shadow-sm flex-shrink-0">
+                              <img 
+                                src={`https://flagcdn.com/w80/${code.toLowerCase()}.png`} 
+                                alt={code}
+                                className="w-full h-full object-cover absolute inset-0" 
+                              />
+                            </div>
                             <span className="leading-tight">{data.name}</span>
                             {!data.active && <span className="text-[10px] ml-auto opacity-50 px-2 py-0.5 border border-current rounded-full flex-shrink-0">Próximamente</span>}
                           </button>

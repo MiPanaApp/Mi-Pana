@@ -211,8 +211,12 @@ const Header = forwardRef((props, ref) => {
                     onClick={() => setIsCountryOpen(!isCountryOpen)}
                     className="flex items-center justify-center cursor-pointer active:scale-95 transition-transform opacity-90"
                   >
-                    <div className="w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xl md:text-2xl border-[0.5px] border-[#003366]/20 bg-[#E0E5EC] shadow-[2px_2px_4px_rgba(163,177,198,0.5),-2px_-2px_4px_rgba(255,255,255,0.8)]">
-                      {COUNTRY_INFO[selectedCountry]?.flag || '🇪🇸'}
+                    <div className="w-5 h-5 md:w-6 md:h-6 rounded-full overflow-hidden border-[0.5px] border-[#003366]/20 bg-[#E0E5EC] shadow-[2px_2px_4px_rgba(163,177,198,0.5),-2px_-2px_4px_rgba(255,255,255,0.8)] relative flex-shrink-0">
+                      <img 
+                        src={`https://flagcdn.com/w80/${selectedCountry.toLowerCase()}.png`} 
+                        alt={selectedCountry}
+                        className="w-full h-full object-cover absolute inset-0" 
+                      />
                     </div>
                   </button>
 
@@ -228,14 +232,20 @@ const Header = forwardRef((props, ref) => {
                           <button
                             key={code}
                             onClick={() => handleCountryChange(code, info.defaultRegion)}
-                            className={`w-12 h-12 flex items-center justify-center rounded-full transition-all text-2xl ${
+                            className={`w-12 h-12 flex items-center justify-center rounded-full transition-all flex-shrink-0 ${
                               selectedCountry === code 
                                 ? 'shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.9)]' 
                                 : 'shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.8)] hover:scale-105 active:scale-95'
                             }`}
                             title={info.defaultRegion}
                           >
-                            {info.flag}
+                            <div className="w-6 h-6 rounded-full overflow-hidden border-[0.5px] border-[#003366]/20 relative">
+                              <img 
+                                src={`https://flagcdn.com/w80/${code.toLowerCase()}.png`} 
+                                alt={code}
+                                className="w-full h-full object-cover absolute inset-0" 
+                              />
+                            </div>
                           </button>
                         ))}
                       </motion.div>

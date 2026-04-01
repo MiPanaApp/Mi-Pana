@@ -16,20 +16,19 @@ import LegalDrawer from '../components/LegalDrawer';
 import panaExito from '../assets/Pana_Billetes.png';
 
 // Mapeo: código del store -> clave de LOCATION_DATA
-const COUNTRY_TO_LOC = { ES: 'ES', CO: 'CO', VE: 'VE', US: 'US', CL: 'CL', PA: 'PA', PE: 'PE', EC: 'EC', DO: 'DO', AR: 'AR' };
+const COUNTRY_TO_LOC = { ES: 'ES', CO: 'CO', US: 'US', CL: 'CL', PA: 'PA', PE: 'PE', EC: 'EC', DO: 'DO', AR: 'AR' };
 
 
 const COUNTRY_CODES = [
-  { code: '+34', flag: '🇪🇸', name: 'España' },
-  { code: '+58', flag: '🇻🇪', name: 'Venezuela' },
-  { code: '+57', flag: '🇨🇴', name: 'Colombia' },
-  { code: '+1', flag: '🇺🇸', name: 'USA' },
-  { code: '+56', flag: '🇨🇱', name: 'Chile' },
-  { code: '+507', flag: '🇵🇦', name: 'Panamá' },
-  { code: '+51', flag: '🇵🇪', name: 'Perú' },
-  { code: '+593', flag: '🇪🇨', name: 'Ecuador' },
-  { code: '+1', flag: '🇩🇴', name: 'Rep. Dom.' },
-  { code: '+54', flag: '🇦🇷', name: 'Argentina' },
+  { code: '+34', iso: 'ES', name: 'España' },
+  { code: '+57', iso: 'CO', name: 'Colombia' },
+  { code: '+1', iso: 'US', name: 'USA' },
+  { code: '+56', iso: 'CL', name: 'Chile' },
+  { code: '+507', iso: 'PA', name: 'Panamá' },
+  { code: '+51', iso: 'PE', name: 'Perú' },
+  { code: '+593', iso: 'EC', name: 'Ecuador' },
+  { code: '+1', iso: 'DO', name: 'Rep. Dom.' },
+  { code: '+54', iso: 'AR', name: 'Argentina' },
 ];
 
 export default function CreateListing() {
@@ -821,7 +820,13 @@ export default function CreateListing() {
                   onClick={() => setIsPrefixOpen(!isPrefixOpen)}
                   className="h-14 px-3 bg-[#E0E5EC] rounded-2xl shadow-[6px_6px_12px_rgba(163,177,198,0.7),-6px_-6px_12px_rgba(255,255,255,0.95)] flex items-center gap-2 font-bold text-[#1A1A3A] hover:bg-white/40 transition-all border border-white/20 active:shadow-inner"
                 >
-                  <span className="text-xl">{selectedPrefix.flag}</span>
+                  <div className="w-5 h-5 rounded-full overflow-hidden border border-[#003366]/20 bg-[#E0E5EC] flex-shrink-0 relative">
+                    <img 
+                      src={`https://flagcdn.com/w80/${selectedPrefix.iso.toLowerCase()}.png`} 
+                      alt={selectedPrefix.name}
+                      className="w-full h-full object-cover absolute inset-0" 
+                    />
+                  </div>
                   <span className="text-sm">{selectedPrefix.code}</span>
                   <ChevronDown size={14} className={`text-[#1A1A3A]/40 transition-transform ${isPrefixOpen ? 'rotate-180' : ''}`} />
                 </button>
@@ -848,7 +853,13 @@ export default function CreateListing() {
                               : 'text-[#1A1A3A]/70 hover:bg-white/80'
                             }`}
                           >
-                            <span className="text-xl">{item.flag}</span>
+                            <div className="w-6 h-6 rounded-full overflow-hidden border border-[#003366]/20 bg-[#E0E5EC] flex-shrink-0 relative">
+                              <img 
+                                src={`https://flagcdn.com/w80/${item.iso.toLowerCase()}.png`} 
+                                alt={item.name}
+                                className="w-full h-full object-cover absolute inset-0" 
+                              />
+                            </div>
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-bold">{item.code}</span>
                               <span className="text-sm font-bold opacity-80">{item.name}</span>
