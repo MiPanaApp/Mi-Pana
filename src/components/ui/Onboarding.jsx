@@ -5,6 +5,7 @@ import { ChevronDown } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 
 const countryData = {
+  VE: { name: 'Venezuela', flag: '🇻🇪', active: true, quote: '¡Mano tengo fe! El mejor país del mundo, chamo 🇻🇪🔥' },
   ES: { name: 'España', flag: '🇪🇸', active: true, quote: 'El arroz con pollo es mejor que la paella 😂🤣' },
   US: { name: 'Estados Unidos', flag: '🇺🇸', active: false, quote: 'El “American Dream” está bien… pero el venezolano ya viene con survival mode activado 😂🤣' },
   CO: { name: 'Colombia', flag: '🇨🇴', active: false, quote: 'La Arepa es Venezolana 😜' },
@@ -16,18 +17,38 @@ const countryData = {
   AR: { name: 'Argentina', flag: '🇦🇷', active: false, quote: 'Argentina tiene historia en el fútbol… pero el venezolano le pone ganas hasta sin historia 💪' }
 };
 
+const capitals = {
+  VE: 'Caracas',
+  ES: 'Madrid',
+  CO: 'Bogotá',
+  US: 'Washington D.C.',
+  CL: 'Santiago',
+  PA: 'Ciudad de Panamá',
+  PE: 'Lima',
+  EC: 'Quito',
+  DO: 'Santo Domingo',
+  AR: 'Buenos Aires'
+};
+
 export default function Onboarding() {
   const [step, setStep] = useState('selector'); // 'selector' | 'transition'
   const [localCountry, setLocalCountry] = useState('');
   const [isCountryOpen, setIsCountryOpen] = useState(false);
   
   const navigate = useNavigate();
-  const { setCountry } = useStore();
-
+  const { setCountry, setFilters } = useStore();
+  
   const handleConfirm = () => {
     if (!localCountry) return;
     
     setCountry(localCountry);
+    
+    // Establecer la Capital por defecto al entrar
+    const capital = capitals[localCountry];
+    if (capital) {
+      setFilters({ location: { level1: '', level2: capital, level3: '' } });
+    }
+    
     setStep('transition');
   };
 

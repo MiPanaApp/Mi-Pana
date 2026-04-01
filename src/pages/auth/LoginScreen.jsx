@@ -3,6 +3,7 @@ import { getAdditionalUserInfo } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, Rocket, ArrowRight, Loader2 } from "lucide-react";
 import { useAuthStore } from "../../store/useAuthStore";
+import { useStore } from "../../store/useStore";
 import { translateFirebaseError } from "../../utils/authErrors";
 import logoFull from "../../assets/Logo_Mi_pana.png";
 import "../../styles/auth.css";
@@ -19,6 +20,7 @@ export default function LoginScreen() {
   // Usamos el store Zustand directamente (fuente de verdad)
   const login = useAuthStore((s) => s.login);
   const loginWithGoogle = useAuthStore((s) => s.loginWithGoogle);
+  const { selectedCountry } = useStore();
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
@@ -33,7 +35,11 @@ export default function LoginScreen() {
           return;
         }
       }
-      navigate("/home");
+      if (selectedCountry) {
+        navigate("/home");
+      } else {
+        navigate("/onboarding");
+      }
     } catch (err) {
       console.error("Error Google Auth:", err);
       if (err.code === 'auth/popup-closed-by-user') {
@@ -57,7 +63,11 @@ export default function LoginScreen() {
     setError(null);
     try {
       await login(email, password);
-      navigate("/home");
+      if (selectedCountry) {
+        navigate("/home");
+      } else {
+        navigate("/onboarding");
+      }
     } catch (err) {
       console.error("Login error:", err);
       setError(translateFirebaseError(err.code));

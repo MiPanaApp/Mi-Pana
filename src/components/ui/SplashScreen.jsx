@@ -1,16 +1,26 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logoFull from '../../assets/Logo_Mi_pana.png';
+import { useAuthStore } from '../../store/useAuthStore';
+import { useStore } from '../../store/useStore';
 
 export default function SplashScreen() {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
+  const { selectedCountry } = useStore();
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      navigate('/onboarding');
+      if (!user) {
+        navigate('/login');
+      } else if (!selectedCountry) {
+        navigate('/onboarding');
+      } else {
+        navigate('/home');
+      }
     }, 3000);
     return () => clearTimeout(timer);
-  }, [navigate]);
+  }, [navigate, user, selectedCountry]);
 
   return (
     <div

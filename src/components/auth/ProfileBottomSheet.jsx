@@ -153,7 +153,7 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
       }, { merge: true });
 
       onClose();
-      navigate("/home");
+      navigate("/onboarding");
     } catch (err) {
       if (err.code) {
         setErrorMsg(translateFirebaseError(err.code));
