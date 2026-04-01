@@ -212,59 +212,86 @@ export default function AdminCategoriesTab() {
 }
 
 function CategoryForm({ formData, setFormData, onSave, onCancel }) {
-  const [showIconPicker, setShowIconPicker] = useState(false);
+    const [showIconPicker, setShowIconPicker] = useState(false);
+    const [iconSearch, setIconSearch] = useState('');
+    const filteredIcons = SUGGESTED_ICONS.filter(i => 
+      i.name.toLowerCase().includes(iconSearch.toLowerCase())
+    );
 
-  return (
-    <div className="space-y-4">
-      <div>
-        <label className="text-[10px] font-black uppercase text-gray-400 mb-1 block px-1">Etiqueta</label>
-        <input 
-          type="text" 
-          value={formData.label}
-          onChange={(e) => setFormData({...formData, label: e.target.value})}
-          className="w-full bg-white border border-gray-200 rounded-2xl px-4 py-2.5 text-sm font-bold outline-none focus:border-[#FFD700]"
-          placeholder="Ej: Inmobiliaria"
-        />
-      </div>
-
-      <div className="flex gap-3">
-        <div className="flex-1 relative">
-          <label className="text-[10px] font-black uppercase text-gray-400 mb-1 block px-1">Icono</label>
-          <button 
-            onClick={() => setShowIconPicker(!showIconPicker)}
-            className="w-full bg-white border border-gray-200 rounded-2xl px-4 py-2.5 text-sm font-bold flex items-center justify-between"
-          >
-            <span className="flex items-center gap-2">
-              {(() => {
-                const IconComp = getIconComponent(formData.icon);
-                return <IconComp size={16} />;
-              })()}
-              {formData.icon}
-            </span>
-            <RefreshCcw size={14} className={showIconPicker ? 'rotate-180 transition-transform' : ''} />
-          </button>
-          
-          {showIconPicker && (
-            <div className="absolute bottom-full left-0 right-0 mb-4 bg-white border border-gray-200 rounded-[2.5rem] shadow-[0_-20px_50px_rgba(0,0,0,0.15)] z-[100] p-5 max-h-72 overflow-y-auto grid grid-cols-5 gap-3 scrollbar-hide">
-              {SUGGESTED_ICONS.map(i => {
-                const IconComp = getIconComponent(i.name);
-                const isSelected = formData.icon === i.name;
-                return (
-                  <button 
-                    key={i.name}
-                    type="button"
-                    onClick={() => { setFormData({...formData, icon: i.name}); setShowIconPicker(false); }}
-                    className={`p-3 rounded-2xl flex flex-col items-center justify-center transition-all ${isSelected ? 'bg-[#FFD700] text-black shadow-inner scale-90' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
-                    title={i.name}
-                  >
-                    <IconComp size={24} />
-                    {/* <span className="text-[8px] mt-1 opacity-40">{i.name}</span> */}
-                  </button>
-                );
-              })}
-            </div>
-          )}
+    return (
+      <div className="space-y-4">
+        <div>
+          <label className="text-[10px] font-black uppercase text-gray-400 mb-1 block px-1">Etiqueta</label>
+          <input 
+            type="text" 
+            value={formData.label}
+            onChange={(e) => setFormData({...formData, label: e.target.value})}
+            className="w-full bg-white border border-gray-200 rounded-2xl px-4 py-2.5 text-sm font-bold outline-none focus:border-[#FFD700]"
+            placeholder="Ej: Inmobiliaria"
+          />
         </div>
+
+        <div className="flex gap-3">
+          <div className="flex-1 relative">
+            <label className="text-[10px] font-black uppercase text-gray-400 mb-1 block px-1">Icono</label>
+            <button 
+              type="button" // Evitar submit
+              onClick={() => setShowIconPicker(!showIconPicker)}
+              className="w-full bg-white border border-gray-200 rounded-2xl px-4 py-2.5 text-sm font-bold flex items-center justify-between"
+            >
+              <span className="flex items-center gap-2">
+                {(() => {
+                  const IconComp = getIconComponent(formData.icon);
+                  return <IconComp size={16} />;
+                })()}
+                {formData.icon}
+              </span>
+              <RefreshCcw size={14} className={showIconPicker ? 'rotate-180 transition-transform text-[#FFD700]' : ''} />
+            </button>
+            
+            {showIconPicker && (
+              <div 
+                className="absolute top-[105%] left-0 w-[280px] bg-white/95 backdrop-blur-xl border border-white/50 rounded-[2rem] shadow-[20px_20px_60px_rgba(0,0,0,0.1)] z-[500] p-4 flex flex-col gap-3 animate-in fade-in zoom-in-95 duration-200"
+              >
+                <div className="flex items-center gap-2 bg-gray-100/50 rounded-xl px-3 py-2">
+                  <Search size={14} className="text-gray-400" />
+                  <input 
+                    type="text" 
+                    placeholder="Buscar icono..."
+                    className="bg-transparent border-none outline-none text-[10px] font-bold w-full"
+                    value={iconSearch}
+                    onChange={(e) => setIconSearch(e.target.value)}
+                    autoFocus
+                  />
+                </div>
+                
+                <div className="max-h-60 overflow-y-auto grid grid-cols-4 gap-2 pr-1 custom-scrollbar">
+                  {filteredIcons.map(i => {
+                    const IconComp = getIconComponent(i.name);
+                    const isSelected = formData.icon === i.name;
+                    return (
+                      <button 
+                        key={i.name}
+                        type="button"
+                        onClick={() => { 
+                          setFormData({...formData, icon: i.name}); 
+                          setShowIconPicker(false);
+                          setIconSearch('');
+                        }}
+                        className={`h-12 rounded-xl flex items-center justify-center transition-all ${isSelected ? 'bg-[#FFD700] text-black shadow-[inset_2px_2px_4px_rgba(0,0,0,0.1)]' : 'bg-gray-50 text-gray-500 hover:bg-white hover:shadow-sm'}`}
+                        title={i.name}
+                      >
+                        <IconComp size={20} />
+                      </button>
+                    );
+                  })}
+                  {filteredIcons.length === 0 && (
+                    <div className="col-span-4 py-4 text-center text-[10px] text-gray-400 font-bold uppercase">No hay iconos</div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
 
         <div className="w-24">
           <label className="text-[10px] font-black uppercase text-gray-400 mb-1 block px-1">Orden</label>
