@@ -810,16 +810,15 @@ export default function Profile() {
               <p className="text-xs font-bold text-[#8888AA] mb-5 pl-1">
                 Según el país seleccionado ({
                   {
-                    'ES': '🇪🇸 España',
-                    'CO': '🇨🇴 Colombia',
-                    'VE': '🇻🇪 Venezuela',
-                    'US': '🇺🇸 Estados Unidos',
-                    'CL': '🇨🇱 Chile',
-                    'PA': '🇵🇦 Panamá',
-                    'PE': '🇵🇪 Perú',
-                    'EC': '🇪🇨 Ecuador',
-                    'DO': '🇩🇴 República Dominicana',
-                    'AR': '🇦🇷 Argentina'
+                    'ES': 'España',
+                    'CO': 'Colombia',
+                    'US': 'Estados Unidos',
+                    'CL': 'Chile',
+                    'PA': 'Panamá',
+                    'PE': 'Perú',
+                    'EC': 'Ecuador',
+                    'DO': 'República Dominicana',
+                    'AR': 'Argentina'
                   }[selectedCountry] || selectedCountry
                 })
               </p>

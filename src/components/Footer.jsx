@@ -196,9 +196,8 @@ const Footer = ({ onContactClick }) => {
         </div>
         
         <div className="pt-8 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4 text-gray-400 text-[10px] font-black uppercase tracking-widest">
-          <span>© 2026 Mi Pana Marketplace. Madrid - Caracas.</span>
+          <span>© 2026 Mi Pana Marketplace. Madrid.</span>
           <div className="flex gap-6">
-             <span>Venezuela 🇻🇪</span>
              <span>Hecho con ❤️ por Panas</span>
           </div>
         </div>

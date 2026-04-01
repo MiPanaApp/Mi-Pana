@@ -118,16 +118,15 @@ const Header = forwardRef((props, ref) => {
     if (user?.uid && import.meta.env.VITE_AUTH_BYPASS !== 'true') {
       try {
         const countryNames = {
-          'ES': '🇪🇸 España',
-          'CO': '🇨🇴 Colombia',
-          'VE': '🇻🇪 Venezuela',
-          'US': '🇺🇸 Estados Unidos',
-          'CL': '🇨🇱 Chile',
-          'PA': '🇵🇦 Panamá',
-          'PE': '🇵🇪 Perú',
-          'EC': '🇪🇨 Ecuador',
-          'DO': '🇩🇴 República Dominicana',
-          'AR': '🇦🇷 Argentina'
+          'ES': 'España',
+          'CO': 'Colombia',
+          'US': 'Estados Unidos',
+          'CL': 'Chile',
+          'PA': 'Panamá',
+          'PE': 'Perú',
+          'EC': 'Ecuador',
+          'DO': 'República Dominicana',
+          'AR': 'Argentina'
         };
         await updateDoc(doc(db, "users", user.uid), {
           country: countryNames[countryCode] || countryNames['ES'],

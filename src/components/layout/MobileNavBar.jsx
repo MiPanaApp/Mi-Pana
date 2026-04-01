@@ -53,12 +53,7 @@ export default function MobileNavBar() {
 
   return (
     <nav className="fixed bottom-0 left-0 w-full z-50 md:hidden bg-[#E0E5EC]/80 backdrop-blur-md shadow-[0_-5px_20px_rgba(163,177,198,0.4)]">
-      {/* Línea tricolor Venezuela */}
-      <div className="flex w-full h-[3px]">
-        <div className="flex-1 bg-[#FFCC00]"></div>
-        <div className="flex-1 bg-[#003366]"></div>
-        <div className="flex-1 bg-[#D90429]"></div>
-      </div>
+
 
       <div
         className="flex justify-around items-center px-2 py-2"
