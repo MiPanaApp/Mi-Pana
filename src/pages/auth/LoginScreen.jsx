@@ -20,7 +20,7 @@ export default function LoginScreen() {
   // Usamos el store Zustand directamente (fuente de verdad)
   const login = useAuthStore((s) => s.login);
   const loginWithGoogle = useAuthStore((s) => s.loginWithGoogle);
-  const { selectedCountry } = useStore();
+  const { hasChosenCountry } = useStore();
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
@@ -35,7 +35,7 @@ export default function LoginScreen() {
           return;
         }
       }
-      if (selectedCountry) {
+      if (hasChosenCountry) {
         navigate("/home");
       } else {
         navigate("/onboarding");
@@ -63,7 +63,7 @@ export default function LoginScreen() {
     setError(null);
     try {
       await login(email, password);
-      if (selectedCountry) {
+      if (hasChosenCountry) {
         navigate("/home");
       } else {
         navigate("/onboarding");

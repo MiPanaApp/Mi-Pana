@@ -36,12 +36,13 @@ export default function Onboarding() {
   const [isCountryOpen, setIsCountryOpen] = useState(false);
   
   const navigate = useNavigate();
-  const { setCountry, setFilters } = useStore();
+  const { setCountry, setFilters, setHasChosenCountry } = useStore();
   
   const handleConfirm = () => {
     if (!localCountry) return;
     
     setCountry(localCountry);
+    setHasChosenCountry(true); // Marcar que el usuario eligió país explícitamente
     
     // Establecer la Capital por defecto al entrar
     const capital = capitals[localCountry];

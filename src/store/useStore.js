@@ -5,6 +5,7 @@ export const useStore = create(
   persist(
     (set) => ({
       selectedCountry: 'ES',
+      hasChosenCountry: false, // Solo true si el usuario pasó por el Onboarding
       selectedRegion: '',
       activeCategory: 'Todas',
       isFilterOpen: false,
@@ -20,6 +21,7 @@ export const useStore = create(
       recentSearches: [], // Historial de búsquedas recientes
       
       setCountry: (country) => set({ selectedCountry: country }),
+      setHasChosenCountry: (val) => set({ hasChosenCountry: val }),
       setRegion: (region) => set({ selectedRegion: region }),
       setActiveCategory: (category) => set({ activeCategory: category }),
       setIsFilterOpen: (isOpen) => set({ isFilterOpen: isOpen }),

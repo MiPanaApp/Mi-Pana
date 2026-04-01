@@ -7,20 +7,20 @@ import { useStore } from '../../store/useStore';
 export default function SplashScreen() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { selectedCountry } = useStore();
+  const { hasChosenCountry } = useStore();
 
   useEffect(() => {
     const timer = setTimeout(() => {
       if (!user) {
         navigate('/login');
-      } else if (!selectedCountry) {
+      } else if (!hasChosenCountry) {
         navigate('/onboarding');
       } else {
         navigate('/home');
       }
     }, 3000);
     return () => clearTimeout(timer);
-  }, [navigate, user, selectedCountry]);
+  }, [navigate, user, hasChosenCountry]);
 
   return (
     <div
