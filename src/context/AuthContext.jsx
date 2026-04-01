@@ -66,6 +66,10 @@ export function AuthProvider({ children }) {
           } else {
             setUserData(null);
           }
+        }, (err) => {
+          console.error("[AuthProvider] Error en onSnapshot:", err);
+          // Opcional: Si el error es de permisos, podemos limpiar userData
+          if (err.code === 'permission-denied') setUserData(null);
         });
         setLoading(false);
         return () => { unsubProfile(); };
