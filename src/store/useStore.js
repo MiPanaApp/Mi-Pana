@@ -23,6 +23,10 @@ export const useStore = create(
       setCountry: (country) => set({ selectedCountry: country }),
       setHasChosenCountry: (val) => set({ hasChosenCountry: val }),
       setRegion: (region) => set({ selectedRegion: region }),
+      
+      // Aliases as requested
+      setSelectedCountry: (country) => set({ selectedCountry: country }),
+      setSelectedRegion: (region) => set({ selectedRegion: region }),
       setActiveCategory: (category) => set({ activeCategory: category }),
       setIsFilterOpen: (isOpen) => set({ isFilterOpen: isOpen }),
       setIsSortOpen: (isOpen) => set({ isSortOpen: isOpen }),

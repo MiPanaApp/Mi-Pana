@@ -35,7 +35,9 @@ export default function LoginScreen() {
           return;
         }
       }
-      if (hasChosenCountry) {
+      const fetchPrefs = useAuthStore.getState().fetchUserPreferences;
+      const { hasPrefs } = await fetchPrefs(result.user.uid);
+      if (hasPrefs || hasChosenCountry) {
         navigate("/home");
       } else {
         navigate("/onboarding");
@@ -62,8 +64,11 @@ export default function LoginScreen() {
     setLoading(true);
     setError(null);
     try {
-      await login(email, password);
-      if (hasChosenCountry) {
+      const result = await login(email, password);
+      const user = useAuthStore.getState().user;
+      const fetchPrefs = useAuthStore.getState().fetchUserPreferences;
+      const { hasPrefs } = await fetchPrefs(user.uid);
+      if (hasPrefs || hasChosenCountry) {
         navigate("/home");
       } else {
         navigate("/onboarding");

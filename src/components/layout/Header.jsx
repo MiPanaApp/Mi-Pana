@@ -7,9 +7,9 @@ import logoTexto from '../../assets/solotexto.png';
 import useAuthFlow from '../../hooks/useAuthFlow';
 import { useAuth } from '../../context/AuthContext';
 import { db } from '../../services/firebase';
-import { doc, getDoc, updateDoc, collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, getDocs, query, orderBy, serverTimestamp } from 'firebase/firestore';
+import { LOCATION_DATA, getCountryNameFromCode, getLevel1Name } from '../../data/locations';
 import { CATEGORIES as DEFAULT_CATEGORIES, getCategoryIcon, sortCategories } from '../../data/categories';
-import { LOCATION_DATA } from '../../data/locations';
 import { FiPlus } from 'react-icons/fi';
 import { FcGoogle } from 'react-icons/fc';
 import { ChevronDown as LucideChevronDown } from 'lucide-react';
@@ -117,20 +117,10 @@ const Header = forwardRef((props, ref) => {
 
     if (user?.uid && import.meta.env.VITE_AUTH_BYPASS !== 'true') {
       try {
-        const countryNames = {
-          'ES': 'España',
-          'CO': 'Colombia',
-          'US': 'Estados Unidos',
-          'CL': 'Chile',
-          'PA': 'Panamá',
-          'PE': 'Perú',
-          'EC': 'Ecuador',
-          'DO': 'República Dominicana',
-          'AR': 'Argentina'
-        };
         await updateDoc(doc(db, "users", user.uid), {
-          country: countryNames[countryCode] || countryNames['ES'],
-          region: defaultRegion
+          lastViewedCountry: getCountryNameFromCode(countryCode),
+          lastViewedRegion: defaultRegion,
+          lastViewedAt: serverTimestamp()
         });
       } catch (err) {
         console.error("Error saving smart country pref:", err);
@@ -148,13 +138,24 @@ const Header = forwardRef((props, ref) => {
     }
   };
 
-  const handleRegionChange = (newRegion) => {
+  const handleRegionChange = async (newRegion) => {
     setRegion(newRegion);
     setFilters({ 
       ...filters, 
       location: { level1: newRegion, level2: '', level3: '' } 
     });
     setIsRegionOpen(false);
+
+    if (user?.uid && import.meta.env.VITE_AUTH_BYPASS !== 'true') {
+      try {
+        await updateDoc(doc(db, "users", user.uid), {
+          lastViewedRegion: newRegion,
+          lastViewedAt: serverTimestamp()
+        });
+      } catch (err) {
+        console.error("Error persisting region change:", err);
+      }
+    }
   };
 
   // Close country dropdown on outside click
@@ -259,7 +260,7 @@ const Header = forwardRef((props, ref) => {
                     className="flex items-center gap-1.5 cursor-pointer active:scale-95 transition-transform opacity-90 group"
                   >
                     <span className="text-[10px] sm:text-[11px] md:text-[14px] font-bold text-[#003366] tracking-tight md:tracking-wide uppercase leading-[1.1] max-w-[80px] sm:max-w-[90px] md:max-w-[150px] whitespace-normal block">
-                      {filters?.location?.level1 || selectedRegion || 'Ubicación'}
+                      {filters?.location?.level1 || selectedRegion || getLevel1Name(selectedCountry)}
                     </span>
                     <LucideChevronDown className={`w-3 h-3 md:w-5 md:h-5 text-[#003366] transition-transform duration-300 ${isRegionOpen ? 'rotate-180' : ''}`} />
                   </button>

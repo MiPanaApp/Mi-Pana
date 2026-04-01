@@ -8,6 +8,9 @@ export default function AvatarCropper({ image, onApply, onCancel }) {
   const isDragging = useRef(false);
   const startPos = useRef({ x: 0, y: 0 });
 
+  const [aspectRatio, setAspectRatio] = useState(1);
+  const imgRef = useRef(null);
+
   const handlePointerDown = (e) => {
     isDragging.current = true;
     startPos.current = { x: e.clientX - position.x, y: e.clientY - position.y };
@@ -25,6 +28,11 @@ export default function AvatarCropper({ image, onApply, onCancel }) {
     isDragging.current = false;
   };
 
+  const onImageLoad = (e) => {
+    const { naturalWidth, naturalHeight } = e.target;
+    setAspectRatio(naturalWidth / naturalHeight);
+  };
+
   const handleApply = () => {
     setIsApplying(true);
     const canvas = document.createElement('canvas');
@@ -40,25 +48,29 @@ export default function AvatarCropper({ image, onApply, onCancel }) {
     img.onload = () => {
       const imgWidth = img.naturalWidth;
       const imgHeight = img.naturalHeight;
-      const aspectRatio = imgWidth / imgHeight;
+      const ar = imgWidth / imgHeight;
       
       const bx = 110; // UI Box Size
       
       let drawW, drawH;
-      if (aspectRatio > 1) {
+      if (ar > 1) {
         drawH = bx;
-        drawW = bx * aspectRatio;
+        drawW = bx * ar;
       } else {
         drawW = bx;
-        drawH = bx / aspectRatio;
+        drawH = bx / ar;
       }
 
       const sFactor = imgWidth / drawW;
-      const viewSize = bx / scale;
       
-      // Calculate view position based on the transform logic
-      const viewX = (drawW - viewSize) / 2 - (position.x / scale);
-      const viewY = (drawH - viewSize) / 2 - (position.y / scale);
+      // Calculate view position
+      // Correct math for centered origin transform and manual drawW/H
+      const centerX = drawW / 2;
+      const centerY = drawH / 2;
+      
+      const viewSize = bx / scale;
+      const viewX = centerX - (viewSize / 2) - (position.x / scale);
+      const viewY = centerY - (viewSize / 2) - (position.y / scale);
       
       const sx = viewX * sFactor;
       const sy = viewY * sFactor;
@@ -87,7 +99,7 @@ export default function AvatarCropper({ image, onApply, onCancel }) {
       
       <div className="flex justify-center mb-4">
         <div 
-          className="w-[110px] h-[110px] rounded-full overflow-hidden border-[4px] border-white shadow-[inset_4px_4px_8px_rgba(180,180,210,0.5),6px_6px_12px_rgba(0,0,0,0.1)] relative cursor-move bg-[#D1D1DF]"
+          className="w-[110px] h-[110px] rounded-full overflow-hidden border-[4px] border-white shadow-[inset_4px_4px_8px_rgba(180,180,210,0.5),6px_6px_12px_rgba(0,0,0,0.1)] relative cursor-move bg-[#D1D1DF] flex items-center justify-center"
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
@@ -95,16 +107,17 @@ export default function AvatarCropper({ image, onApply, onCancel }) {
           style={{ touchAction: 'none' }}
         >
           <img 
+            ref={imgRef}
             src={image} 
             alt="Preview" 
-            className="select-none"
+            onLoad={onImageLoad}
+            className="select-none max-w-none max-h-none"
             style={{ 
               transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
-              transformOrigin: 'center',
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              pointerEvents: 'none'
+              width: aspectRatio > 1 ? 'auto' : '100%',
+              height: aspectRatio > 1 ? '100%' : 'auto',
+              pointerEvents: 'none',
+              flexShrink: 0
             }} 
           />
         </div>

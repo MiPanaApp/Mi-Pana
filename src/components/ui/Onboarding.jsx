@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import { useStore } from '../../store/useStore';
+import { useAuthStore } from '../../store/useAuthStore';
+import { db } from '../../services/firebase';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { getCountryNameFromCode } from '../../data/locations';
 
 const countryData = {
   ES: { name: 'España', active: true, quote: 'El arroz con pollo es mejor que la paella 😂🤣' },
@@ -36,11 +40,26 @@ export default function Onboarding() {
   const navigate = useNavigate();
   const { setCountry, setFilters, setHasChosenCountry } = useStore();
   
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!localCountry) return;
     
     setCountry(localCountry);
     setHasChosenCountry(true); // Marcar que el usuario eligió país explícitamente
+    
+    // Guardar en Firestore si el usuario está logueado
+    const user = useAuthStore.getState().user;
+    if (user && user.uid && import.meta.env.VITE_AUTH_BYPASS !== 'true') {
+      try {
+        const capital = capitals[localCountry];
+        await updateDoc(doc(db, 'users', user.uid), {
+          lastViewedCountry: getCountryNameFromCode(localCountry),
+          lastViewedRegion: capital || '',
+          lastViewedAt: serverTimestamp()
+        });
+      } catch (err) {
+        console.error("Error saving location pref in onboarding:", err);
+      }
+    }
     
     // Establecer la Capital por defecto al entrar
     const capital = capitals[localCountry];

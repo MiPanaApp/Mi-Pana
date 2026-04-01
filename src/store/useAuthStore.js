@@ -7,7 +7,10 @@ import {
   onAuthStateChanged,
   updateProfile,
 } from 'firebase/auth';
-import { auth, googleProvider } from '../services/firebase';
+import { auth, googleProvider, db } from '../services/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { useStore } from './useStore';
+import { getCountryCodeFromName } from '../data/locations';
 
 const isBypass = import.meta.env.VITE_AUTH_BYPASS === 'true';
 
@@ -96,4 +99,41 @@ export const useAuthStore = create((set, get) => ({
   },
 
   clearError: () => set({ error: null }),
+
+  // Fetch user location preferences from Firestore
+  fetchUserPreferences: async (uid) => {
+    if (isBypass) return { hasPrefs: true };
+    try {
+      const userDoc = await getDoc(doc(db, 'users', uid));
+      if (userDoc.exists()) {
+        const data = userDoc.data();
+        // Fallback: If lastViewed is missing, use registered country/region
+        const countryName = data.lastViewedCountry || data.country;
+        const regionName = data.lastViewedRegion || data.region;
+
+        if (countryName) {
+          const { setSelectedCountry, setSelectedRegion, setHasChosenCountry, setFilters } = useStore.getState();
+          const countryCode = getCountryCodeFromName(countryName);
+          setSelectedCountry(countryCode);
+          setSelectedRegion(regionName || '');
+          setHasChosenCountry(true);
+          
+          // Also update filters to match exactly what is being selected
+          setFilters({ 
+            location: { 
+              level1: regionName || '', 
+              level2: '', 
+              level3: '' 
+            } 
+          });
+          
+          return { hasPrefs: true };
+        }
+      }
+      return { hasPrefs: false };
+    } catch (err) {
+      console.error("Error fetching user preferences:", err);
+      return { hasPrefs: false }; // Fallback to onboarding
+    }
+  },
 }));

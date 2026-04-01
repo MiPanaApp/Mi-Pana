@@ -8,6 +8,7 @@ import { doc, setDoc } from "firebase/firestore";
 import { createUserWithEmailAndPassword, updateProfile, updateEmail } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { translateFirebaseError } from "../../utils/authErrors";
+import { getLevel1Name } from "../../data/locations";
 
 export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
   const [showCropper, setShowCropper] = useState(false);
@@ -29,17 +30,16 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
   const [errorMsg, setErrorMsg] = useState("");
   const [showCountrySelect, setShowCountrySelect] = useState(false);
   const [showRegionSelect, setShowRegionSelect] = useState(false);
-
   const countries = [
-    { name: "España", iso: "ES", regionLabel: "Comunidad", regions: ["Andalucía", "Aragón", "Asturias", "Baleares", "Canarias", "Cantabria", "Castilla-La Mancha", "Castilla y León", "Cataluña", "Comunidad Valenciana", "Extremadura", "Galicia", "Madrid", "Murcia", "Navarra", "País Vasco", "La Rioja", "Ceuta", "Melilla"] },
-    { name: "Estados Unidos", iso: "US", regionLabel: "Estado", regions: ["Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"] },
-    { name: "Colombia", iso: "CO", regionLabel: "Departamento", regions: ["Amazonas", "Antioquia", "Arauca", "Atlántico", "Bogotá D.C.", "Bolívar", "Boyacá", "Caldas", "Caquetá", "Casanare", "Cauca", "Cesar", "Chocó", "Córdoba", "Cundinamarca", "Guainía", "Guaviare", "Huila", "La Guajira", "Magdalena", "Meta", "Nariño", "Norte de Santander", "Putumayo", "Quindío", "Risaralda", "San Andrés y Providencia", "Santander", "Sucre", "Tolima", "Valle del Cauca", "Vaupés", "Vichada"] },
-    { name: "Ecuador", iso: "EC", regionLabel: "Provincia", regions: ["Azuay", "Bolívar", "Cañar", "Carchi", "Chimborazo", "Cotopaxi", "El Oro", "Esmeraldas", "Galápagos", "Guayas", "Imbabura", "Loja", "Los Ríos", "Manabí", "Morona Santiago", "Napo", "Orellana", "Pastaza", "Pichinacha", "Santa Elena", "Santo Domingo de los Tsáchilas", "Sucumbíos", "Tungurahua", "Zamora Chinchipe"] },
-    { name: "Perú", iso: "PE", regionLabel: "Departamento", regions: ["Amazonas", "Ancash", "Apurímac", "Arequipa", "Ayacucho", "Cajamarca", "Callao", "Cusco", "Huancavelica", "Huánuco", "Ica", "Junín", "La Libertad", "Lambayeque", "Lima", "Loreto", "Madre de Dios", "Moquegua", "Pasco", "Piura", "Puno", "San Martín", "Tacna", "Tumbes", "Ucayali"] },
-    { name: "Chile", iso: "CL", regionLabel: "Región", regions: ["Arica y Parinacota", "Tarapacá", "Antofagasta", "Atacama", "Coquimbo", "Valparaíso", "Metropolitana de Santiago", "O'Higgins", "Maule", "Ñuble", "Biobío", "La Araucanía", "Los Ríos", "Los Lagos", "Aysén", "Magallanes"] },
-    { name: "Panamá", iso: "PA", regionLabel: "Provincia", regions: ["Bocas del Toro", "Chiriquí", "Coclé", "Colón", "Darién", "Herrera", "Los Santos", "Panamá", "Veraguas", "Panamá Oeste", "Guna Yala", "Emberá-Wounaan", "Ngäbe-Buglé"] },
-    { name: "República Dominicana", iso: "DO", regionLabel: "Provincia", regions: ["Azua", "Baoruco", "Barahona", "Dajabón", "Distrito Nacional", "Duarte", "El Seibo", "Elias Piña", "Espaillat", "Hato Mayor", "Hermanas Mirabal", "Independencia", "La Altagracia", "La Romana", "La Vega", "María Trinidad Sánchez", "Monseñor Nouel", "Monte Cristi", "Monte Plata", "Pedernales", "Peravia", "Puerto Plata", "Samaná", "Sánchez Ramírez", "San Cristóbal", "San José de Ocoa", "San Juan", "San Pedro de Macorís", "Santiago", "Santiago Rodríguez", "Santo Domingo", "Valverde"] },
-    { name: "Argentina", iso: "AR", regionLabel: "Provincia", regions: ["Buenos Aires", "Catamarca", "Chaco", "Chubut", "Ciudad de Buenos Aires", "Córdoba", "Corrientes", "Entre Ríos", "Formosa", "Jujuy", "La Pampa", "La Rioja", "Mendoza", "Misiones", "Neuquén", "Río Negro", "Salta", "San Juan", "San Luis", "Santa Cruz", "Santa Fe", "Santiago del Estero", "Tierra del Fuego", "Tucumán"] }
+    { name: "🇪🇸 España", iso: "ES", regionLabel: "Comunidad", regions: ["Andalucía", "Aragón", "Asturias", "Baleares", "Canarias", "Cantabria", "Castilla-La Mancha", "Castilla y León", "Cataluña", "Comunidad Valenciana", "Extremadura", "Galicia", "Madrid", "Murcia", "Navarra", "País Vasco", "La Rioja", "Ceuta", "Melilla"] },
+    { name: "🇺🇸 Estados Unidos", iso: "US", regionLabel: "Estado", regions: ["Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"] },
+    { name: "🇨🇴 Colombia", iso: "CO", regionLabel: "Departamento", regions: ["Amazonas", "Antioquia", "Arauca", "Atlántico", "Bogotá D.C.", "Bolívar", "Boyacá", "Caldas", "Caquetá", "Casanare", "Cauca", "Cesar", "Chocó", "Córdoba", "Cundinamarca", "Guainía", "Guaviare", "Huila", "La Guajira", "Magdalena", "Meta", "Nariño", "Norte de Santander", "Putumayo", "Quindío", "Risaralda", "San Andrés y Providencia", "Santander", "Sucre", "Tolima", "Valle del Cauca", "Vaupés", "Vichada"] },
+    { name: "🇪🇨 Ecuador", iso: "EC", regionLabel: "Provincia", regions: ["Azuay", "Bolívar", "Cañar", "Carchi", "Chimborazo", "Cotopaxi", "El Oro", "Esmeraldas", "Galápagos", "Guayas", "Imbabura", "Loja", "Los Ríos", "Manabí", "Morona Santiago", "Napo", "Orellana", "Pastaza", "Pichinacha", "Santa Elena", "Santo Domingo de los Tsáchilas", "Sucumbíos", "Tungurahua", "Zamora Chinchipe"] },
+    { name: "🇵🇪 Perú", iso: "PE", regionLabel: "Departamento", regions: ["Amazonas", "Ancash", "Apurímac", "Arequipa", "Ayacucho", "Cajamarca", "Callao", "Cusco", "Huancavelica", "Huánuco", "Ica", "Junín", "La Libertad", "Lambayeque", "Lima", "Loreto", "Madre de Dios", "Moquegua", "Pasco", "Piura", "Puno", "San Martín", "Tacna", "Tumbes", "Ucayali"] },
+    { name: "🇨🇱 Chile", iso: "CL", regionLabel: "Región", regions: ["Arica y Parinacota", "Tarapacá", "Antofagasta", "Atacama", "Coquimbo", "Valparaíso", "Metropolitana de Santiago", "O'Higgins", "Maule", "Ñuble", "Biobío", "La Araucanía", "Los Ríos", "Los Lagos", "Aysén", "Magallanes"] },
+    { name: "🇵🇦 Panamá", iso: "PA", regionLabel: "Provincia", regions: ["Bocas del Toro", "Chiriquí", "Coclé", "Colón", "Darién", "Herrera", "Los Santos", "Panamá", "Veraguas", "Panamá Oeste", "Guna Yala", "Emberá-Wounaan", "Ngäbe-Buglé"] },
+    { name: "🇩🇴 Rep. Dominicana", iso: "DO", regionLabel: "Provincia", regions: ["Azua", "Baoruco", "Barahona", "Dajabón", "Distrito Nacional", "Duarte", "El Seibo", "Elias Piña", "Espaillat", "Hato Mayor", "Hermanas Mirabal", "Independencia", "La Altagracia", "La Romana", "La Vega", "María Trinidad Sánchez", "Monseñor Nouel", "Monte Cristi", "Monte Plata", "Pedernales", "Peravia", "Puerto Plata", "Samaná", "Sánchez Ramírez", "San Cristóbal", "San José de Ocoa", "San Juan", "San Pedro de Macorís", "Santiago", "Santiago Rodríguez", "Santo Domingo", "Valverde"] },
+    { name: "🇦🇷 Argentina", iso: "AR", regionLabel: "Provincia", regions: ["Buenos Aires", "Catamarca", "Chaco", "Chubut", "Ciudad de Buenos Aires", "Córdoba", "Corrientes", "Entre Ríos", "Formosa", "Jujuy", "La Pampa", "La Rioja", "Mendoza", "Misiones", "Neuquén", "Río Negro", "Salta", "San Juan", "San Luis", "Santa Cruz", "Santa Fe", "Santiago del Estero", "Tierra del Fuego", "Tucumán"] }
   ];
 
   const selectedCountryData = countries.find(c => c.name === formData.country);
@@ -146,6 +146,10 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
         email: formData.email,
         country: formData.country,
         region: formData.region,
+        // Inicializar memoria de país/región con la de residencia
+        lastViewedCountry: formData.country,
+        lastViewedRegion: formData.region,
+        lastViewedAt: new Date(),
         birthDate: formData.birthDate,
         gender: formData.gender,
         avatar: avatarUrl,
@@ -355,7 +359,7 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
 
             <div className="flex-1 relative">
               <label className="text-[11px] font-bold uppercase text-[#666688] block mb-[5px]">
-                {selectedCountryData ? selectedCountryData.regionLabel : "Ciudad"}
+                {selectedCountryData ? getLevel1Name(selectedCountryData.iso) : "Ciudad"}
               </label>
               <div 
                 onClick={() => { if(selectedCountryData) setShowRegionSelect(!showRegionSelect); setShowCountrySelect(false); }}

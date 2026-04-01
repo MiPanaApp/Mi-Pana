@@ -304,3 +304,33 @@ export const LOCATION_DATA = {
     }
   }
 };
+
+export const COUNTRIES_CONFIG = {
+  '🇪🇸 España':          { level1Name: 'Comunidad Autónoma', code: 'ES' },
+  '🇺🇸 Estados Unidos':  { level1Name: 'Estado', code: 'US' },
+  '🇨🇴 Colombia':        { level1Name: 'Departamento', code: 'CO' },
+  '🇪🇨 Ecuador':         { level1Name: 'Provincia', code: 'EC' },
+  '🇵🇦 Panamá':          { level1Name: 'Provincia', code: 'PA' },
+  '🇵🇪 Perú':            { level1Name: 'Departamento', code: 'PE' },
+  '🇩🇴 Rep. Dominicana': { level1Name: 'Provincia', code: 'DO' },
+  '🇨🇱 Chile':           { level1Name: 'Región', code: 'CL' },
+  '🇦🇷 Argentina':       { level1Name: 'Provincia', code: 'AR' },
+};
+
+export const getCountryNameFromCode = (code) => {
+  const entry = Object.entries(COUNTRIES_CONFIG).find(([_, config]) => config.code === code);
+  return entry ? entry[0] : '🇪🇸 España';
+};
+
+export const getCountryCodeFromName = (name) => {
+  if (!name) return 'ES';
+  if (COUNTRIES_CONFIG[name]) return COUNTRIES_CONFIG[name].code;
+  // Fallback for names without emojis or minor variations
+  const plainName = name.replace(/[\u{1F1E6}-\u{1F1FF}]{2}\s*/u, '').trim();
+  const entry = Object.entries(COUNTRIES_CONFIG).find(([key]) => key.includes(plainName));
+  return entry ? entry[1].code : 'ES';
+};
+export const getLevel1Name = (code) => {
+  const entry = Object.entries(COUNTRIES_CONFIG).find(([_, config]) => config.code === code);
+  return entry ? entry[1].level1Name : 'Ciudad/Región';
+};

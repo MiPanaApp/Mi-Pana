@@ -10,13 +10,19 @@ export default function SplashScreen() {
   const { hasChosenCountry } = useStore();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
       if (!user) {
         navigate('/login');
-      } else if (!hasChosenCountry) {
-        navigate('/onboarding');
       } else {
-        navigate('/home');
+        // Antes de decidir dónde ir, intentamos recuperar las preferencias de Firestore
+        const fetchPrefs = useAuthStore.getState().fetchUserPreferences;
+        const { hasPrefs } = await fetchPrefs(user.uid);
+        
+        if (hasPrefs || hasChosenCountry) {
+          navigate('/home');
+        } else {
+          navigate('/onboarding');
+        }
       }
     }, 3000);
     return () => clearTimeout(timer);
