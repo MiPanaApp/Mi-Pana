@@ -4,6 +4,7 @@ import { Sliders, Meh, ArrowUpDown, Pin, Star, Clock, Euro, Search } from 'lucid
 import { motion, AnimatePresence } from 'framer-motion';
 import ProductCard from '../components/ProductCard';
 import FilterPanel from '../components/ui/FilterPanel';
+import SkeletonGrid from '../components/ui/SkeletonGrid';
 import { useStore } from '../store/useStore';
 import { collection, getDocs, query, where, doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../services/firebase';
@@ -278,9 +279,7 @@ export default function Home() {
         </div>
 
         {loading ? (
-          <div className="flex justify-center items-center py-20">
-            <div className="w-10 h-10 border-4 border-[#1A1A3A]/20 border-t-[#1A1A3A] rounded-full animate-spin"></div>
-          </div>
+          <SkeletonGrid count={6} />
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 lg:gap-10 px-1">
             {filteredProducts.map(prod => (

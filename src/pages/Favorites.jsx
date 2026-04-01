@@ -7,6 +7,7 @@ import { db } from '../services/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { MOCK_PRODUCTS } from '../data/mockProducts';
 import emptyHammock from '../assets/empty_hammock.png';
+import SkeletonListItem from '../components/ui/SkeletonListItem';
 
 const isMobile = () => window.innerWidth < 768;
 
@@ -267,16 +268,7 @@ export default function Favorites() {
           >
             {loading ? (
               // Skeletons de carga
-              [1, 2, 3].map(i => (
-                 <div key={i} className="bg-[#E0E5EC] rounded-[2rem] p-3 flex gap-4 h-32 animate-pulse shadow-[6px_6px_12px_rgba(163,177,198,0.4),-6px_-6px_12px_rgba(255,255,255,0.6)]">
-                    <div className="h-full w-28 bg-[#1A1A3A]/10 rounded-2xl shrink-0" />
-                    <div className="flex-1 py-2 pr-2 flex flex-col justify-between">
-                       <div className="h-4 bg-[#1A1A3A]/10 rounded-full w-3/4" />
-                       <div className="h-4 bg-[#1A1A3A]/10 rounded-full w-1/2" />
-                       <div className="h-6 bg-[#1A1A3A]/10 rounded-full w-1/3 mt-auto" />
-                    </div>
-                 </div>
-              ))
+              [1, 2, 3].map(i => <SkeletonListItem key={i} />)
             ) : products.length > 0 ? (
               <>
                 <div className="flex justify-between items-center px-3 mb-1">

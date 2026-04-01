@@ -273,9 +273,139 @@ export default function Profile() {
     displayName = currentUser.displayName;
   }
 
+  const renderAdsContent = (isDesktop = false) => (
+    <div className={`space-y-6 ${isDesktop ? "grid grid-cols-1 xl:grid-cols-2 gap-6 space-y-0" : ""}`}>
+      {/* Categoría: ACTIVOS */}
+      <div className={isDesktop ? "bg-white/30 rounded-[30px] p-6 shadow-sm border border-white/50" : ""}>
+        <h3 className="text-[10px] sm:text-xs font-black text-[#0056B3] uppercase tracking-widest mb-4 flex items-center gap-2">
+          <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+          Activos ({activeProducts.length})
+        </h3>
+        <div className="space-y-4">
+          {activeProducts.length === 0 ? (
+            <p className="text-[11px] text-gray-400 italic">No tienes anuncios activos.</p>
+          ) : (
+            activeProducts.map(product => (
+              <div key={product.id} className="bg-[#E0E5EC] p-3.5 md:p-5 rounded-[1.5rem] md:rounded-[2rem] shadow-[4px_4px_8px_#b8b9be,-4px_-4px_8px_#ffffff] flex flex-col gap-3 md:gap-4 transition-transform hover:scale-[1.01]">
+                <div className="flex items-center gap-4">
+                  <img 
+                    src={product.image || product.images?.[0] || 'https://via.placeholder.com/150'} 
+                    alt={product.name}
+                    className="w-14 h-14 md:w-16 md:h-16 rounded-2xl object-cover bg-white shadow-sm flex-shrink-0"
+                  />
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className="text-sm md:text-base font-black text-[#1A1A3A] truncate">{product.name || product.title}</span>
+                    <span className="text-[13px] md:text-sm font-black text-[#0056B3]">{Number(product.price).toLocaleString('es-ES', { minimumFractionDigits: 2 })} €</span>
+                  </div>
+                </div>
+                
+                {/* Botones Centrados Horizontalmente */}
+                <div className="flex items-center justify-center gap-3 pt-2">
+                  <button 
+                    onClick={() => navigate(`/perfil-producto?id=${product.id}`)} 
+                    className="w-10 h-10 md:w-12 md:h-12 bg-white/70 backdrop-blur-md rounded-xl shadow-[4px_4px_8px_#b8b9be,-4px_-4px_8px_#ffffff,inset_2px_2px_4px_rgba(255,255,255,0.5)] flex items-center justify-center active:scale-95 transition-all text-[#0056B3]"
+                    title="Ver anuncio"
+                  >
+                    <ExternalLink size={18} />
+                  </button>
+                  <button 
+                    onClick={() => navigate(`/anunciar?edit=${product.id}`)} 
+                    className="w-10 h-10 md:w-12 md:h-12 bg-white/70 backdrop-blur-md rounded-xl shadow-[4px_4px_8px_#b8b9be,-4px_-4px_8px_#ffffff,inset_2px_2px_4px_rgba(255,255,255,0.5)] flex items-center justify-center active:scale-95 transition-all text-[#D90429]"
+                    title="Editar anuncio"
+                  >
+                    <Edit2 size={18} />
+                  </button>
+                  <button 
+                    onClick={() => handleToggleStatus(product.id, 'active')} 
+                    className="w-10 h-10 md:w-12 md:h-12 bg-white/70 backdrop-blur-md rounded-xl shadow-[4px_4px_8px_#b8b9be,-4px_-4px_8px_#ffffff,inset_2px_2px_4px_rgba(255,255,255,0.5)] flex items-center justify-center active:scale-95 transition-all text-[#F59E0B]"
+                    title="Suspender anuncio temporalmente"
+                  >
+                    <EyeOff size={18} />
+                  </button>
+                  <button 
+                    onClick={() => handleDeleteProduct(product.id)} 
+                    className="w-10 h-10 md:w-12 md:h-12 bg-[#D90429] text-white rounded-xl shadow-[3px_3px_6px_#b8b9be,-3px_-3px_6px_#ffffff] flex items-center justify-center active:scale-95 transition-all"
+                    title="Borrar anuncio definitivamente"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Categoría: NO ACTIVOS */}
+      <div className={isDesktop ? "bg-white/30 rounded-[30px] p-6 shadow-sm border border-white/50" : ""}>
+        <h3 className="text-[10px] sm:text-xs font-black text-[#D90429] uppercase tracking-widest mb-4">
+          No Activos ({inactiveProducts.length})
+        </h3>
+        <div className="space-y-4">
+          {inactiveProducts.length === 0 ? (
+            <p className="text-[11px] text-gray-400 italic">No tienes anuncios suspendidos.</p>
+          ) : (
+            inactiveProducts.map(product => (
+              <div key={product.id} className="bg-[#E0E5EC] p-3.5 md:p-5 rounded-[1.5rem] md:rounded-[2rem] shadow-[4px_4px_8px_#b8b9be,-4px_-4px_8px_#ffffff] flex flex-col gap-3 md:gap-4 opacity-80 backdrop-grayscale-[0.5] transition-transform hover:scale-[1.01]">
+                <div className="flex items-center gap-4">
+                  <img 
+                    src={product.image || product.images?.[0] || 'https://via.placeholder.com/150'} 
+                    alt={product.name}
+                    className="w-14 h-14 md:w-16 md:h-16 rounded-2xl object-cover grayscale shadow-sm flex-shrink-0"
+                  />
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className="text-sm md:text-base font-bold text-gray-500 truncate">{product.name || product.title}</span>
+                    <span className="text-[13px] md:text-sm font-black text-gray-400">{Number(product.price).toLocaleString('es-ES', { minimumFractionDigits: 2 })} €</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-[#D90429]/10 text-[9px] font-black text-[#D90429] uppercase tracking-tighter shrink-0 border border-[#D90429]/20 hidden xs:block">Suspendido</span>
+                </div>
+
+                {/* Botones Centrados Horizontalmente */}
+                <div className="flex items-center justify-center gap-3 pt-2">
+                  <button 
+                    onClick={() => handleToggleStatus(product.id, 'inactive')} 
+                    className="w-10 h-10 md:w-12 md:h-12 bg-white/70 backdrop-blur-md rounded-xl shadow-[4px_4px_8px_#b8b9be,-4px_-4px_8px_#ffffff,inset_2px_2px_4px_rgba(255,255,255,0.5)] flex items-center justify-center active:scale-95 transition-all text-[#10B981]"
+                    title="Reactivar anuncio"
+                  >
+                    <Eye size={18} />
+                  </button>
+                  <button 
+                    onClick={() => navigate(`/anunciar?edit=${product.id}`)} 
+                    className="w-10 h-10 md:w-12 md:h-12 bg-white/70 backdrop-blur-md rounded-xl shadow-[4px_4px_8px_#b8b9be,-4px_-4px_8px_#ffffff,inset_2px_2px_4px_rgba(255,255,255,0.5)] flex items-center justify-center active:scale-95 transition-all text-[#D90429]"
+                    title="Editar anuncio"
+                  >
+                    <Edit2 size={18} />
+                  </button>
+                  <button 
+                    onClick={() => handleDeleteProduct(product.id)} 
+                    className="w-10 h-10 md:w-12 md:h-12 bg-[#D90429] text-white rounded-xl shadow-[0_4px_10px_rgba(217,4,41,0.3)] flex items-center justify-center active:scale-95 transition-all"
+                    title="Borrar anuncio definitivamente"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Botón rápido Crear Anuncio */}
+      <button 
+        onClick={() => navigate('/anunciar')}
+        className={`w-full py-4 flex items-center justify-center gap-2 text-[11px] md:text-sm font-black text-[#0056B3] bg-[#E0E5EC] rounded-2xl shadow-[inset_3px_3px_6px_#b8b9be,inset_-3px_-3px_6px_#ffffff] uppercase tracking-wider ${isDesktop ? "col-span-1 xl:col-span-2 mt-4 hover:shadow-[inset_5px_5px_10px_#b8b9be,inset_-5px_-5px_10px_#ffffff] transition-all" : ""}`}
+      >
+        <PlusCircle size={20} /> Crear Nuevo Post
+      </button>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-[#E0E5EC] pb-32 md:pb-0 pt-[20px] px-6 font-sans">
-      <div className="max-w-md mx-auto">
+    <div className="min-h-screen bg-[#E0E5EC] pb-32 md:pb-12 pt-[20px] px-6 font-sans">
+      <div className="w-full max-w-[1400px] mx-auto md:flex md:gap-8 lg:gap-12 items-start justify-center">
+
+        {/* COLUMNA IZQUIERDA (Perfil) */}
+        <div className="w-full max-w-md mx-auto md:mx-0 md:w-[350px] lg:w-[400px] shrink-0">
         
         {/* Cabecera Soft UI Principal */}
         <div className="bg-[#E0E5EC] rounded-[40px] p-6 shadow-[20px_20px_60px_#bebebe,-20px_-20px_60px_#ffffff] flex flex-col items-center mb-10">
@@ -405,124 +535,8 @@ export default function Profile() {
             {openMenu === 'mis-anuncios' && (
               <div className="mt-2 mx-2 p-4 bg-white/30 rounded-2xl shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3)] space-y-6">
                 
-                {/* Categoría: ACTIVOS */}
-                <div>
-                  <h3 className="text-[10px] font-black text-[#0056B3] uppercase tracking-widest mb-3 flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                    Activos ({activeProducts.length})
-                  </h3>
-                  <div className="space-y-3">
-                    {activeProducts.length === 0 ? (
-                      <p className="text-[11px] text-gray-400 italic">No tienes anuncios activos.</p>
-                    ) : (
-                      activeProducts.map(product => (
-                        <div key={product.id} className="bg-[#E0E5EC] p-3.5 rounded-[1.5rem] shadow-[4px_4px_8px_#b8b9be,-4px_-4px_8px_#ffffff] flex flex-col gap-3">
-                          <div className="flex items-center gap-4">
-                            <img 
-                              src={product.image || product.images?.[0] || 'https://via.placeholder.com/150'} 
-                              alt={product.name}
-                              className="w-14 h-14 rounded-2xl object-cover bg-white shadow-sm flex-shrink-0"
-                            />
-                            <div className="flex flex-col min-w-0 flex-1">
-                              <span className="text-sm font-black text-[#1A1A3A] truncate">{product.name || product.title}</span>
-                              <span className="text-[13px] font-black text-[#0056B3]">{Number(product.price).toLocaleString('es-ES', { minimumFractionDigits: 2 })} €</span>
-                            </div>
-                          </div>
-                          
-                          {/* Botones Debajo - Estilo Íconos Neumórficos (Reducidos 20%) */}
-                          <div className="flex items-center gap-2 pt-2">
-                            <button 
-                              onClick={() => navigate(`/perfil-producto?id=${product.id}`)} 
-                              className="flex-1 h-9 bg-[#0056B3] text-white rounded-xl shadow-[3px_3px_6px_#b8b9be,-3px_-3px_6px_#ffffff] flex items-center justify-center active:scale-95 transition-transform"
-                              title="Ver anuncio"
-                            >
-                              <ExternalLink size={18} />
-                            </button>
-                            <button 
-                              onClick={() => navigate(`/anunciar?edit=${product.id}`)} 
-                              className="flex-1 h-9 bg-[#FFCC00] text-[#1A1A3A] rounded-xl shadow-[3px_3px_6px_#b8b9be,-3px_-3px_6px_#ffffff] flex items-center justify-center active:scale-95 transition-transform"
-                              title="Editar anuncio"
-                            >
-                              <Edit2 size={18} />
-                            </button>
-                            <button 
-                              onClick={() => handleToggleStatus(product.id, 'active')} 
-                              className="flex-1 h-9 bg-[#F59E0B] text-white rounded-xl shadow-[3px_3px_6px_#b8b9be,-3px_-3px_6px_#ffffff] flex items-center justify-center active:scale-95 transition-transform"
-                              title="Suspender anuncio temporalmente"
-                            >
-                              <EyeOff size={18} />
-                            </button>
-                            <button 
-                              onClick={() => handleDeleteProduct(product.id)} 
-                              className="flex-1 h-9 bg-[#D90429] text-white rounded-xl shadow-[3px_3px_6px_#b8b9be,-3px_-3px_6px_#ffffff] flex items-center justify-center active:scale-95 transition-transform"
-                              title="Borrar anuncio definitivamente"
-                            >
-                              <Trash2 size={18} />
-                            </button>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-
-                {/* Categoría: NO ACTIVOS */}
-                <div>
-                  <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">
-                    No Activos ({inactiveProducts.length})
-                  </h3>
-                  <div className="space-y-3">
-                    {inactiveProducts.map(product => (
-                      <div key={product.id} className="bg-[#E0E5EC] p-3.5 rounded-[1.5rem] shadow-[4px_4px_8px_#b8b9be,-4px_-4px_8px_#ffffff] flex flex-col gap-3 opacity-80 backdrop-grayscale-[0.5]">
-                        <div className="flex items-center gap-4">
-                          <img 
-                            src={product.image || product.images?.[0] || 'https://via.placeholder.com/150'} 
-                            alt={product.name}
-                            className="w-14 h-14 rounded-2xl object-cover grayscale shadow-sm flex-shrink-0"
-                          />
-                          <div className="flex flex-col min-w-0 flex-1">
-                            <span className="text-sm font-bold text-gray-500 truncate">{product.name || product.title}</span>
-                            <span className="text-[13px] font-black text-gray-400">{Number(product.price).toLocaleString('es-ES', { minimumFractionDigits: 2 })} €</span>
-                          </div>
-                          <span className="px-2 py-0.5 rounded-full bg-gray-200 text-[9px] font-black text-gray-500 uppercase tracking-tighter">Suspendido</span>
-                        </div>
-
-                        {/* Botones Debajo En Inactivos - Estilo Íconos Neumórficos (Reducidos 20%) */}
-                        <div className="flex items-center gap-2 pt-2">
-                          <button 
-                            onClick={() => handleToggleStatus(product.id, 'inactive')} 
-                            className="flex-1 h-9 bg-[#10B981] text-white rounded-xl shadow-[0_4px_10px_rgba(16,185,129,0.3)] flex items-center justify-center active:scale-95 transition-transform"
-                            title="Reactivar anuncio"
-                          >
-                            <Eye size={18} />
-                          </button>
-                          <button 
-                            onClick={() => navigate(`/anunciar?edit=${product.id}`)} 
-                            className="flex-1 h-9 bg-[#FFCC00] text-[#1A1A3A] rounded-xl shadow-[0_4px_10px_rgba(255,204,0,0.3)] flex items-center justify-center active:scale-95 transition-transform"
-                            title="Editar anuncio"
-                          >
-                            <Edit2 size={18} />
-                          </button>
-                          <button 
-                            onClick={() => handleDeleteProduct(product.id)} 
-                            className="flex-1 h-9 bg-[#D90429] text-white rounded-xl shadow-[0_4px_10px_rgba(217,4,41,0.3)] flex items-center justify-center active:scale-95 transition-transform"
-                            title="Borrar anuncio definitivamente"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Botón rápido Crear Anuncio */}
-                <button 
-                  onClick={() => navigate('/anunciar')}
-                  className="w-full py-3 flex items-center justify-center gap-2 text-[11px] font-black text-[#0056B3] bg-[#E0E5EC] rounded-xl shadow-[inset_3px_3px_6px_#b8b9be,inset_-3px_-3px_6px_#ffffff] uppercase tracking-wider"
-                >
-                  <PlusCircle size={16} /> Crear Nuevo Post
-                </button>
+                {/* Módulo Mis Anuncios */}
+                {renderAdsContent(false)}
               </div>
             )}
           </div>
@@ -753,7 +767,21 @@ export default function Profile() {
 
       </div>
 
-      {/* Modal Neumórfico para Selector de Ubicación */}
+      {/* COLUMNA DERECHA: DASHBOARD DESKTOP */}
+      <div className="hidden md:flex flex-col flex-1 w-full min-w-0 bg-[#E0E5EC] rounded-[40px] p-8 lg:p-10 shadow-[20px_20px_60px_#bebebe,-20px_-20px_60px_#ffffff]">
+        <h2 className="text-xl lg:text-2xl font-black text-[#1A1A3A] mb-8 pb-4 border-b border-white/50 flex flex-col gap-1">
+          Dashboard de Anuncios
+          <span className="text-[11px] lg:text-[13px] font-bold text-gray-400 uppercase tracking-widest">
+            Gestión y Rendimiento
+          </span>
+        </h2>
+        
+        {renderAdsContent(true)}
+      </div>
+
+    </div>
+
+    {/* Modal Neumórfico para Selector de Ubicación */}
       <AnimatePresence>
         {showLocationModal && (
           <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4 overflow-hidden">

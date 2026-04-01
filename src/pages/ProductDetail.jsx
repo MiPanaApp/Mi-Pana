@@ -16,6 +16,54 @@ import { MOCK_PRODUCTS } from '../data/mockProducts';
 import panaLengua from '../assets/pana_lengua.png';
 import { getBadge, BADGE_STYLES } from '../utils/badgeUtils';
 
+export function SkeletonProductDetail() {
+  return (
+    <div className="bg-[#E0E5EC] min-h-screen">
+      
+      {/* Header amarillo skeleton */}
+      <div className="w-full h-[420px] skeleton
+                      rounded-b-0" />
+      
+      <div className="px-5 mt-4 flex flex-col gap-4">
+        
+        {/* Vendedor */}
+        <div className="flex items-center gap-3">
+          <div className="skeleton w-14 h-14
+                          rounded-full flex-shrink-0" />
+          <div className="flex flex-col gap-2 flex-1">
+            <div className="skeleton h-4 w-[60%]
+                            rounded-md" />
+            <div className="skeleton-light h-3
+                            w-[40%] rounded-md" />
+          </div>
+        </div>
+        
+        {/* Título */}
+        <div className="skeleton h-8 w-[90%]
+                        rounded-lg" />
+        <div className="skeleton h-8 w-[70%]
+                        rounded-lg" />
+        
+        {/* Precio */}
+        <div className="skeleton h-12 w-[35%]
+                        rounded-[1.2rem]" />
+        
+        {/* Descripción */}
+        <div className="flex flex-col gap-2 mt-2">
+          <div className="skeleton h-3 w-full rounded-md" />
+          <div className="skeleton-light h-3
+                          w-full rounded-md" />
+          <div className="skeleton-light h-3
+                          w-[80%] rounded-md" />
+          <div className="skeleton-light h-3
+                          w-[90%] rounded-md" />
+        </div>
+        
+      </div>
+    </div>
+  )
+}
+
 // Los productos relacionados se cargan ahora dinámicamente desde Firestore.
 
 export default function ProductDetail() {
@@ -397,11 +445,7 @@ export default function ProductDetail() {
    };
 
    if (loading) {
-      return (
-         <div className="min-h-screen bg-[#E0E5EC] flex items-center justify-center">
-            <div className="w-12 h-12 rounded-full border-4 border-[#1A1A3A]/20 border-t-[#1A1A3A] animate-spin" />
-         </div>
-      );
+      return <SkeletonProductDetail />;
    }
 
    if (error || !product) {
