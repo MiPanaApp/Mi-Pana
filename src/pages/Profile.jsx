@@ -281,7 +281,7 @@ export default function Profile() {
           <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
           Activos ({activeProducts.length})
         </h3>
-        <div className="space-y-4">
+        <div className={`space-y-4 ${isDesktop ? "max-h-[580px] overflow-y-auto pr-5 custom-scrollbar scroll-smooth" : ""}`}>
           {activeProducts.length === 0 ? (
             <p className="text-[11px] text-gray-400 italic">No tienes anuncios activos.</p>
           ) : (
@@ -341,7 +341,7 @@ export default function Profile() {
         <h3 className="text-[10px] sm:text-xs font-black text-[#D90429] uppercase tracking-widest mb-4">
           No Activos ({inactiveProducts.length})
         </h3>
-        <div className="space-y-4">
+        <div className={`space-y-4 ${isDesktop ? "max-h-[580px] overflow-y-auto pr-5 custom-scrollbar scroll-smooth" : ""}`}>
           {inactiveProducts.length === 0 ? (
             <p className="text-[11px] text-gray-400 italic">No tienes anuncios suspendidos.</p>
           ) : (

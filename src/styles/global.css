@@ -83,9 +83,28 @@
   border-radius: 8px;
 }
 
+
 .skeleton-light {
   background: #E4E4EE;
   animation: skeleton-pulse 1.5s ease-in-out infinite;
   border-radius: 8px;
 }
+
+/* Custom Scrollbar for Dashboard Panels */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  margin-block: 85px; /* Reduce el largo total un ~30% (15% arriba y 15% abajo) */
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 86, 179, 0.6); /* Azul Marino Mi Pana */
+  border-radius: 20px;
+  border: 2px solid rgba(224, 229, 236, 0.9); /* Borde claro para separar del fondo */
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 86, 179, 0.8);
+}
+
 
