@@ -65,12 +65,16 @@ export async function submitReview({ interactionId, buyerId, buyerName, sellerId
   let safeProductName = productName;
 
   if (interactionId) {
-    const intDoc = await getDoc(doc(db, 'interactions', interactionId));
-    if (intDoc.exists()) {
-      const dbData = intDoc.data();
-      if (!safeSellerId) safeSellerId = dbData.sellerId;
-      if (!safeProductId) safeProductId = dbData.productId;
-      if (!safeProductName) safeProductName = dbData.productName;
+    try {
+      const intDoc = await getDoc(doc(db, 'interactions', String(interactionId)));
+      if (intDoc.exists()) {
+        const dbData = intDoc.data();
+        if (!safeSellerId) safeSellerId = dbData.sellerId;
+        if (!safeProductId) safeProductId = dbData.productId;
+        if (!safeProductName) safeProductName = dbData.productName;
+      }
+    } catch (e) {
+      console.warn('No se pudo reforzar la interacción:', e);
     }
   }
 
@@ -96,7 +100,7 @@ export async function submitReview({ interactionId, buyerId, buyerName, sellerId
   });
 
   // 3. Actualizar rating del producto con transacción
-  const productRef = doc(db, 'products', safeProductId);
+  const productRef = doc(db, 'products', String(safeProductId));
   await runTransaction(db, async (tx) => {
     const productSnap = await tx.get(productRef);
     if (!productSnap.exists()) return;
@@ -109,7 +113,7 @@ export async function submitReview({ interactionId, buyerId, buyerName, sellerId
   });
 
   // 4. Actualizar score del vendedor con transacción
-  const sellerRef = doc(db, 'users', safeSellerId);
+  const sellerRef = doc(db, 'users', String(safeSellerId));
   await runTransaction(db, async (tx) => {
     const sellerSnap = await tx.get(sellerRef);
     if (!sellerSnap.exists()) return;
@@ -122,7 +126,9 @@ export async function submitReview({ interactionId, buyerId, buyerName, sellerId
   });
 
   // 5. Marcar interacción como revisada
-  await updateDoc(doc(db, 'interactions', interactionId), { reviewed: true });
+  if (interactionId) {
+    await updateDoc(doc(db, 'interactions', String(interactionId)), { reviewed: true });
+  }
 }
 
 // ─── Obtener reviews de un producto ──────────────────────────────────────────
