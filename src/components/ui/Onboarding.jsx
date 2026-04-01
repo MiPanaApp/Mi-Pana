@@ -5,7 +5,6 @@ import { ChevronDown } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 
 const countryData = {
-  VE: { name: 'Venezuela', flag: '🇻🇪', active: true, quote: '¡Mano tengo fe! El mejor país del mundo, chamo 🇻🇪🔥' },
   ES: { name: 'España', flag: '🇪🇸', active: true, quote: 'El arroz con pollo es mejor que la paella 😂🤣' },
   US: { name: 'Estados Unidos', flag: '🇺🇸', active: false, quote: 'El “American Dream” está bien… pero el venezolano ya viene con survival mode activado 😂🤣' },
   CO: { name: 'Colombia', flag: '🇨🇴', active: false, quote: 'La Arepa es Venezolana 😜' },
@@ -18,7 +17,6 @@ const countryData = {
 };
 
 const capitals = {
-  VE: 'Caracas',
   ES: 'Madrid',
   CO: 'Bogotá',
   US: 'Washington D.C.',
