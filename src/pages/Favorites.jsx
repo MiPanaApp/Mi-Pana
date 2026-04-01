@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
 import { db } from '../services/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { MOCK_PRODUCTS } from '../data/mockProducts';
 import emptyHammock from '../assets/empty_hammock.png';
 import SkeletonListItem from '../components/ui/SkeletonListItem';
 
@@ -178,11 +177,7 @@ export default function Favorites() {
         // Normalizamos IDs para comparar de forma segura (strings)
         const favStrings = favorites.map(f => String(f));
         
-        // Mocks
-        const mockFavorites = MOCK_PRODUCTS.filter(p => favStrings.includes(String(p.id)));
-        
-        // Firestore
-        const firestoreIds = favStrings.filter(id => !MOCK_PRODUCTS.some(m => String(m.id) === id));
+        const firestoreIds = favStrings;
         const promises = firestoreIds.map(id => getDoc(doc(db, 'products', id)));
         const docsSnap = await Promise.all(promises);
         
@@ -190,7 +185,7 @@ export default function Favorites() {
           .filter(docSnap => docSnap.exists())
           .map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
 
-        const allProducts = [...firestoreProducts, ...mockFavorites].filter(p => p.status !== 'inactive' && p.status !== 'hidden');
+        const allProducts = [...firestoreProducts].filter(p => p.status !== 'inactive' && p.status !== 'hidden');
         
         // Mantener orden y asegurar unicidad
         const uniqueProductsMap = new Map();

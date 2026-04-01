@@ -12,7 +12,6 @@ import { useAuth } from '../context/AuthContext';
 import { getOrCreateConversation } from '../lib/chat';
 import { registerInteraction, getProductReviews } from '../lib/reviews';
 import { registerView, incrementLikes, decrementLikes } from '../lib/analytics';
-import { MOCK_PRODUCTS } from '../data/mockProducts';
 import panaLengua from '../assets/pana_lengua.png';
 import { getBadge, BADGE_STYLES } from '../utils/badgeUtils';
 
@@ -371,14 +370,7 @@ export default function ProductDetail() {
                fetchRelated(productData.category, productData.id);
                getProductReviews(productData.id).then(setReviews).catch(err => console.warn('Error fetching reviews:', err));
             } else {
-               // --- FALLBACK TO MOCK PRODUCTS ---
-               const mock = MOCK_PRODUCTS.find(p => p.id.toString() === productId);
-               if (mock) {
-                  setProduct(mock);
-                  fetchRelated(mock.category, mock.id);
-               } else {
-                  setError('El anuncio ya no existe o fue eliminado.');
-               }
+               setError('El anuncio ya no existe o fue eliminado.');
             }
          } catch (err) {
             console.error(err);
@@ -417,11 +409,7 @@ export default function ProductDetail() {
             }
          } catch (err) {
             console.warn("Error fetching related products:", err);
-            // Fallback: mostrar mocks de la misma categoría si falla firestore
-            const mockRelated = MOCK_PRODUCTS
-               .filter(p => p.category === category && p.id.toString() !== currentId.toString())
-               .slice(0, 4);
-            setRelatedProducts(mockRelated);
+            setRelatedProducts([]);
          }
       };
 
