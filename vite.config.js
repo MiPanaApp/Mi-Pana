@@ -8,6 +8,9 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      workbox: {
+        maximumFileSizeToCacheInBytes: 5000000, // Aumentado a 5MB para evitar error en build de Vercel
+      },
       includeAssets: ['favicon.png', 'apple-touch-icon.png', 'logo192.png', 'logo512.png'],
       manifest: {
         name: 'Mi Pana',
