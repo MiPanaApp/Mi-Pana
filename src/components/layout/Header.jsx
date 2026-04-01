@@ -14,6 +14,18 @@ import { FiPlus } from 'react-icons/fi';
 import { FcGoogle } from 'react-icons/fc';
 import { ChevronDown as LucideChevronDown } from 'lucide-react';
 
+const COUNTRY_INFO = {
+  'ES': { flag: '🇪🇸', defaultRegion: 'Madrid' },
+  'US': { flag: '🇺🇸', defaultRegion: 'Washington D.C.' },
+  'CO': { flag: '🇨🇴', defaultRegion: 'Bogotá' },
+  'EC': { flag: '🇪🇨', defaultRegion: 'Quito' },
+  'PA': { flag: '🇵🇦', defaultRegion: 'Ciudad de Panamá' },
+  'PE': { flag: '🇵🇪', defaultRegion: 'Lima' },
+  'DO': { flag: '🇩🇴', defaultRegion: 'Santo Domingo' },
+  'CL': { flag: '🇨🇱', defaultRegion: 'Santiago' },
+  'AR': { flag: '🇦🇷', defaultRegion: 'Buenos Aires' }
+};
+
 // Las categorías se cargan dinámicamente desde Firestore en el useEffect del componente
 
 const Header = forwardRef((props, ref) => {
@@ -199,19 +211,9 @@ const Header = forwardRef((props, ref) => {
                     onClick={() => setIsCountryOpen(!isCountryOpen)}
                     className="flex items-center justify-center cursor-pointer active:scale-95 transition-transform opacity-90"
                   >
-                    {selectedCountry === 'ES' ? (
-                      <div className="w-4 h-4 md:w-6 md:h-6 rounded-full overflow-hidden flex flex-col border-[0.5px] border-[#003366]/20 shadow-[2px_2px_4px_rgba(163,177,198,0.5),-2px_-2px_4px_rgba(255,255,255,0.8)]">
-                        <div className="h-[30%] bg-[#AD1519]"></div>
-                        <div className="h-[40%] bg-[#FABD00]"></div>
-                        <div className="h-[30%] bg-[#AD1519]"></div>
-                      </div>
-                    ) : (
-                      <div className="w-4 h-4 md:w-6 md:h-6 rounded-full overflow-hidden flex flex-col border-[0.5px] border-[#003366]/20 shadow-[2px_2px_4px_rgba(163,177,198,0.5),-2px_-2px_4px_rgba(255,255,255,0.8)]">
-                        <div className="h-[50%] bg-[#FCD116]"></div>
-                        <div className="h-[25%] bg-[#003893]"></div>
-                        <div className="h-[25%] bg-[#CE1126]"></div>
-                      </div>
-                    )}
+                    <div className="w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xl md:text-2xl border-[0.5px] border-[#003366]/20 bg-[#E0E5EC] shadow-[2px_2px_4px_rgba(163,177,198,0.5),-2px_-2px_4px_rgba(255,255,255,0.8)]">
+                      {COUNTRY_INFO[selectedCountry]?.flag || '🇪🇸'}
+                    </div>
                   </button>
 
                   <AnimatePresence>
@@ -220,28 +222,22 @@ const Header = forwardRef((props, ref) => {
                         initial={{ opacity: 0, y: 5, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 5, scale: 0.95 }}
-                        className="absolute top-full left-0 mt-4 bg-[#E0E5EC] rounded-3xl shadow-[8px_8px_16px_rgba(163,177,198,0.7),-8px_-8px_16px_rgba(255,255,255,0.9)] border-[0.5px] border-white/60 p-2.5 z-[1001] flex flex-col gap-3"
+                        className="absolute top-full left-0 mt-4 bg-[#E0E5EC] rounded-3xl shadow-[8px_8px_16px_rgba(163,177,198,0.7),-8px_-8px_16px_rgba(255,255,255,0.9)] border-[0.5px] border-white/60 p-2.5 z-[1001] flex flex-col gap-3 max-h-[300px] overflow-y-auto custom-scrollbar"
                       >
-                        <button
-                          onClick={() => handleCountryChange('ES', 'Madrid')}
-                          className={`w-12 h-12 flex items-center justify-center rounded-full transition-all ${selectedCountry === 'ES' ? 'shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.9)]' : 'shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.8)] hover:scale-105 active:scale-95'}`}
-                        >
-                          <div className="w-6 h-6 rounded-full overflow-hidden flex flex-col shadow-sm">
-                            <div className="h-[30%] bg-[#AD1519]"></div>
-                            <div className="h-[40%] bg-[#FABD00]"></div>
-                            <div className="h-[30%] bg-[#AD1519]"></div>
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => handleCountryChange('CO', 'Bogotá')}
-                          className={`w-12 h-12 flex items-center justify-center rounded-full transition-all ${selectedCountry === 'CO' ? 'shadow-[inset_4px_4px_8_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.9)]' : 'shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.8)] hover:scale-105 active:scale-95'}`}
-                        >
-                          <div className="w-6 h-6 rounded-full overflow-hidden flex flex-col shadow-sm">
-                            <div className="h-[50%] bg-[#FCD116]"></div>
-                            <div className="h-[25%] bg-[#003893]"></div>
-                            <div className="h-[25%] bg-[#CE1126]"></div>
-                          </div>
-                        </button>
+                        {Object.entries(COUNTRY_INFO).map(([code, info]) => (
+                          <button
+                            key={code}
+                            onClick={() => handleCountryChange(code, info.defaultRegion)}
+                            className={`w-12 h-12 flex items-center justify-center rounded-full transition-all text-2xl ${
+                              selectedCountry === code 
+                                ? 'shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.9)]' 
+                                : 'shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.8)] hover:scale-105 active:scale-95'
+                            }`}
+                            title={info.defaultRegion}
+                          >
+                            {info.flag}
+                          </button>
+                        ))}
                       </motion.div>
                     )}
                   </AnimatePresence>
