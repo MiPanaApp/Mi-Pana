@@ -117,7 +117,7 @@ export default function ContactModal({ isOpen, onClose }) {
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="relative w-full md:max-w-2xl bg-white rounded-[22px] overflow-hidden shadow-[20px_20px_60px_rgba(163,177,198,0.5),-20px_-20px_60px_rgba(255,255,255,0.8)] border border-white/40"
+            className="relative w-full md:max-w-[800px] bg-white rounded-[32px] overflow-hidden shadow-[20px_20px_60px_rgba(163,177,198,0.5),-20px_-20px_60px_rgba(255,255,255,0.8)] border border-white/40"
           >
             <button
               onClick={onClose}
@@ -150,21 +150,21 @@ export default function ContactModal({ isOpen, onClose }) {
                 </div>
               </div>
             ) : (
-              <div className="p-6">
+              <div className="p-8">
                 <div className="mb-5 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center shadow-sm">
-                    <Headphones size={20} className="text-[#D90429]" />
+                  <div className="w-12 h-12 rounded-[14px] bg-red-50 flex items-center justify-center shadow-sm">
+                    <Headphones size={24} className="text-[#D90429]" />
                   </div>
-                  <h2 className="text-xl font-black text-[#1A1A3A] leading-tight">Contactar Soporte</h2>
+                  <h2 className="text-2xl font-black text-[#1A1A3A] leading-tight">Contactar Soporte</h2>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-3.5">
                   <input type="text" name="honeypot" style={{ display: 'none' }} tabIndex="-1" value={formData.honeypot} onChange={(e) => setFormData({ ...formData, honeypot: e.target.value })} />
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <label className="text-[9px] font-black text-[#8888AA] ml-2 tracking-widest flex items-center gap-1">
-                        <User size={9} className="text-[#0056B3]" /> Nombre Completo <span className="text-[#D90429] ml-0.5">*</span>
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-black text-[#8888AA] ml-2 tracking-widest flex items-center gap-1.5">
+                        <User size={11} className="text-[#0056B3]" /> Nombre Completo <span className="text-[#D90429] ml-0.5">*</span>
                       </label>
                       <input
                         type="text"
@@ -176,9 +176,9 @@ export default function ContactModal({ isOpen, onClose }) {
                       />
                     </div>
 
-                    <div className="space-y-1">
-                      <label className="text-[9px] font-black text-[#8888AA] ml-2 tracking-widest flex items-center gap-1">
-                        <Mail size={9} className="text-[#0056B3]" /> Correo Electrónico <span className="text-[#D90429] ml-0.5">*</span>
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-black text-[#8888AA] ml-2 tracking-widest flex items-center gap-1.5">
+                        <Mail size={11} className="text-[#0056B3]" /> Correo Electrónico <span className="text-[#D90429] ml-0.5">*</span>
                       </label>
                       <input
                         type="email"
@@ -192,9 +192,9 @@ export default function ContactModal({ isOpen, onClose }) {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <label className="text-[9px] font-black text-[#8888AA] ml-2 tracking-widest flex items-center gap-1">
-                        <Phone size={9} className="text-[#0056B3]" /> Teléfono
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-black text-[#8888AA] ml-2 tracking-widest flex items-center gap-1.5">
+                        <Phone size={11} className="text-[#0056B3]" /> Teléfono
                       </label>
                       <div className="flex gap-2">
                         <div className="relative">
@@ -247,9 +247,9 @@ export default function ContactModal({ isOpen, onClose }) {
                       </div>
                     </div>
 
-                    <div className="space-y-1 relative">
-                      <label className="text-[9px] font-black text-[#8888AA] ml-2 tracking-widest flex items-center gap-1">
-                        <MessageSquare size={9} className="text-[#0056B3]" /> Asunto
+                    <div className="space-y-1.5 relative">
+                      <label className="text-[11px] font-black text-[#8888AA] ml-2 tracking-widest flex items-center gap-1.5">
+                        <MessageSquare size={11} className="text-[#0056B3]" /> Asunto
                       </label>
                       <div className="relative">
                         <button
@@ -291,9 +291,9 @@ export default function ContactModal({ isOpen, onClose }) {
                     </div>
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="text-[9px] font-black text-[#8888AA] ml-2 tracking-widest flex items-center gap-1">
-                      <MessageSquare size={9} className="text-[#0056B3]" /> Mensaje <span className="text-[#D90429] ml-0.5">*</span>
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-black text-[#8888AA] ml-2 tracking-widest flex items-center gap-1.5">
+                      <MessageSquare size={11} className="text-[#0056B3]" /> Mensaje <span className="text-[#D90429] ml-0.5">*</span>
                     </label>
                     <textarea
                       required
@@ -314,7 +314,7 @@ export default function ContactModal({ isOpen, onClose }) {
                   <button
                     type="submit"
                     disabled={loading}
-                    className={`group relative w-full py-3.5 rounded-[18px] font-black text-white uppercase tracking-widest text-[11px] transition-all active:scale-[0.98] overflow-hidden
+                    className={`group relative w-full py-4 rounded-[20px] font-black text-white uppercase tracking-widest text-[13px] transition-all active:scale-[0.98] overflow-hidden
                       ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#1A1A3A] hover:bg-[#000000] shadow-[0_8px_16px_rgba(26,26,58,0.3),inset_-2px_-4px_8px_rgba(0,0,0,0.2),inset_2px_4px_8px_rgba(255,255,255,0.2)]'}
                     `}
                   >
