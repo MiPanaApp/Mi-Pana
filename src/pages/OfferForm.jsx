@@ -1,5 +1,12 @@
+import { useState, useEffect } from 'react';
 import { db } from '../services/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useForm } from 'react-hook-form';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Upload, CheckSquare, ChevronLeft, ChevronRight, 
+  Euro, Info, MapPin, Tag, Smartphone, Zap
+} from 'lucide-react';
 import { sortCategories } from '../data/categories';
 import { useCategoryStore } from '../store/useCategoryStore';
 

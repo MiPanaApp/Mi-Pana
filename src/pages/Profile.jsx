@@ -18,7 +18,7 @@ import { uploadString } from 'firebase/storage';
 import { LegalData } from '../data/LegalData';
 import LegalDrawer from '../components/LegalDrawer';
 import { useLocationStore } from '../store/useLocationStore';
-import { getCountryNameFromCode } from '../data/locations';
+import { getCountryNameFromCode, getCountryCodeFromName } from '../data/locations';
 
 export default function Profile() {
   const { userData, currentUser, userAvatar, logout, isAdmin } = useAuth();

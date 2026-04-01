@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { db } from '../../services/firebase';
-import { collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, setDoc, writeBatch } from 'firebase/firestore';
 import { useLocationStore } from '../../store/useLocationStore';
 import { 
   Plus, Edit2, Trash2, Check, X, 
@@ -74,8 +74,11 @@ export default function AdminCountriesTab() {
     if (!window.confirm("¿Seguro que quieres poblar los 9 países iniciales?")) return;
 
     try {
+      const batch = writeBatch(db);
+      
       for (const c of INITIAL_COUNTRIES) {
-        await setDoc(doc(db, 'countries', c.id), {
+        const countryRef = doc(db, 'countries', c.id);
+        batch.set(countryRef, {
           name: c.name,
           flag: c.flag,
           status: c.status,
@@ -85,6 +88,8 @@ export default function AdminCountriesTab() {
           createdAt: serverTimestamp()
         });
       }
+      
+      await batch.commit();
       alert("Países poblados correctamente.");
     } catch (err) {
       console.error(err);
