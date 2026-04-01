@@ -6,10 +6,9 @@ import ProductCard from '../components/ProductCard';
 import FilterPanel from '../components/ui/FilterPanel';
 import SkeletonGrid from '../components/ui/SkeletonGrid';
 import { useStore } from '../store/useStore';
-import { collection, getDocs, query, where, doc, updateDoc, increment } from 'firebase/firestore';
+import { collection, getDocs, query, doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { normalizeText } from '../utils/textUtils';
-import { MOCK_PRODUCTS } from '../data/mockProducts';
 import emptyHammock from '../assets/empty_hammock.png';
 import panaEnMecedora from '../assets/pana_en_mecedora.png';
 
@@ -62,39 +61,26 @@ export default function Home() {
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    const fetch = async () => {
+    const fetchProducts = async () => {
       setLoading(true);
-      const hasSearch = !!filters.searchQuery;
-
       try {
-        // Para el MVP y como Firebase no soporta busquedas por fragmentos nativamente, 
-        // traemos los documentos principales para que el filtro inteligente del cliente actúe, 
-        // que soporta "includes" en nombre, descripción y ahora "keywords".
         const productsRef = collection(db, 'products');
-        let q = query(productsRef);
-
-        const snap = await getDocs(q);
-        const firestoreData = snap.docs.map(doc => ({ ...doc.data(), id: doc.id })).filter(p => p.status !== 'hidden' && p.status !== 'inactive');
-        
-        let mocks = MOCK_PRODUCTS;
-        if (hasSearch) {
-          const s = normalizeText(filters.searchQuery);
-          mocks = mocks.filter(p => 
-            normalizeText(p.name).includes(s) || 
-            normalizeText(p.description).includes(s)
-          );
-        }
-
-        setProducts([...firestoreData, ...mocks]);
+        const snap = await getDocs(query(productsRef));
+        const firestoreData = snap.docs
+          .map(doc => ({ ...doc.data(), id: doc.id }))
+          .filter(p => p.status !== 'hidden' && p.status !== 'inactive');
+        setProducts(firestoreData);
       } catch (err) {
-        console.error("Error fetching products:", err);
+        console.error('Error fetching products:', err);
+        setProducts([]);
       } finally {
         setLoading(false);
       }
     };
-    fetch();
-  }, [filters.searchQuery, filters.onlyVerified, activeCategory]);
+    fetchProducts();
+  }, [selectedCountry]); // Re-fetch cuando cambia el país
 
 
   useEffect(() => {
@@ -112,15 +98,11 @@ export default function Home() {
     // 1. Filtrar por país seleccionado por defecto si no hay filtro manual de ubicación.
     // 2. Orden default (relevance): Priorizar Capital del país, luego más recientes.
     
-    // Siempre filtramos por país activo
+    // Filtro estricto por país seleccionado
+    // Cada producto DEBE tener location.country con el código ISO (ES, CO, US, etc.)
     result = result.filter(p => {
-      const countryId = p.location?.country || p.country || selectedCountry; 
-      const isSp = ['ES', 'España', 'Spain', 'es'].includes(countryId);
-      const isCo = ['CO', 'Colombia', 'co'].includes(countryId);
-      
-      if (selectedCountry === 'ES') return isSp;
-      if (selectedCountry === 'CO') return isCo;
-      return countryId === selectedCountry;
+      const productCountry = p.location?.country || p.country || '';
+      return productCountry === selectedCountry;
     });
 
     // Filtros de Ubicación Estrictos
