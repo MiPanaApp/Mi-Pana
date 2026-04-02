@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { collection, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, onSnapshot, doc, updateDoc, deleteDoc, getDocs, query, where, writeBatch } from 'firebase/firestore';
 import { db } from '../../services/firebase';
-import { Users, Ban, Trash2, CheckCircle, Filter, Info, X, Phone, Mail, Globe, User, Shield, Calendar, Copy } from 'lucide-react';
+import { Users, Ban, Trash2, CheckCircle, Filter, Info, X, Phone, Mail, Globe, User, Shield, Calendar, Copy, AlertTriangle } from 'lucide-react';
 
 export default function AdminUsersTab({ searchQuery = '' }) {
   const [users, setUsers] = useState([]);
@@ -29,14 +29,44 @@ export default function AdminUsersTab({ searchQuery = '' }) {
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id, userName) => {
+    const confirmed = window.confirm(
+      `⚠️ ELIMINAR USUARIO DEFINITIVAMENTE
+
+Usuario: ${userName || id}
+
+Esta acción borrará:
+• Perfil de Firestore
+• Todos sus anuncios
+• Todas sus conversaciones
+
+⚠️ La cuenta de acceso (email/Google) debe eliminarse manualmente desde Firebase Console.
+
+¿Estas seguro? Esta acción NO se puede deshacer.`
+    );
+    if (!confirmed) return;
+
     try {
-      if (confirm('¿Estás seguro de ELIMINAR permanentemente este usuario? Esta acción no se puede deshacer.')) {
-        await deleteDoc(doc(db, 'users', id));
-      }
+      const batch = writeBatch(db);
+
+      // 1. Borrar anuncios del usuario
+      const productsSnap = await getDocs(query(collection(db, 'products'), where('userId', '==', id)));
+      productsSnap.forEach(d => batch.delete(d.ref));
+
+      // 2. Borrar conversaciones del usuario
+      const convsSnap = await getDocs(query(collection(db, 'conversations'), where('participants', 'array-contains', id)));
+      convsSnap.forEach(d => batch.delete(d.ref));
+
+      // 3. Borrar el perfil de usuario
+      batch.delete(doc(db, 'users', id));
+
+      await batch.commit();
+      
+      alert(`✅ Usuario eliminado correctamente.\n\n⚠️ Recuerda eliminar también la cuenta de autenticación desde:\nFirebase Console > Authentication > Users`);
+      setSelectedUser(null);
     } catch (e) {
       console.error(e);
-      alert('Error al borrar el usuario.');
+      alert('Error al borrar el usuario: ' + e.message);
     }
   };
 
@@ -102,7 +132,7 @@ export default function AdminUsersTab({ searchQuery = '' }) {
               <button onClick={() => setSelectedUser(u)} className="p-2 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-100 transition-colors shadow-sm" title="Ver Detalles">
                 <Info className="w-4 h-4" />
               </button>
-              <button onClick={() => handleDelete(u.id)} className="p-2 bg-red-100 text-red-600 rounded-xl hover:bg-red-200 transition-colors shadow-sm" title="Eliminar Permanentemente">
+              <button onClick={() => handleDelete(u.id, `${u.name || ''} ${u.lastName || ''}`.trim() || u.email)} className="p-2 bg-red-100 text-red-600 rounded-xl hover:bg-red-200 transition-colors shadow-sm" title="Eliminar Permanentemente">
                 <Trash2 className="w-4 h-4" />
               </button>
             </div>

@@ -10,6 +10,11 @@ export async function getOrCreateConversation({
   buyerId, sellerId, productId, productName, productCategory, productImage, 
   sellerName, sellerAvatar, buyerName, buyerAvatar 
 }) {
+  // Validar que los IDs esenciales existen
+  if (!buyerId || !sellerId || !productId) {
+    throw new Error('Faltan datos esenciales para crear la conversación (buyerId, sellerId o productId).');
+  }
+
   // ID determinista para evitar duplicados
   const ids = [buyerId, sellerId].sort();
   const conversationId = `${ids[0]}_${ids[1]}_${productId}`;
@@ -17,13 +22,14 @@ export async function getOrCreateConversation({
   const snap = await getDoc(ref);
 
   if (!snap.exists()) {
+    // Todos los campos con fallback para evitar undefined en Firestore
     await setDoc(ref, {
       participants: [buyerId, sellerId],
-      productId,
-      productName,
+      productId: productId || '',
+      productName: productName || 'Anuncio',
       productCategory: productCategory || '',
       productImage: productImage || '',
-      sellerName,
+      sellerName: sellerName || 'Vendedor',
       sellerAvatar: sellerAvatar || '',
       buyerName: buyerName || 'Comprador',
       buyerAvatar: buyerAvatar || '',

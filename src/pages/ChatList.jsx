@@ -327,7 +327,7 @@ export default function ChatList() {
               </p>
             </motion.div>
           ) : (
-            <AnimatePresence mode="popLayout text-left">
+            <AnimatePresence mode="popLayout">
               {filtered.map((chat) => (
                 <SwipeableChat
                   key={chat.id}

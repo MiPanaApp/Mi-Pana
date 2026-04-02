@@ -172,16 +172,18 @@ export default function AdminDashboard() {
           </div>
 
           <div className="flex items-center gap-3 w-full md:w-auto">
-            <div className="bg-white rounded-2xl flex items-center px-4 py-3 shadow-sm flex-1 md:w-72 border border-gray-100">
-              <Search className="w-5 h-5 text-gray-400 mr-2" />
-              <input
-                type="text"
-                value={globalSearch}
-                onChange={(e) => setGlobalSearch(e.target.value)}
-                placeholder="Buscar panas o anuncios..."
-                className="bg-transparent border-none outline-none text-sm font-bold text-gray-600 w-full"
-              />
-            </div>
+            {activeTab === 'anuncios' && (
+              <div className="bg-white rounded-2xl flex items-center px-4 py-3 shadow-sm flex-1 md:w-72 border border-gray-100">
+                <Search className="w-5 h-5 text-gray-400 mr-2" />
+                <input
+                  type="text"
+                  value={globalSearch}
+                  onChange={(e) => setGlobalSearch(e.target.value)}
+                  placeholder="Buscar panas o anuncios..."
+                  className="bg-transparent border-none outline-none text-sm font-bold text-gray-600 w-full"
+                />
+              </div>
+            )}
             {activeTab === 'overview' && (
               <button className="relative w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-gray-100 text-gray-400 hover:text-[#FFD700] transition-colors">
                 <Bell className="w-5 h-5" />

@@ -62,7 +62,7 @@ const Header = forwardRef((props, ref) => {
 
   const dbCategories = useMemo(() => [
     { id: 'Todas', name: 'Todas', iconComponent: FiPlusCircle },
-    ...categories.map(c => ({ id: c.label, name: c.label, iconComponent: c.iconComponent }))
+    ...categories.map(c => ({ id: c.id, name: c.label, iconComponent: c.iconComponent }))
   ], [categories]);
 
   // Scroll categories to left only when count change or on mount

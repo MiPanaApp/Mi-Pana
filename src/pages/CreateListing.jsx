@@ -10,6 +10,7 @@ import { collection, addDoc, getDoc, getDocs, doc, serverTimestamp, query, order
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { ChevronDown, Tag } from 'lucide-react';
 import { getCategoryIcon, getBrandColor, sortCategories } from '../data/categories';
+import { getIconComponent } from '../store/useCategoryStore';
 import { LOCATION_DATA } from '../data/locations';
 import { LegalData } from '../data/LegalData';
 import LegalDrawer from '../components/LegalDrawer';
@@ -198,15 +199,23 @@ export default function CreateListing() {
     }
   }, [editId]);
 
-  // Función para obtener icono y color según el nombre
-  const getCategoryStyle = (name, index) => {
+  const getCategoryStyle = (cat, index) => {
+    if (!cat) return { Icon: Tag, color: getBrandColor(index) };
+    
+    // Si pasamos solo el string del nombre
+    const name = typeof cat === 'string' ? cat : cat.name;
+    // Si pasamos el objeto de la categoría desde Firestore
+    const iconName = typeof cat === 'object' ? cat.icon : null;
+
     return { 
-      Icon: getCategoryIcon(name) || Tag, 
+      Icon: iconName ? getIconComponent(iconName) : (getCategoryIcon(name) || Tag), 
       color: getBrandColor(index) 
     };
   };
 
-  const selectedStyle = getCategoryStyle(form.category, categories.findIndex(c => c.name === form.category));
+  const selectedName = form.category;
+  const selectedCatObj = categories.find(c => c.name === selectedName);
+  const selectedStyle = getCategoryStyle(selectedCatObj || selectedName, categories.findIndex(c => c.name === selectedName));
 
   const handleMainClick = () => mainInputRef.current.click();
   const handleCarouselClick = () => carouselInputRef.current.click();
@@ -623,7 +632,7 @@ export default function CreateListing() {
                       <div className="max-h-68 overflow-y-auto custom-scrollbar p-2 flex flex-col gap-1">
                         {categories.length > 0 ? (
                           categories.map((cat, idx) => {
-                            const style = getCategoryStyle(cat.name, idx);
+                            const style = getCategoryStyle(cat, idx);
                             const isSelected = form.category === cat.name;
 
                             return (

@@ -5,8 +5,9 @@ import { useLocationStore } from '../../store/useLocationStore';
 import { 
   Plus, Edit2, Trash2, Check, X, 
   MapPin, Globe, Shield, RefreshCw, Save,
-  AlertTriangle, Eye, EyeOff
+  AlertTriangle, Eye, EyeOff, ChevronDown
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const STATUS_COLORS = {
   active: 'bg-green-50 text-green-600 border-green-200',
@@ -185,6 +186,14 @@ export default function AdminCountriesTab() {
 }
 
 function CountryForm({ formData, setFormData, onSave, onCancel }) {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  const statusOptions = [
+    { value: 'active', label: 'Activo' },
+    { value: 'suspended', label: 'Suspendido' },
+    { value: 'hidden', label: 'Oculto' }
+  ];
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-2">
@@ -226,15 +235,45 @@ function CountryForm({ formData, setFormData, onSave, onCancel }) {
         </div>
         <div>
           <label className="text-[9px] font-black uppercase text-gray-400 mb-1 block">Estado</label>
-          <select 
-            value={formData.status}
-            onChange={(e) => setFormData({...formData, status: e.target.value})}
-            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm font-bold outline-none"
-          >
-            <option value="active">Activo</option>
-            <option value="suspended">Suspendido</option>
-            <option value="hidden">Oculto</option>
-          </select>
+          <div className="relative">
+            <button
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm font-bold outline-none flex items-center justify-between text-left"
+            >
+              <span className="truncate">{statusOptions.find(o => o.value === formData.status)?.label || 'Seleccionar'}</span>
+              <ChevronDown size={14} className={`text-gray-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            <AnimatePresence>
+              {isDropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)} />
+                  <motion.div
+                    initial={{ opacity: 0, y: -5, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 5, scale: 1 }}
+                    exit={{ opacity: 0, y: -5, scale: 0.95 }}
+                    className="absolute top-full left-0 right-0 bg-white border border-gray-100 rounded-xl shadow-lg z-50 overflow-hidden"
+                  >
+                    {statusOptions.map(option => (
+                      <button
+                        key={option.value}
+                        onClick={() => {
+                          setFormData({ ...formData, status: option.value });
+                          setIsDropdownOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm font-bold hover:bg-gray-50 flex items-center justify-between ${
+                          formData.status === option.value ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                        }`}
+                      >
+                        {option.label}
+                        {formData.status === option.value && <Check size={14} className="text-blue-600" />}
+                      </button>
+                    ))}
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
 

@@ -3,7 +3,7 @@ import {
   User, Mail, Phone, MapPin, LogOut, ChevronDown, 
   ShieldCheck, Loader2, Camera, Lock, Info, 
   HelpCircle, Cookie, ShieldAlert, Instagram, Facebook, Youtube, Twitter, UserCircle2,
-  Package, Edit2, Trash2, PlusCircle, ExternalLink, Eye, EyeOff, X, Calendar, Globe
+  Package, Edit2, Trash2, PlusCircle, ExternalLink, Eye, EyeOff, X, Calendar, Globe, MoreVertical, CheckCircle2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -29,6 +29,7 @@ export default function Profile() {
   const [openMenu, setOpenMenu] = useState(null); 
   const [myProducts, setMyProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(true);
+  const [activeProductMenu, setActiveProductMenu] = useState(null);
   
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [showSexModal, setShowSexModal] = useState(false);
@@ -255,6 +256,21 @@ export default function Profile() {
     setOpenMenu(openMenu === menuName ? null : menuName);
   };
 
+  const toggleProductMenu = (id) => {
+    setActiveProductMenu(activeProductMenu === id ? null : id);
+  };
+
+  // Close menus on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (activeProductMenu && !e.target.closest('.product-menu-container')) {
+        setActiveProductMenu(null);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [activeProductMenu]);
+
   // Sub-componente para los items de la cabecera
   const HeaderInfoItem = ({ icon: Icon, label, value, actionLabel, onAction, isPassword }) => (
     <div className="w-full flex items-center justify-between py-3 border-b border-white/20 last:border-0">
@@ -315,36 +331,86 @@ export default function Profile() {
                   </div>
                 </div>
                 
-                {/* Botones Centrados Horizontalmente */}
-                <div className="flex items-center justify-center gap-3 pt-2">
+                {/* Botón de Menú de Tres Puntos */}
+                <div className="flex justify-end pt-1 relative product-menu-container">
                   <button 
-                    onClick={() => navigate(`/perfil-producto?id=${product.id}`)} 
-                    className="w-10 h-10 md:w-12 md:h-12 bg-white/70 backdrop-blur-md rounded-xl shadow-[4px_4px_8px_#b8b9be,-4px_-4px_8px_#ffffff,inset_2px_2px_4px_rgba(255,255,255,0.5)] flex items-center justify-center active:scale-95 transition-all text-[#0056B3]"
-                    title="Ver anuncio"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleProductMenu(product.id);
+                    }}
+                    className="w-10 h-10 rounded-full bg-[#E0E5EC] shadow-[4px_4px_8px_#b8b9be,-4px_-4px_8px_#ffffff] flex items-center justify-center active:scale-90 transition-all text-[#1A1A3A]"
                   >
-                    <ExternalLink size={18} />
+                    <MoreVertical size={20} />
                   </button>
-                  <button 
-                    onClick={() => navigate(`/anunciar?edit=${product.id}`)} 
-                    className="w-10 h-10 md:w-12 md:h-12 bg-white/70 backdrop-blur-md rounded-xl shadow-[4px_4px_8px_#b8b9be,-4px_-4px_8px_#ffffff,inset_2px_2px_4px_rgba(255,255,255,0.5)] flex items-center justify-center active:scale-95 transition-all text-[#D90429]"
-                    title="Editar anuncio"
-                  >
-                    <Edit2 size={18} />
-                  </button>
-                  <button 
-                    onClick={() => handleToggleStatus(product.id, 'active')} 
-                    className="w-10 h-10 md:w-12 md:h-12 bg-white/70 backdrop-blur-md rounded-xl shadow-[4px_4px_8px_#b8b9be,-4px_-4px_8px_#ffffff,inset_2px_2px_4px_rgba(255,255,255,0.5)] flex items-center justify-center active:scale-95 transition-all text-[#F59E0B]"
-                    title="Suspender anuncio temporalmente"
-                  >
-                    <EyeOff size={18} />
-                  </button>
-                  <button 
-                    onClick={() => handleDeleteProduct(product.id)} 
-                    className="w-10 h-10 md:w-12 md:h-12 bg-[#D90429] text-white rounded-xl shadow-[3px_3px_6px_#b8b9be,-3px_-3px_6px_#ffffff] flex items-center justify-center active:scale-95 transition-all"
-                    title="Borrar anuncio definitivamente"
-                  >
-                    <Trash2 size={18} />
-                  </button>
+
+                  <AnimatePresence>
+                    {activeProductMenu === product.id && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                        className="absolute right-0 bottom-full mb-3 w-48 bg-white rounded-2xl shadow-[0_10px_25px_rgba(0,0,0,0.1)] border border-gray-100 py-2 z-50 overflow-hidden"
+                      >
+                        {/* Opción VER */}
+                        <button 
+                          onClick={() => { setActiveProductMenu(null); navigate(`/perfil-producto?id=${product.id}`); }}
+                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-[#0056B3]">
+                            <ExternalLink size={16} />
+                          </div>
+                          <span className="text-sm font-bold text-[#1A1A3A]">Ver Anuncio</span>
+                        </button>
+
+                        {/* Opción EDITAR */}
+                        <button 
+                          onClick={() => { setActiveProductMenu(null); navigate(`/anunciar?edit=${product.id}`); }}
+                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center text-[#10B981]">
+                            <Edit2 size={16} />
+                          </div>
+                          <span className="text-sm font-bold text-[#1A1A3A]">Editar Anuncio</span>
+                        </button>
+
+                        {/* Opción SUSPENDER / ACTIVAR */}
+                        {product.status === 'inactive' ? (
+                          <button 
+                            onClick={() => { setActiveProductMenu(null); handleToggleStatus(product.id, 'inactive'); }}
+                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center text-[#10B981]">
+                              <CheckCircle2 size={16} />
+                            </div>
+                            <span className="text-sm font-bold text-[#1A1A3A]">Reactivar</span>
+                          </button>
+                        ) : (
+                          <button 
+                            onClick={() => { setActiveProductMenu(null); handleToggleStatus(product.id, 'active'); }}
+                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center text-[#F59E0B]">
+                              <EyeOff size={16} />
+                            </div>
+                            <span className="text-sm font-bold text-[#1A1A3A]">Suspender</span>
+                          </button>
+                        )}
+
+                        <div className="mx-4 my-1 h-px bg-gray-100" />
+
+                        {/* Opción BORRAR */}
+                        <button 
+                          onClick={() => { setActiveProductMenu(null); handleDeleteProduct(product.id); }}
+                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-[#D90429]">
+                            <Trash2 size={16} />
+                          </div>
+                          <span className="text-sm font-bold text-[#D90429]">Eliminar</span>
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
             ))
@@ -376,30 +442,88 @@ export default function Profile() {
                   <span className="px-2 py-0.5 rounded-full bg-[#D90429]/10 text-[9px] font-black text-[#D90429] uppercase tracking-tighter shrink-0 border border-[#D90429]/20 hidden xs:block">Suspendido</span>
                 </div>
 
-                {/* Botones Centrados Horizontalmente */}
-                <div className="flex items-center justify-center gap-3 pt-2">
+                {/* Botón de Menú de Tres Puntos */}
+                <div className="flex justify-end pt-1 relative product-menu-container">
                   <button 
-                    onClick={() => handleToggleStatus(product.id, 'inactive')} 
-                    className="w-10 h-10 md:w-12 md:h-12 bg-white/70 backdrop-blur-md rounded-xl shadow-[4px_4px_8px_#b8b9be,-4px_-4px_8px_#ffffff,inset_2px_2px_4px_rgba(255,255,255,0.5)] flex items-center justify-center active:scale-95 transition-all text-[#10B981]"
-                    title="Reactivar anuncio"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleProductMenu(product.id);
+                    }}
+                    className="w-10 h-10 rounded-full bg-[#E0E5EC] shadow-[4px_4px_8px_#b8b9be,-4px_-4px_8px_#ffffff] flex items-center justify-center active:scale-90 transition-all text-[#1A1A3A]"
                   >
-                    <Eye size={18} />
+                    <MoreVertical size={20} />
                   </button>
-                  <button 
-                    onClick={() => navigate(`/anunciar?edit=${product.id}`)} 
-                    className="w-10 h-10 md:w-12 md:h-12 bg-white/70 backdrop-blur-md rounded-xl shadow-[4px_4px_8px_#b8b9be,-4px_-4px_8px_#ffffff,inset_2px_2px_4px_rgba(255,255,255,0.5)] flex items-center justify-center active:scale-95 transition-all text-[#D90429]"
-                    title="Editar anuncio"
-                  >
-                    <Edit2 size={18} />
-                  </button>
-                  <button 
-                    onClick={() => handleDeleteProduct(product.id)} 
-                    className="w-10 h-10 md:w-12 md:h-12 bg-[#D90429] text-white rounded-xl shadow-[0_4px_10px_rgba(217,4,41,0.3)] flex items-center justify-center active:scale-95 transition-all"
-                    title="Borrar anuncio definitivamente"
-                  >
-                    <Trash2 size={18} />
-                  </button>
+
+                  <AnimatePresence>
+                    {activeProductMenu === product.id && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                        className="absolute right-0 bottom-full mb-3 w-48 bg-white rounded-2xl shadow-[0_10px_25px_rgba(0,0,0,0.1)] border border-gray-100 py-2 z-50 overflow-hidden"
+                      >
+                        {/* Opción VER */}
+                        <button 
+                          onClick={() => { setActiveProductMenu(null); navigate(`/perfil-producto?id=${product.id}`); }}
+                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-[#0056B3]">
+                            <ExternalLink size={16} />
+                          </div>
+                          <span className="text-sm font-bold text-[#1A1A3A]">Ver Anuncio</span>
+                        </button>
+
+                        {/* Opción EDITAR */}
+                        <button 
+                          onClick={() => { setActiveProductMenu(null); navigate(`/anunciar?edit=${product.id}`); }}
+                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center text-[#10B981]">
+                            <Edit2 size={16} />
+                          </div>
+                          <span className="text-sm font-bold text-[#1A1A3A]">Editar Anuncio</span>
+                        </button>
+
+                        {/* Opción SUSPENDER / ACTIVAR */}
+                        {product.status === 'inactive' ? (
+                          <button 
+                            onClick={() => { setActiveProductMenu(null); handleToggleStatus(product.id, 'inactive'); }}
+                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center text-[#10B981]">
+                              <CheckCircle2 size={16} />
+                            </div>
+                            <span className="text-sm font-bold text-[#1A1A3A]">Reactivar</span>
+                          </button>
+                        ) : (
+                          <button 
+                            onClick={() => { setActiveProductMenu(null); handleToggleStatus(product.id, 'active'); }}
+                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center text-[#F59E0B]">
+                              <EyeOff size={16} />
+                            </div>
+                            <span className="text-sm font-bold text-[#1A1A3A]">Suspender</span>
+                          </button>
+                        )}
+
+                        <div className="mx-4 my-1 h-px bg-gray-100" />
+
+                        {/* Opción BORRAR */}
+                        <button 
+                          onClick={() => { setActiveProductMenu(null); handleDeleteProduct(product.id); }}
+                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-[#D90429]">
+                            <Trash2 size={16} />
+                          </div>
+                          <span className="text-sm font-bold text-[#D90429]">Eliminar</span>
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
+
               </div>
             ))
           )}
