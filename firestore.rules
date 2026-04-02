@@ -104,5 +104,13 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin();
     }
+
+    // Countries Collection
+    // Read: Public
+    // Write: Admin only
+    match /countries/{countryId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
   }
 }

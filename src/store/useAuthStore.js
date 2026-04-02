@@ -96,6 +96,10 @@ export const useAuthStore = create((set, get) => ({
     }
     await signOut(auth);
     set({ user: null });
+    // Reset global store (favorites, etc.)
+    const store = useStore.getState();
+    store.clearFavorites();
+    store.clearRecentSearches();
   },
 
   clearError: () => set({ error: null }),

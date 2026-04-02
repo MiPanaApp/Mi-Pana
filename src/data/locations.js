@@ -17,10 +17,10 @@ export const LOCATION_DATA = {
       'Extremadura': { 'Badajoz': [], 'Cáceres': [], 'Mérida': [] },
       'Galicia': { 'Vigo': [], 'La Coruña': [], 'Ponteveda': [], 'Santiago de Compostela': [], 'Ourense': [], 'Lugo': [] },
       'La Rioja': { 'Logroño': [], 'Calahorra': [] },
-      'Madrid': { 
-        'Madrid': ['Centro', 'Salamanca', 'Chamberí', 'Retiro', 'Tetuán', 'Moncloa', 'Arganzuela'], 
-        'Móstoles': [], 'Alcázar de San Juan': [], 'Alcalá de Henares': ['Centro Histórico', 'Ensanche', 'Espartales'], 
-        'Getafe': [], 'Leganés': [], 'Alcorcon': [], 'Fuenlabrada': [], 'Torrejón de Ardoz': [], 'Pozuelo': [], 'Parla': [] 
+      'Madrid': {
+        'Madrid': ['Centro', 'Salamanca', 'Chamberí', 'Retiro', 'Tetuán', 'Moncloa', 'Arganzuela'],
+        'Móstoles': [], 'Alcázar de San Juan': [], 'Alcalá de Henares': ['Centro Histórico', 'Ensanche', 'Espartales'],
+        'Getafe': [], 'Leganés': [], 'Alcorcon': [], 'Fuenlabrada': [], 'Torrejón de Ardoz': [], 'Pozuelo': [], 'Parla': []
       },
       'Murcia': { 'Murcia': [], 'Cartagena': [], 'Lorca': [] },
       'Navarra': { 'Pamplona': [], 'Tudela': [], 'Barañáin': [] },
@@ -306,15 +306,15 @@ export const LOCATION_DATA = {
 };
 
 export const COUNTRIES_CONFIG = {
-  '🇪🇸 España':          { level1Name: 'Comunidad Autónoma', code: 'ES' },
-  '🇺🇸 Estados Unidos':  { level1Name: 'Estado', code: 'US' },
-  '🇨🇴 Colombia':        { level1Name: 'Departamento', code: 'CO' },
-  '🇪🇨 Ecuador':         { level1Name: 'Provincia', code: 'EC' },
-  '🇵🇦 Panamá':          { level1Name: 'Provincia', code: 'PA' },
-  '🇵🇪 Perú':            { level1Name: 'Departamento', code: 'PE' },
+  '🇪🇸 España': { level1Name: 'Comunidad Autónoma', code: 'ES' },
+  '🇺🇸 Estados Unidos': { level1Name: 'Estado', code: 'US' },
+  '🇨🇴 Colombia': { level1Name: 'Departamento', code: 'CO' },
+  '🇪🇨 Ecuador': { level1Name: 'Provincia', code: 'EC' },
+  '🇵🇦 Panamá': { level1Name: 'Provincia', code: 'PA' },
+  '🇵🇪 Perú': { level1Name: 'Departamento', code: 'PE' },
   '🇩🇴 Rep. Dominicana': { level1Name: 'Provincia', code: 'DO' },
-  '🇨🇱 Chile':           { level1Name: 'Región', code: 'CL' },
-  '🇦🇷 Argentina':       { level1Name: 'Provincia', code: 'AR' },
+  '🇨🇱 Chile': { level1Name: 'Región', code: 'CL' },
+  '🇦🇷 Argentina': { level1Name: 'Provincia', code: 'AR' },
 };
 
 export const getCountryNameFromCode = (code) => {

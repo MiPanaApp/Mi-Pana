@@ -63,11 +63,23 @@ export function AuthProvider({ children }) {
               }
               sessionStorage.setItem('country_initialized', 'true');
             }
+
+            // Sync Favorites from Firestore to Zustand Store
+            if (data.favorites) {
+              const { favorites: localFavs, setFavorites } = useStore.getState();
+              // Only sync if they are actually different to avoid cycles or unnecessary renders
+              if (JSON.stringify(data.favorites) !== JSON.stringify(localFavs)) {
+                setFavorites(data.favorites);
+              }
+            } else {
+              // If user has no favorites in Firestore, clear them locally too
+              useStore.getState().setFavorites([]);
+            }
           } else {
             setUserData(null);
           }
         }, (err) => {
-          console.error("[AuthProvider] Error en onSnapshot:", err);
+          console.error(`[AuthProvider] Error en onSnapshot for UID ${user.uid}:`, err);
           // Opcional: Si el error es de permisos, podemos limpiar userData
           if (err.code === 'permission-denied') setUserData(null);
         });

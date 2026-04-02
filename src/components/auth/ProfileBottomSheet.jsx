@@ -1,13 +1,54 @@
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { 
+  PartyPopper, 
+  Camera as CameraIcon, 
+  Image as ImageIcon, 
+  ChevronDown, 
+  Calendar, 
+  User, 
+  Rocket, 
+  Scissors, 
+  Eye, 
+  EyeOff 
+} from "lucide-react";
+import { Camera } from "@capacitor/camera";
+import { auth, db, storage } from "../../services/firebase";
+import { 
+  createUserWithEmailAndPassword, 
+  updateEmail, 
+  updateProfile 
+} from "firebase/auth";
+import { ref, uploadString, getDownloadURL } from "firebase/storage";
+import { doc, setDoc } from "firebase/firestore";
 import { translateFirebaseError } from "../../utils/authErrors";
 import { LOCATION_DATA } from "../../data/locations";
 import { useLocationStore } from "../../store/useLocationStore";
 import { useStore } from "../../store/useStore";
+import AvatarCropper from "./AvatarCropper";
+
+import InfoModal from "../InfoModal";
+import { LegalData } from "../../data/LegalData";
 
 export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
   const [showCropper, setShowCropper] = useState(false);
   const [photoPreview, setPhotoPreview] = useState(null);
+  const [infoModal, setInfoModal] = useState({ isOpen: false, title: "", content: "" });
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
+
+  const handleOpenLegal = (key) => {
+    const doc = LegalData[key];
+    if (doc) {
+      // Formatear texto plano a HTML simple para InfoModal (saltos de línea)
+      const formattedContent = doc.content.replace(/\n/g, '<br/>');
+      setInfoModal({
+        isOpen: true,
+        title: doc.title,
+        content: formattedContent
+      });
+    }
+  };
 
   const { selectedCountry } = useStore();
   const { countries, getCountryConfig, init: initLocations } = useLocationStore();
@@ -474,10 +515,17 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
           </button>
           
           <p className="text-[10px] font-bold text-[#555577] text-center mt-2 mb-2">
-            Al registrarte aceptas nuestros <span className="underline cursor-pointer text-[#1A1A3A]">términos de uso</span> y <span className="underline cursor-pointer text-[#1A1A3A]">política de privacidad</span>
+            Al registrarte aceptas nuestras <span onClick={() => handleOpenLegal('terms')} className="underline cursor-pointer text-[#1A1A3A]">condiciones de contratación</span> y <span onClick={() => handleOpenLegal('privacy')} className="underline cursor-pointer text-[#1A1A3A]">política de privacidad</span>
           </p>
         </div>
       </div>
+
+      <InfoModal 
+        isOpen={infoModal.isOpen} 
+        onClose={() => setInfoModal({ ...infoModal, isOpen: false })} 
+        title={infoModal.title} 
+        content={infoModal.content} 
+      />
     </>
   );
 }
