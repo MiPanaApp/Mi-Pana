@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
 import {
@@ -38,6 +38,13 @@ export default function AdminDashboard() {
   const [totalViews, setTotalViews] = useState(0);
   const [totalLikes, setTotalLikes] = useState(0);
   const [topViewed, setTopViewed] = useState([]);
+  const scrollContainerRef = useRef(null);
+
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo(0, 0);
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     async function fetchStats() {
@@ -153,7 +160,10 @@ export default function AdminDashboard() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col h-[calc(100vh-2rem)] lg:h-[calc(100vh-3rem)] overflow-y-auto hide-scrollbar">
+      <div 
+        ref={scrollContainerRef}
+        className="flex-1 flex flex-col h-[calc(100vh-2rem)] lg:h-[calc(100vh-3rem)] overflow-y-auto hide-scrollbar"
+      >
         <div className="w-full max-w-7xl mx-auto flex flex-col flex-1 px-4 lg:px-8">
 
         {/* Top Header */}
