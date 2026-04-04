@@ -270,37 +270,41 @@ export default function Chat() {
 
           <div 
             onClick={goToProduct}
-            className="flex-1 min-w-0 cursor-pointer active:opacity-70 transition-opacity"
-            title="Ver anuncio"
+            className="flex-1 min-w-0 cursor-pointer active:opacity-70 transition-opacity group"
+            title="Ver producto"
           >
             <p className="font-black text-base leading-tight truncate">{otherName || '...'}</p>
             <div className="flex items-center mt-0.5 overflow-hidden gap-1">
-              <p className="text-[11px] text-[#FFC200] font-bold truncate">
+              <p className="text-[11px] text-[#FFC200] font-bold truncate group-hover:underline decoration-1 underline-offset-2">
                 {conversation?.productName || '...'}
               </p>
               {conversation?.productId && (
-                <ExternalLink size={10} className="text-[#FFC200] opacity-50 flex-shrink-0" />
+                <ExternalLink size={10} className="text-[#FFC200] opacity-50 flex-shrink-0 group-hover:opacity-100 transition-opacity" />
               )}
             </div>
           </div>
 
-          {/* Thumbnail del Producto y Botón Valorar */}
-          <div className="flex-shrink-0 flex items-center gap-3">
-            {otherIsTyping && (
-              <span className="text-[11px] text-[#FFC200] font-bold italic animate-pulse whitespace-nowrap hidden sm:inline">escribiendo...</span>
-            )}
+            {/* Thumbnail del Producto y Botón Valorar */}
+            <div className="flex-shrink-0 flex items-center gap-3">
+              {otherIsTyping && (
+                <span className="text-[11px] text-[#FFC200] font-bold italic animate-pulse whitespace-nowrap hidden sm:inline">escribiendo...</span>
+              )}
 
-            <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-[0_4px_10px_rgba(0,0,0,0.3)] border-2 border-white/10 bg-white/5 flex-shrink-0">
-              <img 
-                src={conversation?.productImage || 'https://images.unsplash.com/photo-1599566150163-29194dcaad36'} 
-                className="w-full h-full object-cover" 
-                alt="Producto"
-                onError={(e) => {
-                  e.target.src = 'https://images.unsplash.com/photo-1599566150163-29194dcaad36';
-                }}
-              />
+              <div 
+                onClick={goToProduct}
+                className="w-14 h-14 rounded-2xl overflow-hidden shadow-[0_4px_10px_rgba(0,0,0,0.3)] border-2 border-white/10 bg-white/5 flex-shrink-0 cursor-pointer active:scale-95 transition-all hover:border-[#FFC200]/50"
+                title="Ver producto"
+              >
+                <img 
+                  src={conversation?.productImage || 'https://images.unsplash.com/photo-1599566150163-29194dcaad36'} 
+                  className="w-full h-full object-cover" 
+                  alt="Producto"
+                  onError={(e) => {
+                    e.target.src = 'https://images.unsplash.com/photo-1599566150163-29194dcaad36';
+                  }}
+                />
+              </div>
             </div>
-          </div>
         </div>
 
         {/* ── Mensajes ── */}

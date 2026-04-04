@@ -56,10 +56,10 @@ export async function canUserReview({ buyerId, productId }) {
   return { can: false, interactionId: null };
 }
 
-// ─── Enviar valoración ────────────────────────────────────────────────────────
+// ─── Enviar valoración (Actualizado con Distribución de Estrellas) ──────────
 export async function submitReview({ interactionId, buyerId, buyerName, sellerId, productId, productName, rating, comment }) {
   
-  // 1. Seguridad: Rescatar datos duros de la interacción si el frontend falla
+  // 1. Validaciones y extracción de datos seguros
   let safeSellerId = sellerId;
   let safeProductId = productId;
   let safeProductName = productName;
@@ -78,15 +78,10 @@ export async function submitReview({ interactionId, buyerId, buyerName, sellerId
     }
   }
 
-  if (!safeSellerId) {
-    throw new Error('No se pudo identificar al vendedor para asignarle la valoración.');
-  }
+  if (!safeSellerId) throw new Error('Vendedor no identificado');
+  if (!safeProductId) throw new Error('Anuncio no identificado');
 
-  if (!safeProductId) {
-    throw new Error('No se pudo identificar el anuncio valorado.');
-  }
-
-  // 2. Crear la review
+  // 2. Crear el documento de la reseña
   await addDoc(collection(db, 'reviews'), {
     interactionId,
     buyerId,
@@ -99,33 +94,50 @@ export async function submitReview({ interactionId, buyerId, buyerName, sellerId
     createdAt: serverTimestamp(),
   });
 
-  // 3. Actualizar rating del producto con transacción
+  // 3. ACTUALIZACIÓN ATÓMICA: Producto (Rating + Distribución) y Vendedor
   const productRef = doc(db, 'products', String(safeProductId));
-  await runTransaction(db, async (tx) => {
-    const productSnap = await tx.get(productRef);
-    if (!productSnap.exists()) return;
-    const data = productSnap.data();
-    const oldRating = data.rating || 0;
-    const oldCount = data.reviewCount || 0;
-    const newCount = oldCount + 1;
-    const newRating = parseFloat(((oldRating * oldCount + rating) / newCount).toFixed(1));
-    tx.update(productRef, { rating: newRating, reviewCount: newCount });
-  });
-
-  // 4. Actualizar score del vendedor con transacción
   const sellerRef = doc(db, 'users', String(safeSellerId));
+
   await runTransaction(db, async (tx) => {
+    // Lecturas primero (Regla de Firestore Transactions)
+    const productSnap = await tx.get(productRef);
     const sellerSnap = await tx.get(sellerRef);
-    if (!sellerSnap.exists()) return;
-    const data = sellerSnap.data();
-    const oldRating = data.sellerScore || 0;
-    const oldCount = data.sellerReviewCount || 0;
-    const newCount = oldCount + 1;
-    const newRating = parseFloat(((oldRating * oldCount + rating) / newCount).toFixed(1));
-    tx.update(sellerRef, { sellerScore: newRating, sellerReviewCount: newCount });
+
+    // -- Actualizar Producto --
+    if (productSnap.exists()) {
+      const pData = productSnap.data();
+      const oldCount = pData.reviewCount || 0;
+      const oldRating = pData.rating || 0;
+      const newCount = oldCount + 1;
+      const newRating = parseFloat(((oldRating * oldCount + rating) / newCount).toFixed(1));
+      
+      // Manejar distribución de estrellas (1-5)
+      const distribution = pData.ratingsDistribution || { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+      distribution[rating] = (distribution[rating] || 0) + 1;
+
+      tx.update(productRef, { 
+        rating: newRating, 
+        reviewCount: newCount,
+        ratingsDistribution: distribution 
+      });
+    }
+
+    // -- Actualizar Vendedor (Seller Score) --
+    if (sellerSnap.exists()) {
+      const sData = sellerSnap.data();
+      const oldSScore = sData.sellerScore || 0;
+      const oldSCount = sData.sellerReviewCount || 0;
+      const newSCount = oldSCount + 1;
+      const newSScore = parseFloat(((oldSScore * oldSCount + rating) / newSCount).toFixed(1));
+      
+      tx.update(sellerRef, { 
+        sellerScore: newSScore, 
+        sellerReviewCount: newSCount 
+      });
+    }
   });
 
-  // 5. Marcar interacción como revisada
+  // 4. Marcar interacción como revisada
   if (interactionId) {
     await updateDoc(doc(db, 'interactions', String(interactionId)), { reviewed: true });
   }

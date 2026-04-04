@@ -297,11 +297,11 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
           <div className="flex gap-4">
             <div className="flex-1">
               <label className="text-[11px] font-bold uppercase text-[#666688] block mb-[5px]">Nombres</label>
-              <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="José" className="w-full px-4 py-3 bg-[#E8E8F0] rounded-[14px] outline-none border-none shadow-[inset_4px_4px_9px_rgba(180,180,210,0.55),inset_-4px_-4px_9px_rgba(255,255,255,0.9)] text-[14px] font-bold text-[#1A1A3A]" />
+              <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="Ej: Pedro" className="w-full px-4 py-3 bg-[#E8E8F0] rounded-[14px] outline-none border-none shadow-[inset_4px_4px_9px_rgba(180,180,210,0.55),inset_-4px_-4px_9px_rgba(255,255,255,0.9)] text-[14px] font-bold text-[#1A1A3A]" />
             </div>
             <div className="flex-1">
               <label className="text-[11px] font-bold uppercase text-[#666688] block mb-[5px]">Apellidos</label>
-              <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="Rodríguez" className="w-full px-4 py-3 bg-[#E8E8F0] rounded-[14px] outline-none border-none shadow-[inset_4px_4px_9px_rgba(180,180,210,0.55),inset_-4px_-4px_9px_rgba(255,255,255,0.9)] text-[14px] font-bold text-[#1A1A3A]" />
+              <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="Ej: Pérez" className="w-full px-4 py-3 bg-[#E8E8F0] rounded-[14px] outline-none border-none shadow-[inset_4px_4px_9px_rgba(180,180,210,0.55),inset_-4px_-4px_9px_rgba(255,255,255,0.9)] text-[14px] font-bold text-[#1A1A3A]" />
             </div>
           </div>
 

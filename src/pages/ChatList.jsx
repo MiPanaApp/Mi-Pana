@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, forwardRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MessageCircle, Search, Trash2, X } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, useTransform, useAnimation } from 'framer-motion';
@@ -26,7 +26,7 @@ function timeAgo(timestamp) {
 }
 
 // Componente para cada item con Swipe-to-delete
-const SwipeableChat = ({ chat, user, userInteractions, onDelete, onNavigate }) => {
+const SwipeableChat = forwardRef(({ chat, user, userInteractions, onDelete, onNavigate }, ref) => {
   const x = useMotionValue(0);
   const controls = useAnimation();
   
@@ -68,7 +68,7 @@ const SwipeableChat = ({ chat, user, userInteractions, onDelete, onNavigate }) =
   const otherAvatar = isMeSeller ? chat.buyerAvatar : chat.sellerAvatar;
 
   return (
-    <div className="relative overflow-hidden rounded-2xl mb-1 chat-item touch-action-pan-y">
+    <div ref={ref} className="relative overflow-hidden rounded-2xl mb-1 chat-item touch-action-pan-y">
       {/* Fondo rojo con papelera (Solo visible al deslizar) */}
       <motion.div
         className="absolute inset-0 flex items-center justify-end pr-6 rounded-2xl"
@@ -155,7 +155,6 @@ const SwipeableChat = ({ chat, user, userInteractions, onDelete, onNavigate }) =
               </div>
                 
               {/* ── Fila de Valoración (Solo si aplica) ── */}
-              {/* ── Fila de Valoración (Solo si aplica) ── */}
               {!isMeSeller && (() => {
                 const interaction = userInteractions?.find(i => i.productId === chat.productId);
                 if (!interaction) return null;
@@ -207,7 +206,7 @@ const SwipeableChat = ({ chat, user, userInteractions, onDelete, onNavigate }) =
       </motion.div>
     </div>
   );
-};
+});
 
 export default function ChatList() {
   const navigate = useNavigate();

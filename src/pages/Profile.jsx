@@ -18,7 +18,7 @@ import { uploadString } from 'firebase/storage';
 import { LegalData } from '../data/LegalData';
 import LegalDrawer from '../components/LegalDrawer';
 import { useLocationStore } from '../store/useLocationStore';
-import { getCountryNameFromCode, getCountryCodeFromName } from '../data/locations';
+import { getCountryNameFromCode, getCountryCodeFromName, LOCATION_DATA } from '../data/locations';
 
 export default function Profile() {
   const { userData, currentUser, userAvatar, logout, isAdmin } = useAuth();
@@ -871,7 +871,7 @@ export default function Profile() {
 
                           <div class="mt-6 p-5 bg-[#1A1A3A] rounded-[25px] text-white shadow-clay">
                             <p class="font-black text-lg mb-2">Nuestro compromiso</p>
-                            <p class="text-[12px] leading-relaxed opacity-90">Detectamos actividades inusuales, pero tu reporte es vital. Usa el botón <b>"Reportar"</b> y revisaremos el caso de inmediato.</p>
+                            <p class="text-[12px] leading-relaxed opacity-90">Detectamos actividades inusuales, pero tu reporte es vital. Usa el botón <b>"Informar sobre Anuncio"</b> y revisaremos el caso de inmediato.</p>
                           </div>
 
                           <p class="text-center font-black text-xs text-[#8888AA] mt-8 italic px-4 leading-relaxed">Navega con confianza, pero siempre con sentido común. ¡En Mi Pana nos cuidamos!</p>
@@ -1001,7 +1001,7 @@ export default function Profile() {
                     onChange={(e) => setNewName(e.target.value)}
                     required
                     className="w-full p-4 bg-[#E0E5EC] rounded-2xl shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.7)] text-[#1A1A3A] font-bold outline-none focus:ring-2 focus:ring-[#0056B3]/40 transition-all placeholder:text-[#1A1A3A]/30"
-                    placeholder="Tu nombre..."
+                    placeholder="Ej: Pedro"
                   />
                 </div>
                 <div>
@@ -1011,7 +1011,7 @@ export default function Profile() {
                     value={newLastName}
                     onChange={(e) => setNewLastName(e.target.value)}
                     className="w-full p-4 bg-[#E0E5EC] rounded-2xl shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.7)] text-[#1A1A3A] font-bold outline-none focus:ring-2 focus:ring-[#0056B3]/40 transition-all placeholder:text-[#1A1A3A]/30"
-                    placeholder="Tu apellido..."
+                    placeholder="Ej: Pérez"
                   />
                 </div>
                 

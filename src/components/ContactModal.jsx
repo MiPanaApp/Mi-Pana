@@ -172,7 +172,7 @@ export default function ContactModal({ isOpen, onClose }) {
                         required
                         value={formData.fullName}
                         onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                        placeholder="Ej: Alex Guevara"
+                        placeholder="Ej: Pedro Perez"
                         className="w-full p-3 bg-white rounded-[15px] shadow-[inset_3px_3px_6px_rgba(163,177,198,0.2),inset_-3px_-3px_6px_rgba(255,255,255,0.7)] border border-transparent focus:border-[#0056B3]/20 outline-none font-bold text-[#1A1A3A] text-[13px] transition-all"
                       />
                     </div>

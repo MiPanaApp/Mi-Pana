@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronDown, Share2, Heart, ShieldCheck, MessageCircle, AlertCircle, Star, MapPin, Flag, X } from 'lucide-react';
 import { db } from '../services/firebase';
-import { doc, getDoc, collection, query, where, getDocs, limit, addDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, limit, addDoc, onSnapshot } from 'firebase/firestore';
 import { useStore } from '../store/useStore';
 import ProductCard from '../components/ProductCard';
 import { useTimeAgo } from '../hooks/useTimeAgo';
@@ -355,29 +355,32 @@ export default function ProductDetail() {
          return;
       }
 
-      const fetchProductAndRelated = async () => {
+      const fetchProductAndRelated = () => {
          setLoading(true);
-         try {
-            // 1. Fetch Producto Principal
-            const docRef = doc(db, 'products', productId);
-            const docSnap = await getDoc(docRef);
-
+         // Subscripción en tiempo real al producto específico
+         const docRef = doc(db, 'products', productId);
+         
+         const unsubscribe = onSnapshot(docRef, (docSnap) => {
             if (docSnap.exists()) {
                const productData = { id: docSnap.id, ...docSnap.data() };
                setProduct(productData);
-
-               // Fetch related & reviews
+               
+               // Una vez tenemos el producto, buscamos relacionados y reviews (una sola vez)
                fetchRelated(productData.category, productData.id);
-               getProductReviews(productData.id).then(setReviews).catch(err => console.warn('Error fetching reviews:', err));
+               getProductReviews(productData.id)
+                  .then(setReviews)
+                  .catch(err => console.warn('Error fetching reviews:', err));
             } else {
                setError('El anuncio ya no existe o fue eliminado.');
             }
-         } catch (err) {
-            console.error(err);
-            setError('Error de conexión al cargar el anuncio.');
-         } finally {
             setLoading(false);
-         }
+         }, (err) => {
+            console.error('Error en onSnapshot Product:', err);
+            setError('Error de conexión al cargar el anuncio.');
+            setLoading(false);
+         });
+
+         return unsubscribe;
       };
 
       const fetchRelated = async (category, currentId) => {
@@ -413,7 +416,8 @@ export default function ProductDetail() {
          }
       };
 
-      fetchProductAndRelated();
+      const unsub = fetchProductAndRelated();
+      return () => unsub();
    }, [productId]);
 
    const handleScroll = (ref) => {
@@ -751,28 +755,48 @@ tlfno contacto: 672 593 950`}
                   <div className="flex gap-6 items-center mb-6 bg-[#E0E5EC] rounded-[2rem] p-6 border border-white/40 shadow-[6px_6px_12px_rgba(163,177,198,0.6),-6px_-6px_12px_rgba(255,255,255,0.8)]">
                      {/* Left: Promedio */}
                      <div className="flex flex-col items-center justify-center border-r border-[#1A1A3A]/10 pr-6">
-                        <span className="text-5xl font-black text-[#1A1A3A] tracking-tighter">{product.rating || "4.8"}</span>
+                        <span className="text-5xl font-black text-[#1A1A3A] tracking-tighter">{product.rating || "0"}</span>
                         <div className="flex text-white drop-shadow-md mt-1 mb-1">
-                           {[...Array(5)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-[#FFC200] text-[#FFC200]" />)}
+                           {[...Array(5)].map((_, i) => (
+                             <Star 
+                                key={i} 
+                                className={`w-3.5 h-3.5 ${i < Math.round(product.rating || 0) ? 'fill-[#FFC200] text-[#FFC200]' : 'fill-[#1A1A3A]/10 text-transparent'}`} 
+                             />
+                           ))}
                         </div>
-                        <span className="text-[10px] uppercase font-bold text-[#1A1A3A]/50 tracking-widest">{product.reviewCount || "124"} avisos</span>
+                        <span className="text-[10px] uppercase font-bold text-[#1A1A3A]/50 tracking-widest">{product.reviewCount || "0"} avisos</span>
                      </div>
 
-                     {/* Right: Barras de progreso (App Store Style) */}
+                     {/* Right: Barras de progreso (App Store Style) Dinámicas */}
                      <div className="flex-1 flex flex-col gap-2">
-                        {[
-                           { s: 5, p: 85 }, { s: 4, p: 10 }, { s: 3, p: 3 }, { s: 2, p: 2 }, { s: 1, p: 0 }
-                        ].map(bar => (
-                           <div key={bar.s} className="flex items-center gap-2">
-                              <div className="flex items-center gap-0.5 w-[22px] justify-end">
-                                 <span className="text-[11px] font-black text-[#1A1A3A]">{bar.s}</span>
-                                 <Star className="w-3 h-3 text-[#1A1A3A] fill-[#1A1A3A]" />
+                        {[5, 4, 3, 2, 1].map(stars => {
+                           // Fallback: si no hay ratingsDistribution en el doc, calculamos de las reseñas cargadas
+                           let count = product.ratingsDistribution?.[stars] || 0;
+                           const total = product.reviewCount || 0;
+
+                           if (!product.ratingsDistribution && total > 0 && reviews.length > 0) {
+                              count = reviews.filter(r => Math.round(r.rating) === stars).length;
+                              // Nota: esto solo es preciso si reviews.length === total, pero es mejor que nada
+                           }
+
+                           const percentage = total > 0 ? (count / total) * 100 : 0;
+                           
+                           return (
+                              <div key={stars} className="flex items-center gap-2">
+                                 <div className="flex items-center gap-0.5 w-[22px] justify-end">
+                                    <span className="text-[11px] font-black text-[#1A1A3A]">{stars}</span>
+                                    <Star className="w-3 h-3 text-[#1A1A3A] fill-[#1A1A3A]" />
+                                 </div>
+                                 <div className="flex-1 h-2 bg-[#1A1A3A]/10 rounded-full overflow-hidden border border-white/20 shadow-inner">
+                                    <motion.div 
+                                      initial={{ width: 0 }}
+                                      animate={{ width: `${percentage}%` }}
+                                      className="h-full bg-[#1A1A3A] rounded-full"
+                                    ></motion.div>
+                                 </div>
                               </div>
-                              <div className="flex-1 h-2 bg-[#1A1A3A]/10 rounded-full overflow-hidden border border-white/20 shadow-inner">
-                                 <div className="h-full bg-[#1A1A3A] rounded-full" style={{ width: `${bar.p}%` }}></div>
-                              </div>
-                           </div>
-                        ))}
+                           );
+                        })}
                      </div>
                   </div>
 
@@ -895,31 +919,51 @@ tlfno contacto: 672 593 950`}
             <div className="mb-10 bg-[#E0E5EC] rounded-[2.5rem] p-10 border border-white/40 shadow-[6px_6px_12px_rgba(163,177,198,0.6),-6px_-6px_12px_rgba(255,255,255,0.8)] flex items-center justify-between gap-20">
                {/* Izquierda: Promedio de Valoración */}
                <div className="flex flex-col items-center justify-center border-r border-[#1A1A3A]/10 pr-20">
-                  <span className="text-7xl font-black text-[#1A1A3A] tracking-tighter">{product.rating || "4.8"}</span>
+                  <span className="text-7xl font-black text-[#1A1A3A] tracking-tighter">{product.rating || "0"}</span>
                   <div className="flex text-white drop-shadow-md mt-2 mb-3">
-                     {[...Array(5)].map((_, i) => <Star key={i} className="w-5 h-5 fill-[#FFC200] text-[#FFC200]" />)}
+                     {[...Array(5)].map((_, i) => (
+                       <Star 
+                          key={i} 
+                          className={`w-5 h-5 ${i < Math.round(product.rating || 0) ? 'fill-[#FFC200] text-[#FFC200]' : 'fill-[#1A1A3A]/10 text-transparent'}`} 
+                       />
+                     ))}
                   </div>
                   <span className="text-[12px] uppercase font-bold text-[#1A1A3A]/50 tracking-[0.25em] leading-none text-center">
-                     {product.reviewCount || "124"} VALORACIONES
+                     {product.reviewCount || "0"} VALORACIONES
                   </span>
                </div>
 
-               {/* Derecha: Barras Estadísticas */}
+               {/* Derecha: Barras Estadísticas Dinámicas */}
                <div className="flex-1 flex flex-col gap-3.5 max-w-lg">
-                  {[
-                     { s: 5, p: 85 }, { s: 4, p: 10 }, { s: 3, p: 3 }, { s: 2, p: 2 }, { s: 1, p: 0 }
-                  ].map(bar => (
-                     <div key={bar.s} className="flex items-center gap-4">
-                        <div className="flex items-center gap-1 w-[34px] justify-end">
-                           <span className="text-[14px] font-black text-[#1A1A3A]">{bar.s}</span>
-                           <Star className="w-3.5 h-3.5 text-[#1A1A3A] fill-[#1A1A3A]" />
+                  {[5, 4, 3, 2, 1].map(stars => {
+                     // Fallback: si no hay ratingsDistribution en el doc, calculamos de las reseñas cargadas
+                     let count = product.ratingsDistribution?.[stars] || 0;
+                     const total = product.reviewCount || 0;
+
+                     if (!product.ratingsDistribution && total > 0 && reviews.length > 0) {
+                        count = reviews.filter(r => Math.round(r.rating) === stars).length;
+                        // Nota: esto solo es preciso si reviews.length === total, pero es mejor que nada
+                     }
+
+                     const percentage = total > 0 ? (count / total) * 100 : 0;
+
+                     return (
+                        <div key={stars} className="flex items-center gap-4">
+                           <div className="flex items-center gap-1 w-[34px] justify-end">
+                              <span className="text-[14px] font-black text-[#1A1A3A]">{stars}</span>
+                              <Star className="w-3.5 h-3.5 text-[#1A1A3A] fill-[#1A1A3A]" />
+                           </div>
+                           <div className="flex-1 h-2.5 bg-[#1A1A3A]/10 rounded-full overflow-hidden border border-white/20 shadow-inner relative">
+                              <motion.div 
+                                 initial={{ width: 0 }}
+                                 animate={{ width: `${percentage}%` }}
+                                 className="h-full bg-[#1A1A3A] rounded-full"
+                              ></motion.div>
+                           </div>
+                           <span className="w-12 text-[12px] font-bold text-[#1A1A3A]/40 text-right">{Math.round(percentage)}%</span>
                         </div>
-                        <div className="flex-1 h-2.5 bg-[#1A1A3A]/10 rounded-full overflow-hidden border border-white/20 shadow-inner">
-                           <div className="h-full bg-[#1A1A3A] rounded-full" style={{ width: `${bar.p}%` }}></div>
-                        </div>
-                        <span className="w-10 text-[12px] font-bold text-[#1A1A3A]/40 text-right">{bar.p}%</span>
-                     </div>
-                  ))}
+                     );
+                  })}
                </div>
             </div>
 
