@@ -6,6 +6,9 @@ import {
   signOut,
   onAuthStateChanged,
   updateProfile,
+  setPersistence,
+  browserSessionPersistence,
+  browserLocalPersistence,
 } from 'firebase/auth';
 import { auth, googleProvider, db } from '../services/firebase';
 import { doc, getDoc } from 'firebase/firestore';
@@ -55,14 +58,35 @@ export const useAuthStore = create((set, get) => ({
   },
 
   // Login con Email y Contraseña
-  login: async (email, password) => {
+  login: async (email, password, rememberMe = false) => {
     if (isBypass) {
+      if (rememberMe) {
+        localStorage.setItem('remember_me_email', email);
+      } else {
+        localStorage.removeItem('remember_me_email');
+      }
       set({ user: BYPASS_USER, loading: false });
       return { success: true };
     }
+
     set({ loading: true, error: null });
     try {
+      // 1. Configurar persistencia según el switch 'Recuérdame'
+      // browserLocalPersistence = siempre conectado hasta logout
+      // browserSessionPersistence = expira al cerrar la pestaña/ventana
+      const persistence = rememberMe ? browserLocalPersistence : browserSessionPersistence;
+      await setPersistence(auth, persistence);
+
+      // 2. Ejecutar login
       const result = await signInWithEmailAndPassword(auth, email, password);
+
+      // 3. Manejar localStorage para el email recordado
+      if (rememberMe) {
+        localStorage.setItem('remember_me_email', email);
+      } else {
+        localStorage.removeItem('remember_me_email');
+      }
+
       set({ user: result.user, loading: false });
       return { success: true };
     } catch (err) {

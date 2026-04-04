@@ -22,6 +22,15 @@ export default function LoginScreen() {
   const loginWithGoogle = useAuthStore((s) => s.loginWithGoogle);
   const { hasChosenCountry } = useStore();
 
+  // Cargar email recordado al montar
+  useEffect(() => {
+    const savedEmail = localStorage.getItem('remember_me_email');
+    if (savedEmail) {
+      setEmail(savedEmail);
+      setRememberMe(true);
+    }
+  }, []);
+
   const handleGoogleSignIn = async () => {
     setLoading(true);
     setError(null);
@@ -64,7 +73,7 @@ export default function LoginScreen() {
     setLoading(true);
     setError(null);
     try {
-      const result = await login(email, password);
+      const result = await login(email, password, rememberMe);
       const user = useAuthStore.getState().user;
       const fetchPrefs = useAuthStore.getState().fetchUserPreferences;
       const { hasPrefs } = await fetchPrefs(user.uid);
