@@ -199,6 +199,20 @@ export default function CreateListing() {
     }
   }, [editId]);
 
+  // Lógica Automática: Consultar para Servicios y Formación
+  useEffect(() => {
+    if (form.category === 'Servicios' || form.category === 'Formación') {
+      if (form.price !== 'Consultar') {
+        setForm(prev => ({ ...prev, price: 'Consultar' }));
+      }
+    } else {
+      // Si cambia de Servicios/Formación a otra, y decía "Consultar", reseteamos a vacío
+      if (form.price === 'Consultar') {
+        setForm(prev => ({ ...prev, price: '' }));
+      }
+    }
+  }, [form.category]);
+
   const getCategoryStyle = (cat, index) => {
     if (!cat) return { Icon: Tag, color: getBrandColor(index) };
     
@@ -676,21 +690,27 @@ export default function CreateListing() {
 
             <div className="flex-col gap-2 w-[120px] flex">
               <span className="text-sm font-bold text-[#1A1A3A]/70 ml-2">Precio (€) <span className="text-red-500">*</span></span>
-              <input 
-                type="text" 
-                required
-                disabled={loading}
-                value={(form.price || '').toString().replace('.', ',')}
-                onChange={(e) => {
-                  let val = e.target.value.replace(',', '.'); // internal normalization
-                  // Allow empty, digits, and at most one dot with up to 2 decimal places
-                  if (val === '' || /^\d*[.]?\d{0,2}$/.test(val)) {
-                    setForm({ ...form, price: val });
-                  }
-                }}
-                placeholder="0,00"
-                className="w-full h-14 px-4 bg-[#E0E5EC] rounded-2xl shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] text-[#1A1A3A] font-black placeholder:text-gray-400/70 text-lg focus:outline-none focus:ring-2 focus:ring-[#1A1A3A]/10 transition-all text-center"
-              />
+              {form.category === 'Servicios' || form.category === 'Formación' ? (
+                <div className="w-full h-14 flex items-center justify-center bg-[#E0E5EC] rounded-2xl shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] text-[#1A1A3A]/40 font-bold text-sm tracking-tight transition-all">
+                   Consultar
+                </div>
+              ) : (
+                <input 
+                  type="text" 
+                  required
+                  disabled={loading}
+                  value={(form.price || '').toString().replace('.', ',')}
+                  onChange={(e) => {
+                    let val = e.target.value.replace(',', '.'); // internal normalization
+                    // Allow empty, digits, and at most one dot with up to 2 decimal places
+                    if (val === '' || /^\d*[.]?\d{0,2}$/.test(val)) {
+                      setForm({ ...form, price: val });
+                    }
+                  }}
+                  placeholder="0,00"
+                  className="w-full h-14 px-4 bg-[#E0E5EC] rounded-2xl shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] text-[#1A1A3A] font-black placeholder:text-gray-400/70 text-lg focus:outline-none focus:ring-2 focus:ring-[#1A1A3A]/10 transition-all text-center"
+                />
+              )}
             </div>
           </div>
 

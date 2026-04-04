@@ -208,36 +208,6 @@ export default function FilterPanel() {
                 </div>
               </section>
 
-              {/* Categorías */}
-              <section>
-                <h3 className="text-sm font-bold text-[#1A1A3A]/60 tracking-widest ml-1 mb-4">Categoría</h3>
-                <div className="grid grid-cols-4 gap-3">
-                  {categories.map((cat) => {
-                    const isSelected = activeCategory === cat.label;
-                    return (
-                      <button
-                        key={cat.id}
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setActiveCategory(isSelected ? 'Todas' : cat.label);
-                        }}
-                        className={`group flex flex-col items-center justify-center p-3 rounded-2xl transition-all duration-300 w-full border ${
-                          isSelected 
-                          ? 'bg-[#D90429] text-white shadow-[inset_3px_3px_6px_rgba(0,0,0,0.3)] scale-95 border-transparent' 
-                          : 'bg-[#E0E5EC] text-[#1A1A3A] hover:bg-[#D90429] hover:text-white shadow-[5px_5px_10px_rgba(163,177,198,0.6),-5px_-5px_10px_rgba(255,255,255,0.8)] border-white/50'
-                        }`}
-                      >
-                        {(() => {
-                          const IconComp = cat.iconComponent;
-                          return <IconComp size={18} className={`mb-0.5 transition-colors ${isSelected ? 'text-white' : 'text-[#1A1A3A] group-hover:text-white'}`} />;
-                        })()}
-                        <span className={`text-[10px] font-bold mt-1 text-center truncate w-full transition-colors ${isSelected ? 'text-white' : 'text-[#1A1A3A] group-hover:text-white'}`}>{cat.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
 
               {/* Rango de Precio */}
               <section>

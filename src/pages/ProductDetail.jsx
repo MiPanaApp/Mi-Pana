@@ -145,13 +145,47 @@ export default function ProductDetail() {
       if (reportReasons.length === 0) return;
       setIsReporting(true);
       try {
-         await addDoc(collection(db, 'reports'), {
-            productId: product.id,
-            productName: product.name,
+         // Recopilar datos detallados del reporte
+         const reportData = {
+            productId: product.id || productId,
+            productName: product.name || 'Sin título',
+            sellerId: product.userId || product.sellerId || 'Desconocido',
+            sellerName: product.userName || 'Desconocido',
+            reporterId: user?.uid || 'Usuario no autenticado',
+            reporterName: user?.displayName || 'Anónimo',
+            reporterEmail: user?.email || 'No disponible',
             reasons: reportReasons,
             createdAt: new Date(),
             status: 'pending',
-         });
+         };
+
+         // 1. Guardar en Firestore para el Dashboard Admin
+         await addDoc(collection(db, 'reports'), reportData);
+
+         // 2. Enviar correo via FormSubmit (usando el token oculto asignado)
+         try {
+            await fetch("https://formsubmit.co/ajax/a160a45a203156bd006b8e2c7e64cba4", {
+               method: "POST",
+               headers: { 
+                 'Content-Type': 'application/json',
+                 'Accept': 'application/json'
+               },
+               body: JSON.stringify({
+                 _subject: `⚠️ ALERTA MI PANA: Reporte de Anuncio - ${reportData.productName}`,
+                 Anuncio_Reportado: reportData.productName,
+                 ID_Anuncio: reportData.productId,
+                 Motivos_del_Reporte: reportReasons.join(', '),
+                 Vendedor_Nombre: reportData.sellerName,
+                 Vendedor_ID: reportData.sellerId,
+                 Reportado_Por: reportData.reporterName,
+                 Reportador_Email: reportData.reporterEmail,
+                 Reportador_ID: reportData.reporterId
+               })
+            });
+         } catch (emailError) {
+            console.error("Error al enviar el correo del reporte:", emailError);
+         }
+
          setReportSuccess(true);
          setTimeout(() => {
             setIsReportModalOpen(false);
@@ -176,7 +210,8 @@ export default function ProductDetail() {
          : (product.location || 'España');
 
       // Volvemos al formato con precio y ubicación que el usuario prefiere
-      const shareText = `🤝 ¡Mira lo que encontré en Mi Pana!\n\n📦 ${product.name}\n💰 ${product.price}€\n📍 ${locationName}\n\n👉 ${shareUrl}`;
+      const priceTag = product.price === 'Consultar' ? 'Consultar' : `${product.price}€`;
+      const shareText = `🤝 ¡Mira lo que encontré en Mi Pana!\n\n📦 ${product.name}\n💰 ${priceTag}\n📍 ${locationName}\n\n👉 ${shareUrl}`;
 
       if (navigator.share) {
          try {
@@ -694,13 +729,21 @@ tlfno contacto: 672 593 950`}
 
                   <div className="flex items-center gap-4 mt-2">
                      <div className="px-5 pt-3 pb-2.5 rounded-[1.2rem] bg-[#1A1A3A] text-white shadow-[inset_2px_4px_8px_rgba(255,255,255,0.25),_0_8px_16px_rgba(26,26,58,0.3)] flex items-baseline gap-0.5">
-                        <span className="text-3xl md:text-4xl font-black">
-                           {Math.floor(parseFloat(product.price) || 0)}
-                        </span>
-                        <span className="text-xl md:text-2xl font-black">
-                           ,{((parseFloat(product.price) || 0) % 1).toFixed(2).split('.')[1]}
-                        </span>
-                        <span className="text-xl md:text-2xl font-black ml-0.5">€</span>
+                        {product.price === 'Consultar' ? (
+                           <span className="text-xl md:text-2xl font-bold tracking-tight py-1">
+                              Consultar
+                           </span>
+                        ) : (
+                           <>
+                              <span className="text-3xl md:text-4xl font-black">
+                                 {Math.floor(parseFloat(product.price) || 0)}
+                              </span>
+                              <span className="text-xl md:text-2xl font-black">
+                                 ,{((parseFloat(product.price) || 0) % 1).toFixed(2).split('.')[1]}
+                              </span>
+                              <span className="text-xl md:text-2xl font-black ml-0.5">€</span>
+                           </>
+                        )}
                      </div>
 
                      {(() => { const badge = getBadge(product); return badge ? (

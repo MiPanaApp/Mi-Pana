@@ -3,17 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
 import {
   Users, ShoppingBag, MessageSquare, Star, ShieldCheck, Heart,
-  Home, BarChart2, Layers, Activity, Search, Bell, Settings, LogOut, ArrowLeft, Eye, Globe
+  Home, BarChart2, Layers, Activity, Search, Bell, Settings, LogOut, ArrowLeft, Eye, Globe, CheckCircle
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { db } from '../../services/firebase';
 // OPTIMIZACIÓN: Importamos getCountFromServer para ahorrar costos de lectura
-import { collection, getDocs, query, limit, getCountFromServer } from 'firebase/firestore';
+import { collection, getDocs, query, limit, getCountFromServer, onSnapshot } from 'firebase/firestore';
 import AdminUsersTab from '../../components/admin/AdminUsersTab';
 import AdminAdsTab from '../../components/admin/AdminAdsTab';
 import AdminStatsTab from '../../components/admin/AdminStatsTab';
 import AdminCategoriesTab from '../../components/admin/AdminCategoriesTab';
 import AdminCountriesTab from '../../components/admin/AdminCountriesTab';
+import AdminReportsModal from '../../components/admin/AdminReportsModal';
 
 // Colores alineados a la marca: Amarillo Mi Pana, Morado Admin y acentos
 const COLORS = ['#FFD700', '#8B5CF6', '#06B6D4', '#F43F5E', '#10B981'];
@@ -35,10 +36,24 @@ export default function AdminDashboard() {
     categories: []
   });
   const [loading, setLoading] = useState(true);
+  const [isReportsModalOpen, setIsReportsModalOpen] = useState(false);
   const [totalViews, setTotalViews] = useState(0);
   const [totalLikes, setTotalLikes] = useState(0);
   const [topViewed, setTopViewed] = useState([]);
+  const [pendingReportsCount, setPendingReportsCount] = useState(0);
   const scrollContainerRef = useRef(null);
+
+  useEffect(() => {
+    const q = query(collection(db, 'reports'));
+    const unsubscribe = onSnapshot(q, (snap) => {
+      let pending = 0;
+      snap.forEach(doc => {
+        if (doc.data().status === 'pending') pending++;
+      });
+      setPendingReportsCount(pending);
+    });
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     if (scrollContainerRef.current) {
@@ -171,12 +186,20 @@ export default function AdminDashboard() {
           <div className="flex items-center gap-4">
             <button 
               onClick={() => navigate('/perfil')}
-              className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-gray-100 text-gray-400 hover:text-blue-600 transition-colors"
+              className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-gray-100 text-gray-400 hover:text-blue-600 transition-colors shrink-0"
             >
               <ArrowLeft size={20} />
             </button>
             <div>
-              <h1 className="text-3xl font-black text-gray-800 tracking-tight">Panel Mi Pana</h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-3xl font-black text-gray-800 tracking-tight">Panel Mi Pana</h1>
+                {activeTab === 'overview' && (
+                  <button className="relative w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm border border-gray-100 text-gray-400 hover:text-[#FFD700] transition-colors shrink-0">
+                    <Bell className="w-5 h-5" />
+                    <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+                  </button>
+                )}
+              </div>
               <p className="text-sm font-bold text-gray-400">Gestión centralizada de la comunidad</p>
             </div>
           </div>
@@ -184,7 +207,7 @@ export default function AdminDashboard() {
           <div className="flex items-center gap-3 w-full md:w-auto">
             {activeTab === 'anuncios' && (
               <div className="bg-white rounded-2xl flex items-center px-4 py-3 shadow-sm flex-1 md:w-72 border border-gray-100">
-                <Search className="w-5 h-5 text-gray-400 mr-2" />
+                <Search className="w-5 h-5 text-gray-400 mr-2 shrink-0" />
                 <input
                   type="text"
                   value={globalSearch}
@@ -194,12 +217,6 @@ export default function AdminDashboard() {
                 />
               </div>
             )}
-            {activeTab === 'overview' && (
-              <button className="relative w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-gray-100 text-gray-400 hover:text-[#FFD700] transition-colors">
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-3 right-3 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-              </button>
-            )}
           </div>
         </div>
 
@@ -207,20 +224,22 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 pb-44 lg:pb-6">
 
             {/* Metrics con Efecto Neumórfico Suave */}
-            <div className="xl:col-span-12 grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="xl:col-span-12 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
               {metrics.map((m, idx) => (
-                <div key={m.id} className="bg-white p-6 rounded-[2rem] shadow-[10px_10px_20px_#ebebeb,-5px_-5px_15px_#ffffff] border border-white/60">
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="text-gray-400 text-xs font-black uppercase tracking-widest">{m.label}</span>
-                    <span className={`text-[11px] font-black px-2.5 py-1 rounded-lg ${m.trend === 'acumulado' ? 'bg-[#FFD700]/20 text-yellow-700' : (m.isPositive ? 'bg-green-50 text-green-500' : 'bg-red-50 text-red-500')}`}>
+                <div key={m.id} className="bg-white p-4 md:p-6 rounded-3xl md:rounded-[2rem] shadow-[10px_10px_20px_#ebebeb,-5px_-5px_15px_#ffffff] border border-white/60 flex flex-col justify-between">
+                  <div className="mb-2 md:mb-3">
+                    <span className="text-gray-400 text-[9px] md:text-xs font-black uppercase tracking-widest leading-tight">{m.label}</span>
+                  </div>
+                  <div className="flex flex-col items-start gap-2 md:flex-row md:items-center md:gap-3">
+                    <span className="text-xl sm:text-2xl md:text-3xl font-black text-gray-800 flex items-center gap-1.5 md:gap-2 truncate">
+                      {idx === 2 && <Eye className="w-5 h-5 md:w-8 md:h-8 text-blue-500 shrink-0" />}
+                      {idx === 3 && <Heart className="w-5 h-5 md:w-8 md:h-8 text-red-500 shrink-0" fill="currentColor" />}
+                      <span className="truncate">{loading ? "..." : m.val}</span>
+                    </span>
+                    <span className={`text-[10px] md:text-xs font-black px-2 py-1 md:px-2.5 md:py-1 rounded-md shrink-0 ${m.trend === 'acumulado' ? 'bg-[#FFD700]/20 text-yellow-700' : (m.isPositive ? 'bg-green-50 text-green-500' : 'bg-red-50 text-red-500')}`}>
                       {m.trend}
                     </span>
                   </div>
-                  <span className="text-3xl font-black text-gray-800 flex items-center gap-2">
-                    {idx === 2 && <Eye className="w-8 h-8 text-blue-500" />}
-                    {idx === 3 && <Heart className="w-8 h-8 text-red-500" fill="currentColor" />}
-                    {loading ? "..." : m.val}
-                  </span>
                 </div>
               ))}
             </div>
@@ -307,13 +326,35 @@ export default function AdminDashboard() {
               </div>
 
               {/* Card de Acción Claymorphism */}
-              <div className="bg-black p-8 rounded-[2.5rem] shadow-xl text-white relative overflow-hidden group">
+              <div className="bg-black p-6 rounded-[2.5rem] shadow-xl text-white relative overflow-hidden group">
                 <div className="absolute -right-4 -top-4 w-24 h-24 bg-[#FFD700] rounded-full blur-3xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
-                <ShieldCheck className="w-10 h-10 text-[#FFD700] mb-4" />
-                <h3 className="font-black text-xl mb-2">Seguridad Mi Pana</h3>
-                <p className="text-sm text-gray-400 font-medium mb-6">Optimiza la confianza de la comunidad revisando los casos pendientes.</p>
-                <button className="w-full bg-[#FFD700] text-black font-black py-4 rounded-2xl shadow-[0_10px_20px_rgba(255,215,0,0.2)] active:scale-95 transition-all">
-                  Iniciar Auditoría
+                
+                <div className="flex items-center gap-3 mb-4 relative z-10">
+                  <ShieldCheck className="w-8 h-8 text-[#FFD700]" />
+                  <h3 className="font-black text-xl">Seguridad Mi Pana</h3>
+                </div>
+                
+                <div className="flex items-center justify-between mb-6 relative z-10 gap-2">
+                  <p className="text-sm text-gray-400 font-medium">Casos pendientes de revisión.</p>
+                  
+                  {pendingReportsCount > 0 ? (
+                    <div className="flex flex-col items-center justify-center bg-red-500 text-white rounded-xl px-4 py-2 shadow-[0_0_15px_rgba(239,68,68,0.5)] shrink-0">
+                      <span className="text-xl font-black leading-none">{pendingReportsCount}</span>
+                      <span className="text-[9px] uppercase tracking-widest font-bold">Nuevos</span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center bg-green-500/20 text-green-500 border border-green-500/30 rounded-xl px-4 py-2 shrink-0">
+                      <CheckCircle className="w-5 h-5 mb-0.5" />
+                      <span className="text-[9px] uppercase tracking-widest font-bold">Al Día</span>
+                    </div>
+                  )}
+                </div>
+
+                <button 
+                  onClick={() => setIsReportsModalOpen(true)}
+                  className="w-full bg-[#FFD700] text-black font-black py-4 rounded-2xl shadow-[0_10px_20px_rgba(255,215,0,0.2)] hover:bg-[#FFE033] active:scale-95 transition-all relative z-10"
+                >
+                  Ver Reportes
                 </button>
               </div>
             </div>
@@ -327,6 +368,10 @@ export default function AdminDashboard() {
         {activeTab === 'paises' && <AdminCountriesTab />}
         {activeTab === 'estadisticas' && <AdminStatsTab />}
 
+        <AdminReportsModal 
+          isOpen={isReportsModalOpen} 
+          onClose={() => setIsReportsModalOpen(false)} 
+        />
         </div>
       </div>
 

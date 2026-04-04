@@ -147,7 +147,7 @@ export default function Home() {
         result.sort((a, b) => (b.rating || 0) - (a.rating || 0)); 
         break;
       case 'price_asc': 
-        result.sort((a, b) => parseFloat(a.price) - parseFloat(b.price)); 
+        result.sort((a, b) => (parseFloat(a.price) || 0) - (parseFloat(b.price) || 0)); 
         break;
       case 'recent': 
         result.sort((a, b) => {

@@ -44,9 +44,15 @@ export default function ProductCard({ product }) {
         {/* Fila precio + rating */}
         <div className="flex items-end justify-between mb-0">
           <div className="text-lg font-black text-[#003366] flex items-baseline gap-0.5">
-            <span className="text-lg">{Math.floor(parseFloat(product.price) || 0)}</span>
-            <span className="text-[10px]">,{((parseFloat(product.price) || 0) % 1).toFixed(2).split('.')[1]}</span>
-            <span className="text-[10px] ml-0.5">€</span>
+            {product.price === 'Consultar' ? (
+              <span className="text-[13px] font-bold tracking-tight text-[#003366]/60">Consultar</span>
+            ) : (
+              <>
+                <span className="text-lg">{Math.floor(parseFloat(product.price) || 0)}</span>
+                <span className="text-[10px]">,{((parseFloat(product.price) || 0) % 1).toFixed(2).split('.')[1]}</span>
+                <span className="text-[10px] ml-0.5">€</span>
+              </>
+            )}
           </div>
           {product.rating != null && (
             <div className="flex items-center gap-0.5 pb-0.5">

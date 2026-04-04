@@ -129,7 +129,7 @@ export default function AdminCountriesTab() {
           )}
 
           {countries.map((c) => (
-            <div key={c.id} className={`bg-white border rounded-[2rem] p-6 transition-all ${c.status === 'hidden' ? 'opacity-50' : ''} shadow-sm hover:shadow-md border-gray-100`}>
+            <div key={c.id} className={`bg-white border rounded-3xl p-4 md:p-5 transition-all ${c.status === 'hidden' ? 'opacity-50' : ''} shadow-sm hover:shadow-md border-gray-100 flex flex-col justify-between`}>
               {editingId === c.id ? (
                 <CountryForm 
                   formData={formData} 
@@ -138,41 +138,44 @@ export default function AdminCountriesTab() {
                   onCancel={() => setEditingId(null)} 
                 />
               ) : (
-                <div className="space-y-4">
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-3">
-                      <span className="text-3xl">{c.flag}</span>
-                      <div>
-                        <h4 className="font-black text-gray-800 flex items-center gap-2">
-                          {c.name} <span className="text-[10px] text-gray-400">({c.id})</span>
-                        </h4>
-                        <div className={`mt-1 px-2 py-0.5 border rounded-lg text-[9px] font-black uppercase inline-block ${STATUS_COLORS[c.status]}`}>
-                          {c.status}
+                <div className="space-y-3">
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <span className="text-2xl shrink-0">{c.flag}</span>
+                      <div className="flex flex-col min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="font-black text-gray-800 text-sm md:text-base truncate">
+                            {c.name}
+                          </h4>
+                          <div className={`px-1.5 py-0.5 border rounded-md text-[8px] font-black uppercase shrink-0 ${STATUS_COLORS[c.status]}`}>
+                            {c.status}
+                          </div>
                         </div>
+                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-none mt-0.5.">CÓDIGO: {c.id}</span>
                       </div>
                     </div>
-                    <div className="flex gap-1">
-                      <button onClick={() => { setEditingId(c.id); setFormData(c); }} className="p-2 hover:bg-gray-50 rounded-xl text-blue-500 transition-colors">
-                        <Edit2 size={16} />
-                      </button>
-                    </div>
+                    
+                    <button onClick={() => { setEditingId(c.id); setFormData(c); }} className="p-1.5 bg-gray-50 hover:bg-gray-100 rounded-lg text-blue-500 transition-colors shrink-0">
+                      <Edit2 size={14} />
+                    </button>
                   </div>
 
-                  <div className="bg-gray-50 rounded-2xl p-4 space-y-2">
-                    <div className="flex justify-between text-[10px] font-black uppercase text-gray-400">
-                      <span>Nivel 1:</span>
-                      <span className="text-gray-600">{c.config?.level1}</span>
+                  <div className="flex items-center gap-4 bg-gray-50 rounded-xl p-3 border border-gray-100">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[8px] font-black uppercase text-gray-400">Nivel 1</p>
+                      <p className="text-[11px] font-bold text-gray-700 truncate">{c.config?.level1}</p>
                     </div>
-                    <div className="flex justify-between text-[10px] font-black uppercase text-gray-400">
-                      <span>Nivel 2:</span>
-                      <span className="text-gray-600">{c.config?.level2}</span>
+                    <div className="w-[1px] h-6 bg-gray-200 shrink-0"></div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[8px] font-black uppercase text-gray-400">Nivel 2</p>
+                      <p className="text-[11px] font-bold text-gray-700 truncate">{c.config?.level2}</p>
                     </div>
                   </div>
 
                   {c.status === 'suspended' && (
-                    <div className="flex items-center gap-2 p-3 bg-orange-50 rounded-2xl text-[10px] font-bold text-orange-600">
-                      <AlertTriangle size={14} className="shrink-0" />
-                      <p className="line-clamp-2">{c.suspendedMessage}</p>
+                    <div className="flex items-start gap-2 p-2.5 bg-orange-50 rounded-xl text-[10px] font-bold text-orange-600 border border-orange-100/50">
+                      <AlertTriangle size={12} className="shrink-0 mt-0.5" />
+                      <p className="line-clamp-2 leading-snug">{c.suspendedMessage}</p>
                     </div>
                   )}
                 </div>
