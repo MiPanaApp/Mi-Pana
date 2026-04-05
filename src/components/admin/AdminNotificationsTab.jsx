@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '../../services/firebase';
-import { Bell, Send, Loader2, ChevronDown, Check } from 'lucide-react';
+import { Bell, Send, Loader2, ChevronDown, Check, Users, X, Mail } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const COUNTRIES = {
   all: { name: 'Todos los países', flag: '🌍' },
@@ -20,6 +21,7 @@ export default function AdminNotificationsTab() {
   const [isCountryOpen, setIsCountryOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [notifHistory, setNotifHistory] = useState([]);
+  const [showRecipients, setShowRecipients] = useState(null);
 
   const loadHistory = async () => {
     try {
@@ -189,7 +191,10 @@ export default function AdminNotificationsTab() {
             <div key={n.id} className="bg-white p-4 rounded-2xl shadow-[0_5px_15px_rgba(0,0,0,0.02)] border border-gray-50 transition-all hover:shadow-[0_8px_25px_rgba(0,0,0,0.06)] hover:border-gray-100">
               <div className="flex justify-between items-start mb-1.5 gap-2">
                 <span className="font-black text-sm text-gray-800 line-clamp-1">{n.title}</span>
-                <span className="text-[10px] font-black bg-blue-50 text-blue-600 px-2.5 py-1 rounded-xl shrink-0 flex items-center gap-1.5 border border-blue-100/50">
+                <span 
+                  onClick={() => n.recipients && setShowRecipients(n)}
+                  className={`text-[10px] font-black px-2.5 py-1 rounded-xl shrink-0 flex items-center gap-1.5 border transition-all ${n.recipients ? 'bg-blue-100 text-blue-700 border-blue-200 cursor-pointer hover:scale-105 active:scale-95' : 'bg-blue-50 text-blue-600 border-blue-100 opacity-60'}`}
+                >
                   <Send className="w-3 h-3" /> {n.sentTo}
                 </span>
               </div>
@@ -214,6 +219,70 @@ export default function AdminNotificationsTab() {
           )}
         </div>
       </div>
+      {/* Modal de Receptores */}
+      <AnimatePresence>
+        {showRecipients && (
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowRecipients(null)}
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col"
+            >
+              <div className="bg-[#FFD700] p-6 flex items-center justify-between">
+                <div>
+                  <h4 className="font-black text-lg text-black">Pana Receptores</h4>
+                  <p className="text-black/60 text-[10px] uppercase font-black tracking-widest">{showRecipients.title}</p>
+                </div>
+                <button 
+                  onClick={() => setShowRecipients(null)}
+                  className="w-10 h-10 bg-black/10 rounded-full flex items-center justify-center hover:bg-black/20 transition-colors"
+                >
+                  <X className="w-5 h-5 text-black" />
+                </button>
+              </div>
+
+              <div className="p-6 max-h-[400px] overflow-y-auto custom-scrollbar space-y-2">
+                {showRecipients.recipients?.map((user, i) => (
+                  <div key={user.uid || i} className="flex items-center gap-3 p-3 bg-gray-50 rounded-2xl border border-gray-100">
+                    <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-blue-600 shrink-0">
+                      <Users className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-sm text-gray-800 truncate">{user.name}</p>
+                      <p className="text-[11px] font-medium text-gray-400 flex items-center gap-1">
+                        <Mail className="w-3 h-3" /> {user.email}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+                {(!showRecipients.recipients || showRecipients.recipients.length === 0) && (
+                  <div className="text-center p-8 text-gray-400 italic text-sm">
+                    No se guardó el detalle de receptores para esta notificación.
+                  </div>
+                )}
+              </div>
+
+              <div className="p-6 bg-gray-50 border-t border-gray-100 flex justify-center">
+                <button 
+                  onClick={() => setShowRecipients(null)}
+                  className="px-8 py-3 bg-black text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 }

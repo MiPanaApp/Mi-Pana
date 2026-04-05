@@ -229,11 +229,21 @@ exports.sendAdminNotification = onCall(
 
     const usersSnap = await query.limit(500).get()
     
-    // Recolectar todos los tokens
+    // Recolectar todos los tokens y detalles de receptores
     const allTokens = []
+    const recipients = []
+    
     usersSnap.docs.forEach(doc => {
-      const tokens = doc.data()?.fcmTokens || []
-      allTokens.push(...tokens)
+      const data = doc.data()
+      const tokens = data.fcmTokens || []
+      if (tokens.length > 0) {
+        allTokens.push(...tokens)
+        recipients.push({
+          uid: doc.id,
+          name: `${data.name || ''} ${data.lastName || ''}`.trim() || 'Sin nombre',
+          email: data.email || 'Sin email'
+        })
+      }
     })
 
     if (!allTokens.length) return { sent: 0 }
@@ -254,17 +264,20 @@ exports.sendAdminNotification = onCall(
         data: { actionUrl: actionUrl || '/home', type: 'admin' }
       })
       totalSent += result.successCount
-
-      // Guardar registro en Firestore
-      await getFirestore().collection('adminNotifications').add({
-        title, body, actionUrl,
-        targetCountry: targetCountry || 'all',
-        targetCategory: targetCategory || 'all',
-        sentTo: totalSent,
-        sentAt: new Date(),
-        sentBy: request.auth.uid
-      })
     }
+
+    // Guardar registro en Firestore con detalle de receptores
+    await getFirestore().collection('adminNotifications').add({
+      title, body, actionUrl,
+      targetCountry: targetCountry || 'all',
+      targetCategory: targetCategory || 'all',
+      sentTo: totalSent,
+      sentAt: new Date(),
+      sentBy: request.auth.uid,
+      recipients: recipients // Lista de usuarios que recibieron (o al menos se intentó)
+    })
+
+    return { sent: totalSent }
 
     return { sent: totalSent }
   }

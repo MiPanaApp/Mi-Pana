@@ -1,10 +1,11 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Sliders, Meh, ArrowUpDown, Pin, Star, Clock, Euro, Search } from 'lucide-react';
+import { Sliders, Meh, ArrowUpDown, Pin, Star, Clock, Euro, Search, Bell } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ProductCard from '../components/ProductCard';
 import FilterPanel from '../components/ui/FilterPanel';
 import SkeletonGrid from '../components/ui/SkeletonGrid';
+import NotificationModal from '../components/ui/NotificationModal';
 import { useStore } from '../store/useStore';
 import { collection, getDocs, query, doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../services/firebase';
@@ -42,6 +43,7 @@ export default function Home() {
   const { categoryId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
 
   // Sync route param with global store category
   useEffect(() => {
@@ -257,6 +259,14 @@ export default function Home() {
             >
               <Sliders size={15} />
             </button>
+
+            <button
+              onClick={() => setIsNotifOpen(true)}
+              className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#EDEDF5] flex-shrink-0 shadow-[3px_3px_7px_rgba(180,180,210,0.65),-3px_-3px_7px_rgba(255,255,255,0.85)] active:scale-95 transition-all text-[#1A1A3A] relative"
+            >
+              <Bell size={15} />
+              <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white shadow-sm ring-white ring-2"></div>
+            </button>
           </div>
         </div>
 
@@ -301,6 +311,7 @@ export default function Home() {
         )}
       </div>
       <FilterPanel />
+      <NotificationModal isOpen={isNotifOpen} onClose={() => setIsNotifOpen(false)} />
     </div>
   );
 }
