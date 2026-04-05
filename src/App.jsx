@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useAuthStore } from './store/useAuthStore';
 import { useCategoryStore } from './store/useCategoryStore';
 import { useLocationStore } from './store/useLocationStore';
+import NotificationPermissionModal from './components/ui/NotificationPermissionModal';
+import { useNotificationPrompt } from './hooks/useNotificationPrompt';
 
 import ScrollToTop from './components/ScrollToTop';
 import SplashScreen from './components/ui/SplashScreen';
@@ -28,7 +30,8 @@ import Messages from './pages/Messages';
 import Profile from './pages/Profile';
 
 function App() {
-  const { init } = useAuthStore();
+  const { init, user } = useAuthStore();
+  const { showModal, closeModal } = useNotificationPrompt(user);
 
   // Inicializar el listener de Firebase Auth al arrancar la app
   useEffect(() => {
@@ -84,6 +87,7 @@ function App() {
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <NotificationPermissionModal isOpen={showModal} onClose={closeModal} />
     </Router>
   );
 }

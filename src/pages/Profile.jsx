@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { 
-  User, Mail, Phone, MapPin, LogOut, ChevronDown, 
+  User, Mail, Phone, MapPin, LogOut, ChevronDown, Bell,
   ShieldCheck, Loader2, Camera, Lock, Info, 
   HelpCircle, Cookie, ShieldAlert, Instagram, Facebook, Youtube, Twitter, UserCircle2,
   Package, Edit2, Trash2, PlusCircle, ExternalLink, Eye, EyeOff, X, Calendar, Globe, MoreVertical, CheckCircle2
@@ -19,9 +19,11 @@ import { LegalData } from '../data/LegalData';
 import LegalDrawer from '../components/LegalDrawer';
 import { useLocationStore } from '../store/useLocationStore';
 import { getCountryNameFromCode, getCountryCodeFromName, LOCATION_DATA } from '../data/locations';
+import { usePushNotifications } from '../hooks/usePushNotifications';
 
 export default function Profile() {
   const { userData, currentUser, userAvatar, logout, isAdmin } = useAuth();
+  const { permission, requestPermission } = usePushNotifications();
   const storeUser = useAuthStore((s) => s.user); // Fuente de verdad del UID real
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
@@ -643,6 +645,17 @@ export default function Profile() {
               isPassword 
               actionLabel={isGoogleLogin ? null : "Cambiar"} 
               onAction={() => { setPwdError(''); setPwdSuccess(false); setPwdForm({ current: '', next: '', confirm: '' }); setShowPasswordModal(true); }} 
+            />
+            <HeaderInfoItem 
+              icon={Bell} 
+              label="Notificaciones Push" 
+              value={permission === 'granted' ? 'Activadas y Listas' : 'Desactivadas'} 
+              actionLabel={permission === 'granted' ? null : "Activar"} 
+              onAction={async () => {
+                const token = await requestPermission();
+                if (token) alert('¡Notificaciones activadas exitosamente!');
+                else alert('Por favor, permite el acceso a notificaciones en tu navegador/dispositivo.');
+              }} 
             />
           </div>
         </div>
