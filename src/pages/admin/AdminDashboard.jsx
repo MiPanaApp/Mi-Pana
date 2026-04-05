@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
 import {
   Users, ShoppingBag, MessageSquare, Star, ShieldCheck, Heart,
-  Home, BarChart2, Layers, Activity, Search, Bell, Settings, LogOut, ArrowLeft, Eye, Globe, CheckCircle
+  Home, BarChart2, Layers, Activity, Search, Bell, Settings, LogOut, ArrowLeft, Eye, Globe, CheckCircle, CalendarClock
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { db } from '../../services/firebase';
@@ -15,6 +15,8 @@ import AdminStatsTab from '../../components/admin/AdminStatsTab';
 import AdminCategoriesTab from '../../components/admin/AdminCategoriesTab';
 import AdminCountriesTab from '../../components/admin/AdminCountriesTab';
 import AdminReportsModal from '../../components/admin/AdminReportsModal';
+import AdminNotificationsTab from '../../components/admin/AdminNotificationsTab';
+import AdminScheduledNotifsTab from '../../components/admin/AdminScheduledNotifsTab';
 
 // Colores alineados a la marca: Amarillo Mi Pana, Morado Admin y acentos
 const COLORS = ['#FFD700', '#8B5CF6', '#06B6D4', '#F43F5E', '#10B981'];
@@ -131,7 +133,7 @@ export default function AdminDashboard() {
 
       {/* Mobile Bottom Navigation - Estilo Claymorphism Soft */}
       <div className="lg:hidden fixed bottom-6 left-4 right-4 bg-white/80 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] z-[100] flex items-center justify-around p-4 rounded-[2.5rem] border border-white">
-        {['overview', 'usuarios', 'anuncios', 'categorias', 'paises', 'estadisticas'].map((tab) => (
+        {['overview', 'usuarios', 'anuncios', 'categorias', 'paises', 'notificaciones', 'programadas', 'estadisticas'].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -142,6 +144,8 @@ export default function AdminDashboard() {
             {tab === 'anuncios' && <ShoppingBag className="w-6 h-6" />}
             {tab === 'categorias' && <Layers className="w-6 h-6" />}
             {tab === 'paises' && <Globe className="w-6 h-6" />}
+            {tab === 'notificaciones' && <Bell className="w-6 h-6" />}
+            {tab === 'programadas' && <CalendarClock className="w-6 h-6" />}
             {tab === 'estadisticas' && <BarChart2 className="w-6 h-6" />}
           </button>
         ))}
@@ -160,6 +164,8 @@ export default function AdminDashboard() {
             { id: 'anuncios', icon: ShoppingBag },
             { id: 'categorias', icon: Layers },
             { id: 'paises', icon: Globe },
+            { id: 'notificaciones', icon: Bell },
+            { id: 'programadas', icon: CalendarClock },
             { id: 'estadisticas', icon: BarChart2 }
           ].map((item) => (
             <button
@@ -366,6 +372,8 @@ export default function AdminDashboard() {
         {activeTab === 'anuncios' && <AdminAdsTab searchQuery={globalSearch} />}
         {activeTab === 'categorias' && <AdminCategoriesTab />}
         {activeTab === 'paises' && <AdminCountriesTab />}
+        {activeTab === 'notificaciones' && <AdminNotificationsTab />}
+        {activeTab === 'programadas' && <AdminScheduledNotifsTab />}
         {activeTab === 'estadisticas' && <AdminStatsTab />}
 
         <AdminReportsModal 

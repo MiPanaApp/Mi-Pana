@@ -97,6 +97,16 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
     
+    // Admin Notifications Collection
+    match /adminNotifications/{notificationId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Scheduled Notifications Collection
+    match /notificationTemplates/{templateId} {
+      allow read, write: if isAdmin();
+    }
+
     // Reports Collection
     match /reports/{reportId} {
       allow create: if isAuthenticated();
