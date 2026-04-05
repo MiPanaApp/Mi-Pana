@@ -1,6 +1,9 @@
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { onRequest, onCall, HttpsError } = require("firebase-functions/v2/https");
 const { onDocumentCreated } = require("firebase-functions/v2/firestore");
+
+const { initializeApp } = require("firebase-admin/app");
+initializeApp();
 /**
  * NOTA DE ARQUITECTURA: 
  * No importamos firebase-admin ni resend aquí arriba para evitar el Timeout de 10s en el despliegue.
