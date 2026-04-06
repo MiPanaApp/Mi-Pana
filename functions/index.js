@@ -1,7 +1,6 @@
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { onRequest, onCall, HttpsError } = require("firebase-functions/v2/https");
 const { onDocumentCreated } = require("firebase-functions/v2/firestore");
-const { onUserCreated } = require("firebase-functions/v2/identity");
 const { defineSecret } = require("firebase-functions/params");
 
 const RESEND_API_KEY = defineSecret("RESEND_API_KEY");
@@ -134,7 +133,7 @@ exports.checkPendingReviews = onSchedule(
           actionUrl: `/perfil-producto?id=${interaction.productId}`,
           type: 'review_reminder'
         }
-      }).catch(() => {}) // No fallar si hay error de tokens
+      }).catch(() => { }) // No fallar si hay error de tokens
     }
 
     console.log("✅ Reseñas habilitadas");
@@ -150,7 +149,7 @@ exports.onNewMessage = onDocumentCreated(
     if (getApps().length === 0) initializeApp();
 
     const message = event.data.data()
-    const convId  = event.params.convId
+    const convId = event.params.convId
 
     // Obtener la conversación para saber el receptor
     const db = getFirestore()
@@ -173,7 +172,7 @@ exports.onNewMessage = onDocumentCreated(
 
     const { getMessaging } = require("firebase-admin/messaging");
     const messaging = getMessaging()
-    
+
     // Enviar a todos los dispositivos del usuario
     await messaging.sendEachForMulticast({
       tokens,
@@ -213,7 +212,7 @@ exports.sendAdminNotification = onCall(
 
     // Verificar que el caller es admin
     if (!request.auth) throw new HttpsError('unauthenticated', 'No auth')
-    
+
     const callerSnap = await getFirestore()
       .collection('users').doc(request.auth.uid).get()
     if (callerSnap.data()?.role !== 'admin') {
@@ -221,7 +220,7 @@ exports.sendAdminNotification = onCall(
     }
 
     const { title, body, actionUrl, targetCountry,
-            targetCategory } = request.data
+      targetCategory } = request.data
 
     // Construir query según filtros
     let query = getFirestore().collection('users')
@@ -232,11 +231,11 @@ exports.sendAdminNotification = onCall(
     }
 
     const usersSnap = await query.limit(500).get()
-    
+
     // Recolectar todos los tokens y detalles de receptores
     const allTokens = []
     const recipients = []
-    
+
     usersSnap.docs.forEach(doc => {
       const data = doc.data()
       const tokens = data.fcmTokens || []
@@ -620,8 +619,10 @@ function bodyText(title, paragraphs) {
 exports.sendWelcomeEmail = onUserCreated(
   { secrets: [RESEND_API_KEY] },
   async (event) => {
-    const user = event.data
-    if (!user.email) return
+    const userData = event.data.data()
+    const email = userData?.email
+    const displayName = userData?.name || userData?.displayName || "pana"
+    if (!email) return
 
     const { Resend } = require("resend")
     const resend = new Resend(RESEND_API_KEY.value())
