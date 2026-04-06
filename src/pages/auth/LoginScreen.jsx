@@ -173,6 +173,8 @@ export default function LoginScreen() {
             {/* Facebook */}
             <button
               type="button"
+              disabled
+              title="Próximamente disponible"
               onClick={handleFacebookSignIn}
               className="flex-1 flex items-center justify-center
                          gap-2 py-3 rounded-2xl font-bold
@@ -180,7 +182,7 @@ export default function LoginScreen() {
                          bg-[#EDEDF5]
                          shadow-[5px_5px_12px_rgba(180,180,210,0.7),
                          -5px_-5px_12px_rgba(255,255,255,0.9)]
-                         active:shadow-[inset_2px_2px_4px_rgba(180,180,210,0.6)]
+                         opacity-40 cursor-not-allowed
                          transition-all"
             >
               <svg width="18" height="18" viewBox="0 0 24 24"
