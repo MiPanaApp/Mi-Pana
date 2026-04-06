@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { getAdditionalUserInfo } from "firebase/auth";
+import { getAdditionalUserInfo, signInWithPopup } from "firebase/auth";
+import { auth, googleProvider, facebookProvider } from "../../services/firebase";
+
 import { useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, Rocket, ArrowRight, Loader2 } from "lucide-react";
 import { useAuthStore } from "../../store/useAuthStore";
@@ -35,7 +37,7 @@ export default function LoginScreen() {
     setLoading(true);
     setError(null);
     try {
-      const { result } = await loginWithGoogle();
+      const result = await signInWithPopup(auth, googleProvider);
       // Verificar si es un usuario nuevo
       if (result) {
         const additionalInfo = getAdditionalUserInfo(result);
@@ -62,6 +64,29 @@ export default function LoginScreen() {
       setLoading(false);
     }
   };
+
+  const handleFacebookSignIn = async () => {
+    try {
+      const result = await signInWithPopup(auth, facebookProvider)
+      const additionalInfo = getAdditionalUserInfo(result)
+      if (additionalInfo?.isNewUser) {
+        navigate("/register", {
+          state: { isGoogleUser: true, user: result.user }
+        })
+      } else {
+        navigate("/home")
+      }
+    } catch (error) {
+      if (error.code === 'auth/popup-closed-by-user') return
+      if (error.code === 
+          'auth/account-exists-with-different-credential') {
+        alert("Ya tienes cuenta con ese email. " +
+              "Usa Google o email/contraseña.")
+        return
+      }
+      alert("No se pudo iniciar sesión con Facebook.")
+    }
+  }
 
   const handleEmailLogin = async (e) => {
     e.preventDefault();
@@ -104,20 +129,75 @@ export default function LoginScreen() {
 
         <form onSubmit={handleEmailLogin} className="clay-card-auth w-full max-w-sm">
           {/* BOTÓN GOOGLE ARRIBA DEL TODO */}
-          <button 
-            type="button" 
-            onClick={handleGoogleSignIn} 
-            disabled={loading}
-            className="clay-btn-google w-full flex items-center justify-center gap-[10px] text-[13px] font-bold text-[#1A1A3A] mb-6 disabled:opacity-50"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path fillRule="evenodd" clipRule="evenodd" d="M23.52 12.2727C23.52 11.4218 23.4436 10.6036 23.3018 9.81816H12V14.4545H18.4582C18.18 15.9545 17.3345 17.2363 16.0527 18.0927V21.1036H19.9364C22.2055 19.0145 23.52 15.9272 23.52 12.2727Z" fill="#4285F4"/>
-              <path fillRule="evenodd" clipRule="evenodd" d="M12.0001 24.0001C15.2401 24.0001 17.9674 22.9256 19.9365 21.1037L16.0528 18.0928C14.9892 18.8074 13.6146 19.2274 12.0001 19.2274C8.87464 19.2274 6.22373 17.1165 5.27464 14.2801H1.26013V17.3946C3.23467 21.3165 7.28195 24.0001 12.0001 24.0001Z" fill="#34A853"/>
-              <path fillRule="evenodd" clipRule="evenodd" d="M5.27451 14.2799C5.03451 13.5599 4.89814 12.7908 4.89814 11.9999C4.89814 11.209 5.02906 10.4399 5.27451 9.71992V6.60535H1.26001C0.458195 8.20353 0 9.9981 0 11.9999C0 14.0017 0.458195 15.7963 1.26001 17.3945L5.27451 14.2799Z" fill="#FBBC05"/>
-              <path fillRule="evenodd" clipRule="evenodd" d="M12.0001 4.77273C13.7619 4.77273 15.3382 5.37818 16.5819 6.56727L20.0237 3.12545C17.9619 1.19455 15.2346 0 12.0001 0C7.28195 0 3.23467 2.68364 1.26013 6.60545L5.27464 9.72C6.22373 6.88364 8.87464 4.77273 12.0001 4.77273Z" fill="#EA4335"/>
-            </svg>
-            Continuar con Google
-          </button>
+          {/* Google + Facebook Social Buttons */}
+          <div className="flex gap-3 mb-5">
+
+            {/* Google */}
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              className="flex-1 flex items-center justify-center
+                         gap-2 py-3 rounded-2xl font-bold
+                         text-[13px] text-[#1A1A3A]
+                         bg-[#EDEDF5]
+                         shadow-[5px_5px_12px_rgba(180,180,210,0.7),
+                         -5px_-5px_12px_rgba(255,255,255,0.9)]
+                         active:shadow-[inset_2px_2px_4px_rgba(180,180,210,0.6)]
+                         transition-all"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24">
+                <path fillRule="evenodd" clipRule="evenodd"
+                  d="M23.52 12.27C23.52 11.42 23.44 10.6 23.3 
+                     9.82H12v4.45h6.46c-.28 1.4-1.04 2.53-2.21 
+                     3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.08z"
+                  fill="#4285F4"/>
+                <path fillRule="evenodd" clipRule="evenodd"
+                  d="M12 24c3.24 0 5.97-.98 7.96-2.66l-3.57-2.77c-1 
+                     .67-2.37 1.08-4.39 1.08-3.13 0-5.78-1.93-6.73 
+                     -4.53H1.26v2.84C3.23 21.53 7.28 24 12 24z"
+                  fill="#34A853"/>
+                <path fillRule="evenodd" clipRule="evenodd"
+                  d="M5.27 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43 
+                     .35-2.09V7.07H1.26C.46 8.55 0 10.22 0 12s.46 
+                     3.45 1.26 4.93l4.01-2.84z"
+                  fill="#FBBC05"/>
+                <path fillRule="evenodd" clipRule="evenodd"
+                  d="M12 4.77c1.76 0 3.34.56 4.58 1.64l3.15-3.15C17.95 
+                     2.09 15.24 1 12 1 7.28 1 3.23 3.47 1.26 7.07l4.01 
+                     2.84C6.22 7.31 8.87 4.77 12 4.77z"
+                  fill="#EA4335"/>
+              </svg>
+              Google
+            </button>
+
+            {/* Facebook */}
+            <button
+              type="button"
+              onClick={handleFacebookSignIn}
+              className="flex-1 flex items-center justify-center
+                         gap-2 py-3 rounded-2xl font-bold
+                         text-[13px] text-[#1A1A3A]
+                         bg-[#EDEDF5]
+                         shadow-[5px_5px_12px_rgba(180,180,210,0.7),
+                         -5px_-5px_12px_rgba(255,255,255,0.9)]
+                         active:shadow-[inset_2px_2px_4px_rgba(180,180,210,0.6)]
+                         transition-all"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24"
+                   fill="#1877F2">
+                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 
+                  5.373-12 12c0 5.99 4.388 10.954 10.125 
+                  11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 
+                  1.792-4.669 4.533-4.669 1.312 0 2.686.235 
+                  2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 
+                  1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 
+                  23.027 24 18.062 24 12.073z"/>
+              </svg>
+              Facebook
+            </button>
+
+          </div>
+
 
           {/* DIVIDER ENTRE GOOGLE Y CAMPOS */}
           <div className="flex items-center gap-3 mb-6 opacity-60">

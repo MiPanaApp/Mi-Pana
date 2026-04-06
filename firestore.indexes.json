@@ -76,6 +76,14 @@
         { "fieldPath": "category", "order": "ASCENDING" },
         { "fieldPath": "views", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "adminNotifications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "targetCountry", "order": "ASCENDING" },
+        { "fieldPath": "sentAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []
