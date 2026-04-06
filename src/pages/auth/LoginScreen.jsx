@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { getAdditionalUserInfo, signInWithPopup } from "firebase/auth";
 import { auth, googleProvider, facebookProvider } from "../../services/firebase";
+import { getFunctions, httpsCallable } from "firebase/functions";
+
 
 import { useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, Rocket, ArrowRight, Loader2 } from "lucide-react";
@@ -9,6 +11,9 @@ import { useStore } from "../../store/useStore";
 import { translateFirebaseError } from "../../utils/authErrors";
 import logoFull from "../../assets/Logo_Mi_pana.png";
 import "../../styles/auth.css";
+
+const functions = getFunctions();
+
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -115,6 +120,28 @@ export default function LoginScreen() {
     }
   };
 
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    const emailInput = email || prompt('Ingresa tu email, pana:');
+    if (!emailInput) return;
+
+    try {
+      setLoading(true);
+      const sendResetEmail = httpsCallable(functions, 'sendPasswordResetEmail');
+      await sendResetEmail({ email: emailInput });
+      alert('Te enviamos un email para recuperar tu contraseña. ¡Revisa tu bandeja, pana! 🤝');
+    } catch (e) {
+      console.error('Error reset pass:', e);
+      if (e.code === 'functions/not-found') {
+        alert('No encontramos una cuenta con ese email.');
+      } else {
+        alert('Error al enviar el email. Inténtalo de nuevo.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="auth-bg">
       <div className="absolute top-[-100px] left-[-50px] w-[300px] h-[300px] rounded-[60%_40%_70%_40%] bg-[#FFB400] opacity-20 blur-xl" />
@@ -200,7 +227,11 @@ export default function LoginScreen() {
               </div>
               <span className="text-[12px] font-bold text-[#8888AA]">Recuérdame</span>
             </label>
-            <a href="#" className="text-[12px] font-bold text-[#2D2D5E] underline opacity-70 hover:opacity-100 transition-opacity">
+            <a 
+              href="#" 
+              onClick={handleForgotPassword}
+              className="text-[12px] font-bold text-[#2D2D5E] underline opacity-70 hover:opacity-100 transition-opacity"
+            >
               ¿Olvidaste tu contraseña?
             </a>
           </div>

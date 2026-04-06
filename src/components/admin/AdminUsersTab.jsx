@@ -1,7 +1,12 @@
 import { useState, useEffect } from 'react';
 import { collection, onSnapshot, doc, updateDoc, deleteDoc, getDocs, query, where, writeBatch } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../../services/firebase';
+
 import { Users, Ban, Trash2, CheckCircle, Filter, Info, X, Phone, Mail, Globe, User, Shield, Calendar, Copy, AlertTriangle } from 'lucide-react';
+
+const functions = getFunctions();
+
 
 export default function AdminUsersTab({ searchQuery = '' }) {
   const [users, setUsers] = useState([]);
@@ -19,9 +24,25 @@ export default function AdminUsersTab({ searchQuery = '' }) {
   }, []);
 
   const handleUpdateStatus = async (id, status) => {
+    const user = users.find(u => u.id === id);
+    if (!user) return;
+
     try {
       if (confirm(`¿Estás seguro de marcar este usuario como ${status}?`)) {
         await updateDoc(doc(db, 'users', id), { status });
+
+        if (status === 'suspended') {
+          try {
+            const sendSuspendedEmail = httpsCallable(functions, 'sendAccountSuspendedEmail');
+            await sendSuspendedEmail({
+              email: user.email,
+              userName: user.name || 'Pana',
+              reason: 'Incumplimiento de las normas de la comunidad'
+            });
+          } catch (e) {
+            console.error('Error enviando email de suspensión:', e);
+          }
+        }
       }
     } catch (e) {
       console.error(e);
@@ -46,6 +67,9 @@ Esta acción borrará:
     );
     if (!confirmed) return;
 
+    const user = users.find(u => u.id === id);
+    const userEmail = user?.email;
+
     try {
       const batch = writeBatch(db);
 
@@ -61,6 +85,18 @@ Esta acción borrará:
       batch.delete(doc(db, 'users', id));
 
       await batch.commit();
+      
+      // Enviar email de eliminación
+      try {
+        const sendSuspendedEmail = httpsCallable(functions, 'sendAccountSuspendedEmail');
+        await sendSuspendedEmail({
+          email: userEmail || '',
+          userName: userName || 'Pana',
+          reason: 'Tu cuenta ha sido eliminada permanentemente por un administrador por incumplimiento de las normas.'
+        });
+      } catch (e) {
+        console.error('Error enviando email post-eliminación:', e);
+      }
       
       alert(`✅ Usuario eliminado correctamente.\n\n⚠️ Recuerda eliminar también la cuenta de autenticación desde:\nFirebase Console > Authentication > Users`);
       setSelectedUser(null);

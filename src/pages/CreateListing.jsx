@@ -8,6 +8,8 @@ import { useStore } from '../store/useStore';
 import { db, storage } from '../services/firebase';
 import { collection, addDoc, getDoc, getDocs, doc, serverTimestamp, query, orderBy, where, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+
 import { ChevronDown, Tag } from 'lucide-react';
 import { getCategoryIcon, getBrandColor, sortCategories } from '../data/categories';
 import { getIconComponent } from '../store/useCategoryStore';
@@ -31,6 +33,8 @@ const COUNTRY_CODES = [
   { code: '+1', iso: 'DO', name: 'Rep. Dom.' },
   { code: '+54', iso: 'AR', name: 'Argentina' },
 ];
+
+const functions = getFunctions();
 
 export default function CreateListing() {
   const navigate = useNavigate();
@@ -372,7 +376,21 @@ export default function CreateListing() {
           premium: false,
           verified: false,
         };
-        await addDoc(collection(db, 'products'), newProduct);
+        const newDocRef = await addDoc(collection(db, 'products'), newProduct);
+
+        // Enviar email de anuncio creado
+        try {
+          const sendProductEmail = httpsCallable(functions, 'sendProductCreatedEmail');
+          await sendProductEmail({
+            email: user?.email || '',
+            userName: user?.displayName || userData?.name || 'Pana',
+            productName: form.title,
+            productId: newDocRef.id,
+            productPrice: form.price
+          });
+        } catch (e) {
+          console.error('Error enviando email de anuncio:', e);
+        }
       }
 
       setSuccess(true);

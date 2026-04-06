@@ -21,7 +21,9 @@ import {
 } from "firebase/auth";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { doc, setDoc } from "firebase/firestore";
+import { getFunctions, httpsCallable } from "firebase/functions";
 import { translateFirebaseError } from "../../utils/authErrors";
+
 import { LOCATION_DATA } from "../../data/locations";
 import { useLocationStore } from "../../store/useLocationStore";
 import { useStore } from "../../store/useStore";
@@ -29,12 +31,19 @@ import AvatarCropper from "./AvatarCropper";
 
 import InfoModal from "../InfoModal";
 import { LegalData } from "../../data/LegalData";
+import EmailVerificationModal from "./EmailVerificationModal";
+
+const functions = getFunctions();
+
 
 export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
   const [showCropper, setShowCropper] = useState(false);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [infoModal, setInfoModal] = useState({ isOpen: false, title: "", content: "" });
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [registeredUser, setRegisteredUser] = useState(null);
   const fileInputRef = useRef(null);
+
   const navigate = useNavigate();
 
   const handleOpenLegal = (key) => {
@@ -197,11 +206,25 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
         avatar: avatarUrl,
         phone: user.phoneNumber || "",
         verificationLevel: 1,
-        createdAt: new Date(),
+        updatedAt: new Date(),
       }, { merge: true });
 
-      onClose();
-      navigate("/onboarding");
+      setRegisteredUser(user);
+      
+      // Enviar código de verificación
+      try {
+        const sendCode = httpsCallable(functions, 'sendVerificationCode');
+        await sendCode({
+          email: user.email,
+          userName: formData.name || 'Pana'
+        });
+        setShowVerificationModal(true);
+      } catch (e) {
+        console.error('Error enviando código:', e);
+        // Si falla el email, igual cerramos y vamos a onboarding para no bloquear
+        onClose();
+        navigate("/onboarding");
+      }
     } catch (err) {
       if (err.code) {
         setErrorMsg(translateFirebaseError(err.code));
@@ -525,6 +548,24 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
         onClose={() => setInfoModal({ ...infoModal, isOpen: false })} 
         title={infoModal.title} 
         content={infoModal.content} 
+      />
+
+      <EmailVerificationModal
+        isOpen={showVerificationModal}
+        email={registeredUser?.email}
+        onVerified={() => {
+          setShowVerificationModal(false);
+          onClose();
+          navigate("/onboarding");
+        }}
+        onResend={async () => {
+          if (!registeredUser) return;
+          const sendCode = httpsCallable(functions, 'sendVerificationCode');
+          await sendCode({
+            email: registeredUser.email,
+            userName: formData.name || 'Pana'
+          }).catch((err) => console.error('Resend error:', err));
+        }}
       />
     </>
   );

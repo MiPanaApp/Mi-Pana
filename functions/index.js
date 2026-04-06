@@ -2,7 +2,6 @@ const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { onRequest, onCall, HttpsError } = require("firebase-functions/v2/https");
 const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { defineSecret } = require("firebase-functions/params");
-
 const RESEND_API_KEY = defineSecret("RESEND_API_KEY");
 
 const { initializeApp } = require("firebase-admin/app");

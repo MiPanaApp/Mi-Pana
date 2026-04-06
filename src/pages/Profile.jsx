@@ -13,7 +13,9 @@ import { ref, getDownloadURL } from 'firebase/storage';
 import { doc, setDoc, collection, query, where, onSnapshot, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db, storage, auth } from '../services/firebase';
 import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { FcGoogle } from 'react-icons/fc';
+
 import { FaInstagram, FaFacebookF, FaYoutube, FaTiktok } from 'react-icons/fa';
 import { FaXTwitter } from 'react-icons/fa6';
 
@@ -23,6 +25,9 @@ import LegalDrawer from '../components/LegalDrawer';
 import { useLocationStore } from '../store/useLocationStore';
 import { getCountryNameFromCode, getCountryCodeFromName, LOCATION_DATA } from '../data/locations';
 import { usePushNotifications } from '../hooks/usePushNotifications';
+
+const functions = getFunctions();
+
 
 export default function Profile() {
   const { userData, currentUser, userAvatar, logout, isAdmin } = useAuth();
@@ -179,9 +184,24 @@ export default function Profile() {
   const inactiveProducts = myProducts.filter(p => p.status === 'inactive' || p.status === 'sold');
 
   const handleDeleteProduct = async (id) => {
-    if (window.confirm('¿Estás seguro de que quieres borrar este anuncio definitivamente?')) {
+    const product = myProducts.find(p => p.id === id);
+    if (!product) return;
+
+    if (window.confirm(`¿Estás seguro de que quieres borrar "${product.name || product.title}" definitivamente?`)) {
       try {
         await deleteDoc(doc(db, 'products', id));
+        
+        // Enviar email de eliminación
+        try {
+          const sendDeletedEmail = httpsCallable(functions, 'sendProductDeletedEmail');
+          await sendDeletedEmail({
+            email: currentUser?.email || storeUser?.email || '',
+            userName: userData?.name || currentUser?.displayName || 'Pana',
+            productName: product.name || product.title
+          });
+        } catch (e) {
+          console.error('Error enviando email de eliminación:', e);
+        }
       } catch (e) {
         console.error("Error al borrar el producto:", e);
         alert("No se pudo borrar el anuncio.");
