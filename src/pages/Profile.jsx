@@ -14,6 +14,9 @@ import { doc, setDoc, collection, query, where, onSnapshot, deleteDoc, updateDoc
 import { db, storage, auth } from '../services/firebase';
 import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { FcGoogle } from 'react-icons/fc';
+import { FaInstagram, FaFacebookF, FaYoutube, FaTiktok } from 'react-icons/fa';
+import { FaXTwitter } from 'react-icons/fa6';
+
 import { uploadString } from 'firebase/storage';
 import { LegalData } from '../data/LegalData';
 import LegalDrawer from '../components/LegalDrawer';
@@ -915,10 +918,22 @@ export default function Profile() {
 
         {/* Redes Sociales Footer - Solo visibles en Móvil */}
         <div className="md:hidden flex justify-center gap-4 mt-12 mb-8">
-          {[Twitter, Instagram, Facebook, Youtube, UserCircle2].map((Icon, i) => (
-            <button key={i} className="w-12 h-12 flex items-center justify-center rounded-full bg-[#E0E5EC] shadow-[5px_5px_10px_#b8b9be,-5px_-5px_10px_#ffffff] text-[#1A1A3A] active:shadow-[inset_3px_3px_6px_#b8b9be,inset_-3px_-3px_6px_#ffffff] transition-all">
-              <Icon size={20} />
-            </button>
+          {[
+            { icon: FaXTwitter, url: 'https://x.com/mi_pana_app' },
+            { icon: FaInstagram, url: 'https://www.instagram.com/mi_pana_app/' },
+            { icon: FaFacebookF, url: 'https://www.facebook.com/profile.php?id=61578713983690' },
+            { icon: FaYoutube, url: 'https://www.youtube.com/@MiPanaApp' },
+            { icon: FaTiktok, url: 'https://www.tiktok.com/@mi_pana_app' }
+          ].map((item, i) => (
+            <a 
+              key={i} 
+              href={item.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-12 h-12 flex items-center justify-center rounded-full bg-[#E0E5EC] shadow-[5px_5px_10px_#b8b9be,-5px_-5px_10px_#ffffff] text-[#1A1A3A] active:shadow-[inset_3px_3px_6px_#b8b9be,inset_-3px_-3px_6px_#ffffff] transition-all"
+            >
+              <item.icon size={20} />
+            </a>
           ))}
         </div>
 

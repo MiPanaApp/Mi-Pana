@@ -27,15 +27,22 @@ const Footer = ({ onContactClick }) => {
             </p>
             <div className="flex gap-4 pt-2">
               {[
-                { icon: FaXTwitter, label: 'x', color: 'hover:text-black' },
-                { icon: FaInstagram, label: 'Instagram', color: 'hover:text-pink-500' },
-                { icon: FaFacebookF, label: 'Facebook', color: 'hover:text-blue-600' },
-                { icon: FaYoutube, label: 'Youtube', color: 'hover:text-red-600' },
-                { icon: FaTiktok, label: 'tiktok', color: 'hover:text-black' }
+                { icon: FaXTwitter, label: 'x', color: 'hover:text-black', url: 'https://x.com/mi_pana_app' },
+                { icon: FaInstagram, label: 'Instagram', color: 'hover:text-pink-500', url: 'https://www.instagram.com/mi_pana_app/' },
+                { icon: FaFacebookF, label: 'Facebook', color: 'hover:text-blue-600', url: 'https://www.facebook.com/profile.php?id=61578713983690' },
+                { icon: FaYoutube, label: 'Youtube', color: 'hover:text-red-600', url: 'https://www.youtube.com/@MiPanaApp' },
+                { icon: FaTiktok, label: 'tiktok', color: 'hover:text-black', url: 'https://www.tiktok.com/@mi_pana_app' }
               ].map((item, i) => (
-                <button key={i} className={`transition-all duration-300 ${item.color}`} title={item.label}>
+                <a 
+                  key={i} 
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`transition-all duration-300 ${item.color}`} 
+                  title={item.label}
+                >
                   <IconPana icon={item.icon} size={20} className="w-12 h-12 bg-white shadow-clay-icon border-white/50" />
-                </button>
+                </a>
               ))}
             </div>
           </div>
