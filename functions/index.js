@@ -1,6 +1,10 @@
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { onRequest, onCall, HttpsError } = require("firebase-functions/v2/https");
 const { onDocumentCreated } = require("firebase-functions/v2/firestore");
+const { onUserCreated } = require("firebase-functions/v2/identity");
+const { defineSecret } = require("firebase-functions/params");
+
+const RESEND_API_KEY = defineSecret("RESEND_API_KEY");
 
 const { initializeApp } = require("firebase-admin/app");
 initializeApp();
@@ -538,5 +542,444 @@ exports.checkScheduledNotifications = onSchedule(
     }
 
     console.log('✅ checkScheduledNotifications completado')
+  }
+)
+
+// ════════════════════════════════════════════════
+// EMAIL HELPERS
+// ════════════════════════════════════════════════
+
+function emailTemplate({ title, preheader, content, ctaText, ctaUrl }) {
+  return `
+  <!DOCTYPE html>
+  <html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>${title}</title>
+  </head>
+  <body style="margin:0;padding:0;background:#E8E8F0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
+    <span style="display:none;max-height:0;overflow:hidden">${preheader}</span>
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#E8E8F0;padding:40px 16px">
+      <tr><td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px">
+          <tr>
+            <td style="background:#1A1A3A;border-radius:20px 20px 0 0;padding:36px 40px;text-align:center">
+              <img src="https://app-mi-pana.vercel.app/icons/logo-splash.png"
+                alt="Mi Pana" width="140"
+                style="display:block;margin:0 auto;max-width:140px"/>
+            </td>
+          </tr>
+          <tr>
+            <td style="background:#FFFFFF;padding:40px 40px 32px;border-left:1px solid #EBEBEB;border-right:1px solid #EBEBEB">
+              ${content}
+              ${ctaText && ctaUrl ? `
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:32px">
+                <tr><td align="center">
+                  <a href="${ctaUrl}"
+                    style="display:inline-block;background:#FFB400;color:#1A1A3A;font-weight:900;font-size:16px;padding:16px 40px;border-radius:14px;text-decoration:none;letter-spacing:0.3px">
+                    ${ctaText}
+                  </a>
+                </td></tr>
+              </table>` : ''}
+            </td>
+          </tr>
+          <tr>
+            <td style="background:#F5F5F8;border-radius:0 0 20px 20px;padding:24px 40px;text-align:center;border:1px solid #EBEBEB;border-top:none">
+              <p style="margin:0 0 8px;color:#1A1A3A;opacity:0.4;font-size:12px">
+                &copy; 2025 Mi Pana &middot; Juntos somos más 🤝
+              </p>
+              <p style="margin:0;font-size:12px">
+                <a href="https://app-mi-pana.vercel.app/privacidad" style="color:#1A1A3A;opacity:0.4;text-decoration:none">Privacidad</a>
+                &nbsp;&middot;&nbsp;
+                <a href="mailto:hola@app-mi-pana.vercel.app" style="color:#1A1A3A;opacity:0.4;text-decoration:none">Contacto</a>
+                &nbsp;&middot;&nbsp;
+                <a href="https://app-mi-pana.vercel.app" style="color:#1A1A3A;opacity:0.4;text-decoration:none">app-mi-pana.vercel.app</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+  </html>`
+}
+
+function bodyText(title, paragraphs) {
+  return `
+    <h1 style="margin:0 0 8px;color:#1A1A3A;font-size:26px;font-weight:900;text-align:center;line-height:1.3">${title}</h1>
+    <div style="width:48px;height:4px;background:#FFB400;border-radius:2px;margin:12px auto 28px"></div>
+    ${paragraphs.map(p => `<p style="margin:0 0 16px;color:#3A3A5A;font-size:15px;line-height:1.7;text-align:center">${p}</p>`).join('')}
+  `
+}
+
+// ════════════════════════════════════════════════
+// EMAIL 1 — Bienvenida (automático al crear usuario)
+// ════════════════════════════════════════════════
+
+exports.sendWelcomeEmail = onUserCreated(
+  { secrets: [RESEND_API_KEY] },
+  async (event) => {
+    const user = event.data
+    if (!user.email) return
+
+    const { Resend } = require("resend")
+    const resend = new Resend(RESEND_API_KEY.value())
+
+    const content = bodyText(
+      "¡Bienvenido a Mi Pana! 🎉",
+      [
+        `<strong>${user.displayName || "Pana"}</strong>, ya eres parte de la comunidad venezolana más grande en el exterior. ¡Nos alegra un montón tenerte con nosotros!`,
+        `Con Mi Pana puedes publicar y encontrar productos y servicios, chatear directamente con otros panas, y construir tu reputación en la comunidad con valoraciones reales.`,
+        `Tu cuenta está lista. ¡Empieza a explorar y a conectar con tu comunidad, pana!`
+      ]
+    )
+
+    await resend.emails.send({
+      from: "Mi Pana <hola@app-mi-pana.vercel.app>",
+      to: user.email,
+      subject: "¡Bienvenido a Mi Pana, pana! 🤝",
+      html: emailTemplate({
+        title: "Bienvenida",
+        preheader: "Ya eres parte de la comunidad venezolana más grande en el exterior",
+        content,
+        ctaText: "Explorar Mi Pana 🚀",
+        ctaUrl: "https://app-mi-pana.vercel.app/home"
+      })
+    })
+
+    console.log(`✅ Email bienvenida enviado: ${user.email}`)
+  }
+)
+
+// ════════════════════════════════════════════════
+// EMAIL 2 — Código de verificación 6 dígitos
+// ════════════════════════════════════════════════
+
+exports.sendVerificationCode = onCall(
+  { secrets: [RESEND_API_KEY] },
+  async (request) => {
+    if (!request.auth) throw new HttpsError("unauthenticated", "No autenticado")
+
+    const { email, userName } = request.data
+    if (!email) throw new HttpsError("invalid-argument", "Email requerido")
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString()
+
+    const { getFirestore } = require("firebase-admin/firestore")
+    const db = getFirestore()
+    await db.collection("verificationCodes").doc(request.auth.uid).set({
+      code,
+      email,
+      createdAt: new Date(),
+      expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+      verified: false
+    })
+
+    const { Resend } = require("resend")
+    const resend = new Resend(RESEND_API_KEY.value())
+
+    const content = bodyText(
+      "Verifica tu email 🔐",
+      [
+        `Hola <strong>${userName || "pana"}</strong>, usa este código para verificar tu cuenta en Mi Pana:`,
+        `<span style="display:inline-block;background:#1A1A3A;color:#FFB400;font-size:42px;font-weight:900;letter-spacing:10px;padding:20px 32px;border-radius:16px;margin:8px 0">${code}</span>`,
+        `<span style="font-size:13px;color:#999">⏱ Este código expira en 15 minutos.<br/>Si no solicitaste este código, ignora este correo.</span>`
+      ]
+    )
+
+    await resend.emails.send({
+      from: "Mi Pana <hola@app-mi-pana.vercel.app>",
+      to: email,
+      subject: `${code} — Tu código de verificación Mi Pana`,
+      html: emailTemplate({
+        title: "Verificación de email",
+        preheader: `Tu código de verificación es ${code}`,
+        content,
+        ctaText: null,
+        ctaUrl: null
+      })
+    })
+
+    console.log(`✅ Código ${code} enviado a: ${email}`)
+    return { success: true }
+  }
+)
+
+// ════════════════════════════════════════════════
+// EMAIL 3 — Verificar código ingresado
+// ════════════════════════════════════════════════
+
+exports.verifyEmailCode = onCall(
+  async (request) => {
+    if (!request.auth) throw new HttpsError("unauthenticated", "No autenticado")
+
+    const { code } = request.data
+    if (!code) throw new HttpsError("invalid-argument", "Código requerido")
+
+    const { getFirestore } = require("firebase-admin/firestore")
+    const db = getFirestore()
+    const docRef = db.collection("verificationCodes").doc(request.auth.uid)
+    const snap = await docRef.get()
+
+    if (!snap.exists) throw new HttpsError("not-found", "Código no encontrado. Solicita uno nuevo.")
+
+    const data = snap.data()
+
+    if (new Date() > data.expiresAt.toDate()) {
+      throw new HttpsError("deadline-exceeded", "El código ha expirado. Solicita uno nuevo.")
+    }
+
+    if (data.code !== code) {
+      throw new HttpsError("invalid-argument", "Código incorrecto. Inténtalo de nuevo.")
+    }
+
+    await docRef.update({ verified: true })
+    await db.collection("users").doc(request.auth.uid).set({ emailVerified: true }, { merge: true })
+
+    return { success: true, message: "¡Email verificado correctamente!" }
+  }
+)
+
+// ════════════════════════════════════════════════
+// EMAIL 4 — Recuperación de contraseña
+// ════════════════════════════════════════════════
+
+exports.sendPasswordResetEmail = onCall(
+  { secrets: [RESEND_API_KEY] },
+  async (request) => {
+    const { email } = request.data
+    if (!email) throw new HttpsError("invalid-argument", "Email requerido")
+
+    const { getAuth } = require("firebase-admin/auth")
+    const resetLink = await getAuth().generatePasswordResetLink(email)
+
+    const { Resend } = require("resend")
+    const resend = new Resend(RESEND_API_KEY.value())
+
+    const content = bodyText(
+      "Recupera tu contraseña 🔑",
+      [
+        `Recibimos una solicitud para restablecer la contraseña de tu cuenta en Mi Pana.`,
+        `Si fuiste tú, haz clic en el botón de abajo para crear una nueva contraseña. Este enlace es válido por <strong>24 horas</strong>.`,
+        `<span style="font-size:13px;color:#999">Si no solicitaste este cambio, ignora este correo. Tu contraseña actual seguirá siendo la misma.</span>`
+      ]
+    )
+
+    await resend.emails.send({
+      from: "Mi Pana <hola@app-mi-pana.vercel.app>",
+      to: email,
+      subject: "Restablece tu contraseña en Mi Pana 🔑",
+      html: emailTemplate({
+        title: "Recuperar contraseña",
+        preheader: "Solicitud de restablecimiento de contraseña",
+        content,
+        ctaText: "Restablecer contraseña 🔑",
+        ctaUrl: resetLink
+      })
+    })
+
+    return { success: true }
+  }
+)
+
+// ════════════════════════════════════════════════
+// EMAIL 5 — Anuncio creado con éxito
+// ════════════════════════════════════════════════
+
+exports.sendProductCreatedEmail = onCall(
+  { secrets: [RESEND_API_KEY] },
+  async (request) => {
+    if (!request.auth) throw new HttpsError("unauthenticated", "No autenticado")
+
+    const { email, userName, productName, productId, productPrice } = request.data
+
+    const { Resend } = require("resend")
+    const resend = new Resend(RESEND_API_KEY.value())
+
+    const content = bodyText(
+      "¡Tu anuncio está activo, pana! 🎉",
+      [
+        `<strong>${userName || "Pana"}</strong>, tu anuncio ha sido publicado exitosamente en Mi Pana y ya está visible para toda la comunidad.`,
+        `<span style="display:inline-block;background:#F5F5F8;border-radius:10px;padding:12px 24px;margin:8px 0;font-weight:700;color:#1A1A3A;font-size:17px">📦 ${productName} &nbsp;·&nbsp; 💰 ${productPrice}€</span>`,
+        `Recuerda responder rápido los mensajes. ¡Los panas que responden rápido consiguen más clientes!`
+      ]
+    )
+
+    await resend.emails.send({
+      from: "Mi Pana <hola@app-mi-pana.vercel.app>",
+      to: email,
+      subject: `✅ Tu anuncio "${productName}" ya está activo`,
+      html: emailTemplate({
+        title: "Anuncio publicado",
+        preheader: `Tu anuncio ${productName} ya está visible en Mi Pana`,
+        content,
+        ctaText: "Ver mi anuncio 👀",
+        ctaUrl: `https://app-mi-pana.vercel.app/perfil-producto?id=${productId}`
+      })
+    })
+
+    return { success: true }
+  }
+)
+
+// ════════════════════════════════════════════════
+// EMAIL 6 — Mensajes sin leer (schedule c/4h)
+// ════════════════════════════════════════════════
+
+exports.sendUnreadMessagesEmail = onSchedule(
+  { schedule: "every 4 hours", region: "us-central1", secrets: [RESEND_API_KEY] },
+  async () => {
+    const { getFirestore } = require("firebase-admin/firestore")
+    const db = getFirestore()
+    const { Resend } = require("resend")
+    const resend = new Resend(RESEND_API_KEY.value())
+
+    const twoHoursAgo = new Date(Date.now() - 2 * 3600000)
+
+    const convsSnap = await db.collection("conversations")
+      .where("hasUnread", "==", true)
+      .where("lastMessageAt", "<=", twoHoursAgo)
+      .limit(100).get()
+
+    if (convsSnap.empty) return
+
+    for (const convDoc of convsSnap.docs) {
+      const conv = convDoc.data()
+
+      const lastEmailSent = conv.lastUnreadEmailSentAt
+      if (lastEmailSent) {
+        const hoursSince = (Date.now() - lastEmailSent.toDate().getTime()) / 3600000
+        if (hoursSince < 24) continue
+      }
+
+      const recipientId = conv.unreadFor
+      if (!recipientId) continue
+
+      const userSnap = await db.collection("users").doc(recipientId).get()
+      if (!userSnap.exists) continue
+
+      const user = userSnap.data()
+      if (!user.email) continue
+
+      const content = bodyText(
+        "Tienes mensajes sin leer 💬",
+        [
+          `¡Ey, <strong>${user.name || "pana"}</strong>! Tienes mensajes nuevos esperándote en Mi Pana.`,
+          `<span style="display:inline-block;background:#F5F5F8;border-radius:10px;padding:12px 24px;font-weight:700;color:#1A1A3A">🔔 ${conv.unreadCount || "Varios"} mensaje(s) sin leer sobre:<br/><span style="color:#FFB400">${conv.productName || "un anuncio"}</span></span>`,
+          `No dejes esperando a tu pana, ¡una respuesta rápida hace la diferencia!`
+        ]
+      )
+
+      await resend.emails.send({
+        from: "Mi Pana <hola@app-mi-pana.vercel.app>",
+        to: user.email,
+        subject: `💬 Tienes mensajes sin leer en Mi Pana`,
+        html: emailTemplate({
+          title: "Mensajes sin leer",
+          preheader: "Tienes mensajes nuevos en Mi Pana",
+          content,
+          ctaText: "Leer mensajes 💬",
+          ctaUrl: "https://app-mi-pana.vercel.app/mensajes"
+        })
+      })
+
+      await convDoc.ref.update({ lastUnreadEmailSentAt: new Date() })
+    }
+
+    console.log("✅ Emails mensajes sin leer procesados")
+  }
+)
+
+// ════════════════════════════════════════════════
+// EMAIL 7 — Suspensión/Eliminación de cuenta
+// ════════════════════════════════════════════════
+
+exports.sendAccountSuspendedEmail = onCall(
+  { secrets: [RESEND_API_KEY] },
+  async (request) => {
+    if (!request.auth) throw new HttpsError("unauthenticated", "No autenticado")
+
+    const { getFirestore } = require("firebase-admin/firestore")
+    const db = getFirestore()
+    const callerSnap = await db.collection("users").doc(request.auth.uid).get()
+    if (callerSnap.data()?.role !== "admin") {
+      throw new HttpsError("permission-denied", "Solo admins")
+    }
+
+    const { email, userName, reason, isPermanent } = request.data
+
+    const { Resend } = require("resend")
+    const resend = new Resend(RESEND_API_KEY.value())
+
+    const tipoSuspension = isPermanent ? "eliminada permanentemente" : "suspendida temporalmente"
+
+    const content = bodyText(
+      isPermanent ? "Tu cuenta ha sido eliminada" : "Tu cuenta ha sido suspendida ⚠️",
+      [
+        `Hola <strong>${userName || "pana"}</strong>, te informamos que tu cuenta en Mi Pana ha sido <strong>${tipoSuspension}</strong> por nuestro equipo de moderación.`,
+        `<span style="display:inline-block;background:#FFF0F0;border-radius:10px;padding:12px 24px;font-weight:600;color:#D90429;font-size:14px;border-left:4px solid #D90429">📋 Motivo: ${reason || "Violación de las normas de la comunidad"}</span>`,
+        isPermanent
+          ? `Esta decisión es definitiva. Si consideras que es un error, puedes contactarnos respondiendo este correo.`
+          : `Si crees que es un error, responde este correo y nuestro equipo lo revisará. Recuerda siempre respetar las normas de nuestra comunidad, pana.`
+      ]
+    )
+
+    await resend.emails.send({
+      from: "Mi Pana <hola@app-mi-pana.vercel.app>",
+      to: email,
+      subject: isPermanent
+        ? "Tu cuenta en Mi Pana ha sido eliminada"
+        : "⚠️ Tu cuenta en Mi Pana ha sido suspendida",
+      html: emailTemplate({
+        title: isPermanent ? "Cuenta eliminada" : "Cuenta suspendida",
+        preheader: `Tu cuenta ha sido ${tipoSuspension}`,
+        content,
+        ctaText: isPermanent ? null : "Contactar soporte",
+        ctaUrl: isPermanent ? null : "mailto:hola@app-mi-pana.vercel.app"
+      })
+    })
+
+    return { success: true }
+  }
+)
+
+// ════════════════════════════════════════════════
+// EMAIL 8 — Eliminación de anuncio confirmada
+// ════════════════════════════════════════════════
+
+exports.sendProductDeletedEmail = onCall(
+  { secrets: [RESEND_API_KEY] },
+  async (request) => {
+    if (!request.auth) throw new HttpsError("unauthenticated", "No autenticado")
+
+    const { email, userName, productName } = request.data
+
+    const { Resend } = require("resend")
+    const resend = new Resend(RESEND_API_KEY.value())
+
+    const content = bodyText(
+      "Anuncio eliminado correctamente 🗑️",
+      [
+        `Hola <strong>${userName || "pana"}</strong>, te confirmamos que tu anuncio ha sido eliminado exitosamente de Mi Pana.`,
+        `<span style="display:inline-block;background:#F5F5F8;border-radius:10px;padding:12px 24px;font-weight:700;color:#1A1A3A;font-size:16px">📦 ${productName}</span>`,
+        `Ya no será visible para otros usuarios. Si fue un error, puedes publicarlo nuevamente cuando quieras. ¡Tu espacio en Mi Pana siempre estará disponible, pana!`
+      ]
+    )
+
+    await resend.emails.send({
+      from: "Mi Pana <hola@app-mi-pana.vercel.app>",
+      to: email,
+      subject: `🗑️ Tu anuncio "${productName}" fue eliminado`,
+      html: emailTemplate({
+        title: "Anuncio eliminado",
+        preheader: `Confirmación: ${productName} eliminado de Mi Pana`,
+        content,
+        ctaText: "Publicar nuevo anuncio ✍️",
+        ctaUrl: "https://app-mi-pana.vercel.app/crear-anuncio"
+      })
+    })
+
+    return { success: true }
   }
 )
