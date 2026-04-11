@@ -262,15 +262,39 @@ export default function Verification() {
           <div className="animate-in fade-in slide-in-from-right-4 duration-500">
             <h2 className="text-2xl font-black text-[#1A1A3A] mb-6">Sube tu documento</h2>
             
-            <div className="mb-6">
-              <label className="block text-sm font-bold text-gray-700 mb-2">Tipo de documento</label>
-              <select value={documentType} onChange={(e) => setDocumentType(e.target.value)} className="w-full bg-white border border-gray-200 rounded-2xl px-4 py-3.5 text-sm font-bold outline-none focus:border-blue-500 shadow-sm appearance-none cursor-pointer">
-                <option value="dni">DNI (España)</option>
-                <option value="passport">Pasaporte</option>
-                <option value="cedula">Cédula Venezolana</option>
-                <option value="nie">NIE (España)</option>
-                <option value="foreign">Documento Extranjero</option>
-              </select>
+            <div className="mb-8">
+              <label className="block text-sm font-bold text-gray-700 mb-4 px-1">Selecciona el tipo de documento</label>
+              <div className="grid grid-cols-1 gap-3">
+                {[
+                  { id: 'dni', label: 'DNI (España)', icon: '🇪🇸' },
+                  { id: 'passport', label: 'Pasaporte', icon: '🛂' },
+                  { id: 'cedula', label: 'Cédula Venezolana', icon: '🇻🇪' },
+                  { id: 'nie', label: 'NIE (España)', icon: '🆔' },
+                  { id: 'foreign', label: 'Doc. Extranjero', icon: '🌍' }
+                ].map((opt) => (
+                  <button
+                    key={opt.id}
+                    onClick={() => setDocumentType(opt.id)}
+                    className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all duration-200 ${
+                      documentType === opt.id 
+                        ? 'border-[#1A1A3A] bg-[#1A1A3A]/5 shadow-md scale-[1.02]' 
+                        : 'border-gray-100 bg-white hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{opt.icon}</span>
+                      <span className={`font-black text-sm ${documentType === opt.id ? 'text-[#1A1A3A]' : 'text-gray-600'}`}>
+                        {opt.label}
+                      </span>
+                    </div>
+                    {documentType === opt.id && (
+                      <div className="w-6 h-6 bg-[#1A1A3A] rounded-full flex items-center justify-center animate-in zoom-in duration-300">
+                        <ShieldCheck size={14} className="text-[#FFB400]" />
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div 
