@@ -630,9 +630,9 @@ export default function Profile() {
           </h1>
           
           {userData?.verificationStatus === 'approved' ? (
-            <div className="flex items-center gap-1.5 bg-[#00C97A]/10 px-4 py-1.5 rounded-full mb-6 border border-[#00C97A]/20 cursor-help" title="Identidad confirmada">
-              <ShieldCheck size={14} className="text-[#00C97A]" />
-              <span className="text-[10px] font-black uppercase text-[#00C97A] tracking-wider">
+            <div className="flex items-center gap-[6px] bg-[#22a06b] px-[12px] py-[5px] rounded-full mb-6 max-w-fit cursor-help" title="Identidad confirmada">
+              <ShieldCheck size={13} color="#ffffff" />
+              <span className="text-[11px] font-medium uppercase text-white tracking-[0.8px]">
                 Pana Verificado
               </span>
             </div>
