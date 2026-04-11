@@ -209,7 +209,7 @@ export default function Verification() {
 
   return (
     <div className="min-h-screen bg-[#F8F9FB] pb-32">
-      <div className="bg-white px-4 py-4 flex items-center justify-between sticky top-0 z-50 border-b border-gray-100 shadow-sm">
+      <div className="bg-white px-4 pt-12 pb-4 flex items-center justify-between sticky top-0 z-50 border-b border-gray-100 shadow-sm">
         <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-gray-800 active:scale-95 transition-transform rounded-full hover:bg-gray-50">
           <ArrowLeft size={24} strokeWidth={2.5} />
         </button>
