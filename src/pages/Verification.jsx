@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useAuthStore } from '../store/useAuthStore';
 import { db, storage } from '../services/firebase';
 import { doc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -8,6 +9,9 @@ import { Camera, ShieldCheck, ArrowLeft, HourglassIcon } from 'lucide-react';
 
 export default function Verification() {
   const { user: authUser } = useAuth();
+  const storeUser = useAuthStore((s) => s.user); // Fuente de verdad del UID real
+  // Usamos el uid del store como fuente primaria (igual que Profile.jsx)
+  const uid = storeUser?.uid || authUser?.uid;
   const navigate = useNavigate();
 
   const [currentStep, setCurrentStep] = useState(0);
@@ -137,7 +141,11 @@ export default function Verification() {
   };
 
   const handleSubmit = async () => {
-    if (!authUser || !authUser.uid) return;
+    console.log('[Verification] handleSubmit — uid:', uid, 'selfie:', selfieCapture, 'doc:', documentFront);
+    if (!uid) {
+      alert('Error de autenticación. Por favor recarga la página e inténtalo de nuevo.');
+      return;
+    }
     if (!selfieCapture) {
       alert('La selfie no fue capturada correctamente. Toca "Repetir" e inténtalo de nuevo.');
       return;
@@ -148,11 +156,11 @@ export default function Verification() {
     }
     setUploading(true);
     try {
-      const uid = authUser.uid;
+      // Usar el uid ya definido arriba
+      console.log('[Verification] Iniciando subida para UID:', uid);
 
-      // Comprimir imágenes antes de subir para ahorrar costos y tiempo
-      const compressedDocument = await compressImage(documentFront, 800, 0.75); // ~200KB
-      const compressedSelfie = await compressImage(selfieCapture, 600, 0.70); // ~150KB
+      const compressedDocument = await compressImage(documentFront, 800, 0.75);
+      const compressedSelfie = await compressImage(selfieCapture, 600, 0.70);
 
       // Subir documento
       const docRef = ref(storage, `verifications/${uid}/document_front.jpg`);
