@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, Rocket, ArrowRight, Loader2 } from "lucide-react";
 import { useAuthStore } from "../../store/useAuthStore";
 import { useStore } from "../../store/useStore";
+import { useDialogStore } from "../../store/useDialogStore";
 import { translateFirebaseError } from "../../utils/authErrors";
 import logoFull from "../../assets/Logo_Mi_pana.png";
 import "../../styles/auth.css";
@@ -28,6 +29,7 @@ export default function LoginScreen() {
   const login = useAuthStore((s) => s.login);
   const loginWithGoogle = useAuthStore((s) => s.loginWithGoogle);
   const { hasChosenCountry } = useStore();
+  const { showAlert, showPrompt } = useDialogStore();
 
   // Cargar email recordado al montar
   useEffect(() => {
@@ -85,11 +87,10 @@ export default function LoginScreen() {
       if (error.code === 'auth/popup-closed-by-user') return
       if (error.code === 
           'auth/account-exists-with-different-credential') {
-        alert("Ya tienes cuenta con ese email. " +
-              "Usa Google o email/contraseña.")
+        showAlert("Ya tienes cuenta con ese email. Usa Google o email/contraseña.", "Email ya registrado");
         return
       }
-      alert("No se pudo iniciar sesión con Facebook.")
+      showAlert("No se pudo iniciar sesión con Facebook.", "Error");
     }
   }
 
@@ -122,20 +123,25 @@ export default function LoginScreen() {
 
   const handleForgotPassword = async (e) => {
     e.preventDefault();
-    const emailInput = email || prompt('Ingresa tu email, pana:');
+    let emailInput = email;
+
+    if (!emailInput) {
+      emailInput = await showPrompt("Ingresa tu email, pana:", "Recuperar contraseña");
+    }
+
     if (!emailInput) return;
 
     try {
       setLoading(true);
       const sendResetEmail = httpsCallable(functions, 'sendPasswordResetEmail');
       await sendResetEmail({ email: emailInput });
-      alert('Te enviamos un email para recuperar tu contraseña. ¡Revisa tu bandeja, pana! 🤝');
+      await showAlert("Te enviamos un email para recuperar tu contraseña. ¡Revisa tu bandeja, pana! 🤝", "¡Email enviado!");
     } catch (e) {
       console.error('Error reset pass:', e);
       if (e.code === 'functions/not-found') {
-        alert('No encontramos una cuenta con ese email.');
+        showAlert("No encontramos una cuenta con ese email.", "Error");
       } else {
-        alert('Error al enviar el email. Inténtalo de nuevo.');
+        showAlert("Error al enviar el email. Inténtalo de nuevo.", "Error");
       }
     } finally {
       setLoading(false);

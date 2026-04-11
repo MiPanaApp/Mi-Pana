@@ -30,6 +30,8 @@ import CreateListing from './pages/CreateListing';
 import Messages from './pages/Messages';
 import Profile from './pages/Profile';
 
+import CustomDialog from './components/ui/CustomDialog';
+
 function App() {
   const { init, user } = useAuthStore();
   const { showModal, closeModal } = useNotificationPrompt(user);
@@ -90,6 +92,7 @@ function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <NotificationPermissionModal isOpen={showModal} onClose={closeModal} />
+      <CustomDialog />
     </Router>
   );
 }
