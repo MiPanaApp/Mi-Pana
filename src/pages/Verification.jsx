@@ -5,8 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import { useAuthStore } from '../store/useAuthStore';
 import { db, storage } from '../services/firebase';
 import { doc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { Camera, ShieldCheck, ArrowLeft, HourglassIcon, CheckCircle2, ChevronDown } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Camera, ShieldCheck, ArrowLeft, HourglassIcon, CheckCircle2, ChevronDown, Search, MessageCircle, Lock } from 'lucide-react';
 
 export default function Verification() {
   const { user: authUser, userData } = useAuth();
@@ -240,25 +240,43 @@ export default function Verification() {
         {currentStep === 0 && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <h2 className="text-2xl font-black text-[#1A1A3A] mb-2">Conviértete en Pana Verificado <ShieldCheck className="inline text-[#00C97A]" /></h2>
-            <p className="text-[#1A1A3A]/60 font-bold mb-8">La comunidad confía más en panas verificados</p>
+            <p className="text-[#1A1A3A]/60 font-bold mb-8">La verificación te da credibilidad y aumenta tus posibilidades de cerrar tratos.</p>
             
-            <div className="space-y-4 mb-8">
-              <div className="bg-white p-4 rounded-2xl border border-gray-100 flex gap-4 items-center shadow-sm">
-                <div className="w-10 h-10 bg-[#00C97A]/10 rounded-full flex items-center justify-center text-[#00C97A] shrink-0"><ShieldCheck size={20} /></div>
-                <p className="text-sm font-bold text-gray-700">Badge "Pana Verificado" en tu perfil y anuncios</p>
+            <div className="space-y-2 mb-8">
+              <div className="bg-white p-5 rounded-2xl border border-gray-100 flex gap-4 items-center shadow-sm">
+                <div className="w-12 h-12 bg-white rounded-[10px] shadow-[0_2px_10px_rgba(0,0,0,0.06)] border border-gray-50 flex items-center justify-center shrink-0">
+                  <ShieldCheck size={24} color="#22a06b" />
+                </div>
+                <div>
+                  <p className="text-sm font-black text-gray-800 mb-0.5">Badge en tu perfil y anuncios</p>
+                  <p className="text-xs font-semibold text-gray-500 leading-tight">El sello visible genera confianza inmediata en compradores y vendedores.</p>
+                </div>
               </div>
-              <div className="bg-white p-4 rounded-2xl border border-gray-100 flex gap-4 items-center shadow-sm">
-                <div className="w-10 h-10 bg-[#FFB400]/10 rounded-full flex items-center justify-center text-[#FFB400] shrink-0"><span className="font-black text-lg">📈</span></div>
-                <p className="text-sm font-bold text-gray-700">Tus anuncios aparecen primero en búsquedas</p>
+
+              <div className="bg-white p-5 rounded-2xl border border-gray-100 flex gap-4 items-center shadow-sm">
+                <div className="w-12 h-12 bg-white rounded-[10px] shadow-[0_2px_10px_rgba(0,0,0,0.06)] border border-gray-50 flex items-center justify-center shrink-0">
+                  <Search size={24} color="#2563eb" />
+                </div>
+                <div>
+                  <p className="text-sm font-black text-gray-800 mb-0.5">Mayor visibilidad en búsquedas</p>
+                  <p className="text-xs font-semibold text-gray-500 leading-tight">Tus anuncios destacan frente a perfiles sin verificar.</p>
+                </div>
               </div>
-              <div className="bg-white p-4 rounded-2xl border border-gray-100 flex gap-4 items-center shadow-sm">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-500 shrink-0"><span className="font-black text-lg">💬</span></div>
-                <p className="text-sm font-bold text-gray-700">Más mensajes y contactos de otros panas</p>
+
+              <div className="bg-white p-5 rounded-2xl border border-gray-100 flex gap-4 items-center shadow-sm">
+                <div className="w-12 h-12 bg-white rounded-[10px] shadow-[0_2px_10px_rgba(0,0,0,0.06)] border border-gray-50 flex items-center justify-center shrink-0">
+                  <MessageCircle size={24} color="#7c3aed" />
+                </div>
+                <div>
+                  <p className="text-sm font-black text-gray-800 mb-0.5">Más contactos de otros panas</p>
+                  <p className="text-xs font-semibold text-gray-500 leading-tight">Los usuarios verificados reciben más mensajes e interacciones.</p>
+                </div>
               </div>
             </div>
 
-            <div className="bg-[#FFF8E7] border border-[#FFB400]/30 rounded-2xl p-4 text-[13px] text-[#1A1A3A]/70 mb-8 font-medium">
-              🔒 Tus documentos se almacenan de forma segura y encriptada. Solo son accesibles por el equipo de verificación de Mi Pana y nunca se comparten con terceros. Al verificarte aceptas que Mi Pana puede contactarte en caso de disputas.
+            <div className="bg-[#FFF8E7] border border-[#FFB400]/30 rounded-2xl p-4 text-[13px] text-[#1A1A3A]/70 mb-8 font-medium flex gap-3 items-start">
+              <Lock size={16} className="text-[#FFB400] shrink-0 mt-0.5" />
+              <p>Tus documentos se almacenan de forma segura y encriptada. Solo los accede el equipo de verificación de Mi Pana y nunca se comparten con terceros.</p>
             </div>
 
             <button onClick={() => setCurrentStep(1)} className="w-full bg-[#1A1A3A] text-white font-black py-4 rounded-2xl shadow-xl hover:-translate-y-0.5 active:scale-95 transition-all">
