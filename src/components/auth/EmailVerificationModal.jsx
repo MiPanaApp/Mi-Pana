@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getFunctions, httpsCallable } from 'firebase/functions'
 
@@ -8,6 +8,38 @@ export default function EmailVerificationModal({
   const [code, setCode] = useState(['', '', '', '', '', ''])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [timeLeft, setTimeLeft] = useState(600)
+  const [toast, setToast] = useState('')
+
+  useEffect(() => {
+    if (!isOpen) return
+    if (timeLeft <= 0) return
+    
+    const timerId = setInterval(() => {
+      setTimeLeft(prev => prev - 1)
+    }, 1000)
+    
+    return () => clearInterval(timerId)
+  }, [isOpen, timeLeft])
+
+  const formatTime = (seconds) => {
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0')
+    const s = (seconds % 60).toString().padStart(2, '0')
+    return `${m}:${s}`
+  }
+
+  const handleResendClick = async () => {
+    try {
+      await onResend()
+      setTimeLeft(600)
+      setCode(['', '', '', '', '', ''])
+      setError('')
+      setToast('Nuevo código enviado a tu correo')
+      setTimeout(() => setToast(''), 3000)
+    } catch (e) {
+      console.error(e)
+    }
+  }
 
   const handleInput = (value, index) => {
     const newCode = [...code]
@@ -88,8 +120,15 @@ export default function EmailVerificationModal({
               </p>
             </div>
 
+            {/* Toast */}
+            {toast && (
+              <div className="fixed top-[20%] left-1/2 -translate-x-1/2 bg-[#1A1A3A] text-white text-[13px] font-bold px-4 py-2 rounded-xl shadow-lg z-[10000] whitespace-nowrap animate-[fadeIn_0.3s_ease-out]">
+                {toast}
+              </div>
+            )}
+
             {/* Code Inputs */}
-            <div className="flex gap-2 justify-center mb-6" onPaste={handlePaste}>
+            <div className="flex gap-2 justify-center mb-4" onPaste={handlePaste}>
               {code.map((digit, i) => (
                 <input
                   key={i}
@@ -98,14 +137,27 @@ export default function EmailVerificationModal({
                   inputMode="numeric"
                   maxLength={1}
                   value={digit}
+                  disabled={timeLeft === 0 || loading}
                   onChange={(e) => handleInput(e.target.value, i)}
                   onKeyDown={(e) => handleKeyDown(e, i)}
                   className="w-12 h-14 text-center text-[24px] font-black text-[#1A1A3A]
                              bg-[#E0E5EC] rounded-2xl border-2 border-transparent
-                             focus:border-[#FFB400] focus:outline-none transition-all
+                             focus:border-[#FFB400] focus:outline-none transition-all disabled:opacity-50
                              shadow-[inset_3px_3px_6px_rgba(180,180,210,0.5),inset_-3px_-3px_6px_rgba(255,255,255,0.9)]"
                 />
               ))}
+            </div>
+
+            {/* Timer Output */}
+            <div className="text-center mb-6">
+              <span className={`text-[18px] font-black ${timeLeft > 0 ? 'text-[#1A1A3A]' : 'text-[#D90429]'}`}>
+                {formatTime(timeLeft)}
+              </span>
+              {timeLeft === 0 && (
+                <p className="text-[#D90429] text-[13px] font-bold mt-1">
+                  El código ha expirado. Solicita uno nuevo.
+                </p>
+              )}
             </div>
 
             {/* Error */}
@@ -118,7 +170,7 @@ export default function EmailVerificationModal({
             {/* Verify Button */}
             <button
               onClick={handleVerify}
-              disabled={loading || code.join('').length !== 6}
+              disabled={loading || code.join('').length !== 6 || timeLeft === 0}
               className="w-full py-4 rounded-2xl bg-[#1A1A3A] text-white font-black text-[16px]
                          disabled:opacity-40 active:scale-95 transition-all mb-3
                          shadow-[0_8px_20px_rgba(26,26,58,0.3)]"
@@ -128,7 +180,7 @@ export default function EmailVerificationModal({
 
             {/* Resend */}
             <button
-              onClick={onResend}
+              onClick={handleResendClick}
               className="w-full py-3 text-[14px] font-bold text-[#1A1A3A]/40 hover:text-[#1A1A3A]/70 transition-colors"
             >
               ¿No llegó? Reenviar código

@@ -9,8 +9,8 @@ const { getFirestore } = require("firebase-admin/firestore");
 const { getMessaging } = require("firebase-admin/messaging");
 
 if (getApps().length === 0) initializeApp();
-const db = getFirestore();
-const { emailTemplate, lucideIcon, bodyText } = require("./emailTemplates");
+const getDb = () => getFirestore();
+const getTemplates = () => require("./emailTemplates");
 
 // --- 1. FUNCIÓN DE CONTACTO ---
 exports.sendContactEmail = onRequest({
@@ -29,7 +29,7 @@ exports.sendContactEmail = onRequest({
 
   try {
     const result = await resend.emails.send({
-      from: "Mi Pana <onboarding@resend.dev>",
+      from: "Mi Pana <hola@mipana.net>",
       to: "radarcriollo@gmail.com",
       reply_to: email,
       subject: `[Mi Pana App] Nuevo mensaje de: ${fullName}`,
@@ -61,9 +61,8 @@ exports.updateBadges = onSchedule(
     const { getFirestore } = require("firebase-admin/firestore");
 
     if (getApps().length === 0) initializeApp();
-    const db = getFirestore();
 
-    const productsSnap = await db.collection("products").get();
+    const productsSnap = await getDb().collection("products").get();
     if (productsSnap.empty) return;
 
     const byCategory = {};
@@ -74,12 +73,12 @@ exports.updateBadges = onSchedule(
       byCategory[cat].push({ id: doc.id, rating: data.rating || 0, searchCount: data.searchCount || 0 });
     });
 
-    const batch = db.batch();
+    const batch = getDb().batch();
     Object.values(byCategory).forEach(products => {
       const topRated = [...products].sort((a, b) => b.rating - a.rating).slice(0, 20).map(p => p.id);
       const topSearched = [...products].sort((a, b) => b.searchCount - a.searchCount).slice(0, 20).map(p => p.id);
       products.forEach(p => {
-        const ref = db.collection("products").doc(p.id);
+        const ref = getDb().collection("products").doc(p.id);
         batch.update(ref, { isTop: topRated.includes(p.id), isPopular: topSearched.includes(p.id) });
       });
     });
@@ -97,24 +96,23 @@ exports.checkPendingReviews = onSchedule(
     const { getFirestore } = require("firebase-admin/firestore");
 
     if (getApps().length === 0) initializeApp();
-    const db = getFirestore();
 
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-    const snap = await db.collection("interactions")
+    const snap = await getDb().collection("interactions")
       .where("canReview", "==", false)
       .where("contactedAt", "<=", oneHourAgo)
       .limit(500).get();
 
     if (snap.empty) return;
 
-    const batch = db.batch();
+    const batch = getDb().batch();
     snap.docs.forEach(doc => batch.update(doc.ref, { canReview: true }));
     await batch.commit();
 
     // Notificar a los usuarios que pueden valorar
     for (const interactionDoc of snap.docs) {
       const interaction = interactionDoc.data()
-      const userSnap = await db
+      const userSnap = await getDb()
         .collection('users').doc(interaction.buyerId).get()
       const tokens = userSnap.data()?.fcmTokens || []
       if (!tokens.length) continue
@@ -145,8 +143,7 @@ exports.onNewMessage = onDocumentCreated(
     const convId = event.params.convId
 
     // Obtener la conversación para saber el receptor
-    const db = getFirestore()
-    const convSnap = await db
+    const convSnap = await getDb()
       .collection('conversations').doc(convId).get()
     if (!convSnap.exists) return
 
@@ -156,7 +153,7 @@ exports.onNewMessage = onDocumentCreated(
     if (!recipientId) return
 
     // Obtener tokens del receptor
-    const userSnap = await db
+    const userSnap = await getDb()
       .collection('users').doc(recipientId).get()
     if (!userSnap.exists) return
 
@@ -283,12 +280,11 @@ exports.checkScheduledNotifications = onSchedule(
     const { getApps, initializeApp } = require("firebase-admin/app");
     if (getApps().length === 0) initializeApp();
 
-    const db = getFirestore()
     const { getMessaging } = require("firebase-admin/messaging");
     const messaging = getMessaging()
 
     // Cargar plantillas activas
-    const templatesSnap = await db
+    const templatesSnap = await getDb()
       .collection('notificationTemplates')
       .where('active', '==', true)
       .get()
@@ -307,7 +303,7 @@ exports.checkScheduledNotifications = onSchedule(
             const daysAgo = new Date(
               Date.now() - template.delayHours * 3600000
             )
-            const productsSnap = await db
+            const productsSnap = await getDb()
               .collection('products')
               .where('active', '==', true)
               .where('updatedAt', '<=', daysAgo)
@@ -320,7 +316,7 @@ exports.checkScheduledNotifications = onSchedule(
               if (!userId) continue
 
               // Verificar que no se haya enviado antes
-              const alreadySent = await db
+              const alreadySent = await getDb()
                 .collection('notificationsSent')
                 .where('templateId', '==', templateId)
                 .where('userId', '==', userId)
@@ -330,7 +326,7 @@ exports.checkScheduledNotifications = onSchedule(
               if (!alreadySent.empty) continue
 
               // Obtener tokens del vendedor
-              const userSnap = await db
+              const userSnap = await getDb()
                 .collection('users').doc(userId).get()
               const tokens = userSnap.data()?.fcmTokens || []
               if (!tokens.length) continue
@@ -352,7 +348,7 @@ exports.checkScheduledNotifications = onSchedule(
               })
 
               // Registrar envío para no repetir
-              await db.collection('notificationsSent').add({
+              await getDb().collection('notificationsSent').add({
                 templateId,
                 userId,
                 productId: productDoc.id,
@@ -367,7 +363,7 @@ exports.checkScheduledNotifications = onSchedule(
             const daysAgo = new Date(
               Date.now() - template.delayHours * 3600000
             )
-            let usersQuery = db.collection('users')
+            let usersQuery = getDb().collection('users')
               .where('lastSeenAt', '<=', daysAgo)
               .where('notificationsEnabled', '==', true)
               .limit(200)
@@ -385,7 +381,7 @@ exports.checkScheduledNotifications = onSchedule(
               if (!tokens.length) continue
 
               // Verificar no enviada en los últimos 7 días
-              const recentSent = await db
+              const recentSent = await getDb()
                 .collection('notificationsSent')
                 .where('templateId', '==', templateId)
                 .where('userId', '==', userDoc.id)
@@ -407,7 +403,7 @@ exports.checkScheduledNotifications = onSchedule(
                 }
               })
 
-              await db.collection('notificationsSent').add({
+              await getDb().collection('notificationsSent').add({
                 templateId,
                 userId: userDoc.id,
                 sentAt: new Date()
@@ -425,7 +421,7 @@ exports.checkScheduledNotifications = onSchedule(
               Date.now() - template.delayHours * 3600000
             )
 
-            const productsSnap = await db
+            const productsSnap = await getDb()
               .collection('products')
               .where('active', '==', true)
               .where('createdAt', '<=', publishedBefore)
@@ -437,7 +433,7 @@ exports.checkScheduledNotifications = onSchedule(
               const userId = product.userId || product.sellerId
               if (!userId) continue
 
-              const alreadySent = await db
+              const alreadySent = await getDb()
                 .collection('notificationsSent')
                 .where('templateId', '==', templateId)
                 .where('productId', '==', productDoc.id)
@@ -445,7 +441,7 @@ exports.checkScheduledNotifications = onSchedule(
 
               if (!alreadySent.empty) continue
 
-              const userSnap = await db
+              const userSnap = await getDb()
                 .collection('users').doc(userId).get()
               const tokens = userSnap.data()?.fcmTokens || []
               if (!tokens.length) continue
@@ -464,7 +460,7 @@ exports.checkScheduledNotifications = onSchedule(
                 }
               })
 
-              await db.collection('notificationsSent').add({
+              await getDb().collection('notificationsSent').add({
                 templateId,
                 userId,
                 productId: productDoc.id,
@@ -479,7 +475,7 @@ exports.checkScheduledNotifications = onSchedule(
             const hoursAgo = new Date(
               Date.now() - template.delayHours * 3600000
             )
-            const usersSnap = await db
+            const usersSnap = await getDb()
               .collection('users')
               .where('createdAt', '<=', hoursAgo)
               .where('profileComplete', '==', false)
@@ -491,7 +487,7 @@ exports.checkScheduledNotifications = onSchedule(
               const tokens = user.fcmTokens || []
               if (!tokens.length) continue
 
-              const alreadySent = await db
+              const alreadySent = await getDb()
                 .collection('notificationsSent')
                 .where('templateId', '==', templateId)
                 .where('userId', '==', userDoc.id)
@@ -511,7 +507,7 @@ exports.checkScheduledNotifications = onSchedule(
                 }
               })
 
-              await db.collection('notificationsSent').add({
+              await getDb().collection('notificationsSent').add({
                 templateId,
                 userId: userDoc.id,
                 sentAt: new Date()
@@ -551,7 +547,7 @@ exports.sendWelcomeEmail = onDocumentCreated(
     const { Resend } = require("resend")
     const resend = new Resend(RESEND_API_KEY.value())
 
-    const content = bodyText(
+    const content = getTemplates().bodyText(
       `¡Bienvenido a Mi Pana!`,
       [
         `<strong>${displayName}</strong>, ya eres parte de la comunidad venezolana más grande en el exterior. ¡Nos alegra un montón tenerte con nosotros!`,
@@ -562,15 +558,15 @@ exports.sendWelcomeEmail = onDocumentCreated(
 
     try {
       const result = await resend.emails.send({
-        from: "Mi Pana <onboarding@resend.dev>",
+        from: "Mi Pana <hola@mipana.net>",
         to: email,
         subject: "¡Bienvenido a Mi Pana, pana!",
-        html: emailTemplate({
+        html: getTemplates().emailTemplate({
           title: "Bienvenida",
           preheader: "Ya eres parte de la comunidad venezolana más grande en el exterior",
           content,
           ctaText: "Explorar Mi Pana",
-          ctaUrl: "https://app-mi-pana.vercel.app/home"
+          ctaUrl: "https://mipana.net/home"
         })
       })
       console.log(`✅ sendWelcomeEmail enviado exitosamente a ${email}:`, JSON.stringify(result))
@@ -594,7 +590,7 @@ exports.sendVerificationCode = onCall(
     if (!email) throw new HttpsError("invalid-argument", "Email requerido")
 
     const code = Math.floor(100000 + Math.random() * 900000).toString()
-    await db.collection("verificationCodes").doc(request.auth.uid).set({
+    await getDb().collection("verificationCodes").doc(request.auth.uid).set({
       code,
       email,
       createdAt: new Date(),
@@ -605,7 +601,7 @@ exports.sendVerificationCode = onCall(
     const { Resend } = require("resend")
     const resend = new Resend(RESEND_API_KEY.value())
 
-    const content = bodyText(
+    const content = getTemplates().bodyText(
       `Verifica tu email`,
       [
         `Hola <strong>${userName || "pana"}</strong>, usa este código para verificar tu cuenta en Mi Pana:`,
@@ -616,10 +612,10 @@ exports.sendVerificationCode = onCall(
 
     try {
       const result = await resend.emails.send({
-        from: "Mi Pana <onboarding@resend.dev>",
+        from: "Mi Pana <hola@mipana.net>",
         to: email,
         subject: `${code} — Tu código de verificación Mi Pana`,
-        html: emailTemplate({
+        html: getTemplates().emailTemplate({
           title: "Verificación de email",
           preheader: `Tu código de verificación es ${code}`,
           content,
@@ -647,15 +643,16 @@ exports.verifyEmailCode = onCall(
     const { code } = request.data
     if (!code) throw new HttpsError("invalid-argument", "Código requerido")
 
-    const docRef = db.collection("verificationCodes").doc(request.auth.uid)
+    const docRef = getDb().collection("verificationCodes").doc(request.auth.uid)
     const snap = await docRef.get()
 
     if (!snap.exists) throw new HttpsError("not-found", "Código no encontrado. Solicita uno nuevo.")
 
     const data = snap.data()
 
-    if (new Date() > data.expiresAt.toDate()) {
-      throw new HttpsError("deadline-exceeded", "El código ha expirado. Solicita uno nuevo.")
+    const tenMinutesInMs = 10 * 60 * 1000;
+    if (new Date() - data.createdAt.toDate() > tenMinutesInMs) {
+      throw new HttpsError("failed-precondition", "El código ha expirado", { code: "CODE_EXPIRED" });
     }
 
     if (data.code !== code) {
@@ -663,7 +660,7 @@ exports.verifyEmailCode = onCall(
     }
 
     await docRef.update({ verified: true })
-    await db.collection("users").doc(request.auth.uid).set({ emailVerified: true }, { merge: true })
+    await getDb().collection("users").doc(request.auth.uid).set({ emailVerified: true }, { merge: true })
 
     return { success: true, message: "¡Email verificado correctamente!" }
   }
@@ -685,7 +682,7 @@ exports.sendPasswordResetEmail = onCall(
     const { Resend } = require("resend")
     const resend = new Resend(RESEND_API_KEY.value())
 
-    const content = bodyText(
+    const content = getTemplates().bodyText(
       `Recupera tu contraseña`,
       [
         `Recibimos una solicitud para restablecer la contraseña de tu cuenta en Mi Pana.`,
@@ -696,10 +693,10 @@ exports.sendPasswordResetEmail = onCall(
 
     try {
       const result = await resend.emails.send({
-        from: "Mi Pana <onboarding@resend.dev>",
+        from: "Mi Pana <hola@mipana.net>",
         to: email,
         subject: "Restablece tu contraseña en Mi Pana",
-        html: emailTemplate({
+        html: getTemplates().emailTemplate({
           title: "Recuperar contraseña",
           preheader: "Solicitud de restablecimiento de contraseña",
           content,
@@ -730,7 +727,7 @@ exports.sendProductCreatedEmail = onCall(
     const { Resend } = require("resend")
     const resend = new Resend(RESEND_API_KEY.value())
 
-    const content = bodyText(
+    const content = getTemplates().bodyText(
       `¡Mi panita, tu anuncio ya está activo!`,
       [
         `<strong>${userName || "Pana"}</strong>, tu anuncio ha sido publicado exitosamente en Mi Pana y ya está visible para toda la comunidad.`,
@@ -741,15 +738,15 @@ exports.sendProductCreatedEmail = onCall(
 
     try {
       const result = await resend.emails.send({
-        from: "Mi Pana <onboarding@resend.dev>",
+        from: "Mi Pana <hola@mipana.net>",
         to: email,
         subject: `Tu anuncio "${productName}" ya está activo`,
-        html: emailTemplate({
+        html: getTemplates().emailTemplate({
           title: "Anuncio publicado",
           preheader: `Tu anuncio ${productName} ya está visible en Mi Pana`,
           content,
           ctaText: "Ver mi anuncio",
-          ctaUrl: `https://app-mi-pana.vercel.app/perfil-producto?id=${productId}`
+          ctaUrl: `https://mipana.net/perfil-producto?id=${productId}`
         })
       })
       console.log(`✅ sendProductCreatedEmail enviado a ${email}:`, JSON.stringify(result))
@@ -773,7 +770,7 @@ exports.sendUnreadMessagesEmail = onSchedule(
 
     const twoHoursAgo = new Date(Date.now() - 2 * 3600000)
 
-    const convsSnap = await db.collection("conversations")
+    const convsSnap = await getDb().collection("conversations")
       .where("hasUnread", "==", true)
       .where("lastMessageAt", "<=", twoHoursAgo)
       .limit(100).get()
@@ -792,13 +789,13 @@ exports.sendUnreadMessagesEmail = onSchedule(
       const recipientId = conv.unreadFor
       if (!recipientId) continue
 
-      const userSnap = await db.collection("users").doc(recipientId).get()
+      const userSnap = await getDb().collection("users").doc(recipientId).get()
       if (!userSnap.exists) continue
 
       const user = userSnap.data()
       if (!user.email) continue
 
-      const content = bodyText(
+      const content = getTemplates().bodyText(
         `Tienes mensajes sin leer`,
         [
           `¡Ey, <strong>${user.name || "pana"}</strong>! Tienes mensajes nuevos esperándote en Mi Pana.`,
@@ -809,15 +806,15 @@ exports.sendUnreadMessagesEmail = onSchedule(
 
       try {
         const result = await resend.emails.send({
-          from: "Mi Pana <onboarding@resend.dev>",
+          from: "Mi Pana <hola@mipana.net>",
           to: user.email,
           subject: `Tienes mensajes sin leer en Mi Pana`,
-          html: emailTemplate({
+          html: getTemplates().emailTemplate({
             title: "Mensajes sin leer",
             preheader: "Tienes mensajes nuevos en Mi Pana",
             content,
             ctaText: "Leer mensajes",
-            ctaUrl: "https://app-mi-pana.vercel.app/messages"
+            ctaUrl: "https://mipana.net/messages"
           })
         })
         console.log(`✅ sendUnreadMessagesEmail enviado a ${user.email}:`, JSON.stringify(result))
@@ -842,7 +839,7 @@ exports.sendAccountSuspendedEmail = onCall(
   async (request) => {
     if (!request.auth) throw new HttpsError("unauthenticated", "No autenticado")
 
-    const callerSnap = await db.collection("users").doc(request.auth.uid).get()
+    const callerSnap = await getDb().collection("users").doc(request.auth.uid).get()
     if (callerSnap.data()?.role !== "admin") {
       throw new HttpsError("permission-denied", "Solo admins")
     }
@@ -854,7 +851,7 @@ exports.sendAccountSuspendedEmail = onCall(
 
     const tipoSuspension = isPermanent ? "eliminada permanentemente" : "suspendida temporalmente"
 
-    const content = bodyText(
+    const content = getTemplates().bodyText(
       isPermanent ? "Tu cuenta ha sido eliminada" : `Tu cuenta ha sido suspendida`,
       [
         `Hola <strong>${userName || "pana"}</strong>, te informamos que tu cuenta en Mi Pana ha sido <strong>${tipoSuspension}</strong> por nuestro equipo de moderación.`,
@@ -867,17 +864,17 @@ exports.sendAccountSuspendedEmail = onCall(
 
     try {
       const result = await resend.emails.send({
-        from: "Mi Pana <onboarding@resend.dev>",
+        from: "Mi Pana <hola@mipana.net>",
         to: email,
         subject: isPermanent
           ? "Tu cuenta en Mi Pana ha sido eliminada"
           : "Tu cuenta en Mi Pana ha sido suspendida",
-        html: emailTemplate({
+        html: getTemplates().emailTemplate({
           title: isPermanent ? "Cuenta eliminada" : "Cuenta suspendida",
           preheader: `Tu cuenta ha sido ${tipoSuspension}`,
           content,
           ctaText: isPermanent ? null : "Contactar soporte",
-          ctaUrl: isPermanent ? null : "mailto:hola@app-mi-pana.vercel.app"
+          ctaUrl: isPermanent ? null : "mailto:hola@mipana.net"
         })
       })
       console.log(`✅ sendAccountSuspendedEmail enviado a ${email}:`, JSON.stringify(result))
@@ -903,7 +900,7 @@ exports.sendProductDeletedEmail = onCall(
     const { Resend } = require("resend")
     const resend = new Resend(RESEND_API_KEY.value())
 
-    const content = bodyText(
+    const content = getTemplates().bodyText(
       `Anuncio eliminado correctamente`,
       [
         `Hola <strong>${userName || "pana"}</strong>, te confirmamos que tu anuncio ha sido eliminado exitosamente de Mi Pana.`,
@@ -914,15 +911,15 @@ exports.sendProductDeletedEmail = onCall(
 
     try {
       const result = await resend.emails.send({
-        from: "Mi Pana <onboarding@resend.dev>",
+        from: "Mi Pana <hola@mipana.net>",
         to: email,
         subject: `Tu anuncio "${productName}" fue eliminado`,
-        html: emailTemplate({
+        html: getTemplates().emailTemplate({
           title: "Anuncio eliminado",
           preheader: `Confirmación: ${productName} eliminado de Mi Pana`,
           content,
           ctaText: "Publicar nuevo anuncio",
-          ctaUrl: "https://app-mi-pana.vercel.app/crear-anuncio"
+          ctaUrl: "https://mipana.net/crear-anuncio"
         })
       })
       console.log(`✅ sendProductDeletedEmail enviado a ${email}:`, JSON.stringify(result))
