@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useAuthStore } from '../store/useAuthStore';
 import { db, storage } from '../services/firebase';
 import { doc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { Camera, ShieldCheck, ArrowLeft, HourglassIcon } from 'lucide-react';
+import { Camera, ShieldCheck, ArrowLeft, HourglassIcon, CheckCircle2, ChevronDown } from 'lucide-react';
 
 export default function Verification() {
   const { user: authUser, userData } = useAuth();
@@ -32,6 +33,15 @@ export default function Verification() {
   const [stream, setStream] = useState(null);
   const [livenessStep, setLivenessStep] = useState('init'); // init | detecting | captured
   const [countdown, setCountdown] = useState(3);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false); // Nuevo state para el dropdown personalizado
+
+  const documentOptions = [
+    { id: 'dni', label: 'DNI (España)' },
+    { id: 'passport', label: 'Pasaporte' },
+    { id: 'cedula', label: 'Cédula Venezolana' },
+    { id: 'nie', label: 'NIE (España)' },
+    { id: 'foreign', label: 'Documento Extranjero' }
+  ];
 
   // Stop camera when unmounting
   useEffect(() => {
@@ -262,15 +272,53 @@ export default function Verification() {
           <div className="animate-in fade-in slide-in-from-right-4 duration-500">
             <h2 className="text-2xl font-black text-[#1A1A3A] mb-6">Sube tu documento</h2>
             
-            <div className="mb-6">
-              <label className="block text-sm font-bold text-gray-700 mb-2">Tipo de documento</label>
-              <select value={documentType} onChange={(e) => setDocumentType(e.target.value)} className="w-full bg-white border border-gray-200 rounded-2xl px-4 py-3.5 text-sm font-bold outline-none focus:border-blue-500 shadow-sm appearance-none cursor-pointer">
-                <option value="dni">DNI (España)</option>
-                <option value="passport">Pasaporte</option>
-                <option value="cedula">Cédula Venezolana</option>
-                <option value="nie">NIE (España)</option>
-                <option value="foreign">Documento Extranjero</option>
-              </select>
+            <div className="mb-8">
+              <label className="block text-sm font-bold text-gray-700 mb-2 px-1">Tipo de documento</label>
+              <div className="relative">
+                <div 
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className={`w-full h-14 px-5 flex items-center justify-between bg-white border border-gray-100 rounded-2xl cursor-pointer transition-all shadow-sm ${isDropdownOpen ? 'ring-2 ring-[#1A1A3A]/10' : ''}`}
+                >
+                  <span className="text-[#1A1A3A] font-bold text-sm">
+                    {documentOptions.find(opt => opt.id === documentType)?.label || 'Seleccionar...'}
+                  </span>
+                  <ChevronDown className={`w-5 h-5 text-[#1A1A3A] transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                </div>
+
+                <AnimatePresence>
+                  {isDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 5, scale: 1 }}
+                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                      className="absolute left-0 right-0 top-full z-[60] mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden"
+                    >
+                      <div className="p-2 flex flex-col gap-1">
+                        {documentOptions.map((opt) => {
+                          const isSelected = documentType === opt.id;
+                          return (
+                            <button
+                              key={opt.id}
+                              type="button"
+                              onClick={() => {
+                                setDocumentType(opt.id);
+                                setIsDropdownOpen(false);
+                              }}
+                              className={`w-full px-4 py-3.5 rounded-xl text-left font-bold text-sm transition-all flex items-center justify-between ${isSelected 
+                                ? 'bg-[#1A1A3A] text-white shadow-md' 
+                                : 'text-gray-600 hover:bg-gray-50'
+                              }`}
+                            >
+                              {opt.label}
+                              {isSelected && <CheckCircle2 size={16} className="text-[#FFB400]" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
 
             <div 
