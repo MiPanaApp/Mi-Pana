@@ -1,4 +1,4 @@
-import { Heart, MapPin } from 'lucide-react';
+import { Heart, MapPin, ShieldCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
@@ -72,7 +72,12 @@ export default function ProductCard({ product }) {
             </div>
           )}
         </div>
-        <h3 className="font-bold text-gray-700 text-xs line-clamp-2 mb-0.5">{product.name}</h3>
+        <h3 className="font-bold text-gray-700 text-xs line-clamp-2 mb-0.5">
+          {product.name}
+          {product.userVerified && (
+            <ShieldCheck size={14} className="inline ml-1 text-[#00C97A] -mt-0.5" title="Pana Verificado" />
+          )}
+        </h3>
         <div className="mt-auto flex items-center gap-1 text-[#1A1A3A]/70 font-semibold">
           <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
           <span className="text-[11px] truncate">

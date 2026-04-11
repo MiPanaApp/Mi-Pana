@@ -29,6 +29,7 @@ import Favorites from './pages/Favorites';
 import CreateListing from './pages/CreateListing';
 import Messages from './pages/Messages';
 import Profile from './pages/Profile';
+import Verification from './pages/Verification';
 
 import CustomDialog from './components/ui/CustomDialog';
 
@@ -78,6 +79,7 @@ function App() {
           <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/ofertar" element={<ProtectedRoute><OfferForm /></ProtectedRoute>} />
           <Route path="/chats" element={<ProtectedRoute><ChatList /></ProtectedRoute>} />
+          <Route path="/verificacion" element={<ProtectedRoute><Verification /></ProtectedRoute>} />
 
           <Route path="/selector-pais" element={<div className="p-8">Selector de País (Coming Soon)</div>} />
         </Route>

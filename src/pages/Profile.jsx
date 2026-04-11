@@ -3,7 +3,8 @@ import {
   User, Mail, Phone, MapPin, LogOut, ChevronDown, Bell,
   ShieldCheck, Loader2, Camera, Lock, Info, 
   HelpCircle, Cookie, ShieldAlert, Instagram, Facebook, Youtube, Twitter, UserCircle2,
-  Package, Edit2, Trash2, PlusCircle, ExternalLink, Eye, EyeOff, X, Calendar, Globe, MoreVertical, CheckCircle2
+  Package, Edit2, Trash2, PlusCircle, ExternalLink, Eye, EyeOff, X, Calendar, Globe, MoreVertical, CheckCircle2,
+  Clock, Shield
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -627,9 +628,31 @@ export default function Profile() {
             <Edit2 size={16} className="text-[#1A1A3A]/40 transition-colors hover:text-[#0056B3] ml-1" />
           </h1>
           
-          <div className="flex items-center gap-1 mb-6 px-4 py-1.5 bg-[#0056B3]/10 rounded-full border border-[#0056B3]/20 text-[#0056B3] text-[10px] font-black uppercase tracking-wider">
-            <ShieldCheck size={14} /> Pana Verificado Nivel {userData?.verificationLevel || 1}
-          </div>
+          {userData?.verificationStatus === 'approved' ? (
+            <div className="flex items-center gap-1.5 bg-[#00C97A]/10 px-4 py-1.5 rounded-full mb-6 border border-[#00C97A]/20 cursor-help" title="Identidad confirmada">
+              <ShieldCheck size={14} className="text-[#00C97A]" />
+              <span className="text-[10px] font-black uppercase text-[#00C97A] tracking-wider">
+                Pana Verificado
+              </span>
+            </div>
+          ) : userData?.verificationStatus === 'pending' ? (
+            <div className="flex items-center gap-1.5 bg-[#FFB400]/10 px-4 py-1.5 rounded-full mb-6 border border-[#FFB400]/20 cursor-help" title="Estamos revisando tu solicitud">
+              <Clock size={14} className="text-[#FFB400]" />
+              <span className="text-[10px] font-black uppercase text-[#FFB400] tracking-wider">
+                Verificación en proceso
+              </span>
+            </div>
+          ) : (
+            <button
+              onClick={() => navigate('/verificacion')}
+              className="flex items-center gap-1.5 bg-[#1A1A3A] px-4 py-1.5 rounded-full mb-6 active:scale-95 transition-transform shadow-[0_4px_10px_rgba(0,0,0,0.1)] group hover:bg-[#2A2A4A]"
+            >
+              <Shield size={14} className="text-white group-hover:text-[#FFB400] transition-colors" />
+              <span className="text-[10px] font-black uppercase text-white tracking-wider">
+                Verificar identidad
+              </span>
+            </button>
+          )}
 
           {/* User Data List */}
           <div className="w-full space-y-1">

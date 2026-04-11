@@ -933,3 +933,130 @@ exports.sendProductDeletedEmail = onCall(
     return { success: true }
   }
 )
+// ════════════════════════════════════════════════
+// SUPRESIÓN Y ELIMINACIÓN TOTAL DE USUARIO DESDE ADMIN
+// ════════════════════════════════════════════════
+
+exports.deleteUserByAdmin = onCall(
+  { region: "us-central1" },
+  async (request) => {
+    // 1. Validar que el que llama está autenticado
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Debes estar autenticado para hacer esto.");
+    }
+
+    const { getFirestore } = require("firebase-admin/firestore");
+    const { getAuth } = require("firebase-admin/auth");
+
+    // 2. Validar que el caller tiene rol de 'admin'
+    const callerSnap = await getFirestore().collection("users").doc(request.auth.uid).get();
+    if (callerSnap.data()?.role !== "admin") {
+      throw new HttpsError("permission-denied", "Solo los administradores pueden eliminar usuarios.");
+    }
+
+    const targetUid = request.data.uid;
+    if (!targetUid) {
+      throw new HttpsError("invalid-argument", "Se requiere el UID del usuario a eliminar.");
+    }
+
+    try {
+      // 3. Eliminar la cuenta de Firebase Authentication
+      // (Los documentos de Firestore ya los elimina el cliente en batch, 
+      // pero si quieres que sea seguro, dejamos que el cliente lo haga o lo hacemos aquí).
+      await getAuth().deleteUser(targetUid);
+      console.log(`✅ Usuario ${targetUid} eliminado de Firebase Auth por admin ${request.auth.uid}`);
+      return { success: true };
+    } catch (error) {
+      console.error(`❌ Error al eliminar usuario ${targetUid} en Auth:`, error.message, error);
+      // Si el usuario ya no existe en Auth pero sí en la base de datos, 
+      // regresamos un flag distinto pero no fallamos, así permitimos limpiar la BD.
+      if (error.code === 'auth/user-not-found') {
+        return { success: true, authNotFound: true };
+      }
+      throw new HttpsError("internal", error.message);
+    }
+  }
+);
+
+exports.sendVerificationResultEmail = onCall(
+  { secrets: [RESEND_API_KEY] },
+  async (request) => {
+    if (!request.auth) throw new HttpsError(
+      "unauthenticated", "No autenticado")
+
+    const { userId, approved, reason } = request.data
+
+    const db = getFirestore()
+    const userSnap = await db.collection('users')
+      .doc(userId).get()
+    const user = userSnap.data()
+
+    if (!user?.email) return { success: false }
+
+    const { Resend } = require("resend")
+    const resend = new Resend(RESEND_API_KEY.value())
+
+    const content = approved ? bodyText(
+      "¡Eres Pana Verificado! ✓",
+      [
+        `<strong>${user.name || "Pana"}</strong>, 
+         hemos revisado tu documentación y 
+         nos complace informarte que tu identidad 
+         ha sido verificada exitosamente. 🎉`,
+        `<span style="display:inline-block;
+           background:#00C97A20;border-radius:12px;
+           padding:12px 24px;font-weight:900;
+           color:#00C97A;font-size:18px">
+           ✓ Pana Verificado
+         </span>`,
+        `A partir de ahora aparecerás con el badge 
+         de verificación en tu perfil y anuncios. 
+         ¡La comunidad confía más en ti, pana!`
+      ]
+    ) : bodyText(
+      "Verificación no aprobada",
+      [
+        `Hola <strong>${user.name || "pana"}</strong>, 
+         hemos revisado tu solicitud de verificación 
+         y no pudimos aprobarla en este momento.`,
+        `<span style="display:inline-block;
+           background:#FFF0F0;border-radius:10px;
+           padding:12px 24px;font-weight:600;
+           color:#D90429;font-size:14px;
+           border-left:4px solid #D90429">
+           📋 Motivo: ${reason || 
+             "Documentación no válida o ilegible"}
+         </span>`,
+        `Puedes volver a intentarlo asegurándote 
+         de que las fotos sean nítidas y el 
+         documento esté completo y visible. 
+         ¡Estamos aquí para ayudarte, pana!`
+      ]
+    )
+
+    await resend.emails.send({
+      from: "Mi Pana <hola@mipana.net>",
+      to: user.email,
+      subject: approved
+        ? "✓ ¡Ya eres Pana Verificado!"
+        : "Tu verificación necesita atención",
+      html: emailTemplate({
+        title: approved
+          ? "Verificación aprobada"
+          : "Verificación no aprobada",
+        preheader: approved
+          ? "Tu identidad ha sido verificada en Mi Pana"
+          : "Tu solicitud de verificación necesita atención",
+        content,
+        ctaText: approved
+          ? "Ver mi perfil verificado ✓"
+          : "Intentar de nuevo",
+        ctaUrl: approved
+          ? "https://mipana.net/perfil"
+          : "https://mipana.net/verificacion"
+      })
+    })
+
+    return { success: true }
+  }
+);

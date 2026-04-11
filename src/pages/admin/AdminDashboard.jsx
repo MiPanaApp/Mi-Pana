@@ -4,9 +4,10 @@ import { useStore } from '../../store/useStore';
 import {
   Users, ShoppingBag, MessageSquare, Star, ShieldCheck, Heart,
   Home, BarChart2, Layers, Activity, Search, Bell, Settings, LogOut, ArrowLeft, Eye, Globe, CheckCircle, CalendarClock,
-  Flame, FlaskConical, Image as LucideImage, Zap, Mail, Trash2
+  Flame, FlaskConical, Image as LucideImage, Zap, Mail, Trash2, ChevronDown, Check
 } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { motion, AnimatePresence } from 'framer-motion';
 import { db } from '../../services/firebase';
 import { collection, getDocs, query, limit, getCountFromServer, onSnapshot } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
@@ -18,7 +19,7 @@ import AdminCountriesTab from '../../components/admin/AdminCountriesTab';
 import AdminReportsModal from '../../components/admin/AdminReportsModal';
 import AdminNotificationsTab from '../../components/admin/AdminNotificationsTab';
 import AdminScheduledNotifsTab from '../../components/admin/AdminScheduledNotifsTab';
-import GeoMapChart from '../../components/admin/GeoMapChart';
+import AdminVerificationsTab from '../../components/admin/AdminVerificationsTab';
 
 // Colores alineados a la marca: Amarillo Mi Pana, Morado Admin y acentos
 const COLORS = ['#FFD700', '#8B5CF6', '#06B6D4', '#F43F5E', '#10B981'];
@@ -45,12 +46,14 @@ export default function AdminDashboard() {
   const [totalLikes, setTotalLikes] = useState(0);
   const [topViewed, setTopViewed] = useState([]);
   const [pendingReportsCount, setPendingReportsCount] = useState(0);
+  const [pendingVerificationsCount, setPendingVerificationsCount] = useState(0);
   const scrollContainerRef = useRef(null);
   const [emailTestResult, setEmailTestResult] = useState(null);
   const [emailTestLoading, setEmailTestLoading] = useState(false);
   const [rawUsers, setRawUsers] = useState([]);
   const [rawProducts, setRawProducts] = useState([]);
   const [growthWeeks, setGrowthWeeks] = useState(8);
+  const [isGrowthSelectOpen, setIsGrowthSelectOpen] = useState(false);
 
   const testEmail = async () => {
     setEmailTestLoading(true);
@@ -84,7 +87,14 @@ export default function AdminDashboard() {
       });
       setPendingReportsCount(pending);
     });
-    return () => unsubscribe();
+
+    const qVerif = query(collection(db, 'verifications'), where('status', '==', 'pending'));
+    const unsubVerif = onSnapshot(qVerif, (snap) => setPendingVerificationsCount(snap.size));
+
+    return () => {
+      unsubscribe();
+      unsubVerif();
+    };
   }, []);
 
   useEffect(() => {
@@ -98,14 +108,28 @@ export default function AdminDashboard() {
       try {
         const usersColl = collection(db, "users");
         const productsColl = collection(db, "products");
+        const categoriesColl = collection(db, "categories");
 
-        const [usersSnap, productsSnap] = await Promise.all([
+        const [usersSnap, productsSnap, categoriesSnap] = await Promise.all([
           getDocs(usersColl),
-          getDocs(productsColl)
+          getDocs(productsColl),
+          getDocs(categoriesColl)
         ]);
 
         const productsList = productsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         const usersList = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        // Mapeo de categorías Reales (ID -> Nombre)
+        const catNamesMap = {};
+        categoriesSnap.docs.forEach(doc => {
+          const data = doc.data();
+          const name = data.name || data.title || 'S/N';
+          catNamesMap[doc.id] = name;
+          // Si el ID es un número guardado como string en Firestore, o viceversa, lo mapeamos doble
+          catNamesMap[String(doc.id)] = name;
+          if (data.id) catNamesMap[String(data.id)] = name;
+          if (data.value) catNamesMap[String(data.value)] = name;
+        });
 
         const totals = productsList.reduce((acc, p) => ({
           views: acc.views + (p.views || 0),
@@ -120,36 +144,50 @@ export default function AdminDashboard() {
            .slice(0, 5);
         setTopViewed(topViewedData);
 
-        // TOP CATEGORIES REALES
-        const catMap = {};
+        // TOP CATEGORIES REALES (Traduciendo IDs a nombres)
+        const catCountMap = {};
         productsList.forEach(data => {
-          const cat = data.category || 'Otros';
-          catMap[cat] = (catMap[cat] || 0) + 1;
+          const catId = data.category;
+          // Mapeamos ID a nombre real. Si no coincide, intentamos con string del ID.
+          const catName = catNamesMap[catId] || catNamesMap[String(catId)] || catId || 'Otros';
+          catCountMap[catName] = (catCountMap[catName] || 0) + 1;
         });
 
-        const catData = Object.keys(catMap).map(name => ({
+        const catData = Object.keys(catCountMap).map(name => ({
           name,
-          value: catMap[name]
+          value: catCountMap[name]
         })).sort((a, b) => b.value - a.value).slice(0, 10);
 
         // CRECIMIENTO EVOLUTIVO (Extrae a Raw para filtro posterior)
         setRawUsers(usersList);
         setRawProducts(productsList);
 
-        // MAPA GEOGRAFICO: USUARIOS POR PAIS ISO-3
-        // App usa ES, US, CO, peeeero el mapa USA ISO-3: ESP, USA, COL...
-        const ISO2_TO_ISO3 = {
-          'ES': 'ESP', 'US': 'USA', 'CO': 'COL', 'EC': 'ECU', 'PA': 'PAN',
-          'PE': 'PER', 'DO': 'DOM', 'CL': 'CHL', 'AR': 'ARG', 'VE': 'VEN', 'MX': 'MEX'
+        // MAPA GEOGRAFICO: USUARIOS POR PAIS (BANDERAS)
+        const COUNTRY_FLAGS = {
+          'ES': { name: 'España', flag: '🇪🇸' },
+          'US': { name: 'Estados', flag: '🇺🇸' },
+          'CO': { name: 'Colombia', flag: '🇨🇴' },
+          'EC': { name: 'Ecuador', flag: '🇪🇨' },
+          'PA': { name: 'Panamá', flag: '🇵🇦' },
+          'PE': { name: 'Perú', flag: '🇵🇪' },
+          'DO': { name: 'Rep. Dom', flag: '🇩🇴' },
+          'CL': { name: 'Chile', flag: '🇨🇱' },
+          'AR': { name: 'Argentina', flag: '🇦🇷' },
+          'MX': { name: 'México', flag: '🇲🇽' }
         };
         const countryMap = {};
         usersList.forEach(u => {
-          if (u.country) {
-            const iso3 = ISO2_TO_ISO3[u.country];
-            if (iso3) countryMap[iso3] = (countryMap[iso3] || 0) + 1;
+          if (u.country && COUNTRY_FLAGS[u.country]) {
+            const code = u.country;
+            countryMap[code] = (countryMap[code] || 0) + 1;
           }
         });
-        const geoData = Object.keys(countryMap).map(k => ({ id: k, value: countryMap[k] }));
+        const geoData = Object.keys(countryMap).map(k => ({ 
+          id: k, 
+          name: COUNTRY_FLAGS[k].name,
+          flag: COUNTRY_FLAGS[k].flag,
+          value: countryMap[k] 
+        })).sort((a, b) => b.value - a.value).slice(0, 5);
 
         setStats(prev => ({
           ...prev,
@@ -215,21 +253,25 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-[#F4F7FE] flex p-3 pb-24 lg:p-6 lg:pb-6 font-sans overflow-hidden">
 
       {/* Mobile Bottom Navigation - Estilo Claymorphism Soft */}
-      <div className="lg:hidden fixed bottom-6 left-4 right-4 bg-white/80 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] z-[100] flex items-center justify-around p-4 rounded-[2.5rem] border border-white">
-        {['overview', 'usuarios', 'anuncios', 'categorias', 'paises', 'notificaciones', 'programadas', 'estadisticas'].map((tab) => (
+      <div className="lg:hidden fixed bottom-6 left-4 right-4 bg-white/80 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] z-[100] flex items-center justify-between px-2 py-3 rounded-[2.5rem] border border-white overflow-x-auto hide-scrollbar gap-1">
+        {['overview', 'usuarios', 'anuncios', 'categorias', 'paises', 'verifications', 'notificaciones', 'programadas', 'estadisticas'].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`p-3 rounded-2xl transition-all ${activeTab === tab ? 'bg-[#FFD700] text-black shadow-lg scale-110' : 'text-gray-400'}`}
+            className={`p-2 rounded-2xl transition-all relative shrink-0 ${activeTab === tab ? 'bg-[#FFD700] text-black shadow-md' : 'text-gray-400'}`}
           >
-            {tab === 'overview' && <Home className="w-6 h-6" />}
-            {tab === 'usuarios' && <Users className="w-6 h-6" />}
-            {tab === 'anuncios' && <ShoppingBag className="w-6 h-6" />}
-            {tab === 'categorias' && <Layers className="w-6 h-6" />}
-            {tab === 'paises' && <Globe className="w-6 h-6" />}
-            {tab === 'notificaciones' && <Bell className="w-6 h-6" />}
-            {tab === 'programadas' && <CalendarClock className="w-6 h-6" />}
-            {tab === 'estadisticas' && <BarChart2 className="w-6 h-6" />}
+            {tab === 'overview' && <Home className="w-5 h-5" />}
+            {tab === 'usuarios' && <Users className="w-5 h-5" />}
+            {tab === 'anuncios' && <ShoppingBag className="w-5 h-5" />}
+            {tab === 'categorias' && <Layers className="w-5 h-5" />}
+            {tab === 'paises' && <Globe className="w-5 h-5" />}
+            {tab === 'verifications' && <ShieldCheck className="w-5 h-5" />}
+            {tab === 'notificaciones' && <Bell className="w-5 h-5" />}
+            {tab === 'programadas' && <CalendarClock className="w-5 h-5" />}
+            {tab === 'estadisticas' && <BarChart2 className="w-5 h-5" />}
+            {tab === 'verifications' && pendingVerificationsCount > 0 && (
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-pulse border border-white" />
+            )}
           </button>
         ))}
       </div>
@@ -247,6 +289,7 @@ export default function AdminDashboard() {
             { id: 'anuncios', icon: ShoppingBag },
             { id: 'categorias', icon: Layers },
             { id: 'paises', icon: Globe },
+            { id: 'verifications', icon: ShieldCheck },
             { id: 'notificaciones', icon: Bell },
             { id: 'programadas', icon: CalendarClock },
             { id: 'estadisticas', icon: BarChart2 }
@@ -258,6 +301,11 @@ export default function AdminDashboard() {
             >
               <item.icon className="w-6 h-6" />
               {activeTab === item.id && <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-1.5 h-8 bg-[#FFD700] rounded-r-full" />}
+              {item.id === 'verifications' && pendingVerificationsCount > 0 && (
+                <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                  {pendingVerificationsCount}
+                </div>
+              )}
             </button>
           ))}
         </div>
@@ -361,21 +409,50 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Gráficos Principales */}
-            <div className="xl:col-span-8 space-y-6">
+            {/* Gráficos Principales y Widgets */}
+            <div className="xl:col-span-12 space-y-6">
               <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-50">
                 <div className="flex justify-between items-center mb-8">
                   <h3 className="text-gray-800 font-black text-lg flex items-center gap-2"><Activity size={18} className="text-blue-500"/> Crecimiento de la Red</h3>
-                  <select 
-                    value={growthWeeks}
-                    onChange={(e) => setGrowthWeeks(Number(e.target.value))}
-                    className="bg-gray-50 border border-gray-100 text-xs font-bold p-2.5 rounded-xl outline-none shadow-sm cursor-pointer hover:bg-gray-100 transition-colors"
-                  >
-                    <option value={4}>Últimas 4 semanas</option>
-                    <option value={8}>Últimas 8 semanas</option>
-                    <option value={12}>Últimas 12 semanas</option>
-                    <option value={24}>Últimas 24 semanas</option>
-                  </select>
+                  
+                  {/* Custom Select Premium */}
+                  <div className="relative">
+                    <button 
+                      onClick={() => setIsGrowthSelectOpen(!isGrowthSelectOpen)}
+                      className="bg-gray-50 border border-gray-100 py-2.5 px-4 rounded-2xl flex items-center gap-3 shadow-sm hover:shadow-md transition-all active:scale-95"
+                    >
+                      <span className="text-xs font-bold text-[#1A1A3A]">Últimas {growthWeeks} semanas</span>
+                      <ChevronDown size={14} className={`text-gray-400 transition-transform duration-300 ${isGrowthSelectOpen ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    <AnimatePresence>
+                      {isGrowthSelectOpen && (
+                        <>
+                          <div className="fixed inset-0 z-40" onClick={() => setIsGrowthSelectOpen(false)}></div>
+                          <motion.div 
+                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                            className="absolute right-0 mt-2 w-48 bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl shadow-2xl z-50 overflow-hidden"
+                          >
+                            {[4, 8, 12, 24].map((range) => (
+                              <button
+                                key={range}
+                                onClick={() => {
+                                  setGrowthWeeks(range);
+                                  setIsGrowthSelectOpen(false);
+                                }}
+                                className="w-full px-5 py-3.5 text-left text-xs font-bold flex items-center justify-between hover:bg-white transition-colors border-b border-gray-50 last:border-0 text-[#1A1A3A]"
+                              >
+                                Últimas {range} semanas
+                                {growthWeeks === range && <Check size={14} className="text-blue-500" />}
+                              </button>
+                            ))}
+                          </motion.div>
+                        </>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 </div>
                 <div className="h-72 min-h-[288px] w-full min-w-0">
                   <ResponsiveContainer width="100%" height="100%">
@@ -399,71 +476,96 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              {/* Widgets Inferiores */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Categorías (PieChart) */}
-                <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-50 flex flex-col items-center">
-                  <h3 className="text-gray-800 font-black w-full mb-4">Top Categorías</h3>
-                  <div className="h-72 min-h-[288px] w-full min-w-0">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie data={stats.categories} innerRadius={60} outerRadius={80} paddingAngle={8} dataKey="value" stroke="none">
-                          {stats.categories?.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
-                        </Pie>
-                        <Tooltip contentStyle={{ borderRadius: '15px', border: 'none', boxShadow: '0 5px 15px rgba(0,0,0,0.1)' }} />
-                        <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', fontWeight: 'bold' }} />
-                      </PieChart>
-                    </ResponsiveContainer>
+              {/* Widgets Inferiores - Fila de 3 en LG */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Categorías (Bar Graph) */}
+                <div className="bg-white p-6 md:p-8 rounded-[2.5rem] shadow-sm border border-gray-50 flex flex-col justify-start">
+                  <h3 className="text-gray-800 font-black mb-6 flex items-center gap-2"><Layers size={18} className="text-[#8B5CF6]" /> Top Categorías</h3>
+                  <div className="w-full flex flex-col gap-4">
+                    {stats.categories.slice(0, 5).map((cat, idx) => {
+                      const maxVal = Math.max(...stats.categories.slice(0, 5).map(c => c.value), 1);
+                      const pct = (cat.value / maxVal) * 100;
+                      return (
+                        <div key={idx} className="w-full flex items-center gap-4">
+                          <div className="flex-1 bg-gray-50 h-10 md:h-12 rounded-xl relative overflow-hidden flex items-center text-sm">
+                            <motion.div 
+                              initial={{ width: 0 }} 
+                              animate={{ width: `${pct}%` }} 
+                              transition={{ duration: 1, ease: 'easeOut' }} 
+                              className="absolute top-0 left-0 h-full"
+                              style={{ backgroundColor: COLORS[idx % COLORS.length], opacity: 0.8 }}
+                            ></motion.div>
+                            <span className="relative z-10 px-4 font-bold text-gray-800 line-clamp-1 drop-shadow-sm truncate">{cat.name}</span>
+                          </div>
+                          <span className="text-sm font-black text-[#1A1A3A] w-8 text-right">{cat.value}</span>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
 
-                {/* Ingresos Mi Pana reemplazado por Mapa Global */}
-                <div className="bg-white p-6 md:p-8 rounded-[2.5rem] shadow-sm border border-gray-50 flex flex-col justify-start relative overflow-hidden">
-                  <h3 className="text-gray-800 font-black mb-2 flex items-center gap-2"><Globe size={18} className="text-green-500" /> Presencia Global</h3>
-                  <p className="text-[10px] text-gray-400 font-bold mb-6">Mapa térmico de usuarios activos</p>
-                  
-                  <div className="w-full flex-1 flex flex-col items-center justify-center relative min-h-[200px]">
-                    {/* Renderizamos el nuevo mapa */}
-                    <GeoMapChart data={stats.geo || []} />
+                {/* Presencia Global (Bar Graph) */}
+                <div className="bg-white p-6 md:p-8 rounded-[2.5rem] shadow-sm border border-gray-50 flex flex-col justify-start">
+                  <h3 className="text-gray-800 font-black mb-6 flex items-center gap-2"><Globe size={18} className="text-[#06B6D4]" /> Presencia Global</h3>
+                  <div className="w-full flex-1 flex flex-col gap-4">
+                    {stats.geo && stats.geo.length > 0 ? stats.geo.map((country, idx) => {
+                      const maxVal = Math.max(...stats.geo.map(c => c.value), 1);
+                      const pct = (country.value / maxVal) * 100;
+                      return (
+                        <div key={idx} className="w-full flex items-center gap-4">
+                          <div className="flex-1 bg-gray-50 h-10 md:h-12 rounded-xl relative overflow-hidden flex items-center text-sm">
+                            <motion.div 
+                              initial={{ width: 0 }} 
+                              animate={{ width: `${pct}%` }} 
+                              transition={{ duration: 1, ease: 'easeOut' }} 
+                              className="absolute top-0 left-0 h-full"
+                              style={{ backgroundColor: COLORS[(idx + 2) % COLORS.length], opacity: 0.8 }}
+                            ></motion.div>
+                            <span className="relative z-10 px-4 font-bold text-gray-800 flex items-center gap-2 drop-shadow-sm truncate">
+                              <span className="text-lg">{country.flag}</span> {country.name}
+                            </span>
+                          </div>
+                          <span className="text-sm font-black text-[#1A1A3A] w-8 text-right">{country.value}</span>
+                        </div>
+                      )
+                    }) : (
+                      <p className="text-sm font-bold text-gray-400 text-center py-8">Aún no hay datos geográficos</p>
+                    )}
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Columna Derecha: Soporte */}
-            <div className="xl:col-span-4 space-y-6">
-
-              {/* Card de Acción Claymorphism */}
-              <div className="bg-black p-6 rounded-[2.5rem] shadow-xl text-white relative overflow-hidden group">
-                <div className="absolute -right-4 -top-4 w-24 h-24 bg-[#FFD700] rounded-full blur-3xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
-                
-                <div className="flex items-center gap-3 mb-4 relative z-10">
-                  <ShieldCheck className="w-8 h-8 text-[#FFD700]" />
-                  <h3 className="font-black text-xl">Seguridad Mi Pana</h3>
-                </div>
-                
-                <div className="flex items-center justify-between mb-6 relative z-10 gap-2">
-                  <p className="text-sm text-gray-400 font-medium">Casos pendientes de revisión.</p>
+                {/* Seguridad Mi Pana (Movido aquí para balancear layout) */}
+                <div className="bg-black p-6 md:p-8 rounded-[2.5rem] shadow-xl text-white relative overflow-hidden group">
+                  <div className="absolute -right-4 -top-4 w-24 h-24 bg-[#FFD700] rounded-full blur-3xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
                   
-                  {pendingReportsCount > 0 ? (
-                    <div className="flex flex-col items-center justify-center bg-red-500 text-white rounded-xl px-4 py-2 shadow-[0_0_15px_rgba(239,68,68,0.5)] shrink-0">
-                      <span className="text-xl font-black leading-none">{pendingReportsCount}</span>
-                      <span className="text-[9px] uppercase tracking-widest font-bold">Nuevos</span>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center bg-green-500/20 text-green-500 border border-green-500/30 rounded-xl px-4 py-2 shrink-0">
-                      <CheckCircle className="w-5 h-5 mb-0.5" />
-                      <span className="text-[9px] uppercase tracking-widest font-bold">Al Día</span>
-                    </div>
-                  )}
-                </div>
+                  <div className="flex items-center gap-3 mb-4 relative z-10">
+                    <ShieldCheck className="w-8 h-8 text-[#FFD700]" />
+                    <h3 className="font-black text-xl">Seguridad</h3>
+                  </div>
+                  
+                  <div className="flex items-center justify-between mb-6 relative z-10 gap-2">
+                    <p className="text-xs text-gray-400 font-medium">Casos pendientes de revisión.</p>
+                    
+                    {pendingReportsCount > 0 ? (
+                      <div className="flex flex-col items-center justify-center bg-red-500 text-white rounded-xl px-4 py-2 shadow-[0_0_15px_rgba(239,68,68,0.5)] shrink-0 scale-90">
+                        <span className="text-xl font-black leading-none">{pendingReportsCount}</span>
+                        <span className="text-[9px] uppercase tracking-widest font-bold">Nuevos</span>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center bg-green-500/20 text-green-500 border border-green-500/30 rounded-xl px-4 py-2 shrink-0 scale-90">
+                        <CheckCircle className="w-5 h-5 mb-0.5" />
+                        <span className="text-[9px] uppercase tracking-widest font-bold">Al Día</span>
+                      </div>
+                    )}
+                  </div>
 
-                <button 
-                  onClick={() => setIsReportsModalOpen(true)}
-                  className="w-full bg-[#FFD700] text-black font-black py-4 rounded-2xl shadow-[0_10px_20px_rgba(255,215,0,0.2)] hover:bg-[#FFE033] active:scale-95 transition-all relative z-10"
-                >
-                  Ver Reportes
-                </button>
+                  <button 
+                    onClick={() => setIsReportsModalOpen(true)}
+                    className="w-full bg-[#FFD700] text-black font-black py-3.5 rounded-2xl shadow-[0_10px_20px_rgba(255,215,0,0.2)] hover:bg-[#FFE033] active:scale-95 transition-all relative z-10 text-sm"
+                  >
+                    Ver Reportes
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -474,6 +576,7 @@ export default function AdminDashboard() {
         {activeTab === 'anuncios' && <AdminAdsTab searchQuery={globalSearch} />}
         {activeTab === 'categorias' && <AdminCategoriesTab />}
         {activeTab === 'paises' && <AdminCountriesTab />}
+        {activeTab === 'verifications' && <AdminVerificationsTab />}
         {activeTab === 'notificaciones' && <AdminNotificationsTab />}
         {activeTab === 'programadas' && <AdminScheduledNotifsTab />}
         {activeTab === 'estadisticas' && <AdminStatsTab />}
@@ -482,14 +585,14 @@ export default function AdminDashboard() {
           isOpen={isReportsModalOpen} 
           onClose={() => setIsReportsModalOpen(false)} 
         />
-        </div>
-      </div>
 
-      <style dangerouslySetInnerHTML={{
-        __html: `
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      `}} />
+        <style dangerouslySetInnerHTML={{
+          __html: `
+          .hide-scrollbar::-webkit-scrollbar { display: none; }
+          .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        `}} />
+      </div>
     </div>
-  );
+  </div>
+);
 }

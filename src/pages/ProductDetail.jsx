@@ -673,7 +673,7 @@ tlfno contacto: 672 593 950`}
                      </div>
                      <div className="flex items-center gap-1.5 pt-0.5">
                         <span className="font-bold text-lg text-[#1A1A3A] truncate max-w-[140px] md:max-w-[180px] lg:max-w-[220px]">{product.userName || "Pana Local"}</span>
-                        {(product.verified || true) && <ShieldCheck className="w-5 h-5 text-[#25D366] fill-[#25D366]/10" />}
+                        {(product.userVerified || product.verified) && <ShieldCheck className="w-5 h-5 text-[#00C97A] stroke-[2px] transition-transform hover:scale-110 cursor-help" title="Pana Verificado" />}
                      </div>
                   </div>
 

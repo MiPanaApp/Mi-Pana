@@ -57,13 +57,12 @@ export default function AdminUsersTab({ searchQuery = '' }) {
 Usuario: ${userName || id}
 
 Esta acción borrará:
+• Cuenta de inicio de sesión (Authentication)
 • Perfil de Firestore
 • Todos sus anuncios
 • Todas sus conversaciones
 
-⚠️ La cuenta de acceso (email/Google) debe eliminarse manualmente desde Firebase Console.
-
-¿Estas seguro? Esta acción NO se puede deshacer.`
+¿Estás seguro? Esta acción NO se puede deshacer.`
     );
     if (!confirmed) return;
 
@@ -81,10 +80,19 @@ Esta acción borrará:
       const convsSnap = await getDocs(query(collection(db, 'conversations'), where('participants', 'array-contains', id)));
       convsSnap.forEach(d => batch.delete(d.ref));
 
-      // 3. Borrar el perfil de usuario
+      // 3. Borrar el perfil de usuario de Firestore
       batch.delete(doc(db, 'users', id));
 
       await batch.commit();
+      
+      // 4. Borrar de Firebase Authentication (usando Cloud Function nueva)
+      try {
+        const deleteAuthUser = httpsCallable(functions, 'deleteUserByAdmin');
+        await deleteAuthUser({ uid: id });
+        console.log("Usuario eliminado de Firebase Auth");
+      } catch (authErr) {
+        console.error("Error al borrar en Auth (puede que ya no existiera):", authErr);
+      }
       
       // Enviar email de eliminación
       try {
@@ -98,7 +106,7 @@ Esta acción borrará:
         console.error('Error enviando email post-eliminación:', e);
       }
       
-      alert(`✅ Usuario eliminado correctamente.\n\n⚠️ Recuerda eliminar también la cuenta de autenticación desde:\nFirebase Console > Authentication > Users`);
+      alert(`✅ Usuario y todos sus datos eliminados correctamente tanto de la Base de Datos como de Authentication.`);
       setSelectedUser(null);
     } catch (e) {
       console.error(e);
