@@ -5,34 +5,31 @@ const { defineSecret } = require("firebase-functions/params");
 const RESEND_API_KEY = defineSecret("RESEND_API_KEY");
 
 const { initializeApp } = require("firebase-admin/app");
+const { getFirestore } = require("firebase-admin/firestore");
+const { getMessaging } = require("firebase-admin/messaging");
+
 initializeApp();
-/**
- * NOTA DE ARQUITECTURA: 
- * No importamos firebase-admin ni resend aquí arriba para evitar el Timeout de 10s en el despliegue.
- * Todo se cargará "Bajo Demanda" dentro de cada export.
- */
+const db = getFirestore();
+const messaging = getMessaging();
 
 // --- 1. FUNCIÓN DE CONTACTO ---
 exports.sendContactEmail = onRequest({
   cors: true,
   maxInstances: 10,
-  region: "us-central1"
+  region: "us-central1",
+  secrets: [RESEND_API_KEY]
 }, async (req, res) => {
-  // CARGA INTERNA / LAZY LOADING
-  const { initializeApp, getApps } = require("firebase-admin/app");
+  // CARGA INTERNA / LAZY LOADING RESEND
   const { Resend } = require("resend");
-
-  // Inicialización segura
-  if (getApps().length === 0) initializeApp();
-  const resend = new Resend("re_Bnt9kkB4_BSed6n9dz9Z4H3sHZA9WLdfi");
+  const resend = new Resend(RESEND_API_KEY.value());
 
   if (req.method !== 'POST') return res.status(405).send('Solo POST');
 
   const { fullName, email, phone, subject, message } = req.body;
 
   try {
-    await resend.emails.send({
-      from: "Mi Pana App <onboarding@resend.dev>",
+    const result = await resend.emails.send({
+      from: "Mi Pana <onboarding@resend.dev>",
       to: "radarcriollo@gmail.com",
       reply_to: email,
       subject: `[Mi Pana App] Nuevo mensaje de: ${fullName}`,
@@ -48,8 +45,10 @@ exports.sendContactEmail = onRequest({
         </div>
       `
     });
+    console.log("✅ sendContactEmail enviado:", JSON.stringify(result));
     return res.status(200).send({ success: true });
   } catch (error) {
+    console.error("❌ sendContactEmail error:", error.message, error);
     return res.status(500).send({ error: error.message });
   }
 });
@@ -278,8 +277,6 @@ exports.sendAdminNotification = onCall(
       sentBy: request.auth.uid,
       recipients: recipients // Lista de usuarios que recibieron (o al menos se intentó)
     })
-
-    return { sent: totalSent }
 
     return { sent: totalSent }
   }
@@ -562,10 +559,10 @@ function emailTemplate({ title, preheader, content, ctaText, ctaUrl }) {
       <tr><td align="center">
         <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px">
           <tr>
-            <td style="background:#1A1A3A;border-radius:20px 20px 0 0;padding:36px 40px;text-align:center">
+            <td style="background:#FFC200;background:linear-gradient(160deg, #FFC200 0%, #F8E22A 60%);border-radius:20px 20px 0 0;padding:36px 40px;text-align:center">
               <img src="https://app-mi-pana.vercel.app/icons/logo-splash.png"
-                alt="Mi Pana" width="140"
-                style="display:block;margin:0 auto;max-width:140px"/>
+                alt="Mi Pana" width="182"
+                style="display:block;margin:0 auto;max-width:182px"/>
             </td>
           </tr>
           <tr>
@@ -585,7 +582,7 @@ function emailTemplate({ title, preheader, content, ctaText, ctaUrl }) {
           <tr>
             <td style="background:#F5F5F8;border-radius:0 0 20px 20px;padding:24px 40px;text-align:center;border:1px solid #EBEBEB;border-top:none">
               <p style="margin:0 0 8px;color:#1A1A3A;opacity:0.4;font-size:12px">
-                &copy; 2025 Mi Pana &middot; Juntos somos más 🤝
+                &copy; 2025 Mi Pana &middot; Juntos somos más
               </p>
               <p style="margin:0;font-size:12px">
                 <a href="https://app-mi-pana.vercel.app/privacidad" style="color:#1A1A3A;opacity:0.4;text-decoration:none">Privacidad</a>
@@ -603,10 +600,18 @@ function emailTemplate({ title, preheader, content, ctaText, ctaUrl }) {
   </html>`
 }
 
+function lucideIcon(name, color = '#1A1A3A', size = 18) {
+  return `<img src="https://unpkg.com/lucide-static@latest/icons/${name}.svg" width="${size}" height="${size}" style="vertical-align:middle;display:inline-block;margin-top:-2px" alt="${name}"/>`
+}
+
 function bodyText(title, paragraphs) {
   return `
-    <h1 style="margin:0 0 8px;color:#1A1A3A;font-size:26px;font-weight:900;text-align:center;line-height:1.3">${title}</h1>
-    <div style="width:48px;height:4px;background:#FFB400;border-radius:2px;margin:12px auto 28px"></div>
+    <div style="text-align:center;">
+      <div style="display:inline-block;text-align:left;">
+        <h1 style="margin:0;color:#1A1A3A;font-size:26px;font-weight:900;line-height:1.3">${title}</h1>
+        <div style="width:40px;height:4px;background:#FFB400;border-radius:2px;margin:12px 0 28px"></div>
+      </div>
+    </div>
     ${paragraphs.map(p => `<p style="margin:0 0 16px;color:#3A3A5A;font-size:15px;line-height:1.7;text-align:center">${p}</p>`).join('')}
   `
 }
@@ -615,8 +620,11 @@ function bodyText(title, paragraphs) {
 // EMAIL 1 — Bienvenida (automático al crear usuario)
 // ════════════════════════════════════════════════
 
-exports.sendWelcomeEmail = onUserCreated(
-  { secrets: [RESEND_API_KEY] },
+exports.sendWelcomeEmail = onDocumentCreated(
+  { 
+    document: "users/{userId}", // Especificamos la ruta para mayor claridad si es necesario
+    secrets: [RESEND_API_KEY] 
+  },
   async (event) => {
     const userData = event.data.data()
     const email = userData?.email
@@ -627,28 +635,32 @@ exports.sendWelcomeEmail = onUserCreated(
     const resend = new Resend(RESEND_API_KEY.value())
 
     const content = bodyText(
-      "¡Bienvenido a Mi Pana! 🎉",
+      `¡Bienvenido a Mi Pana! ${lucideIcon('party-popper', '#FFB400', 24)}`,
       [
-        `<strong>${user.displayName || "Pana"}</strong>, ya eres parte de la comunidad venezolana más grande en el exterior. ¡Nos alegra un montón tenerte con nosotros!`,
+        `<strong>${displayName}</strong>, ya eres parte de la comunidad venezolana más grande en el exterior. ¡Nos alegra un montón tenerte con nosotros!`,
         `Con Mi Pana puedes publicar y encontrar productos y servicios, chatear directamente con otros panas, y construir tu reputación en la comunidad con valoraciones reales.`,
         `Tu cuenta está lista. ¡Empieza a explorar y a conectar con tu comunidad, pana!`
       ]
     )
 
-    await resend.emails.send({
-      from: "Mi Pana <hola@app-mi-pana.vercel.app>",
-      to: user.email,
-      subject: "¡Bienvenido a Mi Pana, pana! 🤝",
-      html: emailTemplate({
-        title: "Bienvenida",
-        preheader: "Ya eres parte de la comunidad venezolana más grande en el exterior",
-        content,
-        ctaText: "Explorar Mi Pana 🚀",
-        ctaUrl: "https://app-mi-pana.vercel.app/home"
+    try {
+      const result = await resend.emails.send({
+        from: "Mi Pana <onboarding@resend.dev>",
+        to: email,
+        subject: "¡Bienvenido a Mi Pana, pana!",
+        html: emailTemplate({
+          title: "Bienvenida",
+          preheader: "Ya eres parte de la comunidad venezolana más grande en el exterior",
+          content,
+          ctaText: `Explorar Mi Pana ${lucideIcon('rocket', '#1A1A3A', 16)}`,
+          ctaUrl: "https://app-mi-pana.vercel.app/home"
+        })
       })
-    })
-
-    console.log(`✅ Email bienvenida enviado: ${user.email}`)
+      console.log(`✅ sendWelcomeEmail enviado exitosamente a ${email}:`, JSON.stringify(result))
+    } catch (emailError) {
+      console.error(`❌ sendWelcomeEmail error enviando a ${email}:`, emailError.message, emailError)
+      throw emailError
+    }
   }
 )
 
@@ -665,9 +677,6 @@ exports.sendVerificationCode = onCall(
     if (!email) throw new HttpsError("invalid-argument", "Email requerido")
 
     const code = Math.floor(100000 + Math.random() * 900000).toString()
-
-    const { getFirestore } = require("firebase-admin/firestore")
-    const db = getFirestore()
     await db.collection("verificationCodes").doc(request.auth.uid).set({
       code,
       email,
@@ -680,28 +689,32 @@ exports.sendVerificationCode = onCall(
     const resend = new Resend(RESEND_API_KEY.value())
 
     const content = bodyText(
-      "Verifica tu email 🔐",
+      `Verifica tu email ${lucideIcon('lock', '#FFB400', 22)}`,
       [
         `Hola <strong>${userName || "pana"}</strong>, usa este código para verificar tu cuenta en Mi Pana:`,
         `<span style="display:inline-block;background:#1A1A3A;color:#FFB400;font-size:42px;font-weight:900;letter-spacing:10px;padding:20px 32px;border-radius:16px;margin:8px 0">${code}</span>`,
-        `<span style="font-size:13px;color:#999">⏱ Este código expira en 15 minutos.<br/>Si no solicitaste este código, ignora este correo.</span>`
+        `<span style="font-size:13px;color:#999">${lucideIcon('clock', '#999', 14)} Este código expira en 15 minutos.<br/>Si no solicitaste este código, ignora este correo.</span>`
       ]
     )
 
-    await resend.emails.send({
-      from: "Mi Pana <hola@app-mi-pana.vercel.app>",
-      to: email,
-      subject: `${code} — Tu código de verificación Mi Pana`,
-      html: emailTemplate({
-        title: "Verificación de email",
-        preheader: `Tu código de verificación es ${code}`,
-        content,
-        ctaText: null,
-        ctaUrl: null
+    try {
+      const result = await resend.emails.send({
+        from: "Mi Pana <onboarding@resend.dev>",
+        to: email,
+        subject: `${code} — Tu código de verificación Mi Pana`,
+        html: emailTemplate({
+          title: "Verificación de email",
+          preheader: `Tu código de verificación es ${code}`,
+          content,
+          ctaText: null,
+          ctaUrl: null
+        })
       })
-    })
-
-    console.log(`✅ Código ${code} enviado a: ${email}`)
+      console.log(`✅ sendVerificationCode — Código ${code} enviado a ${email}:`, JSON.stringify(result))
+    } catch (emailError) {
+      console.error(`❌ sendVerificationCode error enviando a ${email}:`, emailError.message, emailError)
+      throw emailError
+    }
     return { success: true }
   }
 )
@@ -717,8 +730,6 @@ exports.verifyEmailCode = onCall(
     const { code } = request.data
     if (!code) throw new HttpsError("invalid-argument", "Código requerido")
 
-    const { getFirestore } = require("firebase-admin/firestore")
-    const db = getFirestore()
     const docRef = db.collection("verificationCodes").doc(request.auth.uid)
     const snap = await docRef.get()
 
@@ -758,7 +769,7 @@ exports.sendPasswordResetEmail = onCall(
     const resend = new Resend(RESEND_API_KEY.value())
 
     const content = bodyText(
-      "Recupera tu contraseña 🔑",
+      `Recupera tu contraseña ${lucideIcon('key', '#FFB400', 22)}`,
       [
         `Recibimos una solicitud para restablecer la contraseña de tu cuenta en Mi Pana.`,
         `Si fuiste tú, haz clic en el botón de abajo para crear una nueva contraseña. Este enlace es válido por <strong>24 horas</strong>.`,
@@ -766,19 +777,24 @@ exports.sendPasswordResetEmail = onCall(
       ]
     )
 
-    await resend.emails.send({
-      from: "Mi Pana <hola@app-mi-pana.vercel.app>",
-      to: email,
-      subject: "Restablece tu contraseña en Mi Pana 🔑",
-      html: emailTemplate({
-        title: "Recuperar contraseña",
-        preheader: "Solicitud de restablecimiento de contraseña",
-        content,
-        ctaText: "Restablecer contraseña 🔑",
-        ctaUrl: resetLink
+    try {
+      const result = await resend.emails.send({
+        from: "Mi Pana <onboarding@resend.dev>",
+        to: email,
+        subject: "Restablece tu contraseña en Mi Pana",
+        html: emailTemplate({
+          title: "Recuperar contraseña",
+          preheader: "Solicitud de restablecimiento de contraseña",
+          content,
+          ctaText: `Restablecer contraseña ${lucideIcon('key', '#1A1A3A', 16)}`,
+          ctaUrl: resetLink
+        })
       })
-    })
-
+      console.log(`✅ sendPasswordResetEmail enviado a ${email}:`, JSON.stringify(result))
+    } catch (emailError) {
+      console.error(`❌ sendPasswordResetEmail error enviando a ${email}:`, emailError.message, emailError)
+      throw emailError
+    }
     return { success: true }
   }
 )
@@ -798,27 +814,32 @@ exports.sendProductCreatedEmail = onCall(
     const resend = new Resend(RESEND_API_KEY.value())
 
     const content = bodyText(
-      "¡Tu anuncio está activo, pana! 🎉",
+      `¡Mi panita, tu anuncio ya está activo! ${lucideIcon('party-popper', '#FFB400', 24)}`,
       [
         `<strong>${userName || "Pana"}</strong>, tu anuncio ha sido publicado exitosamente en Mi Pana y ya está visible para toda la comunidad.`,
-        `<span style="display:inline-block;background:#F5F5F8;border-radius:10px;padding:12px 24px;margin:8px 0;font-weight:700;color:#1A1A3A;font-size:17px">📦 ${productName} &nbsp;·&nbsp; 💰 ${productPrice}€</span>`,
+        `<span style="display:inline-block;background:#F5F5F8;border-radius:10px;padding:12px 24px;margin:8px 0;font-weight:700;color:#1A1A3A;font-size:17px">${lucideIcon('package', '#1A1A3A', 20)} ${productName} &nbsp;·&nbsp; ${lucideIcon('banknote', '#1A1A3A', 20)} ${productPrice}€</span>`,
         `Recuerda responder rápido los mensajes. ¡Los panas que responden rápido consiguen más clientes!`
       ]
     )
 
-    await resend.emails.send({
-      from: "Mi Pana <hola@app-mi-pana.vercel.app>",
-      to: email,
-      subject: `✅ Tu anuncio "${productName}" ya está activo`,
-      html: emailTemplate({
-        title: "Anuncio publicado",
-        preheader: `Tu anuncio ${productName} ya está visible en Mi Pana`,
-        content,
-        ctaText: "Ver mi anuncio 👀",
-        ctaUrl: `https://app-mi-pana.vercel.app/perfil-producto?id=${productId}`
+    try {
+      const result = await resend.emails.send({
+        from: "Mi Pana <onboarding@resend.dev>",
+        to: email,
+        subject: `Tu anuncio "${productName}" ya está activo`,
+        html: emailTemplate({
+          title: "Anuncio publicado",
+          preheader: `Tu anuncio ${productName} ya está visible en Mi Pana`,
+          content,
+          ctaText: `Ver mi anuncio ${lucideIcon('eye', '#1A1A3A', 16)}`,
+          ctaUrl: `https://app-mi-pana.vercel.app/perfil-producto?id=${productId}`
+        })
       })
-    })
-
+      console.log(`✅ sendProductCreatedEmail enviado a ${email}:`, JSON.stringify(result))
+    } catch (emailError) {
+      console.error(`❌ sendProductCreatedEmail error enviando a ${email}:`, emailError.message, emailError)
+      throw emailError
+    }
     return { success: true }
   }
 )
@@ -830,8 +851,6 @@ exports.sendProductCreatedEmail = onCall(
 exports.sendUnreadMessagesEmail = onSchedule(
   { schedule: "every 4 hours", region: "us-central1", secrets: [RESEND_API_KEY] },
   async () => {
-    const { getFirestore } = require("firebase-admin/firestore")
-    const db = getFirestore()
     const { Resend } = require("resend")
     const resend = new Resend(RESEND_API_KEY.value())
 
@@ -863,26 +882,32 @@ exports.sendUnreadMessagesEmail = onSchedule(
       if (!user.email) continue
 
       const content = bodyText(
-        "Tienes mensajes sin leer 💬",
+        `Tienes mensajes sin leer ${lucideIcon('message-square', '#FFB400', 22)}`,
         [
           `¡Ey, <strong>${user.name || "pana"}</strong>! Tienes mensajes nuevos esperándote en Mi Pana.`,
-          `<span style="display:inline-block;background:#F5F5F8;border-radius:10px;padding:12px 24px;font-weight:700;color:#1A1A3A">🔔 ${conv.unreadCount || "Varios"} mensaje(s) sin leer sobre:<br/><span style="color:#FFB400">${conv.productName || "un anuncio"}</span></span>`,
+          `<span style="display:inline-block;background:#F5F5F8;border-radius:10px;padding:12px 24px;font-weight:700;color:#1A1A3A">${lucideIcon('bell', '#FFB400', 18)} ${conv.unreadCount || "Varios"} mensaje(s) sin leer sobre:<br/><span style="color:#FFB400">${conv.productName || "un anuncio"}</span></span>`,
           `No dejes esperando a tu pana, ¡una respuesta rápida hace la diferencia!`
         ]
       )
 
-      await resend.emails.send({
-        from: "Mi Pana <hola@app-mi-pana.vercel.app>",
-        to: user.email,
-        subject: `💬 Tienes mensajes sin leer en Mi Pana`,
-        html: emailTemplate({
-          title: "Mensajes sin leer",
-          preheader: "Tienes mensajes nuevos en Mi Pana",
-          content,
-          ctaText: "Leer mensajes 💬",
-          ctaUrl: "https://app-mi-pana.vercel.app/mensajes"
+      try {
+        const result = await resend.emails.send({
+          from: "Mi Pana <onboarding@resend.dev>",
+          to: user.email,
+          subject: `Tienes mensajes sin leer en Mi Pana`,
+          html: emailTemplate({
+            title: "Mensajes sin leer",
+            preheader: "Tienes mensajes nuevos en Mi Pana",
+            content,
+            ctaText: `Leer mensajes ${lucideIcon('message-square', '#1A1A3A', 16)}`,
+            ctaUrl: "https://app-mi-pana.vercel.app/messages"
+          })
         })
-      })
+        console.log(`✅ sendUnreadMessagesEmail enviado a ${user.email}:`, JSON.stringify(result))
+      } catch (emailError) {
+        console.error(`❌ sendUnreadMessagesEmail error enviando a ${user.email}:`, emailError.message)
+        // Continuar con los siguientes sin fallar toda la función
+      }
 
       await convDoc.ref.update({ lastUnreadEmailSentAt: new Date() })
     }
@@ -900,8 +925,6 @@ exports.sendAccountSuspendedEmail = onCall(
   async (request) => {
     if (!request.auth) throw new HttpsError("unauthenticated", "No autenticado")
 
-    const { getFirestore } = require("firebase-admin/firestore")
-    const db = getFirestore()
     const callerSnap = await db.collection("users").doc(request.auth.uid).get()
     if (callerSnap.data()?.role !== "admin") {
       throw new HttpsError("permission-denied", "Solo admins")
@@ -915,31 +938,36 @@ exports.sendAccountSuspendedEmail = onCall(
     const tipoSuspension = isPermanent ? "eliminada permanentemente" : "suspendida temporalmente"
 
     const content = bodyText(
-      isPermanent ? "Tu cuenta ha sido eliminada" : "Tu cuenta ha sido suspendida ⚠️",
+      isPermanent ? "Tu cuenta ha sido eliminada" : `Tu cuenta ha sido suspendida ${lucideIcon('alert-triangle', '#D90429', 24)}`,
       [
         `Hola <strong>${userName || "pana"}</strong>, te informamos que tu cuenta en Mi Pana ha sido <strong>${tipoSuspension}</strong> por nuestro equipo de moderación.`,
-        `<span style="display:inline-block;background:#FFF0F0;border-radius:10px;padding:12px 24px;font-weight:600;color:#D90429;font-size:14px;border-left:4px solid #D90429">📋 Motivo: ${reason || "Violación de las normas de la comunidad"}</span>`,
+        `<span style="display:inline-block;background:#FFF0F0;border-radius:10px;padding:12px 24px;font-weight:600;color:#D90429;font-size:14px;border-left:4px solid #D90429">${lucideIcon('clipboard-list', '#D90429', 18)} Motivo: ${reason || "Violación de las normas de la comunidad"}</span>`,
         isPermanent
           ? `Esta decisión es definitiva. Si consideras que es un error, puedes contactarnos respondiendo este correo.`
           : `Si crees que es un error, responde este correo y nuestro equipo lo revisará. Recuerda siempre respetar las normas de nuestra comunidad, pana.`
       ]
     )
 
-    await resend.emails.send({
-      from: "Mi Pana <hola@app-mi-pana.vercel.app>",
-      to: email,
-      subject: isPermanent
-        ? "Tu cuenta en Mi Pana ha sido eliminada"
-        : "⚠️ Tu cuenta en Mi Pana ha sido suspendida",
-      html: emailTemplate({
-        title: isPermanent ? "Cuenta eliminada" : "Cuenta suspendida",
-        preheader: `Tu cuenta ha sido ${tipoSuspension}`,
-        content,
-        ctaText: isPermanent ? null : "Contactar soporte",
-        ctaUrl: isPermanent ? null : "mailto:hola@app-mi-pana.vercel.app"
+    try {
+      const result = await resend.emails.send({
+        from: "Mi Pana <onboarding@resend.dev>",
+        to: email,
+        subject: isPermanent
+          ? "Tu cuenta en Mi Pana ha sido eliminada"
+          : "Tu cuenta en Mi Pana ha sido suspendida",
+        html: emailTemplate({
+          title: isPermanent ? "Cuenta eliminada" : "Cuenta suspendida",
+          preheader: `Tu cuenta ha sido ${tipoSuspension}`,
+          content,
+          ctaText: isPermanent ? null : "Contactar soporte",
+          ctaUrl: isPermanent ? null : "mailto:hola@app-mi-pana.vercel.app"
+        })
       })
-    })
-
+      console.log(`✅ sendAccountSuspendedEmail enviado a ${email}:`, JSON.stringify(result))
+    } catch (emailError) {
+      console.error(`❌ sendAccountSuspendedEmail error enviando a ${email}:`, emailError.message, emailError)
+      throw emailError
+    }
     return { success: true }
   }
 )
@@ -959,27 +987,32 @@ exports.sendProductDeletedEmail = onCall(
     const resend = new Resend(RESEND_API_KEY.value())
 
     const content = bodyText(
-      "Anuncio eliminado correctamente 🗑️",
+      `Anuncio eliminado correctamente ${lucideIcon('trash-2', '#666', 22)}`,
       [
         `Hola <strong>${userName || "pana"}</strong>, te confirmamos que tu anuncio ha sido eliminado exitosamente de Mi Pana.`,
-        `<span style="display:inline-block;background:#F5F5F8;border-radius:10px;padding:12px 24px;font-weight:700;color:#1A1A3A;font-size:16px">📦 ${productName}</span>`,
+        `<span style="display:inline-block;background:#F5F5F8;border-radius:10px;padding:12px 24px;font-weight:700;color:#1A1A3A;font-size:16px">${lucideIcon('package', '#666', 18)} ${productName}</span>`,
         `Ya no será visible para otros usuarios. Si fue un error, puedes publicarlo nuevamente cuando quieras. ¡Tu espacio en Mi Pana siempre estará disponible, pana!`
       ]
     )
 
-    await resend.emails.send({
-      from: "Mi Pana <hola@app-mi-pana.vercel.app>",
-      to: email,
-      subject: `🗑️ Tu anuncio "${productName}" fue eliminado`,
-      html: emailTemplate({
-        title: "Anuncio eliminado",
-        preheader: `Confirmación: ${productName} eliminado de Mi Pana`,
-        content,
-        ctaText: "Publicar nuevo anuncio ✍️",
-        ctaUrl: "https://app-mi-pana.vercel.app/crear-anuncio"
+    try {
+      const result = await resend.emails.send({
+        from: "Mi Pana <onboarding@resend.dev>",
+        to: email,
+        subject: `Tu anuncio "${productName}" fue eliminado`,
+        html: emailTemplate({
+          title: "Anuncio eliminado",
+          preheader: `Confirmación: ${productName} eliminado de Mi Pana`,
+          content,
+          ctaText: `Publicar nuevo anuncio ${lucideIcon('pencil', '#1A1A3A', 16)}`,
+          ctaUrl: "https://app-mi-pana.vercel.app/crear-anuncio"
+        })
       })
-    })
-
+      console.log(`✅ sendProductDeletedEmail enviado a ${email}:`, JSON.stringify(result))
+    } catch (emailError) {
+      console.error(`❌ sendProductDeletedEmail error enviando a ${email}:`, emailError.message, emailError)
+      throw emailError
+    }
     return { success: true }
   }
 )

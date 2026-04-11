@@ -26,7 +26,7 @@ import { useLocationStore } from '../store/useLocationStore';
 import { getCountryNameFromCode, getCountryCodeFromName, LOCATION_DATA } from '../data/locations';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 
-const functions = getFunctions();
+const functions = getFunctions(undefined, 'us-central1');
 
 
 export default function Profile() {

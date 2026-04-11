@@ -33,7 +33,7 @@ import InfoModal from "../InfoModal";
 import { LegalData } from "../../data/LegalData";
 import EmailVerificationModal from "./EmailVerificationModal";
 
-const functions = getFunctions();
+const functions = getFunctions(undefined, 'us-central1');
 
 
 export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
@@ -213,6 +213,12 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
       
       // Enviar código de verificación
       try {
+        if (!user?.email) {
+          console.warn('[ProfileBottomSheet] No hay email de usuario, saltando verificación');
+          onClose();
+          navigate("/onboarding");
+          return;
+        }
         const sendCode = httpsCallable(functions, 'sendVerificationCode');
         await sendCode({
           email: user.email,
@@ -220,7 +226,7 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
         });
         setShowVerificationModal(true);
       } catch (e) {
-        console.error('Error enviando código:', e);
+        console.error('[ProfileBottomSheet] Error enviando código de verificación:', e);
         // Si falla el email, igual cerramos y vamos a onboarding para no bloquear
         onClose();
         navigate("/onboarding");

@@ -12,7 +12,7 @@ import { translateFirebaseError } from "../../utils/authErrors";
 import logoFull from "../../assets/Logo_Mi_pana.png";
 import "../../styles/auth.css";
 
-const functions = getFunctions();
+const functions = getFunctions(undefined, 'us-central1');
 
 
 export default function LoginScreen() {

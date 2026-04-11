@@ -9,6 +9,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pi
 import { db } from '../../services/firebase';
 // OPTIMIZACIÓN: Importamos getCountFromServer para ahorrar costos de lectura
 import { collection, getDocs, query, limit, getCountFromServer, onSnapshot } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import AdminUsersTab from '../../components/admin/AdminUsersTab';
 import AdminAdsTab from '../../components/admin/AdminAdsTab';
 import AdminStatsTab from '../../components/admin/AdminStatsTab';
@@ -44,6 +45,31 @@ export default function AdminDashboard() {
   const [topViewed, setTopViewed] = useState([]);
   const [pendingReportsCount, setPendingReportsCount] = useState(0);
   const scrollContainerRef = useRef(null);
+  const [emailTestResult, setEmailTestResult] = useState(null);
+  const [emailTestLoading, setEmailTestLoading] = useState(false);
+
+  const testEmail = async () => {
+    setEmailTestLoading(true);
+    setEmailTestResult(null);
+    try {
+      const fns = getFunctions(undefined, 'us-central1');
+      const sendTest = httpsCallable(fns, 'sendProductCreatedEmail');
+      const result = await sendTest({
+        email: 'radarcriollo@gmail.com',
+        userName: 'Admin Test',
+        productName: 'Producto de Prueba 🦪',
+        productId: 'test-123',
+        productPrice: '99'
+      });
+      console.log('✅ Test email enviado exitosamente:', result);
+      setEmailTestResult({ ok: true, msg: '✅ Email de prueba enviado. ¡Revisa radarcriollo@gmail.com!' });
+    } catch (error) {
+      console.error('❌ Error en test de email:', error);
+      setEmailTestResult({ ok: false, msg: '❌ Error: ' + error.message });
+    } finally {
+      setEmailTestLoading(false);
+    }
+  };
 
   useEffect(() => {
     const q = query(collection(db, 'reports'));
@@ -248,6 +274,37 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* 🧪 Panel de Test de Emails */}
+            <div className="xl:col-span-12 bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="font-black text-gray-800 text-lg flex items-center gap-2">
+                    🧪 Test Sistema de Emails
+                  </h3>
+                  <p className="text-xs font-bold text-gray-400 mt-0.5">Envía un email de prueba a radarcriollo@gmail.com para verificar que Resend funciona.</p>
+                </div>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <button
+                    id="btn-test-email"
+                    onClick={testEmail}
+                    disabled={emailTestLoading}
+                    className="px-5 py-2.5 bg-[#FFB400] text-[#1A1A3A] font-black rounded-xl text-sm shadow-sm hover:bg-[#ffc533] active:scale-95 transition-all disabled:opacity-60 flex items-center gap-2"
+                  >
+                    {emailTestLoading ? '⏳ Enviando...' : '🧪 Test Email Sistema'}
+                  </button>
+                  {emailTestResult && (
+                    <span className={`text-sm font-bold px-3 py-1.5 rounded-xl ${
+                      emailTestResult.ok
+                        ? 'bg-green-50 text-green-600 border border-green-200'
+                        : 'bg-red-50 text-red-600 border border-red-200'
+                    }`}>
+                      {emailTestResult.msg}
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Gráficos Principales */}

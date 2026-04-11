@@ -3,8 +3,8 @@
   "description": "Mi Pana — Firebase Cloud Functions",
   "dependencies": {
     "algoliasearch": "^5.0.0",
-    "firebase-admin": "^13.7.0",
-    "firebase-functions": "^7.2.3",
+    "firebase-admin": "^13.8.0",
+    "firebase-functions": "^7.2.5",
     "resend": "^6.10.0"
   },
   "engines": {

@@ -5,7 +5,7 @@ import { db } from '../../services/firebase';
 
 import { Users, Ban, Trash2, CheckCircle, Filter, Info, X, Phone, Mail, Globe, User, Shield, Calendar, Copy, AlertTriangle } from 'lucide-react';
 
-const functions = getFunctions();
+const functions = getFunctions(undefined, 'us-central1');
 
 
 export default function AdminUsersTab({ searchQuery = '' }) {

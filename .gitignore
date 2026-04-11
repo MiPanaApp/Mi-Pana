@@ -61,3 +61,5 @@ dopestyle/
 .env.test.local
 .env.production.local
 service-account.json
+.vercel
+.env*.local

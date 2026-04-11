@@ -34,7 +34,7 @@ const COUNTRY_CODES = [
   { code: '+54', iso: 'AR', name: 'Argentina' },
 ];
 
-const functions = getFunctions();
+const functions = getFunctions(undefined, 'us-central1');
 
 export default function CreateListing() {
   const navigate = useNavigate();
@@ -380,14 +380,18 @@ export default function CreateListing() {
 
         // Enviar email de anuncio creado
         try {
-          const sendProductEmail = httpsCallable(functions, 'sendProductCreatedEmail');
-          await sendProductEmail({
-            email: user?.email || '',
-            userName: user?.displayName || userData?.name || 'Pana',
-            productName: form.title,
-            productId: newDocRef.id,
-            productPrice: form.price
-          });
+          if (!user?.email) {
+            console.warn('[CreateListing] No hay email de usuario, saltando email');
+          } else {
+            const sendProductEmail = httpsCallable(functions, 'sendProductCreatedEmail');
+            await sendProductEmail({
+              email: user.email,
+              userName: user?.displayName || userData?.name || 'Pana',
+              productName: form.title,
+              productId: newDocRef.id,
+              productPrice: form.price
+            });
+          }
         } catch (e) {
           console.error('Error enviando email de anuncio:', e);
         }
