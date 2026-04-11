@@ -63,3 +63,6 @@ dopestyle/
 service-account.json
 .vercel
 .env*.local
+
+# Sensitive documents / credentials
+*.rtf
