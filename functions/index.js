@@ -552,7 +552,7 @@ exports.sendWelcomeEmail = onDocumentCreated(
     const resend = new Resend(RESEND_API_KEY.value())
 
     const content = bodyText(
-      `¡Bienvenido a Mi Pana! ${lucideIcon('party-popper', '#FFB400', 24)}`,
+      `¡Bienvenido a Mi Pana!`,
       [
         `<strong>${displayName}</strong>, ya eres parte de la comunidad venezolana más grande en el exterior. ¡Nos alegra un montón tenerte con nosotros!`,
         `Con Mi Pana puedes publicar y encontrar productos y servicios, chatear directamente con otros panas, y construir tu reputación en la comunidad con valoraciones reales.`,
@@ -569,7 +569,7 @@ exports.sendWelcomeEmail = onDocumentCreated(
           title: "Bienvenida",
           preheader: "Ya eres parte de la comunidad venezolana más grande en el exterior",
           content,
-          ctaText: `Explorar Mi Pana ${lucideIcon('rocket', '#1A1A3A', 16)}`,
+          ctaText: "Explorar Mi Pana",
           ctaUrl: "https://app-mi-pana.vercel.app/home"
         })
       })
@@ -606,11 +606,11 @@ exports.sendVerificationCode = onCall(
     const resend = new Resend(RESEND_API_KEY.value())
 
     const content = bodyText(
-      `Verifica tu email ${lucideIcon('lock', '#FFB400', 22)}`,
+      `Verifica tu email`,
       [
         `Hola <strong>${userName || "pana"}</strong>, usa este código para verificar tu cuenta en Mi Pana:`,
         `<span style="display:inline-block;background:#1A1A3A;color:#FFB400;font-size:42px;font-weight:900;letter-spacing:10px;padding:20px 32px;border-radius:16px;margin:8px 0">${code}</span>`,
-        `<span style="font-size:13px;color:#999">${lucideIcon('clock', '#999', 14)} Este código expira en 15 minutos.<br/>Si no solicitaste este código, ignora este correo.</span>`
+        `<span style="font-size:13px;color:#999">Este código expira en 15 minutos.<br/>Si no solicitaste este código, ignora este correo.</span>`
       ]
     )
 
@@ -686,7 +686,7 @@ exports.sendPasswordResetEmail = onCall(
     const resend = new Resend(RESEND_API_KEY.value())
 
     const content = bodyText(
-      `Recupera tu contraseña ${lucideIcon('key', '#FFB400', 22)}`,
+      `Recupera tu contraseña`,
       [
         `Recibimos una solicitud para restablecer la contraseña de tu cuenta en Mi Pana.`,
         `Si fuiste tú, haz clic en el botón de abajo para crear una nueva contraseña. Este enlace es válido por <strong>24 horas</strong>.`,
@@ -703,7 +703,7 @@ exports.sendPasswordResetEmail = onCall(
           title: "Recuperar contraseña",
           preheader: "Solicitud de restablecimiento de contraseña",
           content,
-          ctaText: `Restablecer contraseña ${lucideIcon('key', '#1A1A3A', 16)}`,
+          ctaText: "Restablecer contraseña",
           ctaUrl: resetLink
         })
       })
@@ -731,10 +731,10 @@ exports.sendProductCreatedEmail = onCall(
     const resend = new Resend(RESEND_API_KEY.value())
 
     const content = bodyText(
-      `¡Mi panita, tu anuncio ya está activo! ${lucideIcon('party-popper', '#FFB400', 24)}`,
+      `¡Mi panita, tu anuncio ya está activo!`,
       [
         `<strong>${userName || "Pana"}</strong>, tu anuncio ha sido publicado exitosamente en Mi Pana y ya está visible para toda la comunidad.`,
-        `<span style="display:inline-block;background:#F5F5F8;border-radius:10px;padding:12px 24px;margin:8px 0;font-weight:700;color:#1A1A3A;font-size:17px">${lucideIcon('package', '#1A1A3A', 20)} ${productName} &nbsp;·&nbsp; ${lucideIcon('banknote', '#1A1A3A', 20)} ${productPrice}€</span>`,
+        `<span style="display:inline-block;background:#F5F5F8;border-radius:10px;padding:12px 24px;margin:8px 0;font-weight:700;color:#1A1A3A;font-size:17px">${productName} &nbsp;·&nbsp; ${productPrice}€</span>`,
         `Recuerda responder rápido los mensajes. ¡Los panas que responden rápido consiguen más clientes!`
       ]
     )
@@ -748,7 +748,7 @@ exports.sendProductCreatedEmail = onCall(
           title: "Anuncio publicado",
           preheader: `Tu anuncio ${productName} ya está visible en Mi Pana`,
           content,
-          ctaText: `Ver mi anuncio ${lucideIcon('eye', '#1A1A3A', 16)}`,
+          ctaText: "Ver mi anuncio",
           ctaUrl: `https://app-mi-pana.vercel.app/perfil-producto?id=${productId}`
         })
       })
@@ -799,10 +799,10 @@ exports.sendUnreadMessagesEmail = onSchedule(
       if (!user.email) continue
 
       const content = bodyText(
-        `Tienes mensajes sin leer ${lucideIcon('message-square', '#FFB400', 22)}`,
+        `Tienes mensajes sin leer`,
         [
           `¡Ey, <strong>${user.name || "pana"}</strong>! Tienes mensajes nuevos esperándote en Mi Pana.`,
-          `<span style="display:inline-block;background:#F5F5F8;border-radius:10px;padding:12px 24px;font-weight:700;color:#1A1A3A">${lucideIcon('bell', '#FFB400', 18)} ${conv.unreadCount || "Varios"} mensaje(s) sin leer sobre:<br/><span style="color:#FFB400">${conv.productName || "un anuncio"}</span></span>`,
+          `<span style="display:inline-block;background:#F5F5F8;border-radius:10px;padding:12px 24px;font-weight:700;color:#1A1A3A"> ${conv.unreadCount || "Varios"} mensaje(s) sin leer sobre:<br/><span style="color:#FFB400">${conv.productName || "un anuncio"}</span></span>`,
           `No dejes esperando a tu pana, ¡una respuesta rápida hace la diferencia!`
         ]
       )
@@ -816,7 +816,7 @@ exports.sendUnreadMessagesEmail = onSchedule(
             title: "Mensajes sin leer",
             preheader: "Tienes mensajes nuevos en Mi Pana",
             content,
-            ctaText: `Leer mensajes ${lucideIcon('message-square', '#1A1A3A', 16)}`,
+            ctaText: "Leer mensajes",
             ctaUrl: "https://app-mi-pana.vercel.app/messages"
           })
         })
@@ -855,10 +855,10 @@ exports.sendAccountSuspendedEmail = onCall(
     const tipoSuspension = isPermanent ? "eliminada permanentemente" : "suspendida temporalmente"
 
     const content = bodyText(
-      isPermanent ? "Tu cuenta ha sido eliminada" : `Tu cuenta ha sido suspendida ${lucideIcon('alert-triangle', '#D90429', 24)}`,
+      isPermanent ? "Tu cuenta ha sido eliminada" : `Tu cuenta ha sido suspendida`,
       [
         `Hola <strong>${userName || "pana"}</strong>, te informamos que tu cuenta en Mi Pana ha sido <strong>${tipoSuspension}</strong> por nuestro equipo de moderación.`,
-        `<span style="display:inline-block;background:#FFF0F0;border-radius:10px;padding:12px 24px;font-weight:600;color:#D90429;font-size:14px;border-left:4px solid #D90429">${lucideIcon('clipboard-list', '#D90429', 18)} Motivo: ${reason || "Violación de las normas de la comunidad"}</span>`,
+        `<span style="display:inline-block;background:#FFF0F0;border-radius:10px;padding:12px 24px;font-weight:600;color:#D90429;font-size:14px;border-left:4px solid #D90429"> Motivo: ${reason || "Violación de las normas de la comunidad"}</span>`,
         isPermanent
           ? `Esta decisión es definitiva. Si consideras que es un error, puedes contactarnos respondiendo este correo.`
           : `Si crees que es un error, responde este correo y nuestro equipo lo revisará. Recuerda siempre respetar las normas de nuestra comunidad, pana.`
@@ -904,10 +904,10 @@ exports.sendProductDeletedEmail = onCall(
     const resend = new Resend(RESEND_API_KEY.value())
 
     const content = bodyText(
-      `Anuncio eliminado correctamente ${lucideIcon('trash-2', '#666', 22)}`,
+      `Anuncio eliminado correctamente`,
       [
         `Hola <strong>${userName || "pana"}</strong>, te confirmamos que tu anuncio ha sido eliminado exitosamente de Mi Pana.`,
-        `<span style="display:inline-block;background:#F5F5F8;border-radius:10px;padding:12px 24px;font-weight:700;color:#1A1A3A;font-size:16px">${lucideIcon('package', '#666', 18)} ${productName}</span>`,
+        `<span style="display:inline-block;background:#F5F5F8;border-radius:10px;padding:12px 24px;font-weight:700;color:#1A1A3A;font-size:16px">${productName}</span>`,
         `Ya no será visible para otros usuarios. Si fue un error, puedes publicarlo nuevamente cuando quieras. ¡Tu espacio en Mi Pana siempre estará disponible, pana!`
       ]
     )
@@ -921,7 +921,7 @@ exports.sendProductDeletedEmail = onCall(
           title: "Anuncio eliminado",
           preheader: `Confirmación: ${productName} eliminado de Mi Pana`,
           content,
-          ctaText: `Publicar nuevo anuncio ${lucideIcon('pencil', '#1A1A3A', 16)}`,
+          ctaText: "Publicar nuevo anuncio",
           ctaUrl: "https://app-mi-pana.vercel.app/crear-anuncio"
         })
       })
