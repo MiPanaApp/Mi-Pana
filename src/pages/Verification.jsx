@@ -24,6 +24,7 @@ export default function Verification() {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
   const videoRef = useRef(null);
+  const streamRef = useRef(null); // Ref para acceder al stream sin closures stale
   const [stream, setStream] = useState(null);
   const [livenessStep, setLivenessStep] = useState('init'); // init | detecting | captured
   const [countdown, setCountdown] = useState(3);
@@ -31,9 +32,12 @@ export default function Verification() {
   // Stop camera when unmounting
   useEffect(() => {
     return () => {
-      if (stream) stream.getTracks().forEach(t => t.stop());
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(t => t.stop());
+        streamRef.current = null;
+      }
     };
-  }, [stream]);
+  }, []);
 
   const handleDocumentCapture = (e) => {
     const file = e.target.files[0];
@@ -49,13 +53,14 @@ export default function Verification() {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'user' }
       });
+      streamRef.current = mediaStream; // Guardamos en ref para acceso inmediato
+      setStream(mediaStream);
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
         await videoRef.current.play().catch(e => console.warn("Auto-play prevented", e));
       }
-      setStream(mediaStream);
       setLivenessStep('detecting');
-      
+
       let count = 3;
       setCountdown(count);
       const timer = setInterval(() => {
@@ -63,7 +68,7 @@ export default function Verification() {
         setCountdown(count);
         if (count === 0) {
           clearInterval(timer);
-          setTimeout(capturePhoto, 500); // small delay after hitting 0
+          setTimeout(capturePhoto, 500);
         }
       }, 1000);
     } catch (error) {
@@ -72,21 +77,39 @@ export default function Verification() {
     }
   };
 
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop());
+      streamRef.current = null;
+    }
+    setStream(null);
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+  };
+
   const capturePhoto = () => {
     if (!videoRef.current) return;
     const canvas = document.createElement('canvas');
-    canvas.width = videoRef.current.videoWidth;
-    canvas.height = videoRef.current.videoHeight;
+    canvas.width = videoRef.current.videoWidth || 640;
+    canvas.height = videoRef.current.videoHeight || 480;
     canvas.getContext('2d').drawImage(videoRef.current, 0, 0);
-    
+
+    // Apagar cámara ANTES de hacer el blob para evitar el indicador de grabación de iOS
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop());
+      streamRef.current = null;
+    }
+    setStream(null);
+
     canvas.toBlob((blob) => {
+      if (!blob) {
+        alert('Error al capturar la foto. Inténtalo de nuevo.');
+        return;
+      }
       setSelfieCapture(blob);
       setLivenessScore(calculateLivenessScore(blob));
       setLivenessStep('captured');
-      if (stream) {
-        stream.getTracks().forEach(t => t.stop());
-        setStream(null);
-      }
     }, 'image/jpeg', 0.9);
   };
 
@@ -115,6 +138,14 @@ export default function Verification() {
 
   const handleSubmit = async () => {
     if (!authUser || !authUser.uid) return;
+    if (!selfieCapture) {
+      alert('La selfie no fue capturada correctamente. Toca "Repetir" e inténtalo de nuevo.');
+      return;
+    }
+    if (!documentFront) {
+      alert('El documento no fue cargado correctamente.');
+      return;
+    }
     setUploading(true);
     try {
       const uid = authUser.uid;
@@ -338,7 +369,7 @@ export default function Verification() {
 
             {livenessStep === 'captured' && (
               <div className="flex gap-3">
-                <button onClick={() => { setLivenessStep('init'); setSelfieCapture(null); }} className="px-5 py-4 rounded-2xl font-black bg-gray-200 text-gray-700 active:scale-95 transition-transform">Repetir</button>
+                <button onClick={() => { stopCamera(); setLivenessStep('init'); setSelfieCapture(null); }} className="px-5 py-4 rounded-2xl font-black bg-gray-200 text-gray-700 active:scale-95 transition-transform">Repetir</button>
                 <button onClick={handleSubmit} disabled={uploading} className="flex-1 bg-[#1A1A3A] text-[#FFB400] font-black py-4 rounded-2xl shadow-xl hover:-translate-y-0.5 active:scale-95 transition-all disabled:opacity-50 flex justify-center items-center gap-2">
                   {uploading ? <><span className="animate-spin text-xl">⏳</span> Enviando...</> : 'Enviar solicitud'}
                 </button>
