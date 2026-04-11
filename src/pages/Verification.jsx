@@ -8,7 +8,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Camera, ShieldCheck, ArrowLeft, HourglassIcon } from 'lucide-react';
 
 export default function Verification() {
-  const { user: authUser } = useAuth();
+  const { user: authUser, userData } = useAuth();
   const storeUser = useAuthStore((s) => s.user); // Fuente de verdad del UID real
   // Usamos el uid del store como fuente primaria (igual que Profile.jsx)
   const uid = storeUser?.uid || authUser?.uid;
@@ -181,7 +181,7 @@ export default function Verification() {
         selfieUrl,
         livenessScore,
         submittedAt: serverTimestamp(),
-        country: authUser.country || '',
+        country: userData?.country || userData?.location?.country || '',
         expiresAt: new Date(Date.now() + 2 * 365 * 24 * 3600000)
       });
 
