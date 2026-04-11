@@ -1,0 +1,43 @@
+# MiPana — Deploy Workflow desde Disco Interno
+
+## ⚠️ Problema conocido
+El deploy desde el **disco externo siempre da timeout**.  
+**Solución:** usar siempre el **disco interno** (`~/MiPana-deploy`) para los deploys.
+
+---
+
+## 🚀 Comandos de deploy
+
+```bash
+# 1. Copiar el index.js actualizado al disco interno
+cp "/Volumes/INTERNACION/RESPALDO/alex/App Mi Pana/functions/index.js" \
+   ~/MiPana-deploy/functions/index.js
+
+# 2. Ir al disco interno
+cd ~/MiPana-deploy/functions
+
+# 3. Desplegar desde ahí
+firebase deploy --only functions
+```
+
+---
+
+## 🔁 Flujo estándar (cada modificación)
+
+```
+1. Antigravity modifica el archivo en el disco externo
+        ↓
+2. Copiar al disco interno con el cp de arriba
+        ↓
+3. Desplegar desde ~/MiPana-deploy/functions
+```
+
+---
+
+## 📁 Rutas clave
+
+| Descripción | Ruta |
+|---|---|
+| Fuente (disco externo) | `/Volumes/INTERNACION/RESPALDO/alex/App Mi Pana/functions/index.js` |
+| Destino (disco interno) | `~/MiPana-deploy/functions/index.js` |
+| Directorio de deploy | `~/MiPana-deploy/functions` |
