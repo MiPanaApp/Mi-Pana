@@ -71,141 +71,223 @@ Para cualquier controversia derivada del uso de App Mi Pana, las partes se somet
   privacy: {
     title: 'Políticas de Privacidad',
     content: `POLÍTICA DE PRIVACIDAD – APP MI PANA
+Última actualización: abril 2025
 
 I. CONDICIONES GENERALES DE USO
-
 1. IDENTIFICACIÓN DEL TITULAR
-
 En cumplimiento de la Ley 34/2002 (LSSI-CE), se informa que:
-• Titular: Edgar Guevara
-• NIE: Y8580357Z
-• Domicilio: Valencia, España
-• Email: radarcriollo@gmail.com
 
-La App "Mi Pana" es un marketplace que permite a usuarios publicar anuncios de compraventa de productos y ofrecer servicios profesionales.
+Titular: Edgar Guevara
+NIE: Y8580357Z
+Domicilio: Valencia, España
+Email: radarcriollo@gmail.com
+Web: https://mipana.net
+
+La App "Mi Pana" es un marketplace que permite a usuarios de la comunidad venezolana en el exterior publicar anuncios de compraventa de productos y ofrecer servicios profesionales, facilitando el contacto entre compradores y vendedores.
 
 2. CONDICIÓN DE USUARIO
-
 El acceso y uso de la App atribuye la condición de Usuario, implicando la aceptación íntegra de estas condiciones.
-
 El Usuario declara:
-• Ser mayor de 18 años
-• Facilitar datos veraces
-• Cumplir la legislación vigente
 
-3. REGISTRO Y VERIFICACIÓN DE IDENTIDAD (KYC)
+Ser mayor de 18 años
+Facilitar datos veraces y actualizados
+Cumplir la legislación vigente en su país de residencia
+Haber leído y aceptado la presente Política de Privacidad
 
-Para operar como vendedor o profesional, se requerirá verificación de identidad mediante:
-• DNI/NIE/Pasaporte o documento equivalente
+3. REGISTRO Y AUTENTICACIÓN
+El Usuario puede registrarse mediante:
 
-Base legal:
-• Art. 6.1.b RGPD (ejecución del contrato)
-• Art. 6.1.f RGPD (interés legítimo: prevención de fraude)
+Correo electrónico y contraseña
+Cuenta de Google (OAuth2)
+Cuenta de Facebook (OAuth2)
+Número de teléfono mediante código OTP por SMS
 
-Garantías:
-• Tratamiento cifrado
-• Acceso restringido
-• Conservación limitada al tiempo necesario para validación y auditorías
+Al registrarse por correo electrónico, el Usuario recibirá un código de verificación de 6 dígitos para confirmar la titularidad del email. Dicho código expira a los 15 minutos.
+La App utiliza Firebase Authentication (Google LLC) como proveedor de autenticación. Los datos de autenticación se procesan conforme a la Política de Privacidad de Google.
 
-El usuario podrá negarse, pero ello impedirá el acceso a funcionalidades de venta.
+4. VERIFICACIÓN DE IDENTIDAD — SISTEMA "PANA VERIFICADO"
+La App ofrece de forma voluntaria y opcional un sistema de verificación de identidad que otorga al Usuario la insignia "Pana Verificado ✓", incrementando su credibilidad ante la comunidad.
+4.1 Datos recopilados para la verificación:
 
-4. USO DE LA PLATAFORMA
+Fotografía del documento de identidad (DNI, NIE, Pasaporte, Cédula u otro documento oficial)
+Selfie en tiempo real mediante cámara frontal del dispositivo (liveness check)
+Puntuación de liveness calculada localmente en el dispositivo
 
+4.2 Proceso de verificación:
+
+El Usuario sube su documentación de forma voluntaria
+Las imágenes se almacenan de forma cifrada en Firebase Storage con acceso restringido exclusivamente al equipo de revisión de Mi Pana
+Un administrador de Mi Pana revisa la solicitud manualmente en un plazo de 24-48 horas
+El Usuario recibe un email con el resultado (aprobado o rechazado con motivo)
+Una vez revisada la solicitud, las imágenes son eliminadas permanentemente de los servidores, conservando únicamente el resultado de la verificación en la base de datos
+
+4.3 Conservación de datos de verificación:
+
+Imágenes del documento y selfie: eliminadas inmediatamente tras la revisión (máximo 30 días si no se revisan)
+Resultado de la verificación (aprobado/rechazado): conservado durante la vigencia de la cuenta
+La verificación tiene una validez de 2 años, tras los cuales puede solicitarse renovación
+
+4.4 Base legal:
+
+Art. 6.1.a RGPD (consentimiento expreso del usuario)
+Art. 6.1.f RGPD (interés legítimo: prevención de fraude y estafas)
+
+4.5 Derechos sobre los datos de verificación:
+El Usuario puede solicitar la eliminación de su verificación en cualquier momento contactando a radarcriollo@gmail.com. La eliminación de la verificación conlleva la retirada de la insignia "Pana Verificado" de su perfil y anuncios.
+4.6 Consecuencias del uso indebido:
+Al someterse a la verificación, el Usuario acepta expresamente que, en caso de conductas fraudulentas, estafas o incumplimiento grave de las normas de la comunidad, Mi Pana podrá utilizar los datos de contacto verificados para la resolución de disputas y, si fuera necesario, para la comunicación con autoridades competentes, conforme a la legislación aplicable.
+
+5. COMUNICACIONES POR EMAIL
+La App envía comunicaciones automáticas por correo electrónico mediante el servicio Resend (Resend Inc.) en las siguientes situaciones:
+
+Email de bienvenida: al crear una cuenta nueva
+Código de verificación: al registrarse para confirmar el email
+Recuperación de contraseña: cuando el Usuario solicita restablecer su contraseña
+Confirmación de anuncio publicado: al crear un nuevo anuncio
+Confirmación de anuncio eliminado: al eliminar un anuncio
+Aviso de mensajes sin leer: cuando hay mensajes sin responder en el chat (máximo 1 email por conversación cada 24 horas)
+Resultado de verificación de identidad: al aprobar o rechazar una solicitud "Pana Verificado"
+Suspensión o eliminación de cuenta: en caso de incumplimiento de normas
+
+El Usuario puede solicitar la baja de comunicaciones no transaccionales contactando a radarcriollo@gmail.com. Los emails transaccionales (seguridad, verificación, recuperación de contraseña) no pueden desactivarse ya que son necesarios para el funcionamiento del servicio.
+
+6. NOTIFICACIONES PUSH
+La App puede solicitar permiso para enviar notificaciones push al dispositivo del Usuario mediante Firebase Cloud Messaging (Google LLC).
+Las notificaciones push se utilizan para:
+
+Avisar de nuevos mensajes en el chat
+Recordatorios de valoración tras un contacto
+Comunicaciones de la comunidad y novedades
+
+El Usuario puede:
+
+Aceptar o rechazar el permiso cuando la App lo solicite
+Revocar el permiso en cualquier momento desde los ajustes de su dispositivo
+Gestionar sus preferencias de notificación desde su perfil en la App
+
+El rechazo de notificaciones push no afecta al uso de las funcionalidades principales de la App.
+
+7. USO DE LA PLATAFORMA
 Queda prohibido:
-• Publicar contenido ilícito, fraudulento o engañoso
-• Suplantar identidad
-• Introducir malware
-• Vulnerar derechos de terceros
 
-La App podrá suspender cuentas que incumplan estas normas.
+Publicar contenido ilícito, fraudulento o engañoso
+Suplantar la identidad de otras personas
+Introducir malware o código malicioso
+Vulnerar derechos de propiedad intelectual de terceros
+Realizar estafas o transacciones fraudulentas
+Acosar, amenazar o discriminar a otros usuarios
 
-5. PROPIEDAD INTELECTUAL
+La App podrá suspender o eliminar cuentas que incumplan estas normas, notificando al Usuario por email con el motivo de la suspensión.
 
-Todos los contenidos de la App son titularidad del propietario. El Usuario autoriza el uso no exclusivo, gratuito y limitado en el tiempo de las imágenes y contenidos publicados, únicamente para la promoción de sus anuncios dentro de la App y en canales asociados, durante la vigencia del anuncio.
+8. PROPIEDAD INTELECTUAL
+Todos los contenidos de la App (diseño, código, marca "Mi Pana", logotipo y personaje) son titularidad del propietario o están debidamente licenciados.
+El Usuario autoriza el uso no exclusivo, gratuito y limitado de las imágenes y contenidos publicados en sus anuncios, únicamente para la promoción de dichos anuncios dentro de la App y en canales asociados de Mi Pana, durante la vigencia del anuncio.
 
-6. RESPONSABILIDAD
+9. RESPONSABILIDAD
+App Mi Pana actúa como intermediario tecnológico. No se responsabiliza de:
 
-App Mi Pana actúa como intermediario. No se responsabiliza de:
-• La veracidad de los anuncios
-• La calidad de productos o servicios
-• Los acuerdos entre usuarios
+La veracidad de los anuncios publicados por los usuarios
+La calidad de los productos o servicios ofrecidos
+Los acuerdos económicos entre usuarios
+Las transacciones realizadas fuera de la plataforma
 
-No obstante, responderá en los casos legalmente exigibles.
+No obstante, responderá en los casos legalmente exigibles conforme a la normativa aplicable.
 
 II. CONDICIONES DE CONTRATACIÓN Y PAGOS
-
 1. MÉTODOS DE PAGO
-
-Se admiten:
-• Stripe / PayPal (sujetos a sus condiciones)
-• Métodos directos entre usuarios (Zelle, criptomonedas)
-
-⚠️ Advertencia: El uso de métodos externos implica riesgos que el usuario acepta expresamente. La plataforma no será responsable de errores en transferencias, bloqueos de cuentas, ni pérdidas por uso de criptomonedas.
+La App Mi Pana es una plataforma de contacto. Las transacciones económicas se realizan directamente entre usuarios mediante los métodos que acuerden entre ellos.
+⚠️ Advertencia: El uso de métodos de pago externos (transferencias bancarias, Zelle, Bizum, criptomonedas u otros) implica riesgos que el usuario acepta expresamente. La plataforma no será responsable de errores en transferencias, bloqueos de cuentas, ni pérdidas derivadas de acuerdos entre usuarios.
 
 2. SERVICIOS PROFESIONALES
-
-Los profesionales son responsables de cumplir normativa aplicable y disponer de licencias necesarias. La App no verifica habilitaciones profesionales.
+Los profesionales que ofrezcan servicios a través de la App son responsables de cumplir la normativa aplicable en su país de residencia y de disponer de las licencias y habilitaciones necesarias para el ejercicio de su actividad. La App no verifica habilitaciones profesionales.
 
 3. USO DE INTELIGENCIA ARTIFICIAL
-
-La App puede utilizar IA para generación de descripciones y atención al cliente. El usuario es responsable de revisar los contenidos generados.
+La App puede utilizar herramientas de Inteligencia Artificial para la generación de descripciones de anuncios y atención al cliente. El usuario es responsable de revisar y validar los contenidos generados antes de publicarlos.
 
 III. POLÍTICA DE PRIVACIDAD (RGPD)
-
 1. RESPONSABLE DEL TRATAMIENTO
-Edgar Guevara – Email: radarcriollo@gmail.com
+Edgar Guevara
+Email: radarcriollo@gmail.com
+Web: https://mipana.net
 
 2. DATOS RECOPILADOS
-• Identificativos: nombre, email, teléfono
-• Verificación: documentos de identidad
-• Técnicos: IP, cookies, navegación
+
+Identificativos: nombre, email, número de teléfono, foto de perfil
+Verificación de identidad: fotografía de documento oficial, selfie en tiempo real (eliminados tras revisión)
+Contenido generado: anuncios, imágenes de productos, mensajes del chat
+Técnicos: dirección IP, tipo de dispositivo, sistema operativo, datos de navegación
+Tokens de notificación: identificadores FCM para el envío de notificaciones push
 
 3. FINALIDAD Y BASE LEGAL
-• Gestión de cuenta: Ejecución contractual
-• Prevención de fraude (KYC): Interés legítimo
-• Marketing: Consentimiento
-• Mejora del servicio: Interés legítimo
+FinalidadBase legalGestión de cuenta y autenticaciónEjecución contractual (Art. 6.1.b RGPD)Verificación de identidad (KYC)Consentimiento + Interés legítimo (Art. 6.1.a y 6.1.f RGPD)Envío de emails transaccionalesEjecución contractual (Art. 6.1.b RGPD)Notificaciones pushConsentimiento (Art. 6.1.a RGPD)Prevención de fraudeInterés legítimo (Art. 6.1.f RGPD)Marketing y comunicacionesConsentimiento (Art. 6.1.a RGPD)Mejora del servicio y análisisInterés legítimo (Art. 6.1.f RGPD)
 
 4. DESTINATARIOS
+Los datos podrán ser tratados por los siguientes proveedores tecnológicos:
 
-Los datos podrán ser tratados por:
-• Proveedores tecnológicos (hosting, cloud)
-• Pasarelas de pago (Stripe, PayPal)
-• Herramientas de análisis
+Google Firebase (Google LLC) — autenticación, base de datos, almacenamiento y notificaciones push
+Vercel Inc. — alojamiento web y dominio
+Resend Inc. — envío de emails transaccionales
+Google Analytics — análisis de uso de la App
+
+Todos los proveedores cuentan con garantías adecuadas de protección de datos conforme al RGPD.
 
 5. TRANSFERENCIAS INTERNACIONALES
+Algunos proveedores pueden procesar datos fuera del Espacio Económico Europeo (EEE), en particular en Estados Unidos. En estos casos se aplican las garantías adecuadas previstas en el RGPD, incluyendo las Cláusulas Contractuales Tipo aprobadas por la Comisión Europea.
 
-Podrán existir transferencias fuera del EEE (ej. EEUU), con garantías adecuadas (cláusulas contractuales tipo).
+6. CONSERVACIÓN DE DATOS
 
-6. CONSERVACIÓN
-• Datos de cuenta: mientras exista relación
-• Datos KYC: tiempo estrictamente necesario
-• Datos bloqueados conforme a obligaciones legales
+Datos de cuenta: durante la vigencia de la relación y el tiempo legalmente exigible tras su cancelación
+Imágenes de verificación KYC: eliminadas inmediatamente tras la revisión (máximo 30 días)
+Resultado de verificación: durante la vigencia de la cuenta
+Mensajes del chat: durante la vigencia de la cuenta o hasta su eliminación por el usuario
+Tokens FCM: actualizados en cada sesión, eliminados al revocar permisos
+Datos bloqueados: conforme a obligaciones legales vigentes
 
 7. DERECHOS DEL USUARIO
+El Usuario puede ejercer los siguientes derechos en cualquier momento:
 
-El usuario puede ejercer: Acceso, Rectificación, Supresión, Oposición, Portabilidad y Limitación. Enviando solicitud a: radarcriollo@gmail.com
+Acceso: conocer qué datos se tratan
+Rectificación: corregir datos inexactos
+Supresión: solicitar la eliminación de sus datos
+Oposición: oponerse al tratamiento en determinados casos
+Portabilidad: recibir sus datos en formato estructurado
+Limitación: restringir el tratamiento en determinados casos
+Retirada del consentimiento: en cualquier momento, sin efecto retroactivo
 
-También puede reclamar ante la Agencia Española de Protección de Datos (AEPD).
+Para ejercer cualquiera de estos derechos, el Usuario debe enviar una solicitud a: radarcriollo@gmail.com indicando el derecho que desea ejercer y acreditando su identidad.
+El Usuario también puede presentar una reclamación ante la Agencia Española de Protección de Datos (AEPD): www.aepd.es
 
 IV. POLÍTICA DE COOKIES
-
 1. TIPOS DE COOKIES
-• Técnicas (necesarias)
-• Analíticas
-• Publicitarias
+
+Técnicas (necesarias): imprescindibles para el funcionamiento de la App. No requieren consentimiento.
+Analíticas: permiten analizar el uso de la App para su mejora. Requieren consentimiento.
+De preferencias: recuerdan las configuraciones del usuario (idioma, localización). Requieren consentimiento.
 
 2. CONSENTIMIENTO
+El Usuario podrá aceptar, rechazar o configurar las cookies antes de su instalación mediante el banner de consentimiento que aparece en el primer acceso. Puede modificar su configuración en cualquier momento desde los ajustes de la App.
 
-El usuario podrá aceptar, rechazar o configurar cookies antes de su instalación, mediante banner de consentimiento.
+V. SEGURIDAD
+Mi Pana aplica medidas técnicas y organizativas para garantizar la seguridad de los datos personales:
 
-V. JURISDICCIÓN Y LEY APLICABLE
+Cifrado de datos en tránsito (HTTPS/TLS)
+Almacenamiento cifrado en Firebase Storage y Firestore
+Acceso restringido a datos sensibles (documentos de verificación)
+Eliminación automática de imágenes tras revisión
+Autenticación segura mediante Firebase Authentication
+Reglas de seguridad en base de datos y almacenamiento
 
-Se aplica la legislación española. En caso de consumidores, será competente el juzgado del domicilio del usuario. En otros casos: Valencia, España.
+En caso de brecha de seguridad que afecte a datos personales, Mi Pana notificará a los afectados y a la AEPD en los plazos legalmente establecidos.
 
-VI. ACTUALIZACIONES
+VI. JURISDICCIÓN Y LEY APLICABLE
+La presente Política se rige por la legislación española y la normativa europea de protección de datos (RGPD — Reglamento UE 2016/679).
+En caso de disputas con consumidores, será competente el juzgado del domicilio del usuario. En otros casos, las partes se someten a los juzgados y tribunales de Valencia, España.
 
-La App podrá modificar estas condiciones, notificándolo a los usuarios.`
+VII. ACTUALIZACIONES DE ESTA POLÍTICA
+Mi Pana podrá modificar esta Política de Privacidad para adaptarla a cambios legislativos o funcionales de la App. Los usuarios serán notificados por email con al menos 15 días de antelación ante cambios sustanciales. La versión vigente estará siempre disponible en https://mipana.net/privacidad
+
+© 2025 Mi Pana · Juntos somos más 🤝
+https://mipana.net · radarcriollo@gmail.com`
   },
 
   cookies: {
