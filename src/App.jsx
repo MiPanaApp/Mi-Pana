@@ -12,6 +12,7 @@ import Onboarding from './components/ui/Onboarding';
 import LoginScreen from './pages/auth/LoginScreen';
 import RegisterScreen from './pages/auth/RegisterScreen';
 import CompleteProfile from './pages/auth/CompleteProfile';
+import ResetPasswordScreen from './pages/auth/ResetPasswordScreen';
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import AdminRoute from './components/auth/AdminRoute';
@@ -54,6 +55,7 @@ function App() {
         <Route path="/login" element={<LoginScreen />} />
         <Route path="/register" element={<RegisterScreen />} />
         <Route path="/register/complete-profile" element={<CompleteProfile />} />
+        <Route path="/reset-password" element={<ResetPasswordScreen />} />
         
         {/* Onboarding Flow */}
         <Route path="/" element={<SplashScreen />} />

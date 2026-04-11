@@ -677,7 +677,10 @@ exports.sendPasswordResetEmail = onCall(
     if (!email) throw new HttpsError("invalid-argument", "Email requerido")
 
     const { getAuth } = require("firebase-admin/auth")
-    const resetLink = await getAuth().generatePasswordResetLink(email)
+    let resetLink = await getAuth().generatePasswordResetLink(email)
+    
+    // Cambiamos el link estándar de Firebase por la pantalla nativa de la app
+    resetLink = resetLink.replace("https://app-mi-pana.firebaseapp.com/__/auth/action", "https://mipana.net/reset-password")
 
     const { Resend } = require("resend")
     const resend = new Resend(RESEND_API_KEY.value())
