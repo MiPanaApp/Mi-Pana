@@ -47,10 +47,11 @@ export default function Verification() {
   const startCamera = async () => {
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }
+        video: { facingMode: 'user' }
       });
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
+        await videoRef.current.play().catch(e => console.warn("Auto-play prevented", e));
       }
       setStream(mediaStream);
       setLivenessStep('detecting');
@@ -283,8 +284,18 @@ export default function Verification() {
             <p className="text-sm font-bold text-gray-500 mb-8">Necesitamos comprobar que eres tú.</p>
 
             <div className="relative w-full aspect-[3/4] max-w-xs mx-auto rounded-[32px] overflow-hidden bg-black mb-8 shadow-2xl">
+              
+              {/* Se mantiene siempre renderizado para que videoRef sea válido de inmediato */}
+              <video 
+                ref={videoRef} 
+                autoPlay 
+                playsInline 
+                muted 
+                className={`w-full h-full object-cover scale-x-[-1] ${(livenessStep === 'detecting' || livenessStep === 'captured') ? 'block' : 'hidden'}`} 
+              />
+
               {livenessStep === 'init' && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#1A1A3A] text-white p-6">
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#1A1A3A] text-white p-6 z-10">
                   <Camera size={48} className="text-[#FFB400] mb-4 opacity-80" />
                   <p className="font-bold text-center mb-6">Coloca tu cara dentro del óvalo en la pantalla que aparecerá al encender la cámara.</p>
                   <button onClick={startCamera} className="w-full bg-[#FFB400] text-black font-black py-3 rounded-xl active:scale-95 transition-transform">Encender cámara</button>
@@ -293,7 +304,6 @@ export default function Verification() {
 
               {(livenessStep === 'detecting' || livenessStep === 'captured') && (
                 <>
-                  <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover scale-x-[-1]" />
                   {livenessStep === 'captured' && selfieCapture && (
                     <img src={URL.createObjectURL(selfieCapture)} className="absolute inset-0 w-full h-full object-cover scale-x-[-1]" alt="Selfie" />
                   )}

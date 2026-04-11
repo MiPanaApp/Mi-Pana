@@ -79,13 +79,13 @@ function App() {
           <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/ofertar" element={<ProtectedRoute><OfferForm /></ProtectedRoute>} />
           <Route path="/chats" element={<ProtectedRoute><ChatList /></ProtectedRoute>} />
-          <Route path="/verificacion" element={<ProtectedRoute><Verification /></ProtectedRoute>} />
 
           <Route path="/selector-pais" element={<div className="p-8">Selector de País (Coming Soon)</div>} />
         </Route>
         
-        {/* Fullscreen Chat Route (No Layout Wrapper) */}
+        {/* Fullscreen Routes (No Layout Wrapper) */}
         <Route path="/chat/:conversationId" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+        <Route path="/verificacion" element={<ProtectedRoute><Verification /></ProtectedRoute>} />
         
         {/* Admin Flow */}
         <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />

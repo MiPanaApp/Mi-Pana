@@ -9,7 +9,7 @@ import {
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import { db } from '../../services/firebase';
-import { collection, getDocs, query, limit, getCountFromServer, onSnapshot } from 'firebase/firestore';
+import { collection, getDocs, query, limit, getCountFromServer, onSnapshot, where } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import AdminUsersTab from '../../components/admin/AdminUsersTab';
 import AdminAdsTab from '../../components/admin/AdminAdsTab';

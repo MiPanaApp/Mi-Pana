@@ -23,6 +23,7 @@ import { FaXTwitter } from 'react-icons/fa6';
 import { uploadString } from 'firebase/storage';
 import { LegalData } from '../data/LegalData';
 import LegalDrawer from '../components/LegalDrawer';
+import AvatarCropper from '../components/auth/AvatarCropper';
 import { useLocationStore } from '../store/useLocationStore';
 import { getCountryNameFromCode, getCountryCodeFromName, LOCATION_DATA } from '../data/locations';
 import { usePushNotifications } from '../hooks/usePushNotifications';
