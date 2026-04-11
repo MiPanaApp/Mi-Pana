@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
 import {
   Users, ShoppingBag, MessageSquare, Star, ShieldCheck, Heart,
-  Home, BarChart2, Layers, Activity, Search, Bell, Settings, LogOut, ArrowLeft, Eye, Globe, CheckCircle, CalendarClock
+  Home, BarChart2, Layers, Activity, Search, Bell, Settings, LogOut, ArrowLeft, Eye, Globe, CheckCircle, CalendarClock,
+  Flame, FlaskConical, Image as LucideImage, Zap, Mail, Trash2
 } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { db } from '../../services/firebase';
-// OPTIMIZACIÓN: Importamos getCountFromServer para ahorrar costos de lectura
 import { collection, getDocs, query, limit, getCountFromServer, onSnapshot } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import AdminUsersTab from '../../components/admin/AdminUsersTab';
@@ -18,6 +18,7 @@ import AdminCountriesTab from '../../components/admin/AdminCountriesTab';
 import AdminReportsModal from '../../components/admin/AdminReportsModal';
 import AdminNotificationsTab from '../../components/admin/AdminNotificationsTab';
 import AdminScheduledNotifsTab from '../../components/admin/AdminScheduledNotifsTab';
+import GeoMapChart from '../../components/admin/GeoMapChart';
 
 // Colores alineados a la marca: Amarillo Mi Pana, Morado Admin y acentos
 const COLORS = ['#FFD700', '#8B5CF6', '#06B6D4', '#F43F5E', '#10B981'];
@@ -47,6 +48,9 @@ export default function AdminDashboard() {
   const scrollContainerRef = useRef(null);
   const [emailTestResult, setEmailTestResult] = useState(null);
   const [emailTestLoading, setEmailTestLoading] = useState(false);
+  const [rawUsers, setRawUsers] = useState([]);
+  const [rawProducts, setRawProducts] = useState([]);
+  const [growthWeeks, setGrowthWeeks] = useState(8);
 
   const testEmail = async () => {
     setEmailTestLoading(true);
@@ -95,12 +99,13 @@ export default function AdminDashboard() {
         const usersColl = collection(db, "users");
         const productsColl = collection(db, "products");
 
-        const [usersCountSnap, productsSnap] = await Promise.all([
-          getCountFromServer(usersColl),
+        const [usersSnap, productsSnap] = await Promise.all([
+          getDocs(usersColl),
           getDocs(productsColl)
         ]);
 
         const productsList = productsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const usersList = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
         const totals = productsList.reduce((acc, p) => ({
           views: acc.views + (p.views || 0),
@@ -115,6 +120,7 @@ export default function AdminDashboard() {
            .slice(0, 5);
         setTopViewed(topViewedData);
 
+        // TOP CATEGORIES REALES
         const catMap = {};
         productsList.forEach(data => {
           const cat = data.category || 'Otros';
@@ -124,13 +130,34 @@ export default function AdminDashboard() {
         const catData = Object.keys(catMap).map(name => ({
           name,
           value: catMap[name]
-        })).sort((a, b) => b.value - a.value).slice(0, 5);
+        })).sort((a, b) => b.value - a.value).slice(0, 10);
 
-        setStats({
-          totalUsers: usersCountSnap.data().count,
-          totalProducts: productsList.length,
-          categories: catData.length > 0 ? catData : [{ name: 'Sin datos', value: 1 }]
+        // CRECIMIENTO EVOLUTIVO (Extrae a Raw para filtro posterior)
+        setRawUsers(usersList);
+        setRawProducts(productsList);
+
+        // MAPA GEOGRAFICO: USUARIOS POR PAIS ISO-3
+        // App usa ES, US, CO, peeeero el mapa USA ISO-3: ESP, USA, COL...
+        const ISO2_TO_ISO3 = {
+          'ES': 'ESP', 'US': 'USA', 'CO': 'COL', 'EC': 'ECU', 'PA': 'PAN',
+          'PE': 'PER', 'DO': 'DOM', 'CL': 'CHL', 'AR': 'ARG', 'VE': 'VEN', 'MX': 'MEX'
+        };
+        const countryMap = {};
+        usersList.forEach(u => {
+          if (u.country) {
+            const iso3 = ISO2_TO_ISO3[u.country];
+            if (iso3) countryMap[iso3] = (countryMap[iso3] || 0) + 1;
+          }
         });
+        const geoData = Object.keys(countryMap).map(k => ({ id: k, value: countryMap[k] }));
+
+        setStats(prev => ({
+          ...prev,
+          totalUsers: usersList.length,
+          totalProducts: productsList.length,
+          categories: catData.length > 0 ? catData : [{ name: 'Sin datos', value: 1 }],
+          geo: geoData
+        }));
         setLoading(false);
       } catch (err) {
         console.error("Error fetching stats:", err);
@@ -139,6 +166,36 @@ export default function AdminDashboard() {
     }
     fetchStats();
   }, []);
+
+  // Efecto dinámico para recalcular el chart de Crecimiento si cambian las semanas
+  useEffect(() => {
+    if (!rawUsers.length && !rawProducts.length) return;
+
+    const getWeeksAgo = (dateStr) => {
+      const date = new Date(dateStr?.seconds ? dateStr.seconds * 1000 : dateStr);
+      if (isNaN(date)) return 99;
+      const diffTime = Math.abs(new Date() - date);
+      return Math.floor(diffTime / (1000 * 60 * 60 * 24 * 7));
+    };
+
+    const growthData = Array.from({ length: growthWeeks }, (_, i) => ({
+      name: `Sem -${(growthWeeks - 1) - i}`,
+      users: 0,
+      ads: 0
+    }));
+
+    rawUsers.forEach(u => {
+      const w = getWeeksAgo(u.createdAt);
+      if (w < growthWeeks) growthData[(growthWeeks - 1) - w].users += 1;
+    });
+
+    rawProducts.forEach(p => {
+      const w = getWeeksAgo(p.createdAt);
+      if (w < growthWeeks) growthData[(growthWeeks - 1) - w].ads += 1;
+    });
+
+    setStats(prev => ({ ...prev, growth: growthData }));
+  }, [growthWeeks, rawUsers, rawProducts]);
 
   const formatCount = (n) => {
     if (!n) return '0';
@@ -225,12 +282,6 @@ export default function AdminDashboard() {
             <div>
               <div className="flex items-center gap-3">
                 <h1 className="text-3xl font-black text-gray-800 tracking-tight">Panel Mi Pana</h1>
-                {activeTab === 'overview' && (
-                  <button className="relative w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm border border-gray-100 text-gray-400 hover:text-[#FFD700] transition-colors shrink-0">
-                    <Bell className="w-5 h-5" />
-                    <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-                  </button>
-                )}
               </div>
               <p className="text-sm font-bold text-gray-400">Gestión centralizada de la comunidad</p>
             </div>
@@ -255,20 +306,22 @@ export default function AdminDashboard() {
         {activeTab === 'overview' && (
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 pb-44 lg:pb-6">
 
-            {/* Metrics con Efecto Neumórfico Suave */}
-            <div className="xl:col-span-12 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
+            {/* Metrics compactas */}
+            <div className="xl:col-span-12 grid grid-cols-2 md:grid-cols-4 gap-4">
               {metrics.map((m, idx) => (
-                <div key={m.id} className="bg-white p-4 md:p-6 rounded-3xl md:rounded-[2rem] shadow-[10px_10px_20px_#ebebeb,-5px_-5px_15px_#ffffff] border border-white/60 flex flex-col justify-between">
-                  <div className="mb-2 md:mb-3">
-                    <span className="text-gray-400 text-[9px] md:text-xs font-black uppercase tracking-widest leading-tight">{m.label}</span>
+                <div key={m.id} className="bg-white p-4 rounded-[2rem] shadow-[8px_8px_16px_#ebebeb,-4px_-4px_12px_#ffffff] border border-white/60 flex flex-col justify-center min-h-[110px]">
+                  <div className="mb-1">
+                    <span className="text-gray-400 text-[10px] font-black uppercase tracking-widest">{m.label}</span>
                   </div>
-                  <div className="flex flex-col items-start gap-2 md:flex-row md:items-center md:gap-3">
-                    <span className="text-xl sm:text-2xl md:text-3xl font-black text-gray-800 flex items-center gap-1.5 md:gap-2 truncate">
-                      {idx === 2 && <Eye className="w-5 h-5 md:w-8 md:h-8 text-blue-500 shrink-0" />}
-                      {idx === 3 && <Heart className="w-5 h-5 md:w-8 md:h-8 text-red-500 shrink-0" fill="currentColor" />}
-                      <span className="truncate">{loading ? "..." : m.val}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl font-extrabold text-[#1A1A3A] flex items-center gap-1.5 shrink-0">
+                      {idx === 0 && <Users className="w-5 h-5 text-purple-500 shrink-0" />}
+                      {idx === 1 && <ShoppingBag className="w-5 h-5 text-yellow-500 shrink-0" />}
+                      {idx === 2 && <Eye className="w-5 h-5 text-blue-500 shrink-0" />}
+                      {idx === 3 && <Heart className="w-5 h-5 text-red-500 shrink-0" fill="currentColor" />}
+                      <span>{loading ? "..." : m.val}</span>
                     </span>
-                    <span className={`text-[10px] md:text-xs font-black px-2 py-1 md:px-2.5 md:py-1 rounded-md shrink-0 ${m.trend === 'acumulado' ? 'bg-[#FFD700]/20 text-yellow-700' : (m.isPositive ? 'bg-green-50 text-green-500' : 'bg-red-50 text-red-500')}`}>
+                    <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md shrink-0 border ${m.trend === 'acumulado' ? 'bg-yellow-50 text-yellow-700 border-yellow-100' : (m.isPositive ? 'bg-green-50 text-green-500 border-green-100' : 'bg-red-50 text-red-500 border-red-100')}`}>
                       {m.trend}
                     </span>
                   </div>
@@ -277,22 +330,23 @@ export default function AdminDashboard() {
             </div>
 
             {/* 🧪 Panel de Test de Emails */}
-            <div className="xl:col-span-12 bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div>
-                  <h3 className="font-black text-gray-800 text-lg flex items-center gap-2">
-                    🧪 Test Sistema de Emails
+            <div className="xl:col-span-12 bg-white py-4 px-6 rounded-[2rem] shadow-sm border border-gray-50">
+              <div className="flex flex-col sm:flex-row items-center sm:items-center justify-between gap-4 text-center sm:text-left">
+                <div className="flex flex-col items-center sm:items-start">
+                  <h3 className="font-black text-gray-800 text-lg flex items-center justify-center sm:justify-start gap-2">
+                    <FlaskConical size={20} className="text-orange-500" /> Test Sistema de Emails
                   </h3>
-                  <p className="text-xs font-bold text-gray-400 mt-0.5">Envía un email de prueba a radarcriollo@gmail.com para verificar que Resend funciona.</p>
+                  <p className="text-xs font-bold text-gray-400 mt-0.5 max-w-[280px] sm:max-w-none">Envía un email de prueba a radarcriollo@gmail.com para verificar que Resend funciona.</p>
                 </div>
-                <div className="flex items-center gap-3 flex-wrap">
+                <div className="flex items-center justify-center sm:justify-end gap-3 flex-wrap w-full sm:w-auto">
                   <button
                     id="btn-test-email"
                     onClick={testEmail}
                     disabled={emailTestLoading}
                     className="px-5 py-2.5 bg-[#FFB400] text-[#1A1A3A] font-black rounded-xl text-sm shadow-sm hover:bg-[#ffc533] active:scale-95 transition-all disabled:opacity-60 flex items-center gap-2"
                   >
-                    {emailTestLoading ? '⏳ Enviando...' : '🧪 Test Email Sistema'}
+                    {emailTestLoading ? <Activity className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+                    {emailTestLoading ? 'Enviando...' : 'Test Sistema'}
                   </button>
                   {emailTestResult && (
                     <span className={`text-sm font-bold px-3 py-1.5 rounded-xl ${
@@ -311,19 +365,36 @@ export default function AdminDashboard() {
             <div className="xl:col-span-8 space-y-6">
               <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-50">
                 <div className="flex justify-between items-center mb-8">
-                  <h3 className="text-gray-800 font-black text-lg">Crecimiento de la Red</h3>
-                  <select className="bg-gray-50 border-none text-xs font-bold p-2 rounded-xl outline-none">
-                    <option>Últimos 7 días</option>
-                    <option>Este mes</option>
+                  <h3 className="text-gray-800 font-black text-lg flex items-center gap-2"><Activity size={18} className="text-blue-500"/> Crecimiento de la Red</h3>
+                  <select 
+                    value={growthWeeks}
+                    onChange={(e) => setGrowthWeeks(Number(e.target.value))}
+                    className="bg-gray-50 border border-gray-100 text-xs font-bold p-2.5 rounded-xl outline-none shadow-sm cursor-pointer hover:bg-gray-100 transition-colors"
+                  >
+                    <option value={4}>Últimas 4 semanas</option>
+                    <option value={8}>Últimas 8 semanas</option>
+                    <option value={12}>Últimas 12 semanas</option>
+                    <option value={24}>Últimas 24 semanas</option>
                   </select>
                 </div>
                 <div className="h-72 min-h-[288px] w-full min-w-0">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={BARDATA}>
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#A3A8B8', fontSize: 12, fontWeight: 700 }} />
-                      <Tooltip cursor={{ fill: '#F4F7FE' }} contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }} />
-                      <Bar dataKey="reg" fill="#FFD700" radius={[10, 10, 10, 10]} barSize={15} />
-                    </BarChart>
+                    <AreaChart data={stats.growth || []}>
+                      <defs>
+                        <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0}/>
+                        </linearGradient>
+                        <linearGradient id="colorAds" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#FFD700" stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor="#FFD700" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#A3A8B8', fontSize: 10, fontWeight: 700 }} />
+                      <Tooltip cursor={{ stroke: '#F4F7FE', strokeWidth: 2 }} contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }} />
+                      <Area type="monotone" dataKey="users" name="Nuevos Usuarios" stroke="#8B5CF6" strokeWidth={3} fillOpacity={1} fill="url(#colorUsers)" />
+                      <Area type="monotone" dataKey="ads" name="Nuevos Anuncios" stroke="#FFB400" strokeWidth={3} fillOpacity={1} fill="url(#colorAds)" />
+                    </AreaChart>
                   </ResponsiveContainer>
                 </div>
               </div>
@@ -333,60 +404,34 @@ export default function AdminDashboard() {
                 {/* Categorías (PieChart) */}
                 <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-50 flex flex-col items-center">
                   <h3 className="text-gray-800 font-black w-full mb-4">Top Categorías</h3>
-                  <div className="h-48 min-h-[192px] w-full min-w-0">
+                  <div className="h-72 min-h-[288px] w-full min-w-0">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie data={stats.categories} innerRadius={60} outerRadius={80} paddingAngle={8} dataKey="value" stroke="none">
-                          {stats.categories.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                          {stats.categories?.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
                         </Pie>
-                        <Tooltip />
+                        <Tooltip contentStyle={{ borderRadius: '15px', border: 'none', boxShadow: '0 5px 15px rgba(0,0,0,0.1)' }} />
+                        <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', fontWeight: 'bold' }} />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
                 </div>
 
-                {/* Ingresos Mi Pana */}
-                <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-50 flex flex-col justify-center">
-                  <h3 className="text-gray-800 font-black mb-2">Potencial de Mercado</h3>
-                  <span className="text-4xl font-black text-gray-800 mb-6 tracking-tighter">$ 310,268</span>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-xs font-black text-gray-400 uppercase">
-                      <span>Meta mensual</span>
-                      <span>75%</span>
-                    </div>
-                    <div className="w-full bg-gray-100 rounded-full h-4 shadow-inner">
-                      <div className="bg-gradient-to-r from-[#FFD700] to-yellow-500 h-4 rounded-full shadow-md" style={{ width: '75%' }}></div>
-                    </div>
+                {/* Ingresos Mi Pana reemplazado por Mapa Global */}
+                <div className="bg-white p-6 md:p-8 rounded-[2.5rem] shadow-sm border border-gray-50 flex flex-col justify-start relative overflow-hidden">
+                  <h3 className="text-gray-800 font-black mb-2 flex items-center gap-2"><Globe size={18} className="text-green-500" /> Presencia Global</h3>
+                  <p className="text-[10px] text-gray-400 font-bold mb-6">Mapa térmico de usuarios activos</p>
+                  
+                  <div className="w-full flex-1 flex flex-col items-center justify-center relative min-h-[200px]">
+                    {/* Renderizamos el nuevo mapa */}
+                    <GeoMapChart data={stats.geo || []} />
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Columna Derecha: Popularidad & Soporte */}
+            {/* Columna Derecha: Soporte */}
             <div className="xl:col-span-4 space-y-6">
-              {/* Anuncios Más Populares (Top 5) */}
-              <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-50">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-gray-800 font-black">Top 5 Anuncios 🔥</h3>
-                </div>
-                <div className="space-y-4">
-                  {topViewed.map((ad, idx) => (
-                    <div key={ad.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-2xl transition-all border border-transparent hover:border-gray-100">
-                      <div className="font-black text-gray-300 w-4 text-center">{idx + 1}</div>
-                      <div className="w-10 h-10 bg-gray-100 rounded-xl overflow-hidden shrink-0 shadow-sm border border-gray-200">
-                        {ad.image ? <img src={ad.image} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center">📷</div>}
-                      </div>
-                      <div className="flex flex-col flex-1 min-w-0">
-                        <span className="text-[13px] font-bold text-gray-800 line-clamp-1 truncate">{ad.name}</span>
-                        <div className="flex gap-2.5 mt-1">
-                          <span className="text-[11px] font-black text-blue-500 flex items-center gap-1"><Eye className="w-3 h-3"/> {formatCount(ad.views)}</span>
-                          <span className="text-[11px] font-black text-red-500 flex items-center gap-1">❤️ {formatCount(ad.likes)}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
 
               {/* Card de Acción Claymorphism */}
               <div className="bg-black p-6 rounded-[2.5rem] shadow-xl text-white relative overflow-hidden group">

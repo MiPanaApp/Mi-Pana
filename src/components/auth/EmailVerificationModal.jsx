@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getFunctions, httpsCallable } from 'firebase/functions'
+import { playPopSound } from '../../utils/audio'
 
 export default function EmailVerificationModal({
   isOpen, email, onVerified, onResend
@@ -10,6 +11,12 @@ export default function EmailVerificationModal({
   const [error, setError] = useState('')
   const [timeLeft, setTimeLeft] = useState(600)
   const [toast, setToast] = useState('')
+
+  useEffect(() => {
+    if (isOpen) {
+      playPopSound();
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return

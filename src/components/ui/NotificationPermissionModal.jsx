@@ -1,11 +1,19 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { Bell, MessageCircle, Tag, Heart, X } from 'lucide-react'
 import { usePushNotifications } from '../../hooks/usePushNotifications'
+import { useEffect } from 'react'
+import { playPopSound } from '../../utils/audio'
 
 export default function NotificationPermissionModal({
   isOpen, onClose
 }) {
   const { requestPermission, isSupported } = usePushNotifications()
+
+  useEffect(() => {
+    if (isOpen && isSupported) {
+      playPopSound()
+    }
+  }, [isOpen, isSupported])
 
   if (!isSupported) return null
 

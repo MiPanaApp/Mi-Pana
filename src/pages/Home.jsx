@@ -12,6 +12,7 @@ import { db } from '../services/firebase';
 import { normalizeText } from '../utils/textUtils';
 import emptyHammock from '../assets/empty_hammock.png';
 import panaEnMecedora from '../assets/pana_en_mecedora.png';
+import { useNotifications } from '../hooks/useNotifications';
 
 const CAPITALS = {
   ES: 'Madrid',
@@ -44,6 +45,7 @@ export default function Home() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const { activeNotifications, loading: notifsLoading, dismissOne, dismissAll } = useNotifications();
 
   // Sync route param with global store category
   useEffect(() => {
@@ -265,7 +267,11 @@ export default function Home() {
               className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#EDEDF5] flex-shrink-0 shadow-[3px_3px_7px_rgba(180,180,210,0.65),-3px_-3px_7px_rgba(255,255,255,0.85)] active:scale-95 transition-all text-[#1A1A3A] relative"
             >
               <Bell size={15} />
-              <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white shadow-sm ring-white ring-2"></div>
+              {activeNotifications.length > 0 && (
+                <div className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 bg-[#D90429] rounded-full shadow-sm text-white text-[9px] font-black flex items-center justify-center leading-none z-10 border border-white">
+                  {activeNotifications.length > 99 ? '99+' : activeNotifications.length}
+                </div>
+              )}
             </button>
           </div>
         </div>
@@ -311,7 +317,14 @@ export default function Home() {
         )}
       </div>
       <FilterPanel />
-      <NotificationModal isOpen={isNotifOpen} onClose={() => setIsNotifOpen(false)} />
+      <NotificationModal 
+        isOpen={isNotifOpen} 
+        onClose={() => setIsNotifOpen(false)} 
+        notifications={activeNotifications}
+        loading={notifsLoading}
+        onDismissOne={dismissOne}
+        onDismissAll={dismissAll}
+      />
     </div>
   );
 }

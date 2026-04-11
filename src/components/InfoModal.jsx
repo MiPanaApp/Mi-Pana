@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Info } from 'lucide-react';
 import { useEffect } from 'react';
+import { playPopSound } from '../utils/audio';
 
 export default function InfoModal({ isOpen, onClose, title, content }) {
   
@@ -8,6 +9,7 @@ export default function InfoModal({ isOpen, onClose, title, content }) {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      playPopSound();
     } else {
       document.body.style.overflow = 'unset';
     }

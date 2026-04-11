@@ -2,31 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertCircle, HelpCircle, MessageSquare, X } from 'lucide-react';
 import { useDialogStore } from '../../store/useDialogStore';
-
-// Genera un sutil y rápido sonido pop
-const playPopSound = () => {
-  try {
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
-    
-    oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(600, audioCtx.currentTime);
-    oscillator.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.08);
-    
-    gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-    
-    oscillator.start();
-    oscillator.stop(audioCtx.currentTime + 0.1);
-  } catch(e) {
-    // Si el navegador bloquea AudioContext por no tener interacción previa, ignoramos suavemente
-    console.debug('No se pudo reproducir el sonido de la alerta:', e);
-  }
-};
+import { playPopSound } from '../../utils/audio';
 
 export default function CustomDialog() {
   const { 
