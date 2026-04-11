@@ -23,7 +23,9 @@ service firebase.storage {
         && request.resource.size < 10 * 1024 * 1024
         && request.resource.contentType.matches('image/.*');
       // Solo el usuario y admins pueden leer
-      allow read: if request.auth.uid == userId;
+      allow read: if request.auth.uid == userId 
+        || request.auth.token.email == 'grupoluminika@gmail.com'
+        || request.auth.token.role == 'admin';
     }
     
     // Generic fallback for authorized users
