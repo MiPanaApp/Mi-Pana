@@ -5,6 +5,7 @@ import { useCategoryStore } from './store/useCategoryStore';
 import { useLocationStore } from './store/useLocationStore';
 import NotificationPermissionModal from './components/ui/NotificationPermissionModal';
 import { useNotificationPrompt } from './hooks/useNotificationPrompt';
+import { usePushNotifications } from './hooks/usePushNotifications';
 
 import ScrollToTop from './components/ScrollToTop';
 import SplashScreen from './components/ui/SplashScreen';

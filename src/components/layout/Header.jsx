@@ -1,4 +1,4 @@
-import { Search, Menu, X, Home, Heart as LucideHeart, PlusCircle, MessageCircle, User as LucideUser } from 'lucide-react';
+import { Search, Menu, X, Home, Heart as LucideHeart, PlusCircle, MessageCircle, User as LucideUser, MapPin } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion';
 import { useState, useRef, useEffect, forwardRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -372,9 +372,12 @@ const Header = forwardRef((props, ref) => {
                     Hola, <span className="font-bold underline underline-offset-2 flex items-center gap-1">{userName} {isGoogleLogin && <FcGoogle size={14} title="Conectado con Google" />}</span>
                   </p>
                   {userLocation?.areaLevel2 && (
-                    <span style={{ fontSize: 10, color: '#666666', fontWeight: '500', marginTop: 1, letterSpacing: 0.2 }}>
-                      {userLocation.areaLevel2}
-                    </span>
+                    <div className="flex flex-row items-center gap-1" style={{ marginTop: 1 }}>
+                      <MapPin size={10} color="#666666" />
+                      <span style={{ fontSize: 10, color: '#666666', fontWeight: '500', letterSpacing: 0.2 }}>
+                        {userLocation.areaLevel2}
+                      </span>
+                    </div>
                   )}
                 </motion.div>
               )}

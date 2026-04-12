@@ -12,27 +12,31 @@ export function usePushNotifications() {
   const [fcmToken, setFcmToken] = useState(null)
   const [foregroundMessage, setForegroundMessage] = useState(null)
 
-  // Solicitar permiso y obtener token
+  // Registrar token automáticamente si ya hay permiso (solo una vez por sesión o cambio de usuario)
+  useEffect(() => {
+    if (Notification.permission === 'granted' && auth.currentUser) {
+      requestPermission()
+    }
+  }, [auth.currentUser])
+
   const requestPermission = async () => {
     try {
-      // Solo pedir en contexto seguro (HTTPS o localhost)
-      if (!('Notification' in window)) return null
-      if (!('serviceWorker' in navigator)) return null
+      if (!('Notification' in window) || !('serviceWorker' in navigator)) return null
 
       const perm = await Notification.requestPermission()
       setPermission(perm)
       if (perm !== 'granted') return null
 
+      const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js')
       const messaging = getMessaging()
+      
       const token = await getToken(messaging, {
         vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
-        serviceWorkerRegistration: await navigator.serviceWorker
-          .register('/firebase-messaging-sw.js')
+        serviceWorkerRegistration: registration
       })
 
-      if (token && auth.currentUser) {
-        // Guardar token en Firestore del usuario
-        // Array para soportar múltiples dispositivos
+      // Solo guardar si el token es nuevo o diferente al actual en estado
+      if (token && auth.currentUser && token !== fcmToken) {
         await setDoc(
           doc(db, 'users', auth.currentUser.uid),
           {
@@ -46,12 +50,12 @@ export function usePushNotifications() {
       }
       return token
     } catch (error) {
-      console.error('Error FCM:', error)
+      console.error('[PushNotifications] Error:', error)
       return null
     }
   }
 
-  // Escuchar notificaciones con la app en PRIMER PLANO
+  // Escuchar notificaciones en PRIMER PLANO
   useEffect(() => {
     if (permission !== 'granted') return
 
@@ -59,12 +63,18 @@ export function usePushNotifications() {
       const messaging = getMessaging()
       const unsubscribe = onMessage(messaging, (payload) => {
         setForegroundMessage(payload)
-        // Aquí se mostrará el Toast personalizado
-        // El Toast consume foregroundMessage desde el contexto
+        
+        // Mostrar notificación nativa si la app está abierta
+        if (Notification.permission === 'granted') {
+          new Notification(payload.notification?.title || 'Mi Pana', {
+            body: payload.notification?.body || '',
+            icon: '/icons/icon-192.png'
+          })
+        }
       })
       return () => unsubscribe()
     } catch (e) {
-      // FCM no disponible en este contexto
+      // Ignorar errores de contexto
     }
   }, [permission])
 

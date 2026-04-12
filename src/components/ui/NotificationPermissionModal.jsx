@@ -18,6 +18,7 @@ export default function NotificationPermissionModal({
   if (!isSupported) return null
 
   const handleActivate = async () => {
+    console.log('[DEBUG] Botón "Activar" clickeado en el Modal');
     await requestPermission()
     onClose()
   }

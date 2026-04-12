@@ -194,7 +194,7 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
       await setDoc(doc(db, "users", uid), {
         name: formData.name,
         lastName: formData.lastName,
-        email: formData.email,
+        email: user.email, // ✅ Siempre usar el email de Firebase Auth, no el del formulario
         country: formData.country, // Guardamos CÓDIGO ISO (ej: ES, US)
         region: formData.region,
         // Inicializar memoria de país/región con la de residencia
