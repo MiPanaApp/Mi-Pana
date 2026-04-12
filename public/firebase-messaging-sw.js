@@ -33,8 +33,11 @@ messaging.onBackgroundMessage((payload) => {
 // Click en la notificación → abrir la app en la ruta correcta
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const actionUrl = event.notification.data?.actionUrl || '/home';
+  const rawUrl = event.notification.data?.actionUrl || '/home';
   
+  // Convertir siempre a URL absoluta asegurando compatibilidad con iOS Safari
+  const actionUrl = new URL(rawUrl, self.location.origin).href;
+
   event.waitUntil(
     clients.matchAll({ type: 'window' }).then(clientList => {
       for (const client of clientList) {
