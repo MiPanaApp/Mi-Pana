@@ -14,7 +14,7 @@ export function usePushNotifications() {
 
   // Registrar token automáticamente si ya hay permiso (solo una vez por sesión o cambio de usuario)
   useEffect(() => {
-    if (Notification.permission === 'granted' && auth.currentUser) {
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted' && auth.currentUser) {
       requestPermission()
     }
   }, [auth.currentUser])
@@ -65,7 +65,7 @@ export function usePushNotifications() {
         setForegroundMessage(payload)
         
         // Mostrar notificación nativa si la app está abierta
-        if (Notification.permission === 'granted') {
+        if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
           new Notification(payload.notification?.title || 'Mi Pana', {
             body: payload.notification?.body || '',
             icon: '/icons/icon-192.png'
