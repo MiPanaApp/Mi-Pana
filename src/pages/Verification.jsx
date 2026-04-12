@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useAuthStore } from '../store/useAuthStore';
 import { db, storage } from '../services/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { doc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { Camera, ShieldCheck, ArrowLeft, HourglassIcon, CheckCircle2, ChevronDown, Search, MessageCircle, Lock } from 'lucide-react';
 
