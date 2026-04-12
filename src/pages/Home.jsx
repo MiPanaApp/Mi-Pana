@@ -7,7 +7,7 @@ import FilterPanel from '../components/ui/FilterPanel';
 import SkeletonGrid from '../components/ui/SkeletonGrid';
 import NotificationModal from '../components/ui/NotificationModal';
 import { useStore } from '../store/useStore';
-import { collection, getDocs, query, doc, updateDoc, increment } from 'firebase/firestore';
+import { collection, getDocs, query, doc, updateDoc, increment, orderBy, limit, startAfter } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { normalizeText } from '../utils/textUtils';
 import emptyHammock from '../assets/empty_hammock.png';
@@ -65,17 +65,27 @@ export default function Home() {
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [lastDoc, setLastDoc] = useState(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const PAGE_SIZE = 10;
 
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
+      setLastDoc(null);
+      setHasMore(true);
       try {
         const productsRef = collection(db, 'products');
-        const snap = await getDocs(query(productsRef));
+        const q = query(productsRef, orderBy('createdAt', 'desc'), limit(PAGE_SIZE));
+        const snap = await getDocs(q);
         const firestoreData = snap.docs
-          .map(doc => ({ ...doc.data(), id: doc.id }))
+          .map(d => ({ ...d.data(), id: d.id }))
           .filter(p => p.status !== 'hidden' && p.status !== 'inactive');
         setProducts(firestoreData);
+        setLastDoc(snap.docs[snap.docs.length - 1] || null);
+        setHasMore(snap.docs.length === PAGE_SIZE);
       } catch (err) {
         console.error('Error fetching products:', err);
         setProducts([]);
@@ -85,6 +95,26 @@ export default function Home() {
     };
     fetchProducts();
   }, [selectedCountry]); // Re-fetch cuando cambia el país
+
+  const loadMore = async () => {
+    if (!lastDoc || loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const productsRef = collection(db, 'products');
+      const q = query(productsRef, orderBy('createdAt', 'desc'), startAfter(lastDoc), limit(PAGE_SIZE));
+      const snap = await getDocs(q);
+      const moreData = snap.docs
+        .map(d => ({ ...d.data(), id: d.id }))
+        .filter(p => p.status !== 'hidden' && p.status !== 'inactive');
+      setProducts(prev => [...prev, ...moreData]);
+      setLastDoc(snap.docs[snap.docs.length - 1] || null);
+      setHasMore(snap.docs.length === PAGE_SIZE);
+    } catch (err) {
+      console.error('Error loading more products:', err);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
 
   useEffect(() => {
@@ -313,6 +343,23 @@ export default function Home() {
 
               </div>
             )}
+          </div>
+        )}
+
+        {/* Botón Cargar más — solo visible si hay más docs y no hay filtros activos */}
+        {!loading && hasMore && !filters.searchQuery && !filters.location?.level1 && !filters.onlyVerified && activeCategory === 'Todas' && (
+          <div className="flex justify-center mt-6 mb-2">
+            <button
+              onClick={loadMore}
+              disabled={loadingMore}
+              className="px-8 py-4 rounded-2xl bg-[#E0E5EC] text-[#1A1A3A] font-black text-sm uppercase tracking-wider shadow-[6px_6px_12px_rgba(163,177,198,0.6),-6px_-6px_12px_rgba(255,255,255,0.9)] active:shadow-[inset_4px_4px_8px_rgba(163,177,198,0.5),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] transition-all disabled:opacity-50 flex items-center gap-2"
+            >
+              {loadingMore ? (
+                <><span className="inline-block w-4 h-4 border-2 border-[#1A1A3A]/30 border-t-[#1A1A3A] rounded-full animate-spin" /> Cargando...</>
+              ) : (
+                'Cargar más anuncios'
+              )}
+            </button>
           </div>
         )}
       </div>

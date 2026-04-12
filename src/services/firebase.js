@@ -19,7 +19,13 @@ const app = initializeApp(firebaseConfig);
 
 // Initialize services
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+// Initialize Firestore con caché local persistente (IndexedDB)
+// Reduce lecturas facturables y habilita uso offline en PWA/Android/iOS
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager()
+  })
+});
 export const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({
