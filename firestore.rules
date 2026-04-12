@@ -97,9 +97,10 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
     
-    // Admin Notifications Collection
+    // Admin Notifications Collection (Broadcasts to users)
     match /adminNotifications/{notificationId} {
-      allow read, write: if isAdmin();
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
     }
 
     // Scheduled Notifications Collection

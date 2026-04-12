@@ -42,7 +42,8 @@ const Header = forwardRef((props, ref) => {
     setRegion,
     filters,
     setFilters,
-    addRecentSearch
+    addRecentSearch,
+    userLocation
   } = useStore();
   
   const [hidden, setHidden] = useState(false);
@@ -362,7 +363,7 @@ const Header = forwardRef((props, ref) => {
                 <motion.div 
                   initial={{ opacity: 0, y: -5 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-1.5 self-end mr-0 md:mr-[64px] flex items-center gap-1.5"
+                  className="mt-1.5 self-end mr-0 md:mr-[64px] flex flex-col items-end gap-0"
                 >
                   <p 
                     onClick={() => navigate('/perfil')}
@@ -370,6 +371,11 @@ const Header = forwardRef((props, ref) => {
                   >
                     Hola, <span className="font-bold underline underline-offset-2 flex items-center gap-1">{userName} {isGoogleLogin && <FcGoogle size={14} title="Conectado con Google" />}</span>
                   </p>
+                  {userLocation?.areaLevel2 && (
+                    <span style={{ fontSize: 10, color: '#666666', fontWeight: '500', marginTop: 1, letterSpacing: 0.2 }}>
+                      {userLocation.areaLevel2}
+                    </span>
+                  )}
                 </motion.div>
               )}
             </div>

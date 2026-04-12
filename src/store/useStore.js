@@ -21,6 +21,7 @@ export const useStore = create(
       },
       favorites: [],
       recentSearches: [], // Historial de búsquedas recientes
+      userLocation: null, // Coordenadas gps reales del user si activó filtro ubicación
       
       setCountry: (country) => set({ selectedCountry: country }),
       setHasChosenCountry: (val) => set({ hasChosenCountry: val }),
@@ -29,6 +30,7 @@ export const useStore = create(
       // Aliases as requested
       setSelectedCountry: (country) => set({ selectedCountry: country }),
       setSelectedRegion: (region) => set({ selectedRegion: region }),
+      setUserLocation: (loc) => set({ userLocation: loc }),
       setActiveCategory: (category) => set({ activeCategory: category }),
       setIsFilterOpen: (isOpen) => set({ isFilterOpen: isOpen }),
       setIsSortOpen: (isOpen) => set({ isSortOpen: isOpen }),

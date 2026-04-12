@@ -21,7 +21,8 @@ export default function FilterPanel() {
     setActiveCategory, 
     selectedCountry,
     setCountry,
-    setRegion 
+    setRegion,
+    setUserLocation
   } = useStore();
   const [isLocating, setIsLocating] = useState(false);
   const { categories } = useCategoryStore();
@@ -88,6 +89,7 @@ export default function FilterPanel() {
       // Geocodificación Inversa Real usando API Nominatim (OpenStreetMap)
       let detectedCountry = selectedCountry;
       let detectedRegion = '';
+      let specificLocality = '';
 
       try {
         const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&accept-language=es`);
@@ -96,6 +98,7 @@ export default function FilterPanel() {
         if (data && data.address) {
           detectedCountry = data.address.country_code ? data.address.country_code.toUpperCase() : selectedCountry;
           detectedRegion = data.address.state || data.address.region || data.address.province || data.address.city || '';
+          specificLocality = data.address.county || data.address.city || data.address.town || data.address.village || detectedRegion;
         }
       } catch (err) {
         console.warn("Aviso: No se pudo geocodificar, se usa aproximado.", err);
@@ -113,7 +116,14 @@ export default function FilterPanel() {
       // 2. Actualizar la Región en el Store
       setRegion(detectedRegion);
 
-      // 3. Aplicar Filtros de Ubicación
+      // 3. Guardar las coordenadas y nivel detallado para uso futuro
+      setUserLocation({
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+        areaLevel2: specificLocality || detectedRegion
+      });
+
+      // 4. Aplicar Filtros de Ubicación
       setFilters({
         location: {
           level1: detectedRegion, 
