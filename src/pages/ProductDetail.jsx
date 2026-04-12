@@ -798,12 +798,14 @@ tlfno contacto: 672 593 950`}
                   <div className="flex gap-6 items-center mb-6 bg-[#E0E5EC] rounded-[2rem] p-6 border border-white/40 shadow-[6px_6px_12px_rgba(163,177,198,0.6),-6px_-6px_12px_rgba(255,255,255,0.8)]">
                      {/* Left: Promedio */}
                      <div className="flex flex-col items-center justify-center border-r border-[#1A1A3A]/10 pr-6">
-                        <span className="text-5xl font-black text-[#1A1A3A] tracking-tighter">{product.rating || "0"}</span>
+                        <span className="text-5xl font-black text-[#1A1A3A] tracking-tighter">
+                           {product.reviewCount > 0 ? Number(product.rating || 0).toFixed(1).replace('.', ',') : "0,0"}
+                        </span>
                         <div className="flex text-white drop-shadow-md mt-1 mb-1">
                            {[...Array(5)].map((_, i) => (
                              <Star 
                                 key={i} 
-                                className={`w-3.5 h-3.5 ${i < Math.round(product.rating || 0) ? 'fill-[#FFC200] text-[#FFC200]' : 'fill-[#1A1A3A]/10 text-transparent'}`} 
+                                className={`w-3.5 h-3.5 ${i < (product.reviewCount > 0 ? Math.round(product.rating || 0) : 0) ? 'fill-[#FFC200] text-[#FFC200]' : 'fill-[#1A1A3A]/10 text-transparent'}`} 
                              />
                            ))}
                         </div>
@@ -962,12 +964,14 @@ tlfno contacto: 672 593 950`}
             <div className="mb-10 bg-[#E0E5EC] rounded-[2.5rem] p-10 border border-white/40 shadow-[6px_6px_12px_rgba(163,177,198,0.6),-6px_-6px_12px_rgba(255,255,255,0.8)] flex items-center justify-between gap-20">
                {/* Izquierda: Promedio de Valoración */}
                <div className="flex flex-col items-center justify-center border-r border-[#1A1A3A]/10 pr-20">
-                  <span className="text-7xl font-black text-[#1A1A3A] tracking-tighter">{product.rating || "0"}</span>
+                  <span className="text-7xl font-black text-[#1A1A3A] tracking-tighter">
+                     {product.reviewCount > 0 ? Number(product.rating || 0).toFixed(1).replace('.', ',') : "0,0"}
+                  </span>
                   <div className="flex text-white drop-shadow-md mt-2 mb-3">
                      {[...Array(5)].map((_, i) => (
                        <Star 
                           key={i} 
-                          className={`w-5 h-5 ${i < Math.round(product.rating || 0) ? 'fill-[#FFC200] text-[#FFC200]' : 'fill-[#1A1A3A]/10 text-transparent'}`} 
+                          className={`w-5 h-5 ${i < (product.reviewCount > 0 ? Math.round(product.rating || 0) : 0) ? 'fill-[#FFC200] text-[#FFC200]' : 'fill-[#1A1A3A]/10 text-transparent'}`} 
                        />
                      ))}
                   </div>

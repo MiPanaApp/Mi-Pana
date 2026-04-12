@@ -40,9 +40,11 @@ export default function ProductCard({ product }) {
         <h3 className="font-bold text-pana-blue text-[13px] line-clamp-1 leading-tight mb-1">{product.name}</h3>
         
         <div className="flex items-center gap-1">
-          <Star className="w-3 h-3 fill-pana-yellow text-pana-yellow" />
-          <span className="text-[11px] font-black text-gray-700">{product.rating}</span>
-          <span className="text-[9px] text-gray-400">({product.reviewCount})</span>
+          <Star className={`w-3 h-3 ${product.reviewCount > 0 ? 'fill-pana-yellow text-pana-yellow' : 'fill-gray-200 text-gray-200'}`} />
+          <span className="text-[11px] font-black text-gray-700">
+            {product.reviewCount > 0 ? Number(product.rating || 0).toFixed(1).replace('.', ',') : '0,0'}
+          </span>
+          <span className="text-[9px] text-gray-400">({product.reviewCount || 0})</span>
         </div>
       </div>
     </div>

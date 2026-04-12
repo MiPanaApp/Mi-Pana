@@ -108,7 +108,11 @@ export default function AdminStatsTab() {
       {/* Value */}
       <div className="flex items-center gap-1.5 flex-shrink-0 bg-gray-50 px-2.5 py-1.5 rounded-xl">
         <Icon className={`w-3.5 h-3.5 ${iconColor}`} />
-        <span className="text-sm font-black text-gray-700">{formatVal ? formatVal(item[valueKey]) : (item[valueKey] || 0)}</span>
+        <span className="text-sm font-black text-gray-700">
+          {valueKey === 'rating' 
+            ? (item.reviewCount > 0 ? Number(item.rating || 0).toFixed(1).replace('.', ',') : "0,0")
+            : (formatVal ? formatVal(item[valueKey]) : (item[valueKey] || 0))}
+        </span>
       </div>
     </div>
   );
