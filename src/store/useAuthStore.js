@@ -11,7 +11,7 @@ import {
   browserLocalPersistence,
 } from 'firebase/auth';
 import { auth, googleProvider, db } from '../services/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useStore } from './useStore';
 import { getCountryCodeFromName } from '../data/locations';
 
@@ -104,7 +104,24 @@ export const useAuthStore = create((set, get) => ({
     set({ loading: true, error: null });
     try {
       const result = await signInWithPopup(auth, googleProvider);
-      set({ user: result.user, loading: false });
+      const user = result.user;
+
+      // Crear/actualizar documento con valores por defecto usando merge:true
+      // Garantiza que todos los usuarios de Google tengan el campo notificationsEnabled
+      // para que la query de Admin funcione de forma consistente.
+      await setDoc(
+        doc(db, 'users', user.uid),
+        {
+          email: user.email,
+          displayName: user.displayName,
+          photoURL: user.photoURL,
+          notificationsEnabled: false, // default: se actualiza a true cuando acepta el modal
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true } // No sobreescribe campos existentes como fcmTokens, name, etc.
+      );
+
+      set({ user, loading: false });
       return { success: true, result };
     } catch (err) {
       set({ error: err.message, loading: false });

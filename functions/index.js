@@ -212,8 +212,9 @@ exports.sendAdminNotification = onCall(
       targetCategory } = request.data
 
     // Construir query según filtros
+    // El criterio real es tener tokens guardados, no el booleano notificationsEnabled
+    // (usuarios de Google nunca verán el modal pero pueden tener tokens)
     let query = getFirestore().collection('users')
-      .where('notificationsEnabled', '==', true)
 
     if (targetCountry) {
       query = query.where('country', '==', targetCountry)
@@ -221,13 +222,14 @@ exports.sendAdminNotification = onCall(
 
     const usersSnap = await query.limit(500).get()
 
-    // Recolectar todos los tokens y detalles de receptores
+    // Recolectar tokens filtrando por quienes REALMENTE tienen tokens guardados
     const allTokens = []
     const recipients = []
 
     usersSnap.docs.forEach(doc => {
       const data = doc.data()
       const tokens = data.fcmTokens || []
+      // Incluir si tiene al menos un token registrado
       if (tokens.length > 0) {
         allTokens.push(...tokens)
         recipients.push({
