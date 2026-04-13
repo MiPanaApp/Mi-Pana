@@ -17,7 +17,8 @@ import { LOCATION_DATA } from '../data/locations';
 import { LegalData } from '../data/LegalData';
 import { getCoordsFromLocation } from '../utils/geoUtils';
 import LegalDrawer from '../components/LegalDrawer';
-
+import { Capacitor } from '@capacitor/core';
+import { takePicture, pickMultipleImages } from '../utils/cameraUtils';
 import panaExito from '../assets/Pana_Billetes.png';
 
 // Mapeo: código del store -> clave de LOCATION_DATA
@@ -45,7 +46,7 @@ export default function CreateListing() {
   const [isEditing, setIsEditing] = useState(false);
   const [initialMainPhoto, setInitialMainPhoto] = useState(null);
   const [existingCarousel, setExistingCarousel] = useState([]);
-  
+
   const { user } = useAuthStore();
   const { userData } = useAuth(); // Avatar y datos del perfil de Firestore
   const { selectedCountry } = useStore();
@@ -60,6 +61,11 @@ export default function CreateListing() {
   const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
   const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
   const [isLevel3DropdownOpen, setIsLevel3DropdownOpen] = useState(false);
+  const [level3Suggestions, setLevel3Suggestions] = useState([]);
+  const [isLevel3SuggestionsOpen, setIsLevel3SuggestionsOpen] = useState(false);
+  const [isTypingLevel3, setIsTypingLevel3] = useState(false);
+  const suggestionsRef = useRef(null);
+
 
   const [selectedPrefix, setSelectedPrefix] = useState(COUNTRY_CODES[0]);
   const [isPrefixOpen, setIsPrefixOpen] = useState(false);
@@ -91,7 +97,7 @@ export default function CreateListing() {
       try {
         const q = query(collection(db, 'categories'), orderBy('name', 'asc'));
         const querySnapshot = await getDocs(q);
-        
+
         if (!isMounted) return;
 
         let cats = querySnapshot.docs.map(doc => ({
@@ -114,7 +120,7 @@ export default function CreateListing() {
         if (cats.length === 0) {
           const defaultCats = ['Comida', 'Envios', 'Inmobiliaria', 'Formación', 'Deporte', 'Empleo', 'Servicios', 'Ventas', 'Legal', 'Salud', 'Otros'];
           const newCats = [];
-          
+
           for (const name of defaultCats) {
             // Verificamos por si otra instancia ya la creó
             const checkQ = query(collection(db, 'categories'), where('name', '==', name));
@@ -138,6 +144,58 @@ export default function CreateListing() {
     };
     fetchCategories();
     return () => { isMounted = false; };
+  }, []);
+
+  // Autocomplete para Nivel 3 cuando se usa el input manual
+  useEffect(() => {
+    const locKey = COUNTRY_TO_LOC[selectedCountry] || 'ES';
+    const locData = LOCATION_DATA[locKey];
+    const level3Options = location.level2 ? (locData.data[location.level1]?.[location.level2] || []) : [];
+
+    // Solo si estamos en modo input manual, ha escrito >= 3 caracteres y está activo
+    if (level3Options.length > 0 || !location.level3 || location.level3.length < 3 || !isTypingLevel3) {
+      setLevel3Suggestions([]);
+      setIsLevel3SuggestionsOpen(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        const countryName = COUNTRY_CODES.find(c => c.iso === selectedCountry)?.name || selectedCountry;
+        const query = `${location.level3}, ${location.level2}, ${location.level1}, ${countryName}`;
+
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5`,
+          { headers: { 'User-Agent': 'MiPanaApp/1.0' } }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          const suggestions = data
+            .map(item => item.name || item.display_name.split(',')[0]) // Solo tomar el nombre principal
+            .filter((name, index, self) => self.indexOf(name) === index); // Únicos
+
+          setLevel3Suggestions(suggestions);
+          setIsLevel3SuggestionsOpen(suggestions.length > 0);
+        }
+      } catch (error) {
+        console.warn('Error fetching level 3 suggestions', error);
+      }
+    }, 600); // 600ms debounce
+
+    return () => clearTimeout(timer);
+  }, [location.level3, location.level2, location.level1, selectedCountry, isTypingLevel3]);
+
+  // Hook para cerrar sugerencias al clickear fuera
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(event.target)) {
+        setIsLevel3SuggestionsOpen(false);
+        setIsTypingLevel3(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   // Fetch User Custom Default Country/Prefix
@@ -183,9 +241,9 @@ export default function CreateListing() {
               const matchedPrefix = COUNTRY_CODES.find(c => data.whatsapp.startsWith(c.code));
               if (matchedPrefix) {
                 setSelectedPrefix(matchedPrefix);
-                setForm(prev => ({...prev, whatsapp: data.whatsapp.slice(matchedPrefix.code.length)}));
+                setForm(prev => ({ ...prev, whatsapp: data.whatsapp.slice(matchedPrefix.code.length) }));
               } else {
-                setForm(prev => ({...prev, whatsapp: data.whatsapp}));
+                setForm(prev => ({ ...prev, whatsapp: data.whatsapp }));
               }
             }
             setLocation({
@@ -226,15 +284,15 @@ export default function CreateListing() {
 
   const getCategoryStyle = (cat, index) => {
     if (!cat) return { Icon: Tag, color: getBrandColor(index) };
-    
+
     // Si pasamos solo el string del nombre
     const name = typeof cat === 'string' ? cat : cat.name;
     // Si pasamos el objeto de la categoría desde Firestore
     const iconName = typeof cat === 'object' ? cat.icon : null;
 
-    return { 
-      Icon: iconName ? getIconComponent(iconName) : (getCategoryIcon(name) || Tag), 
-      color: getBrandColor(index) 
+    return {
+      Icon: iconName ? getIconComponent(iconName) : (getCategoryIcon(name) || Tag),
+      color: getBrandColor(index)
     };
   };
 
@@ -245,43 +303,100 @@ export default function CreateListing() {
   const handleMainClick = () => mainInputRef.current.click();
   const handleCarouselClick = () => carouselInputRef.current.click();
 
-  const handleMainChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setError('La imagen principal debe pesar menos de 5MB');
-        return;
+  const handleMainChange = async (e) => {
+    // Si es un evento de input file (web)
+    if (e?.target?.files) {
+      const file = e.target.files[0];
+      if (file) {
+        if (file.size > 5 * 1024 * 1024) {
+          setError('La imagen principal debe pesar menos de 5MB');
+          return;
+        }
+        setImageFile(file);
+        setImagePreview(URL.createObjectURL(file));
+        setError('');
       }
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
-      setError('');
+    }
+    // Si es llamada desde botón nativo (sin evento)
+    else {
+      try {
+        const result = await takePicture();
+        if (!result) return; // Usuario canceló
+
+        // Crear un File object desde el Blob para mantener compatibilidad
+        const file = new File([result.blob], `photo_${Date.now()}.jpg`, {
+          type: 'image/jpeg'
+        });
+
+        setImageFile(file);
+        setImagePreview(result.webPath);
+        setError('');
+      } catch (err) {
+        console.error('Error tomando foto:', err);
+        setError('Error al tomar la foto');
+      }
     }
   };
 
-  const handleCarouselChange = (e) => {
-    const files = Array.from(e.target.files);
-    const totalCount = existingCarousel.length + carouselFiles.length + files.length;
-    
-    if (totalCount > 10) {
-      setError('Puedes subir hasta un máximo de 10 fotos adicionales.');
-      return;
-    }
+  const handleCarouselChange = async (e) => {
+    // Si es un evento de input file (web)
+    if (e?.target?.files) {
+      const files = Array.from(e.target.files);
+      const totalCount = existingCarousel.length + carouselFiles.length + files.length;
 
-    const newFiles = [...carouselFiles];
-    const newPreviews = [...carouselPreviews];
-
-    files.forEach(file => {
-      if (file.size < 5 * 1024 * 1024) {
-        newFiles.push(file);
-        newPreviews.push(URL.createObjectURL(file));
-      } else {
-        setError('Alguna imagen del carrusel supera los 5MB y no se añadió.');
+      if (totalCount > 10) {
+        setError('Puedes subir hasta un máximo de 10 fotos adicionales.');
+        return;
       }
-    });
 
-    setCarouselFiles(newFiles);
-    setCarouselPreviews(newPreviews);
-    setError('');
+      const newFiles = [...carouselFiles];
+      const newPreviews = [...carouselPreviews];
+
+      files.forEach(file => {
+        if (file.size < 5 * 1024 * 1024) {
+          newFiles.push(file);
+          newPreviews.push(URL.createObjectURL(file));
+        } else {
+          setError('Alguna imagen del carrusel supera los 5MB y no se añadió.');
+        }
+      });
+
+      setCarouselFiles(newFiles);
+      setCarouselPreviews(newPreviews);
+      setError('');
+    }
+    // Si es llamada desde botón nativo (sin evento)
+    else {
+      try {
+        const maxAllowed = 10 - existingCarousel.length - carouselFiles.length;
+        if (maxAllowed <= 0) {
+          setError('Ya tienes el máximo de 10 fotos adicionales.');
+          return;
+        }
+
+        const results = await pickMultipleImages(maxAllowed);
+        if (!results || results.length === 0) return; // Usuario canceló
+
+        const newFiles = [...carouselFiles];
+        const newPreviews = [...carouselPreviews];
+
+        results.forEach(result => {
+          // Crear File object desde Blob
+          const file = new File([result.blob], `carousel_${Date.now()}.jpg`, {
+            type: 'image/jpeg'
+          });
+          newFiles.push(file);
+          newPreviews.push(result.webPath);
+        });
+
+        setCarouselFiles(newFiles);
+        setCarouselPreviews(newPreviews);
+        setError('');
+      } catch (err) {
+        console.error('Error seleccionando imágenes:', err);
+        setError('Error al seleccionar imágenes');
+      }
+    }
   };
 
   const removeMainImage = (e) => {
@@ -304,6 +419,20 @@ export default function CreateListing() {
     e.preventDefault();
     if (!imageFile && !initialMainPhoto) {
       setError('Sube al menos la foto principal para tu anuncio.');
+      return;
+    }
+
+    if (!location.level1 || !location.level2 || !location.level3) {
+      setError('Por favor, selecciona o ingresa todos los datos del Lugar del Anuncio.');
+      return;
+    }
+
+    // Validación mínima de caracteres para el nivel 3 si fue manual
+    const locKey = COUNTRY_TO_LOC[selectedCountry] || 'ES';
+    const locData = LOCATION_DATA[locKey];
+    const level3Options = location.level2 ? (locData.data[location.level1]?.[location.level2] || []) : [];
+    if (level3Options.length === 0 && location.level3.length < 3) {
+      setError('La zona o barrio debe tener al menos 3 caracteres.');
       return;
     }
 
@@ -441,7 +570,7 @@ export default function CreateListing() {
     return (
       <div className="min-h-screen bg-[#E0E5EC] flex flex-col items-center justify-center px-6 pb-32 text-center">
         <div className="flex flex-col items-center justify-center scale-90">
-          <motion.img 
+          <motion.img
             initial={{ scale: 0.5, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             src={panaExito}
@@ -459,7 +588,7 @@ export default function CreateListing() {
     <div className="bg-[#E0E5EC] min-h-screen pb-32">
       {/* Header Sticky */}
       <div className="sticky top-0 z-50 bg-[#E0E5EC]/80 backdrop-blur-xl px-4 pt-10 md:pt-4 pb-4 flex items-center shadow-sm">
-        <button 
+        <button
           onClick={() => navigate(-1)}
           className="p-2 bg-[#E0E5EC] rounded-xl shadow-[4px_4px_8px_rgba(163,177,198,0.6),-4px_-4px_8px_rgba(255,255,255,0.8)] active:shadow-[inset_3px_3px_6px_rgba(163,177,198,0.6),inset_-3px_-3px_6px_rgba(255,255,255,0.8)] transition-all"
         >
@@ -469,7 +598,7 @@ export default function CreateListing() {
       </div>
 
       <div className="max-w-md mx-auto px-5 mt-6">
-        
+
         {/* Error Message */}
         <AnimatePresence>
           {error && (
@@ -485,33 +614,43 @@ export default function CreateListing() {
         </AnimatePresence>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-          
+
           {/* UPLOAD IMAGEN PRINCIPAL */}
           <div className="flex flex-col gap-2">
             <span className="text-sm font-bold text-[#1A1A3A]/70 ml-2">Foto Principal <span className="text-red-500">*</span></span>
-            <div 
-              onClick={handleMainClick}
-              className={`relative overflow-hidden w-full h-56 bg-[#E0E5EC] rounded-[2rem] flex flex-col items-center justify-center cursor-pointer transition-all border-4 border-[#E0E5EC] ${imagePreview 
-                ? 'shadow-[6px_6px_12px_rgba(163,177,198,0.7),-6px_-6px_12px_rgba(255,255,255,0.9)]' 
-                : 'shadow-[inset_8px_8px_16px_rgba(163,177,198,0.6),inset_-8px_-8px_16px_rgba(255,255,255,0.8)]'
-              }`}
+
+            <div
+              onClick={() => {
+                if (Capacitor.isNativePlatform()) {
+                  // En nativo, llamar directamente a la función
+                  handleMainChange();
+                } else {
+                  // En web, hacer clic en el input oculto
+                  mainInputRef.current?.click();
+                }
+              }}
+              className="relative overflow-hidden w-full h-56 bg-[#E0E5EC] rounded-[2rem] flex flex-col items-center justify-center cursor-pointer shadow-[6px_6px_12px_rgba(163,177,198,0.7),-6px_-6px_12px_rgba(255,255,255,0.8)] hover:shadow-[inset_3px_3px_6px_rgba(163,177,198,0.6),inset_-3px_-3px_6px_rgba(255,255,255,0.8)] transition-all"
             >
-              <input 
-                type="file" 
+              {/* Input file oculto (solo para web) */}
+              <input
+                type="file"
                 ref={mainInputRef}
                 accept="image/*"
                 className="hidden"
                 onChange={handleMainChange}
                 disabled={loading}
               />
-              
+
               {imagePreview ? (
                 <>
                   <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                  <button 
+                  <button
                     type="button"
-                    onClick={removeMainImage}
-                    className="absolute top-3 right-3 p-2 bg-red-500/80 backdrop-blur-md rounded-full text-white shadow-lg z-10"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeMainImage();
+                    }}
+                    className="absolute top-3 right-3 p-2 bg-red-500/80 backdrop-blur-md rounded-full text-white hover:bg-red-600 transition-all"
                   >
                     <X size={18} strokeWidth={3} />
                   </button>
@@ -519,7 +658,9 @@ export default function CreateListing() {
               ) : (
                 <div className="flex flex-col items-center gap-3 text-[#1A1A3A]/40">
                   <ImagePlus size={48} strokeWidth={1.5} />
-                  <span className="font-bold text-sm">Toca para subir foto</span>
+                  <span className="font-bold text-sm">
+                    {Capacitor.isNativePlatform() ? 'Toca para subir foto' : 'Toca para subir foto'}
+                  </span>
                 </div>
               )}
             </div>
@@ -531,7 +672,7 @@ export default function CreateListing() {
               <span className="text-sm font-bold text-[#1A1A3A]/70">Fotos del Carrusel (Max 10)</span>
               <span className="text-[10px] font-black text-[#1A1A3A]/40 uppercase tracking-widest">{carouselFiles.length} / 10</span>
             </div>
-            
+
             <div className="grid grid-cols-4 gap-3">
               {/* Previews del carrusel (Guardadas y Nuevas) */}
               <AnimatePresence>
@@ -545,7 +686,7 @@ export default function CreateListing() {
                     className="relative aspect-square rounded-2xl overflow-hidden bg-[#E0E5EC] shadow-[4px_4px_8px_rgba(163,177,198,0.6),-4px_-4px_8px_rgba(255,255,255,0.8)] group"
                   >
                     <img src={url} alt={`Saved Carousel ${index}`} className="w-full h-full object-cover" />
-                    <button 
+                    <button
                       type="button"
                       onClick={() => setExistingCarousel(prev => prev.filter((_, i) => i !== index))}
                       className="absolute top-1 right-1 p-1.5 bg-red-500/90 rounded-full text-white shadow-md z-10 md:opacity-0 group-hover:opacity-100 transition-opacity"
@@ -554,7 +695,7 @@ export default function CreateListing() {
                     </button>
                   </motion.div>
                 ))}
-                
+
                 {carouselPreviews.map((preview, index) => (
                   <motion.div
                     key={`new-${preview}`}
@@ -565,7 +706,7 @@ export default function CreateListing() {
                     className="relative aspect-square rounded-2xl overflow-hidden bg-[#E0E5EC] shadow-[4px_4px_8px_rgba(163,177,198,0.6),-4px_-4px_8px_rgba(255,255,255,0.8)] group"
                   >
                     <img src={preview} alt={`Carousel ${index}`} className="w-full h-full object-cover" />
-                    <button 
+                    <button
                       type="button"
                       onClick={() => removeCarouselItem(index)}
                       className="absolute top-1 right-1 p-1.5 bg-red-500/90 rounded-full text-white shadow-md z-10 md:opacity-0 group-hover:opacity-100 transition-opacity"
@@ -578,14 +719,24 @@ export default function CreateListing() {
 
               {/* Botón para añadir más (Solo si < 10 combinadas) */}
               {(existingCarousel.length + carouselFiles.length) < 10 && (
-                <motion.div 
+                <motion.div
                   whileTap={{ scale: 0.96 }}
-                  onClick={handleCarouselClick}
+                  onClick={() => {
+                    if (Capacitor.isNativePlatform()) {
+                      // En nativo, llamar directamente a la función
+                      handleCarouselChange();
+                    } else {
+                      // En web, hacer clic en el input oculto
+                      carouselInputRef.current?.click();
+                    }
+                  }}
                   className="aspect-square rounded-[2rem] bg-[#E0E5EC] shadow-[inset_6px_6px_12px_rgba(163,177,198,0.7),inset_-6px_-6px_12px_rgba(255,255,255,0.8)] flex items-center justify-center cursor-pointer text-[#1A1A3A]/30 hover:text-[#1A1A3A]/50 transition-all active:shadow-[inset_8px_8px_16px_rgba(163,177,198,0.8),inset_-8px_-8px_16px_rgba(255,255,255,0.9)]"
                 >
                   <ImagePlus size={24} strokeWidth={2} />
-                  <input 
-                    type="file" 
+                  
+                  {/* Input file oculto (solo para web) */}
+                  <input
+                    type="file"
                     ref={carouselInputRef}
                     accept="image/*"
                     multiple
@@ -609,8 +760,8 @@ export default function CreateListing() {
                 {form.title.length} / 35
               </span>
             </div>
-            <input 
-              type="text" 
+            <input
+              type="text"
               required
               maxLength={35}
               disabled={loading}
@@ -625,11 +776,11 @@ export default function CreateListing() {
           <div className="flex flex-col gap-2">
             <div className="flex justify-between items-center ml-2">
               <span className="text-sm font-bold text-[#1A1A3A]/70">Descripción del Anuncio <span className="text-red-500">*</span></span>
-               <span className={`text-[10px] font-bold tracking-tight ${form.description.length >= 480 ? 'text-red-500' : 'text-[#1A1A3A]/40'}`}>
+              <span className={`text-[10px] font-bold tracking-tight ${form.description.length >= 480 ? 'text-red-500' : 'text-[#1A1A3A]/40'}`}>
                 {form.description.length} / 500 caracteres
-               </span>
+              </span>
             </div>
-            <textarea 
+            <textarea
               required
               maxLength={500}
               disabled={loading}
@@ -643,8 +794,8 @@ export default function CreateListing() {
           {/* KEYWORDS */}
           <div className="flex flex-col gap-2">
             <span className="text-sm font-bold text-[#1A1A3A]/70 ml-2">Palabras Clave <span className="text-red-500">*</span></span>
-            <input 
-              type="text" 
+            <input
+              type="text"
               required
               disabled={loading}
               value={form.keywords}
@@ -659,20 +810,20 @@ export default function CreateListing() {
           <div className="flex gap-4">
             <div className="flex-col gap-2 flex-1 flex relative">
               <span className="text-sm font-bold text-[#1A1A3A]/70 ml-2">Categoría <span className="text-red-500">*</span></span>
-              
+
               {/* Custom Dropdown */}
               <div className="relative">
-                <div 
+                <div
                   onClick={() => !loading && setIsDropdownOpen(!isDropdownOpen)}
-                  className={`w-full h-14 px-5 flex items-center justify-between bg-[#E0E5EC] rounded-2xl cursor-pointer transition-all ${isDropdownOpen 
-                    ? 'shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)]' 
+                  className={`w-full h-14 px-5 flex items-center justify-between bg-[#E0E5EC] rounded-2xl cursor-pointer transition-all ${isDropdownOpen
+                    ? 'shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)]'
                     : 'shadow-[6px_6px_12px_rgba(163,177,198,0.7),-6px_-6px_12px_rgba(255,255,255,0.9)]'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-3">
                     {form.category && (
-                      <selectedStyle.Icon 
-                        size={18} 
+                      <selectedStyle.Icon
+                        size={18}
                         style={{ color: selectedStyle.color }}
                         className="flex-shrink-0"
                       />
@@ -706,14 +857,14 @@ export default function CreateListing() {
                                   setForm({ ...form, category: cat.name });
                                   setIsDropdownOpen(false);
                                 }}
-                                className={`w-full px-4 py-3 rounded-xl text-left font-bold text-sm transition-all flex items-center justify-between group ${isSelected 
-                                  ? 'bg-[#1A1A3A] text-white shadow-lg' 
+                                className={`w-full px-4 py-3 rounded-xl text-left font-bold text-sm transition-all flex items-center justify-between group ${isSelected
+                                  ? 'bg-[#1A1A3A] text-white shadow-lg'
                                   : 'text-[#1A1A3A]/70 hover:bg-white/50'
-                                }`}
+                                  }`}
                               >
                                 <div className="flex items-center gap-3">
-                                  <style.Icon 
-                                    size={18} 
+                                  <style.Icon
+                                    size={18}
                                     style={{ color: isSelected ? '#fff' : style.color }}
                                     className="transition-colors"
                                   />
@@ -741,11 +892,11 @@ export default function CreateListing() {
               <span className="text-sm font-bold text-[#1A1A3A]/70 ml-2">Precio (€) <span className="text-red-500">*</span></span>
               {form.category === 'Servicios' || form.category === 'Formación' ? (
                 <div className="w-full h-14 flex items-center justify-center bg-[#E0E5EC] rounded-2xl shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] text-[#1A1A3A]/40 font-bold text-sm tracking-tight transition-all">
-                   Consultar
+                  Consultar
                 </div>
               ) : (
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   required
                   disabled={loading}
                   value={(form.price || '').toString().replace('.', ',')}
@@ -772,6 +923,22 @@ export default function CreateListing() {
             const level3Options = location.level2 ? (locData.data[location.level1]?.[location.level2] || []) : [];
             const level3Label = locData.labels?.level3 || 'Barrio / Zona';
 
+            const normalizeLevel3 = (str) => {
+              const cleanStr = str.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s\-']/g, '').substring(0, 50);
+              return cleanStr.replace(/\b[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]/g, c => c.toUpperCase());
+            };
+
+            const getLevel3Placeholder = () => {
+              switch (selectedCountry) {
+                case 'ES': return 'Ej: Ruzafa, El Carmen...';
+                case 'VE': return 'Ej: Chacao, Los Palos Grandes...';
+                case 'MX': return 'Ej: Polanco, Condesa...';
+                case 'CO': return 'Ej: El Poblado, Chapinero...';
+                case 'AR': return 'Ej: Palermo, Recoleta...';
+                case 'CL': return 'Ej: Providencia, Ñuñoa...';
+                default: return 'Ej: Centro, San Juan...';
+              }
+            };
 
             return (
               <div className="flex flex-col gap-3">
@@ -785,11 +952,10 @@ export default function CreateListing() {
                   <div className="relative flex-1 min-w-0">
                     <div
                       onClick={() => { setIsLocationDropdownOpen(!isLocationDropdownOpen); setIsCityDropdownOpen(false); }}
-                      className={`w-full h-14 px-4 flex items-center justify-between bg-[#E0E5EC] rounded-2xl cursor-pointer transition-all ${
-                        isLocationDropdownOpen
-                          ? 'shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)]'
-                          : 'shadow-[6px_6px_12px_rgba(163,177,198,0.7),-6px_-6px_12px_rgba(255,255,255,0.9)]'
-                      }`}
+                      className={`w-full h-14 px-4 flex items-center justify-between bg-[#E0E5EC] rounded-2xl cursor-pointer transition-all ${isLocationDropdownOpen
+                        ? 'shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)]'
+                        : 'shadow-[6px_6px_12px_rgba(163,177,198,0.7),-6px_-6px_12px_rgba(255,255,255,0.9)]'
+                        }`}
                     >
                       <span className={`text-sm font-semibold truncate ${location.level1 ? 'text-[#1A1A3A]' : 'text-gray-400/70'}`}>
                         {location.level1 || locData.level1Label}
@@ -814,11 +980,10 @@ export default function CreateListing() {
                                   setLocation({ level1: regionName, level2: '' });
                                   setIsLocationDropdownOpen(false);
                                 }}
-                                className={`w-full px-4 py-2.5 rounded-xl text-left font-bold text-sm transition-all ${
-                                  location.level1 === regionName
-                                    ? 'bg-[#1A1A3A] text-white'
-                                    : 'text-[#1A1A3A]/70 hover:bg-white/50'
-                                }`}
+                                className={`w-full px-4 py-2.5 rounded-xl text-left font-bold text-sm transition-all ${location.level1 === regionName
+                                  ? 'bg-[#1A1A3A] text-white'
+                                  : 'text-[#1A1A3A]/70 hover:bg-white/50'
+                                  }`}
                               >
                                 {regionName}
                               </button>
@@ -837,13 +1002,12 @@ export default function CreateListing() {
                         setIsCityDropdownOpen(!isCityDropdownOpen);
                         setIsLocationDropdownOpen(false);
                       }}
-                      className={`w-full h-14 px-4 flex items-center justify-between bg-[#E0E5EC] rounded-2xl transition-all ${
-                        !location.level1
-                          ? 'opacity-50 cursor-not-allowed shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.6)]'
-                          : isCityDropdownOpen
-                            ? 'cursor-pointer shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)]'
-                            : 'cursor-pointer shadow-[6px_6px_12px_rgba(163,177,198,0.7),-6px_-6px_12px_rgba(255,255,255,0.9)]'
-                      }`}
+                      className={`w-full h-14 px-4 flex items-center justify-between bg-[#E0E5EC] rounded-2xl transition-all ${!location.level1
+                        ? 'opacity-50 cursor-not-allowed shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.6)]'
+                        : isCityDropdownOpen
+                          ? 'cursor-pointer shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)]'
+                          : 'cursor-pointer shadow-[6px_6px_12px_rgba(163,177,198,0.7),-6px_-6px_12px_rgba(255,255,255,0.9)]'
+                        }`}
                     >
                       <span className={`text-sm font-semibold truncate ${location.level2 ? 'text-[#1A1A3A]' : 'text-gray-400/70'}`}>
                         {location.level2 || locData.level2Label}
@@ -865,15 +1029,14 @@ export default function CreateListing() {
                                 key={city}
                                 type="button"
                                 onClick={() => {
-                                   setLocation(prev => ({ ...prev, level2: city, level3: '' }));
-                                   setIsCityDropdownOpen(false);
-                                   setIsLevel3DropdownOpen(false);
+                                  setLocation(prev => ({ ...prev, level2: city, level3: '' }));
+                                  setIsCityDropdownOpen(false);
+                                  setIsLevel3DropdownOpen(false);
                                 }}
-                                className={`w-full px-4 py-2.5 rounded-xl text-left font-bold text-sm transition-all ${
-                                  location.level2 === city
-                                    ? 'bg-[#1A1A3A] text-white'
-                                    : 'text-[#1A1A3A]/70 hover:bg-white/50'
-                                }`}
+                                className={`w-full px-4 py-2.5 rounded-xl text-left font-bold text-sm transition-all ${location.level2 === city
+                                  ? 'bg-[#1A1A3A] text-white'
+                                  : 'text-[#1A1A3A]/70 hover:bg-white/50'
+                                  }`}
                               >
                                 {city}
                               </button>
@@ -888,10 +1051,10 @@ export default function CreateListing() {
                   * Primero selecciona {locData.level1Label.toLowerCase()}, luego la ciudad.
                 </p>
 
-                {/* Selector Level 3 (Barrio / Zona) — solo si hay opciones disponibles */}
-                {level3Options.length > 0 && (
+                {/* Selector Level 3 (Barrio / Zona) — dropdown si hay opciones, input si no */}
+                {level3Options.length > 0 ? (
                   <div className="relative">
-                    <span className="text-[10px] font-bold text-[#1A1A3A]/50 uppercase tracking-wider ml-2 mb-1 block">{level3Label}</span>
+                    <span className="text-[10px] font-bold text-[#1A1A3A]/50 uppercase tracking-wider ml-2 mb-1 block">{level3Label} <span className="text-red-500">*</span></span>
                     <div
                       onClick={() => {
                         if (!location.level2) return;
@@ -899,13 +1062,12 @@ export default function CreateListing() {
                         setIsLocationDropdownOpen(false);
                         setIsCityDropdownOpen(false);
                       }}
-                      className={`w-full h-14 px-4 flex items-center justify-between bg-[#E0E5EC] rounded-2xl transition-all ${
-                        !location.level2
-                          ? 'opacity-50 cursor-not-allowed shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.6)]'
-                          : isLevel3DropdownOpen
-                            ? 'cursor-pointer shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)]'
-                            : 'cursor-pointer shadow-[6px_6px_12px_rgba(163,177,198,0.7),-6px_-6px_12px_rgba(255,255,255,0.9)]'
-                      }`}
+                      className={`w-full h-14 px-4 flex items-center justify-between bg-[#E0E5EC] rounded-2xl transition-all ${!location.level2
+                        ? 'opacity-50 cursor-not-allowed shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.6)]'
+                        : isLevel3DropdownOpen
+                          ? 'cursor-pointer shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)]'
+                          : 'cursor-pointer shadow-[6px_6px_12px_rgba(163,177,198,0.7),-6px_-6px_12px_rgba(255,255,255,0.9)]'
+                        }`}
                     >
                       <span className={`text-sm font-semibold truncate ${location.level3 ? 'text-[#1A1A3A]' : 'text-gray-400/70'}`}>
                         {location.level3 || `Selecciona ${level3Label.toLowerCase()}...`}
@@ -930,11 +1092,10 @@ export default function CreateListing() {
                                   setLocation(prev => ({ ...prev, level3: zone }));
                                   setIsLevel3DropdownOpen(false);
                                 }}
-                                className={`w-full px-4 py-2.5 rounded-xl text-left font-bold text-sm transition-all ${
-                                  location.level3 === zone
-                                    ? 'bg-[#1A1A3A] text-white'
-                                    : 'text-[#1A1A3A]/70 hover:bg-white/50'
-                                }`}
+                                className={`w-full px-4 py-2.5 rounded-xl text-left font-bold text-sm transition-all ${location.level3 === zone
+                                  ? 'bg-[#1A1A3A] text-white'
+                                  : 'text-[#1A1A3A]/70 hover:bg-white/50'
+                                  }`}
                               >
                                 {zone}
                               </button>
@@ -944,10 +1105,69 @@ export default function CreateListing() {
                       )}
                     </AnimatePresence>
                   </div>
+                ) : (
+                  location.level2 && (
+                    <div className="flex flex-col gap-1 mt-1 relative" ref={suggestionsRef}>
+                      <label className="text-[10px] font-bold text-[#1A1A3A]/50 uppercase tracking-wider ml-2 block">
+                        {level3Label} <span className="text-red-500">*</span>
+                        {location.level3.length > 0 && location.level3.length < 3 && (
+                          <span className="text-red-500 normal-case tracking-normal ml-2">(Mín. 3 caracteres)</span>
+                        )}
+                      </label>
+                      <input
+                        type="text"
+                        value={location.level3}
+                        onChange={(e) => {
+                          const normalized = normalizeLevel3(e.target.value);
+                          setLocation({ ...location, level3: normalized });
+                          setIsTypingLevel3(true);
+                          setIsLevel3SuggestionsOpen(true);
+                        }}
+                        onFocus={() => {
+                          if (level3Suggestions.length > 0) setIsLevel3SuggestionsOpen(true);
+                        }}
+                        placeholder={getLevel3Placeholder()}
+                        required
+                        minLength={3}
+                        maxLength={50}
+                        className="w-full h-14 px-4 bg-[#E0E5EC] rounded-2xl shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] text-[#1A1A3A] font-bold focus:outline-none transition-all"
+                      />
+
+                      <AnimatePresence>
+                        {isLevel3SuggestionsOpen && level3Suggestions.length > 0 && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 5, scale: 1 }}
+                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                            className="absolute left-0 right-0 top-full z-[60] mt-1 bg-[#E0E5EC] rounded-2xl shadow-[8px_8px_16px_rgba(163,177,198,0.8),-8px_-8px_16px_rgba(255,255,255,1)] border border-white/40 overflow-hidden"
+                          >
+                            <div className="max-h-56 overflow-y-auto custom-scrollbar p-2 flex flex-col gap-1">
+                              {level3Suggestions.map((zone) => (
+                                <button
+                                  key={zone}
+                                  type="button"
+                                  onClick={() => {
+                                    setLocation(prev => ({ ...prev, level3: zone }));
+                                    setIsLevel3SuggestionsOpen(false);
+                                    setIsTypingLevel3(false);
+                                  }}
+                                  className={`w-full px-4 py-2.5 rounded-xl text-left font-bold text-sm transition-all text-[#1A1A3A]/70 hover:bg-white/50`}
+                                >
+                                  {zone}
+                                </button>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  )
                 )}
+
 
               </div>
             );
+
           })()}
 
           {/* WHATSAPP */}
@@ -962,10 +1182,10 @@ export default function CreateListing() {
                   className="h-14 px-3 bg-[#E0E5EC] rounded-2xl shadow-[6px_6px_12px_rgba(163,177,198,0.7),-6px_-6px_12px_rgba(255,255,255,0.95)] flex items-center gap-2 font-bold text-[#1A1A3A] hover:bg-white/40 transition-all border border-white/20 active:shadow-inner"
                 >
                   <div className="w-5 h-5 rounded-full overflow-hidden border border-[#003366]/20 bg-[#E0E5EC] flex-shrink-0 relative">
-                    <img 
-                      src={`https://flagcdn.com/w80/${selectedPrefix.iso.toLowerCase()}.png`} 
+                    <img
+                      src={`https://flagcdn.com/w80/${selectedPrefix.iso.toLowerCase()}.png`}
                       alt={selectedPrefix.name}
-                      className="w-full h-full object-cover absolute inset-0" 
+                      className="w-full h-full object-cover absolute inset-0"
                     />
                   </div>
                   <span className="text-sm">{selectedPrefix.code}</span>
@@ -989,16 +1209,16 @@ export default function CreateListing() {
                               setSelectedPrefix(item);
                               setIsPrefixOpen(false);
                             }}
-                            className={`flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-all ${selectedPrefix.name === item.name 
-                              ? 'bg-[#1A1A3A] text-white' 
+                            className={`flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-all ${selectedPrefix.name === item.name
+                              ? 'bg-[#1A1A3A] text-white'
                               : 'text-[#1A1A3A]/70 hover:bg-white/80'
-                            }`}
+                              }`}
                           >
                             <div className="w-6 h-6 rounded-full overflow-hidden border border-[#003366]/20 bg-[#E0E5EC] flex-shrink-0 relative">
-                              <img 
-                                src={`https://flagcdn.com/w80/${item.iso.toLowerCase()}.png`} 
+                              <img
+                                src={`https://flagcdn.com/w80/${item.iso.toLowerCase()}.png`}
                                 alt={item.name}
-                                className="w-full h-full object-cover absolute inset-0" 
+                                className="w-full h-full object-cover absolute inset-0"
                               />
                             </div>
                             <div className="flex items-center gap-2">
@@ -1013,8 +1233,8 @@ export default function CreateListing() {
                 </AnimatePresence>
               </div>
 
-              <input 
-                type="tel" 
+              <input
+                type="tel"
                 required
                 disabled={loading}
                 value={form.whatsapp}
@@ -1053,11 +1273,11 @@ export default function CreateListing() {
       </div>
 
       {/* Drawer Legal */}
-      <LegalDrawer 
-        isOpen={legalDocs.isOpen} 
-        onClose={() => setLegalDocs({ ...legalDocs, isOpen: false })} 
-        title={legalDocs.title} 
-        content={legalDocs.content} 
+      <LegalDrawer
+        isOpen={legalDocs.isOpen}
+        onClose={() => setLegalDocs({ ...legalDocs, isOpen: false })}
+        title={legalDocs.title}
+        content={legalDocs.content}
       />
     </div>
   );

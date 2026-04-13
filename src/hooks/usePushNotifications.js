@@ -27,7 +27,11 @@ export function usePushNotifications() {
       setPermission(perm)
       if (perm !== 'granted') return null
 
-      const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js')
+      // Registrar el SW y esperar a que esté ACTIVO antes de solicitar token
+      // Esto evita AbortError: "Subscription failed - no active Service Worker"
+      await navigator.serviceWorker.register('/firebase-messaging-sw.js')
+      const registration = await navigator.serviceWorker.ready
+
       const messaging = getMessaging()
       
       const token = await getToken(messaging, {

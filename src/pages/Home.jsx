@@ -13,7 +13,7 @@ import { normalizeText } from '../utils/textUtils';
 import emptyHammock from '../assets/empty_hammock.png';
 import panaEnMecedora from '../assets/pana_en_mecedora.png';
 import { useNotifications } from '../hooks/useNotifications';
-import { calculateDistance, getUserProvince, getNearbyProvinces } from '../utils/geoUtils';
+import { calculateDistance, getUserProvince, getNearbyProvinces, getUserLocation } from '../utils/geoUtils';
 
 
 const CAPITALS = {
@@ -30,14 +30,14 @@ const CAPITALS = {
 };
 
 export default function Home() {
-  const { 
-    activeCategory, 
-    filters, 
-    setFilters, 
-    sortBy, 
-    setSortBy, 
-    setIsFilterOpen, 
-    isSortOpen, 
+  const {
+    activeCategory,
+    filters,
+    setFilters,
+    sortBy,
+    setSortBy,
+    setIsFilterOpen,
+    isSortOpen,
     setIsSortOpen,
     selectedCountry,
     setActiveCategory,
@@ -125,25 +125,39 @@ export default function Home() {
 
   const handleSortSelect = async (id) => {
     setSortBy(id);
-    if (id === 'distance' && !userLocation && 'geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(async (pos) => {
-        const { latitude, longitude } = pos.coords;
-        const loc = await getUserProvince(latitude, longitude);
+
+    if (id === 'distance' && !userLocation) {
+      try {
+        // ✅ USAR NUEVA FUNCIÓN COMPATIBLE WEB + NATIVO
+        const coords = await getUserLocation();
+
+        const loc = await getUserProvince(coords.lat, coords.lng);
+
         if (loc) {
           setUserLocation({
-            lat: latitude,
-            lng: longitude,
+            lat: coords.lat,
+            lng: coords.lng,
             level1: loc.level1,
             level2: loc.level2,
+            level3: loc.level3,
             country: loc.country
           });
         } else {
-          setUserLocation({ lat: latitude, lng: longitude, level1: '', level2: '', country: '' });
+          setUserLocation({
+            lat: coords.lat,
+            lng: coords.lng,
+            level1: '',
+            level2: '',
+            level3: '',
+            country: ''
+          });
         }
-      }, err => {
-        console.warn('Geolocation error:', err);
-      });
+      } catch (err) {
+        console.error('Error obteniendo ubicación:', err);
+        alert('No pudimos obtener tu ubicación. Verifica los permisos de la app.');
+      }
     }
+
     setIsSortOpen(false);
   };
 
@@ -162,7 +176,7 @@ export default function Home() {
     // REGLAS DE NEGOCIO (Guardadas para futura edición):
     // 1. Filtrar por país seleccionado por defecto si no hay filtro manual de ubicación.
     // 2. Orden default (relevance): Priorizar Capital del país, luego más recientes.
-    
+
     // Filtro estricto por país seleccionado
     // Cada producto DEBE tener location.country con el código ISO (ES, CO, US, etc.)
     result = result.filter(p => {
@@ -208,28 +222,28 @@ export default function Home() {
 
     // Lógica de Ordenación
     switch (sortBy) {
-      case 'rating': 
-        result.sort((a, b) => (b.rating || 0) - (a.rating || 0)); 
+      case 'rating':
+        result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
         break;
-      case 'price_asc': 
-        result.sort((a, b) => (parseFloat(a.price) || 0) - (parseFloat(b.price) || 0)); 
+      case 'price_asc':
+        result.sort((a, b) => (parseFloat(a.price) || 0) - (parseFloat(b.price) || 0));
         break;
-      case 'recent': 
+      case 'recent':
         result.sort((a, b) => {
           const dateA = a.createdAt?.seconds || 0;
           const dateB = b.createdAt?.seconds || 0;
           return dateB - dateA;
-        }); 
+        });
         break;
-      case 'searches': 
-        result.sort((a, b) => (b.searchCount || 0) - (a.searchCount || 0)); 
+      case 'searches':
+        result.sort((a, b) => (b.searchCount || 0) - (a.searchCount || 0));
         break;
-      case 'distance': 
+      case 'distance':
         if (!userLocation) break;
         result.sort((a, b) => {
           let scoreA = 10000;
           let scoreB = 10000;
-          
+
           const aL3 = a.location?.level3 || '';
           const aL2 = a.location?.level2 || a.city || '';
           const aL1 = a.location?.level1 || a.state || '';
@@ -243,27 +257,27 @@ export default function Home() {
             else if (aL1 && userLocation.level1 && aL1 === userLocation.level1) scoreA = 500;
             else scoreA = 1000;
           } else {
-             const dist = calculateDistance(userLocation.lat, userLocation.lng, a.location.coordinates.lat, a.location.coordinates.lng);
-             scoreA = dist;
-             a._distanceKm = dist;
+            const dist = calculateDistance(userLocation.lat, userLocation.lng, a.location.coordinates.lat, a.location.coordinates.lng);
+            scoreA = dist;
+            a._distanceKm = dist;
           }
-          
+
           if (!b.location?.coordinates) {
             if (bL3 && userLocation.level3 && bL3 === userLocation.level3) scoreB = 0;
             else if (bL2 && userLocation.level2 && bL2 === userLocation.level2) scoreB = 100;
             else if (bL1 && userLocation.level1 && bL1 === userLocation.level1) scoreB = 500;
             else scoreB = 1000;
           } else {
-             const dist = calculateDistance(userLocation.lat, userLocation.lng, b.location.coordinates.lat, b.location.coordinates.lng);
-             scoreB = dist;
-             b._distanceKm = dist;
+            const dist = calculateDistance(userLocation.lat, userLocation.lng, b.location.coordinates.lat, b.location.coordinates.lng);
+            scoreB = dist;
+            b._distanceKm = dist;
           }
-          
+
           a._distanceScore = scoreA;
           b._distanceScore = scoreB;
-          
+
           return scoreA - scoreB;
-        }); 
+        });
         break;
 
       case 'relevance':
@@ -276,15 +290,15 @@ export default function Home() {
           const isBCapital = (b.location?.level2 === capitalCity || b.city === capitalCity) ? 0 : 1;
 
           if (isACapital !== isBCapital) return isACapital - isBCapital;
-          
+
           // Secondary sort: Recents (createdAt). Handle standard Timestamp or Date or string
           const getMillis = (dateObj) => {
-             if (!dateObj) return 0;
-             if (dateObj.toMillis) return dateObj.toMillis();
-             if (dateObj.seconds) return dateObj.seconds * 1000;
-             if (typeof dateObj === 'string' || typeof dateObj === 'number') return new Date(dateObj).getTime();
-             if (dateObj instanceof Date) return dateObj.getTime();
-             return 0;
+            if (!dateObj) return 0;
+            if (dateObj.toMillis) return dateObj.toMillis();
+            if (dateObj.seconds) return dateObj.seconds * 1000;
+            if (typeof dateObj === 'string' || typeof dateObj === 'number') return new Date(dateObj).getTime();
+            if (dateObj instanceof Date) return dateObj.getTime();
+            return 0;
           };
           const dateA = getMillis(a.createdAt);
           const dateB = getMillis(b.createdAt);
@@ -301,7 +315,7 @@ export default function Home() {
       if (sortBy === 'distance' && userLocation?.level2 && !nearbyLoading && products.length > 0) {
         // Verificar si de los filtrados, alguno es de la zona
         const hasLocalAds = filteredProducts.some(p => p._distanceScore === 0);
-        
+
         if (!hasLocalAds) {
           setNearbyLoading(true);
           try {
@@ -316,7 +330,7 @@ export default function Home() {
               const snap = await getDocs(q);
               const nearbyData = snap.docs.map(d => ({ ...d.data(), id: d.id, _isNearbyFallback: true }))
                 .filter(p => !products.find(ex => ex.id === p.id));
-              
+
               if (nearbyData.length > 0) {
                 setProducts(prev => [...prev, ...nearbyData]);
               }
@@ -340,7 +354,7 @@ export default function Home() {
         if (prod.id && typeof prod.id === 'string') {
           updateDoc(doc(db, 'products', prod.id), {
             searchCount: increment(1)
-          }).catch(() => {});
+          }).catch(() => { });
         }
       });
     }, 1500);
@@ -382,7 +396,7 @@ export default function Home() {
                     ].map((opt) => (
                       <button
                         key={opt.id}
-                        onClick={() => handleSortSelect(opt.id) }
+                        onClick={() => handleSortSelect(opt.id)}
                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-xs ${sortBy === opt.id ? 'bg-[#1A1A3A] text-white shadow-lg' : 'text-[#1A1A3A] hover:bg-black/5'}`}
                       >
                         <opt.icon size={14} />
@@ -425,10 +439,10 @@ export default function Home() {
 
             {products.length === 0 && (
               <div className="col-span-full py-12 text-center flex flex-col items-center justify-center p-6 mt-4">
-                <img 
-                  src={emptyHammock} 
-                  alt="No hay anuncios" 
-                  className="w-[280px] h-auto object-contain mb-2 drop-shadow-[0_10px_15px_rgba(0,0,0,0.05)]" 
+                <img
+                  src={emptyHammock}
+                  alt="No hay anuncios"
+                  className="w-[280px] h-auto object-contain mb-2 drop-shadow-[0_10px_15px_rgba(0,0,0,0.05)]"
                 />
                 <p className="text-[20px] md:text-[24px] font-black text-[#1A1A3A] tracking-tight uppercase leading-none">
                   Aún no hay anuncios
@@ -441,10 +455,10 @@ export default function Home() {
 
             {products.length > 0 && filteredProducts.length === 0 && (
               <div className="col-span-full py-8 text-center flex flex-col items-center justify-center p-6 mt-0">
-                <img 
-                  src={panaEnMecedora} 
-                  alt="No hay resultados" 
-                  className="w-[190px] h-auto object-contain mb-1 drop-shadow-[0_10px_15px_rgba(0,0,0,0.05)]" 
+                <img
+                  src={panaEnMecedora}
+                  alt="No hay resultados"
+                  className="w-[190px] h-auto object-contain mb-1 drop-shadow-[0_10px_15px_rgba(0,0,0,0.05)]"
                 />
                 <h3 className="text-[22px] font-black text-[#1A1A3A] tracking-tight uppercase leading-none">
                   No hay panas con estos filtros
@@ -473,9 +487,9 @@ export default function Home() {
         )}
       </div>
       <FilterPanel />
-      <NotificationModal 
-        isOpen={isNotifOpen} 
-        onClose={() => setIsNotifOpen(false)} 
+      <NotificationModal
+        isOpen={isNotifOpen}
+        onClose={() => setIsNotifOpen(false)}
         notifications={activeNotifications}
         loading={notifsLoading}
         onDismissOne={dismissOne}
