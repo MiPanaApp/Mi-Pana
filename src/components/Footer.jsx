@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { ShieldCheck, CheckCircle2, Clock } from 'lucide-react';
 import { FaInstagram, FaTwitter, FaFacebookF, FaYoutube, FaTiktok } from 'react-icons/fa';
 import { FaXTwitter } from 'react-icons/fa6';
 import { IconPana } from './ui/IconPana';
@@ -7,6 +10,11 @@ import LegalDrawer from './LegalDrawer';
 
 const Footer = ({ onContactClick }) => {
   const [legalDocs, setLegalDocs] = useState({ isOpen: false, title: '', content: '' });
+  const navigate = useNavigate();
+  const { userData } = useAuth();
+
+  const isVerified = userData?.verificationStatus === 'approved';
+  const isPending = userData?.verificationStatus === 'pending';
 
   const openLegal = (key) => {
     const doc = LegalData[key];
@@ -140,7 +148,27 @@ const Footer = ({ onContactClick }) => {
                   `
                 } 
               }))} className="hover:text-pana-yellow transition-colors text-nowrap">¿Cómo funciona?</button></li>
-              <li><button onClick={() => {}} className="hover:text-pana-yellow transition-colors text-left text-nowrap">Verificación de Pana</button></li>
+              <li>
+                <button 
+                  onClick={() => {
+                    if (!isVerified && !isPending) {
+                      navigate('/verificacion');
+                    }
+                  }} 
+                  className={`flex items-center gap-2 transition-colors text-left text-nowrap ${
+                    isVerified || isPending 
+                      ? 'text-gray-400 cursor-default' 
+                      : 'hover:text-pana-yellow'
+                  }`}
+                >
+                  Verificación de Pana
+                  {isVerified ? (
+                    <CheckCircle2 size={14} className="text-[#00C97A]" />
+                  ) : isPending ? (
+                    <Clock size={14} className="text-[#FFB400]" />
+                  ) : null}
+                </button>
+              </li>
             </ul>
           </div>
           

@@ -131,10 +131,11 @@ export default function ProductDetail() {
    };
 
    const REPORT_REASONS = [
+      "Ya no está activo",
       "Está repetido",
+      "El precio es incorrecto",
       "La categoría es incorrecta",
       "Ya está vendido",
-      "Es un profesional",
       "El teléfono es incorrecto",
       "Contenido ilegal",
       "Es una estafa",
@@ -1248,7 +1249,7 @@ tlfno contacto: 672 593 950`}
 
                      {!reportSuccess ? (
                         <>
-                           <h3 className="text-xl md:text-2xl font-black text-[#1A1A3A] mb-6 pr-8 leading-tight">
+                           <h3 className="text-xl md:text-2xl font-black text-[#1A1A3A] mb-6 leading-tight text-center">
                               ¿Cuál es el motivo de tu denuncia?
                            </h3>
 

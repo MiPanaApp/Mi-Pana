@@ -217,9 +217,9 @@ export default function Verification() {
         <div className="w-8"></div>
       </div>
 
-      <div className="max-w-md mx-auto p-6 pt-8">
+      <div className="max-w-md mx-auto p-4 pt-4 text-center sm:text-left">
         {currentStep < 3 && (
-          <div className="flex items-center justify-center gap-2 mb-8">
+          <div className="flex items-center justify-center gap-2 mb-4">
             {['Introducción', 'Documento', 'Selfie'].map((label, i) => (
               <div key={i} className="flex items-center gap-2">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-black ${
@@ -239,47 +239,50 @@ export default function Verification() {
         {/* PASO 0: INTRODUCCIÓN */}
         {currentStep === 0 && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <h2 className="text-2xl font-black text-[#1A1A3A] mb-2">Conviértete en Pana Verificado <ShieldCheck className="inline text-[#00C97A]" /></h2>
-            <p className="text-[#1A1A3A]/60 font-bold mb-8">La verificación te da credibilidad y aumenta tus posibilidades de cerrar tratos.</p>
+            <h2 className="text-xl md:text-[21px] font-black text-[#1A1A3A] mb-1 flex items-center justify-center sm:justify-start gap-2">
+              Conviértete en Pana Verificado 
+              <ShieldCheck className="text-[#00C97A] shrink-0" size={22} />
+            </h2>
+            <p className="text-[13px] md:text-[15px] text-[#1A1A3A]/60 font-bold mb-4">La verificación te da credibilidad y aumenta tus posibilidades de cerrar tratos.</p>
             
-            <div className="space-y-2 mb-8">
-              <div className="bg-white p-5 rounded-2xl border border-gray-100 flex gap-4 items-center shadow-sm">
-                <div className="w-12 h-12 bg-white rounded-[10px] shadow-[0_2px_10px_rgba(0,0,0,0.06)] border border-gray-50 flex items-center justify-center shrink-0">
-                  <ShieldCheck size={24} color="#22a06b" />
+            <div className="space-y-1.5 mb-4">
+              <div className="bg-white p-3 rounded-2xl border border-gray-100 flex gap-3 items-center shadow-sm">
+                <div className="w-10 h-10 bg-white rounded-[10px] shadow-[0_2px_10px_rgba(0,0,0,0.06)] border border-gray-50 flex items-center justify-center shrink-0">
+                  <ShieldCheck size={20} color="#22a06b" />
                 </div>
                 <div>
-                  <p className="text-sm font-black text-gray-800 mb-0.5">Badge en tu perfil y anuncios</p>
-                  <p className="text-xs font-semibold text-gray-500 leading-tight">El sello visible genera confianza inmediata en compradores y vendedores.</p>
+                  <p className="text-sm font-black text-gray-800 mb-0.5 leading-none">Badge en tu perfil</p>
+                  <p className="text-[11px] font-semibold text-gray-400 leading-tight">Sello visible en tu perfil y anuncios.</p>
                 </div>
               </div>
 
-              <div className="bg-white p-5 rounded-2xl border border-gray-100 flex gap-4 items-center shadow-sm">
-                <div className="w-12 h-12 bg-white rounded-[10px] shadow-[0_2px_10px_rgba(0,0,0,0.06)] border border-gray-50 flex items-center justify-center shrink-0">
-                  <Search size={24} color="#2563eb" />
+              <div className="bg-white p-3.5 rounded-2xl border border-gray-100 flex gap-3 items-center shadow-sm">
+                <div className="w-10 h-10 bg-white rounded-[10px] shadow-[0_2px_10px_rgba(0,0,0,0.06)] border border-gray-50 flex items-center justify-center shrink-0">
+                  <Search size={20} color="#2563eb" />
                 </div>
                 <div>
-                  <p className="text-sm font-black text-gray-800 mb-0.5">Mayor visibilidad en búsquedas</p>
-                  <p className="text-xs font-semibold text-gray-500 leading-tight">Tus anuncios destacan frente a perfiles sin verificar.</p>
+                  <p className="text-sm font-black text-gray-800 mb-0.5 leading-none">Mayor visibilidad</p>
+                  <p className="text-[11px] font-semibold text-gray-400 leading-tight">Tus anuncios destacan frente a otros.</p>
                 </div>
               </div>
 
-              <div className="bg-white p-5 rounded-2xl border border-gray-100 flex gap-4 items-center shadow-sm">
-                <div className="w-12 h-12 bg-white rounded-[10px] shadow-[0_2px_10px_rgba(0,0,0,0.06)] border border-gray-50 flex items-center justify-center shrink-0">
-                  <MessageCircle size={24} color="#7c3aed" />
+              <div className="bg-white p-3.5 rounded-2xl border border-gray-100 flex gap-3 items-center shadow-sm">
+                <div className="w-10 h-10 bg-white rounded-[10px] shadow-[0_2px_10px_rgba(0,0,0,0.06)] border border-gray-50 flex items-center justify-center shrink-0">
+                  <MessageCircle size={20} color="#7c3aed" />
                 </div>
                 <div>
-                  <p className="text-sm font-black text-gray-800 mb-0.5">Más contactos de otros panas</p>
-                  <p className="text-xs font-semibold text-gray-500 leading-tight">Los usuarios verificados reciben más mensajes e interacciones.</p>
+                  <p className="text-sm font-black text-gray-800 mb-0.5 leading-none">Más interacciones</p>
+                  <p className="text-[11px] font-semibold text-gray-400 leading-tight">Recibe más mensajes de interesados.</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-[#FFF8E7] border border-[#FFB400]/30 rounded-2xl p-4 text-[13px] text-[#1A1A3A]/70 mb-8 font-medium flex gap-3 items-start">
-              <Lock size={16} className="text-[#FFB400] shrink-0 mt-0.5" />
-              <p>Tus documentos se almacenan de forma segura y encriptada. Solo los accede el equipo de verificación de Mi Pana y nunca se comparten con terceros.</p>
+            <div className="bg-[#FFF8E7] border border-[#FFB400]/30 rounded-2xl p-3 text-[12px] text-[#1A1A3A]/70 mb-4 font-medium flex gap-3 items-start">
+              <Lock size={14} className="text-[#FFB400] shrink-0 mt-0.5" />
+              <p>Documentos seguros y encriptados. Solo los accede Mi Pana y nunca se comparten.</p>
             </div>
 
-            <button onClick={() => setCurrentStep(1)} className="w-full bg-[#1A1A3A] text-white font-black py-4 rounded-2xl shadow-xl hover:-translate-y-0.5 active:scale-95 transition-all">
+            <button onClick={() => setCurrentStep(1)} className="w-full bg-[#1A1A3A] text-white font-black py-3.5 rounded-2xl shadow-xl hover:-translate-y-0.5 active:scale-95 transition-all">
               Comenzar verificación →
             </button>
           </div>
@@ -288,19 +291,19 @@ export default function Verification() {
         {/* PASO 1: DOCUMENTO */}
         {currentStep === 1 && (
           <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-            <h2 className="text-2xl font-black text-[#1A1A3A] mb-6">Sube tu documento</h2>
+            <h2 className="text-xl font-black text-[#1A1A3A] mb-4">Sube tu documento</h2>
             
-            <div className="mb-8">
-              <label className="block text-sm font-bold text-gray-700 mb-2 px-1">Tipo de documento</label>
+            <div className="mb-4">
+              <label className="block text-[13px] font-bold text-gray-700 mb-1.5 px-1">Tipo de documento</label>
               <div className="relative">
                 <div 
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className={`w-full h-14 px-5 flex items-center justify-between bg-white border border-gray-100 rounded-2xl cursor-pointer transition-all shadow-sm ${isDropdownOpen ? 'ring-2 ring-[#1A1A3A]/10' : ''}`}
+                  className={`w-full h-12 px-5 flex items-center justify-between bg-white border border-gray-100 rounded-2xl cursor-pointer transition-all shadow-sm ${isDropdownOpen ? 'ring-2 ring-[#1A1A3A]/10' : ''}`}
                 >
                   <span className="text-[#1A1A3A] font-bold text-sm">
                     {documentOptions.find(opt => opt.id === documentType)?.label || 'Seleccionar...'}
                   </span>
-                  <ChevronDown className={`w-5 h-5 text-[#1A1A3A] transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-4 h-4 text-[#1A1A3A] transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} />
                 </div>
 
                 <AnimatePresence>
@@ -341,30 +344,29 @@ export default function Verification() {
 
             <div 
               onClick={() => fileInputRef.current.click()}
-              className="w-full h-48 border-2 border-dashed border-[#1A1A3A]/30 rounded-[2rem] flex flex-col items-center justify-center cursor-pointer bg-[#EDEDF5]/50 hover:bg-[#EDEDF5] active:scale-[0.98] transition-all overflow-hidden relative mb-8"
+              className="w-full h-40 border-2 border-dashed border-[#1A1A3A]/30 rounded-[2rem] flex flex-col items-center justify-center cursor-pointer bg-[#EDEDF5]/50 hover:bg-[#EDEDF5] active:scale-[0.98] transition-all overflow-hidden relative mb-4"
             >
               {frontPreview ? (
                 <img src={frontPreview} alt="Documento" className="w-full h-full object-cover" />
               ) : (
                 <>
-                  <div className="w-14 h-14 bg-white rounded-full shadow-sm flex items-center justify-center mb-3">
-                    <Camera size={28} className="text-[#1A1A3A]"/>
+                  <div className="w-12 h-12 bg-white rounded-full shadow-sm flex items-center justify-center mb-2">
+                    <Camera size={24} className="text-[#1A1A3A]"/>
                   </div>
-                  <p className="text-[14px] font-bold text-[#1A1A3A]/60">Toca para fotografiar la parte frontal</p>
+                  <p className="text-[13px] font-bold text-[#1A1A3A]/60">Toca para fotografiar el frontal</p>
                 </>
               )}
             </div>
             <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleDocumentCapture} />
             
-            <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-8 space-y-2">
-              <p className="text-[13px] font-bold text-gray-600 flex items-center gap-2"><span className="text-green-500">✅</span> Documento completo y legible</p>
-              <p className="text-[13px] font-bold text-gray-600 flex items-center gap-2"><span className="text-green-500">✅</span> Buena iluminación sin reflejos</p>
-              <p className="text-[13px] font-bold text-gray-600 flex items-center gap-2"><span className="text-red-500">❌</span> Sin fotos borrosas o cortadas</p>
-              <p className="text-[13px] font-bold text-gray-600 flex items-center gap-2"><span className="text-red-500">❌</span> Sin filtros ni ediciones</p>
+            <div className="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm mb-4 space-y-1">
+              <p className="text-[12px] font-bold text-gray-600 flex items-center gap-2"><span className="text-green-500">✅</span> Documento legible</p>
+              <p className="text-[12px] font-bold text-gray-600 flex items-center gap-2"><span className="text-green-500">✅</span> Buena iluminación</p>
+              <p className="text-[12px] font-bold text-gray-600 flex items-center gap-2"><span className="text-red-500">❌</span> Borroso o cortado</p>
             </div>
 
             <div className="flex gap-3">
-              <button onClick={() => setCurrentStep(0)} className="px-6 py-4 rounded-2xl font-black bg-gray-200 text-gray-700 active:scale-95 transition-transform">Atrás</button>
+              <button onClick={() => setCurrentStep(0)} className="px-5 py-3.5 rounded-2xl font-black bg-gray-200 text-gray-700 active:scale-95 transition-transform">Atrás</button>
               <button 
                 onClick={() => {
                   if (documentFront) {
@@ -374,7 +376,7 @@ export default function Verification() {
                   }
                 }}
                 disabled={!documentFront} 
-                className="flex-1 bg-[#1A1A3A] text-white font-black py-4 rounded-2xl shadow-xl hover:-translate-y-0.5 active:scale-95 transition-all disabled:opacity-50 disabled:translate-y-0"
+                className="flex-1 bg-[#1A1A3A] text-white font-black py-3.5 rounded-2xl shadow-xl hover:-translate-y-0.5 active:scale-95 transition-all disabled:opacity-50 disabled:translate-y-0"
               >
                 Siguiente paso →
               </button>
@@ -385,10 +387,10 @@ export default function Verification() {
         {/* PASO 2: SELFIE / LIVENESS */}
         {currentStep === 2 && (
           <div className="animate-in fade-in slide-in-from-right-4 duration-500 text-center">
-            <h2 className="text-2xl font-black text-[#1A1A3A] mb-2">Selfie de seguridad</h2>
-            <p className="text-sm font-bold text-gray-500 mb-8">Necesitamos comprobar que eres tú.</p>
+            <h2 className="text-xl font-black text-[#1A1A3A] mb-1">Selfie de seguridad</h2>
+            <p className="text-[13px] font-bold text-gray-500 mb-6">Necesitamos comprobar que eres tú.</p>
 
-            <div className="relative w-full aspect-[3/4] max-w-xs mx-auto rounded-[32px] overflow-hidden bg-black mb-8 shadow-2xl">
+            <div className="relative w-full aspect-[3/4] max-w-[280px] mx-auto rounded-[32px] overflow-hidden bg-black mb-6 shadow-2xl">
               
               {/* Se mantiene siempre renderizado para que videoRef sea válido de inmediato */}
               <video 
@@ -443,9 +445,9 @@ export default function Verification() {
 
             {livenessStep === 'captured' && (
               <div className="flex gap-3">
-                <button onClick={() => { stopCamera(); setLivenessStep('init'); setSelfieCapture(null); }} className="px-5 py-4 rounded-2xl font-black bg-gray-200 text-gray-700 active:scale-95 transition-transform">Repetir</button>
-                <button onClick={handleSubmit} disabled={uploading} className="flex-1 bg-[#1A1A3A] text-[#FFB400] font-black py-4 rounded-2xl shadow-xl hover:-translate-y-0.5 active:scale-95 transition-all disabled:opacity-50 flex justify-center items-center gap-2">
-                  {uploading ? <><span className="animate-spin text-xl">⏳</span> Enviando...</> : 'Enviar solicitud'}
+                <button onClick={() => { stopCamera(); setLivenessStep('init'); setSelfieCapture(null); }} className="px-5 py-3.5 rounded-2xl font-black bg-gray-200 text-gray-700 active:scale-95 transition-transform text-sm">Repetir</button>
+                <button onClick={handleSubmit} disabled={uploading} className="flex-1 bg-[#1A1A3A] text-[#FFB400] font-black py-3.5 rounded-2xl shadow-xl hover:-translate-y-0.5 active:scale-95 transition-all disabled:opacity-50 flex justify-center items-center gap-2 text-sm">
+                  {uploading ? <><span className="animate-spin text-lg">⏳</span> Enviando...</> : 'Enviar solicitud'}
                 </button>
               </div>
             )}

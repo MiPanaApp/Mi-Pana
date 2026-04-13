@@ -569,13 +569,6 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Botón rápido Crear Anuncio */}
-      <button 
-        onClick={() => navigate('/anunciar')}
-        className={`w-full py-4 flex items-center justify-center gap-2 text-[11px] md:text-sm font-black text-[#0056B3] bg-[#E0E5EC] rounded-2xl shadow-[inset_3px_3px_6px_#b8b9be,inset_-3px_-3px_6px_#ffffff] uppercase tracking-wider ${isDesktop ? "col-span-1 xl:col-span-2 mt-4 hover:shadow-[inset_5px_5px_10px_#b8b9be,inset_-5px_-5px_10px_#ffffff] transition-all" : ""}`}
-      >
-        <PlusCircle size={20} /> Crear Nuevo Post
-      </button>
     </div>
   );
 
@@ -864,7 +857,27 @@ export default function Profile() {
                 >
                   <User size={16}/> Sobre Mi Pana
                 </button>
-                <button className="flex items-center gap-3 p-3 text-sm font-bold text-[#555577] hover:bg-white/50 rounded-xl transition-colors"><ShieldCheck size={16}/> Verificación Mi Pana</button>
+                <button 
+                  onClick={() => {
+                    if (userData?.verificationStatus !== 'approved' && userData?.verificationStatus !== 'pending') {
+                      navigate('/verificacion');
+                    }
+                  }}
+                  className={`flex items-center justify-between w-full p-3 text-sm font-bold rounded-xl transition-colors ${
+                    userData?.verificationStatus === 'approved' || userData?.verificationStatus === 'pending'
+                      ? 'text-[#1A1A3A]/40 cursor-default'
+                      : 'text-[#555577] hover:bg-white/50'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <ShieldCheck size={16}/> Verificación Mi Pana
+                  </div>
+                  {userData?.verificationStatus === 'approved' ? (
+                    <CheckCircle2 size={16} className="text-[#00C97A]" />
+                  ) : userData?.verificationStatus === 'pending' ? (
+                    <Clock size={16} className="text-[#FFB400]" />
+                  ) : null}
+                </button>
               </div>
             )}
           </div>
