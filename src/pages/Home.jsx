@@ -13,6 +13,8 @@ import { normalizeText } from '../utils/textUtils';
 import emptyHammock from '../assets/empty_hammock.png';
 import panaEnMecedora from '../assets/pana_en_mecedora.png';
 import { useNotifications } from '../hooks/useNotifications';
+import { calculateDistance, getUserProvince, getNearbyProvinces } from '../utils/geoUtils';
+
 
 const CAPITALS = {
   ES: 'Madrid',
@@ -38,10 +40,13 @@ export default function Home() {
     isSortOpen, 
     setIsSortOpen,
     selectedCountry,
-    setActiveCategory
+    setActiveCategory,
+    userLocation,
+    setUserLocation
   } = useStore();
   const sortRef = useRef(null);
   const { categoryId } = useParams();
+
   const navigate = useNavigate();
   const location = useLocation();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
@@ -114,6 +119,32 @@ export default function Home() {
     } finally {
       setLoadingMore(false);
     }
+  };
+
+  const [nearbyLoading, setNearbyLoading] = useState(false);
+
+  const handleSortSelect = async (id) => {
+    setSortBy(id);
+    if (id === 'distance' && !userLocation && 'geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        const loc = await getUserProvince(latitude, longitude);
+        if (loc) {
+          setUserLocation({
+            lat: latitude,
+            lng: longitude,
+            level1: loc.level1,
+            level2: loc.level2,
+            country: loc.country
+          });
+        } else {
+          setUserLocation({ lat: latitude, lng: longitude, level1: '', level2: '', country: '' });
+        }
+      }, err => {
+        console.warn('Geolocation error:', err);
+      });
+    }
+    setIsSortOpen(false);
   };
 
 
@@ -194,9 +225,44 @@ export default function Home() {
         result.sort((a, b) => (b.searchCount || 0) - (a.searchCount || 0)); 
         break;
       case 'distance': 
-        result.sort((a, b) => (a.distance || 0) - (b.distance || 0)); 
+        if (!userLocation) break;
+        result.sort((a, b) => {
+          let scoreA = 10000;
+          let scoreB = 10000;
+          
+          const aL2 = a.location?.level2 || a.city || '';
+          const aL1 = a.location?.level1 || a.state || '';
+          const bL2 = b.location?.level2 || b.city || '';
+          const bL1 = b.location?.level1 || b.state || '';
+
+          if (!a.location?.coordinates) {
+            if (aL2 && userLocation.level2 && aL2 === userLocation.level2) scoreA = 0;
+            else if (aL1 && userLocation.level1 && aL1 === userLocation.level1) scoreA = 500;
+            else scoreA = 1000;
+          } else {
+             const dist = calculateDistance(userLocation.lat, userLocation.lng, a.location.coordinates.lat, a.location.coordinates.lng);
+             scoreA = dist;
+             a._distanceKm = dist;
+          }
+          
+          if (!b.location?.coordinates) {
+            if (bL2 && userLocation.level2 && bL2 === userLocation.level2) scoreB = 0;
+            else if (bL1 && userLocation.level1 && bL1 === userLocation.level1) scoreB = 500;
+            else scoreB = 1000;
+          } else {
+             const dist = calculateDistance(userLocation.lat, userLocation.lng, b.location.coordinates.lat, b.location.coordinates.lng);
+             scoreB = dist;
+             b._distanceKm = dist;
+          }
+          
+          a._distanceScore = scoreA;
+          b._distanceScore = scoreB;
+          
+          return scoreA - scoreB;
+        }); 
         break;
       case 'relevance':
+
       default:
         // Orden default: Capital primero, luego fecha descendente
         const capitalCity = CAPITALS[selectedCountry] || 'Madrid';
@@ -222,9 +288,47 @@ export default function Home() {
     }
 
     return result;
-  }, [products, filters, activeCategory, sortBy, selectedCountry]);
+  }, [products, filters, activeCategory, sortBy, selectedCountry, userLocation]);
+
+  // Fallback: Si no hay anuncios en la provincia, buscar en limítrofes
+  useEffect(() => {
+    const fetchNearby = async () => {
+      if (sortBy === 'distance' && userLocation?.level2 && !nearbyLoading && products.length > 0) {
+        // Verificar si de los filtrados, alguno es de la zona
+        const hasLocalAds = filteredProducts.some(p => p._distanceScore === 0);
+        
+        if (!hasLocalAds) {
+          setNearbyLoading(true);
+          try {
+            const nearbyProvinces = getNearbyProvinces(userLocation.level2);
+            if (nearbyProvinces.length > 0) {
+              const q = query(
+                collection(db, 'products'),
+                where('location.level2', 'in', nearbyProvinces),
+                orderBy('createdAt', 'desc'),
+                limit(10)
+              );
+              const snap = await getDocs(q);
+              const nearbyData = snap.docs.map(d => ({ ...d.data(), id: d.id, _isNearbyFallback: true }))
+                .filter(p => !products.find(ex => ex.id === p.id));
+              
+              if (nearbyData.length > 0) {
+                setProducts(prev => [...prev, ...nearbyData]);
+              }
+            }
+          } catch (err) {
+            console.error('Error fetching nearby fallback:', err);
+          } finally {
+            setNearbyLoading(false);
+          }
+        }
+      }
+    };
+    fetchNearby();
+  }, [sortBy, userLocation, filteredProducts.length]);
 
   useEffect(() => {
+
     if (!filters.searchQuery || filteredProducts.length === 0) return;
     const timer = setTimeout(() => {
       filteredProducts.forEach(prod => {
@@ -273,7 +377,7 @@ export default function Home() {
                     ].map((opt) => (
                       <button
                         key={opt.id}
-                        onClick={() => { setSortBy(opt.id); setIsSortOpen(false); }}
+                        onClick={() => handleSortSelect(opt.id) }
                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-xs ${sortBy === opt.id ? 'bg-[#1A1A3A] text-white shadow-lg' : 'text-[#1A1A3A] hover:bg-black/5'}`}
                       >
                         <opt.icon size={14} />

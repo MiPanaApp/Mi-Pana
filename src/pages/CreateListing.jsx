@@ -15,7 +15,9 @@ import { getCategoryIcon, getBrandColor, sortCategories } from '../data/categori
 import { getIconComponent } from '../store/useCategoryStore';
 import { LOCATION_DATA } from '../data/locations';
 import { LegalData } from '../data/LegalData';
+import { getCoordsFromLocation } from '../utils/geoUtils';
 import LegalDrawer from '../components/LegalDrawer';
+
 import panaExito from '../assets/Pana_Billetes.png';
 
 // Mapeo: código del store -> clave de LOCATION_DATA
@@ -332,6 +334,18 @@ export default function CreateListing() {
       );
       const finalCarouselImages = [...existingCarousel, ...newCarouselURLs];
 
+      // 3.5. Obtener coordenadas silenciosamente para búsqueda por proximidad
+      let coords = null;
+      try {
+        coords = await getCoordsFromLocation(
+          COUNTRY_CODES.find(c => c.iso === selectedCountry)?.name || selectedCountry, // Usar nombre del país si es posible
+          location.level1,
+          location.level2
+        );
+      } catch (err) {
+        console.warn('[CreateListing] Ignorando error geocoding:', err);
+      }
+
       // 4. Guardar o Actualizar en Firestore
       if (isEditing) {
         const updateData = {
@@ -347,6 +361,7 @@ export default function CreateListing() {
             country: selectedCountry,
             level1: location.level1,
             level2: location.level2,
+            ...(coords && { coordinates: coords }),
           },
           updatedAt: serverTimestamp(),
         };
@@ -365,6 +380,7 @@ export default function CreateListing() {
             country: selectedCountry,
             level1: location.level1,
             level2: location.level2,
+            ...(coords && { coordinates: coords }),
           },
           userId: user?.uid || 'test-user-id',
           userName: user?.displayName || userData?.name || 'Usuario de Prueba',

@@ -21,7 +21,7 @@ export const useStore = create(
       },
       favorites: [],
       recentSearches: [], // Historial de búsquedas recientes
-      userLocation: null, // Coordenadas gps reales del user si activó filtro ubicación
+      userLocation: null, // { lat, lng, level1, level2, country }
       
       setCountry: (country) => set({ selectedCountry: country }),
       setHasChosenCountry: (val) => set({ hasChosenCountry: val }),

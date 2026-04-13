@@ -4,21 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
 import { getBadge, BADGE_STYLES } from '../utils/badgeUtils';
 
-const haversineKm = (lat1, lon1, lat2, lon2) => {
-  if (!lat1 || !lon1 || !lat2 || !lon2) return 0;
-  const R = 6371; // Radio de la Tierra en km
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-            Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return (R * c).toFixed(1);
-};
-
 export default function ProductCard({ product }) {
   const navigate = useNavigate();
-  const { favorites, toggleFavorite, userLocation } = useStore();
+  const { favorites, toggleFavorite, userLocation, sortBy } = useStore();
   const isFavorite = (favorites || []).some(id => String(id) === String(product.id));
   const badge = getBadge(product);
 
@@ -99,11 +87,20 @@ export default function ProductCard({ product }) {
             {typeof product.location === 'object'
               ? (product.location.level2 || product.location.level1 || 'Madrid')
               : (product.location || 'Madrid')}
-            {' • '}
-            {userLocation?.lat && product?.lat 
-              ? `${haversineKm(userLocation.lat, userLocation.lng, product.lat, product.lng)} km`
-              : product.distance || `${(Math.random() * 5 + 0.5).toFixed(1)} km`}
+            {sortBy === 'distance' && (
+              <>
+                {' • '}
+                {product._distanceKm != null 
+                  ? `${product._distanceKm.toFixed(1)} km`
+                  : product._distanceScore === 0 
+                    ? '📍 Cerca de ti' 
+                    : product._distanceScore === 500
+                      ? 'En tu región'
+                      : ''}
+              </>
+            )}
           </span>
+
         </div>
       </div>
     </motion.div>

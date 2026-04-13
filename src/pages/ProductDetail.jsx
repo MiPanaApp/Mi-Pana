@@ -14,6 +14,8 @@ import { registerInteraction, getProductReviews } from '../lib/reviews';
 import { registerView, incrementLikes, decrementLikes } from '../lib/analytics';
 import panaLengua from '../assets/pana_lengua.png';
 import { getBadge, BADGE_STYLES } from '../utils/badgeUtils';
+import SellerProfileModal from '../components/SellerProfileModal';
+
 
 export function SkeletonProductDetail() {
   return (
@@ -94,6 +96,8 @@ export default function ProductDetail() {
    const { userData, userAvatar } = useAuth();
    const [startingChat, setStartingChat] = useState(false);
    const [copied, setCopied] = useState(false);
+   const [isSellerModalOpen, setIsSellerModalOpen] = useState(false);
+
 
    const handleStartChat = async () => {
       if (!user) { navigate('/login'); return; }
@@ -660,23 +664,30 @@ tlfno contacto: 672 593 950`}
             >
                {/* Fila superior Desktop: Información del Vendedor + Botones Acción alineados */}
                <div className="flex items-center justify-between mb-4 pl-1">
-                  <div className="flex items-center gap-3">
-                     <div className="w-12 h-12 rounded-full overflow-hidden shadow-[inset_2px_2px_4px_rgba(163,177,198,0.5),inset_-2px_-2px_4px_rgba(255,255,255,0.7)] bg-white border-2 border-white flex-shrink-0">
-                        <img
-                           src={(product.userId === user?.uid ? userAvatar : product.sellerAvatar) || `https://api.dicebear.com/7.x/micah/svg?seed=${product.userName || 'Pana'}&backgroundColor=E0E5EC`}
-                           className="w-full h-full object-cover"
-                           alt="Avatar"
-                           referrerPolicy="no-referrer"
-                           onError={(e) => {
-                              e.target.src = `https://api.dicebear.com/7.x/micah/svg?seed=${product.userName || 'Pana'}&backgroundColor=E0E5EC`;
-                           }}
-                        />
-                     </div>
-                     <div className="flex items-center gap-1.5 pt-0.5">
-                        <span className="font-bold text-lg text-[#1A1A3A] truncate max-w-[140px] md:max-w-[180px] lg:max-w-[220px]">{product.userName || "Pana Local"}</span>
-                        {(product.userVerified || product.verified) && <ShieldCheck className="w-5 h-5 text-[#00C97A] stroke-[2px] transition-transform hover:scale-110 cursor-help" title="Pana Verificado" />}
-                     </div>
-                  </div>
+                   <div 
+                     className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+                     onClick={() => setIsSellerModalOpen(true)}
+                   >
+                      <div className="w-12 h-12 rounded-full overflow-hidden shadow-[inset_2px_2px_4px_rgba(163,177,198,0.5),inset_-2px_-2px_4px_rgba(255,255,255,0.7)] bg-white border-2 border-white flex-shrink-0">
+                         <img
+                            src={(product.userId === user?.uid ? userAvatar : product.sellerAvatar) || `https://api.dicebear.com/7.x/micah/svg?seed=${product.userName || 'Pana'}&backgroundColor=E0E5EC`}
+                            className="w-full h-full object-cover"
+                            alt="Avatar"
+                            referrerPolicy="no-referrer"
+                            onError={(e) => {
+                               e.target.src = `https://api.dicebear.com/7.x/micah/svg?seed=${product.userName || 'Pana'}&backgroundColor=E0E5EC`;
+                            }}
+                         />
+                      </div>
+                      <div className="flex flex-col justify-center">
+                        <div className="flex items-center gap-1.5 pt-0.5">
+                           <span className="font-bold text-lg text-[#1A1A3A] truncate max-w-[140px] md:max-w-[180px] lg:max-w-[220px]">{product.userName || "Pana Local"}</span>
+                           {(product.userVerified || product.verified) && <ShieldCheck className="w-5 h-5 text-[#00C97A] stroke-[2px] transition-transform hover:scale-110 cursor-help" title="Pana Verificado" />}
+                        </div>
+                        <p className="text-sm text-[#1A1A3A]/60 font-medium">Ver perfil</p>
+                      </div>
+                   </div>
+
 
                   {/* Indicador de Ubicación (Dinamico) */}
                   <div className="flex items-center gap-4 pr-1">
@@ -1309,6 +1320,23 @@ tlfno contacto: 672 593 950`}
                </div>
             )}
          </AnimatePresence>
+
+         <SellerProfileModal
+            isOpen={isSellerModalOpen}
+            onClose={() => setIsSellerModalOpen(false)}
+            seller={{
+               userId: product.userId,
+               userName: product.userName,
+               sellerAvatar: product.sellerAvatar,
+               sellerEmail: product.sellerEmail,
+               rating: product.sellerRating,
+               reviewCount: product.sellerReviewCount,
+               createdAt: product.sellerCreatedAt,
+               birthDate: product.sellerBirthDate,
+               sex: product.sellerSex
+            }}
+            productLocation={product.location}
+         />
 
          {/* Helper Style Component for hiding scrollbars if custom classes are not set */}
          <style dangerouslySetInnerHTML={{
