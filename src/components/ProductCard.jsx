@@ -81,27 +81,34 @@ export default function ProductCard({ product }) {
             <ShieldCheck size={14} className="inline ml-1 text-[#00C97A] -mt-0.5" title="Pana Verificado" />
           )}
         </h3>
-        <div className="mt-auto flex items-center gap-1 text-[#1A1A3A]/70 font-semibold">
-          <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-          <span className="text-[11px] truncate">
-            {typeof product.location === 'object'
-              ? (product.location.level2 || product.location.level1 || 'Madrid')
-              : (product.location || 'Madrid')}
-            {sortBy === 'distance' && (
-              <>
-                {' • '}
-                {product._distanceKm != null 
-                  ? `${product._distanceKm.toFixed(1)} km`
-                  : product._distanceScore === 0 
-                    ? '📍 Cerca de ti' 
-                    : product._distanceScore === 500
-                      ? 'En tu región'
-                      : ''}
-              </>
-            )}
-          </span>
-
+        <div className="mt-auto flex flex-col gap-0.5">
+          <div className="flex items-center gap-1 text-[#1A1A3A]/70 font-semibold">
+            <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+            <span className="text-[11px] truncate">
+              {typeof product.location === 'object'
+                ? (product.location.level2 || product.location.level1 || 'Madrid')
+                : (product.location || 'Madrid')}
+              {sortBy === 'distance' && (
+                <>
+                  {' • '}
+                  {product._distanceKm != null 
+                    ? `${product._distanceKm.toFixed(1)} km`
+                    : product._distanceScore === 0 
+                      ? '📍 Cerca de ti' 
+                      : product._distanceScore === 500
+                        ? 'En tu región'
+                        : ''}
+                </>
+              )}
+            </span>
+          </div>
+          {product.location?.level3 && (
+            <span className="text-[10px] font-bold text-[#1A1A3A]/40 pl-[18px] truncate">
+              {product.location.level3}
+            </span>
+          )}
         </div>
+
       </div>
     </motion.div>
   );

@@ -230,13 +230,16 @@ export default function Home() {
           let scoreA = 10000;
           let scoreB = 10000;
           
+          const aL3 = a.location?.level3 || '';
           const aL2 = a.location?.level2 || a.city || '';
           const aL1 = a.location?.level1 || a.state || '';
+          const bL3 = b.location?.level3 || '';
           const bL2 = b.location?.level2 || b.city || '';
           const bL1 = b.location?.level1 || b.state || '';
 
           if (!a.location?.coordinates) {
-            if (aL2 && userLocation.level2 && aL2 === userLocation.level2) scoreA = 0;
+            if (aL3 && userLocation.level3 && aL3 === userLocation.level3) scoreA = 0;
+            else if (aL2 && userLocation.level2 && aL2 === userLocation.level2) scoreA = 100;
             else if (aL1 && userLocation.level1 && aL1 === userLocation.level1) scoreA = 500;
             else scoreA = 1000;
           } else {
@@ -246,7 +249,8 @@ export default function Home() {
           }
           
           if (!b.location?.coordinates) {
-            if (bL2 && userLocation.level2 && bL2 === userLocation.level2) scoreB = 0;
+            if (bL3 && userLocation.level3 && bL3 === userLocation.level3) scoreB = 0;
+            else if (bL2 && userLocation.level2 && bL2 === userLocation.level2) scoreB = 100;
             else if (bL1 && userLocation.level1 && bL1 === userLocation.level1) scoreB = 500;
             else scoreB = 1000;
           } else {
@@ -261,6 +265,7 @@ export default function Home() {
           return scoreA - scoreB;
         }); 
         break;
+
       case 'relevance':
 
       default:

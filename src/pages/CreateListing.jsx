@@ -53,11 +53,14 @@ export default function CreateListing() {
   const carouselInputRef = useRef(null);
 
   const [form, setForm] = useState({ title: '', category: '', price: '', whatsapp: '', description: '', keywords: '' });
-  const [location, setLocation] = useState({ level1: '', level2: '' }); // lugar del anuncio
+  const [location, setLocation] = useState({ level1: '', level2: '', level3: '' }); // lugar del anuncio
+
   const [categories, setCategories] = useState([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
   const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
+  const [isLevel3DropdownOpen, setIsLevel3DropdownOpen] = useState(false);
+
   const [selectedPrefix, setSelectedPrefix] = useState(COUNTRY_CODES[0]);
   const [isPrefixOpen, setIsPrefixOpen] = useState(false);
   const [imageFile, setImageFile] = useState(null);
@@ -187,8 +190,10 @@ export default function CreateListing() {
             }
             setLocation({
               level1: data.location?.level1 || '',
-              level2: data.location?.level2 || ''
+              level2: data.location?.level2 || '',
+              level3: data.location?.level3 || ''
             });
+
             if (data.image) {
               setInitialMainPhoto(data.image);
               setImagePreview(data.image);
@@ -338,10 +343,12 @@ export default function CreateListing() {
       let coords = null;
       try {
         coords = await getCoordsFromLocation(
-          COUNTRY_CODES.find(c => c.iso === selectedCountry)?.name || selectedCountry, // Usar nombre del país si es posible
+          COUNTRY_CODES.find(c => c.iso === selectedCountry)?.name || selectedCountry,
           location.level1,
-          location.level2
+          location.level2,
+          location.level3
         );
+
       } catch (err) {
         console.warn('[CreateListing] Ignorando error geocoding:', err);
       }
@@ -361,8 +368,10 @@ export default function CreateListing() {
             country: selectedCountry,
             level1: location.level1,
             level2: location.level2,
+            level3: location.level3,
             ...(coords && { coordinates: coords }),
           },
+
           updatedAt: serverTimestamp(),
         };
         await updateDoc(doc(db, 'products', editId), updateData);
@@ -380,8 +389,10 @@ export default function CreateListing() {
             country: selectedCountry,
             level1: location.level1,
             level2: location.level2,
+            level3: location.level3,
             ...(coords && { coordinates: coords }),
           },
+
           userId: user?.uid || 'test-user-id',
           userName: user?.displayName || userData?.name || 'Usuario de Prueba',
           sellerAvatar: user?.photoURL || userData?.avatar || '',
@@ -758,6 +769,9 @@ export default function CreateListing() {
             const locData = LOCATION_DATA[locKey];
             const level1Options = Object.keys(locData.data);
             const cities = location.level1 ? Object.keys(locData.data[location.level1] || {}) : [];
+            const level3Options = location.level2 ? (locData.data[location.level1]?.[location.level2] || []) : [];
+            const level3Label = locData.labels?.level3 || 'Barrio / Zona';
+
 
             return (
               <div className="flex flex-col gap-3">
@@ -851,8 +865,9 @@ export default function CreateListing() {
                                 key={city}
                                 type="button"
                                 onClick={() => {
-                                  setLocation(prev => ({ ...prev, level2: city }));
-                                  setIsCityDropdownOpen(false);
+                                   setLocation(prev => ({ ...prev, level2: city, level3: '' }));
+                                   setIsCityDropdownOpen(false);
+                                   setIsLevel3DropdownOpen(false);
                                 }}
                                 className={`w-full px-4 py-2.5 rounded-xl text-left font-bold text-sm transition-all ${
                                   location.level2 === city
@@ -872,6 +887,65 @@ export default function CreateListing() {
                 <p className="text-[10px] text-[#1A1A3A]/40 font-bold ml-2 italic">
                   * Primero selecciona {locData.level1Label.toLowerCase()}, luego la ciudad.
                 </p>
+
+                {/* Selector Level 3 (Barrio / Zona) — solo si hay opciones disponibles */}
+                {level3Options.length > 0 && (
+                  <div className="relative">
+                    <span className="text-[10px] font-bold text-[#1A1A3A]/50 uppercase tracking-wider ml-2 mb-1 block">{level3Label}</span>
+                    <div
+                      onClick={() => {
+                        if (!location.level2) return;
+                        setIsLevel3DropdownOpen(!isLevel3DropdownOpen);
+                        setIsLocationDropdownOpen(false);
+                        setIsCityDropdownOpen(false);
+                      }}
+                      className={`w-full h-14 px-4 flex items-center justify-between bg-[#E0E5EC] rounded-2xl transition-all ${
+                        !location.level2
+                          ? 'opacity-50 cursor-not-allowed shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.6)]'
+                          : isLevel3DropdownOpen
+                            ? 'cursor-pointer shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)]'
+                            : 'cursor-pointer shadow-[6px_6px_12px_rgba(163,177,198,0.7),-6px_-6px_12px_rgba(255,255,255,0.9)]'
+                      }`}
+                    >
+                      <span className={`text-sm font-semibold truncate ${location.level3 ? 'text-[#1A1A3A]' : 'text-gray-400/70'}`}>
+                        {location.level3 || `Selecciona ${level3Label.toLowerCase()}...`}
+                      </span>
+                      <ChevronDown className={`w-4 h-4 text-[#1A1A3A]/50 flex-shrink-0 transition-transform duration-300 ${isLevel3DropdownOpen ? 'rotate-180' : ''}`} />
+                    </div>
+
+                    <AnimatePresence>
+                      {isLevel3DropdownOpen && level3Options.length > 0 && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 5, scale: 1 }}
+                          exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                          className="absolute left-0 right-0 top-full z-[60] mt-1 bg-[#E0E5EC] rounded-2xl shadow-[8px_8px_16px_rgba(163,177,198,0.8),-8px_-8px_16px_rgba(255,255,255,1)] border border-white/40 overflow-hidden"
+                        >
+                          <div className="max-h-56 overflow-y-auto custom-scrollbar p-2 flex flex-col gap-1">
+                            {level3Options.map((zone) => (
+                              <button
+                                key={zone}
+                                type="button"
+                                onClick={() => {
+                                  setLocation(prev => ({ ...prev, level3: zone }));
+                                  setIsLevel3DropdownOpen(false);
+                                }}
+                                className={`w-full px-4 py-2.5 rounded-xl text-left font-bold text-sm transition-all ${
+                                  location.level3 === zone
+                                    ? 'bg-[#1A1A3A] text-white'
+                                    : 'text-[#1A1A3A]/70 hover:bg-white/50'
+                                }`}
+                              >
+                                {zone}
+                              </button>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
+
               </div>
             );
           })()}

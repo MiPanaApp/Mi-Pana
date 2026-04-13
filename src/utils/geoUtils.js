@@ -41,10 +41,12 @@ export const getUserProvince = async (lat, lng) => {
       const location = {
         level1: data.address.state || '',
         level2: data.address.province || data.address.county || data.address.city || data.address.town || '',
+        level3: data.address.city || data.address.town || data.address.village || data.address.suburb || '',
         country: data.address.country_code ? data.address.country_code.toUpperCase() : '',
         lat,
         lng
       };
+
       
       // 4. Guardar en caché
       localStorage.setItem(
@@ -78,10 +80,13 @@ export const getNearbyProvinces = (province) => {
   return key ? MOCK_NEARBY_PROVINCES[key] : [];
 };
 
-export const getCoordsFromLocation = async (country, level1, level2) => {
+export const getCoordsFromLocation = async (country, level1, level2, level3) => {
   try {
-    // Construir query de búsqueda
-    const query = `${level2}, ${level1}, ${country}`;
+    // Construir query - más específico si hay level3
+    const query = level3
+      ? `${level3}, ${level2}, ${level1}, ${country}`
+      : `${level2}, ${level1}, ${country}`;
+
     
     const response = await fetch(
       `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`,
