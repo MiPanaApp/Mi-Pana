@@ -301,9 +301,8 @@ export default function AdminDashboard() {
 
       {/* Floating Sidebar - Neumorphism Style */}
       <div className="hidden lg:flex flex-col items-center py-8 w-24 bg-white rounded-[2.5rem] shadow-[20px_20px_60px_#d9dade,-20px_-20px_60px_#ffffff] h-[calc(100vh-3rem)] mr-6 sticky top-6 border border-white/50">
-        <div className="w-14 h-14 bg-[#FFD700] rounded-2xl flex items-center justify-center mb-10 shadow-inner">
-          <ShieldCheck className="w-7 h-7 text-black" />
-        </div>
+        {/* Sidebar Logo / Spacer */}
+        <div className="mb-6" />
 
         <div className="flex flex-col gap-8 flex-1 w-full items-center">
           {[
