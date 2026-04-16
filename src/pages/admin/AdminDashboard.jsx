@@ -293,7 +293,7 @@ export default function AdminDashboard() {
             {tab === 'programadas' && <CalendarClock className="w-5 h-5" />}
             {tab === 'estadisticas' && <BarChart2 className="w-5 h-5" />}
             {tab === 'verifications' && pendingVerificationsCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-pulse border border-white" />
+              <span className="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-full animate-pulse border-2 border-white shadow-sm" />
             )}
           </button>
         ))}
@@ -324,7 +324,7 @@ export default function AdminDashboard() {
               <item.icon className="w-6 h-6" />
               {activeTab === item.id && <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-1.5 h-8 bg-[#FFD700] rounded-r-full" />}
               {item.id === 'verifications' && pendingVerificationsCount > 0 && (
-                <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                <div className="absolute top-0 right-0 bg-red-500 text-white text-[11px] font-black w-[22px] h-[22px] rounded-full flex items-center justify-center border-2 border-white shadow-md transform translate-x-1/4 -translate-y-1/4">
                   {pendingVerificationsCount}
                 </div>
               )}
