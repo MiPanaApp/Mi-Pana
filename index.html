@@ -2,21 +2,6 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){window.dataLayer.push(arguments);}
-      
-      // Inicializar consentimiento por defecto (Modo Consentimiento v2)
-      gtag('consent', 'default', {
-        'analytics_storage': 'denied',
-        'ad_storage': 'denied',
-        'ad_user_data': 'denied',
-        'ad_personalization': 'denied',
-        'wait_for_update': 500
-      });
-
-      gtag('js', new Date());
-    </script>
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
@@ -30,16 +15,18 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
-    <meta property="og:title" content="Mi Pana" />
-    <meta property="og:description" content="Marketplace Premium para la Diáspora Venezolana" />
-    <meta property="og:image" content="https://mipana.net/og-image.png" />
-    <meta property="og:url" content="https://mipana.net/" />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Mi Pana" />
-    <meta name="twitter:description" content="Marketplace Premium para la Diáspora Venezolana" />
-    <meta name="twitter:image" content="https://mipana.net/og-image.png" />
     <title>Mi Pana</title>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag("consent", "default", {
+        "analytics_storage": "denied",
+        "ad_storage": "denied",
+        "ad_user_data": "denied",
+        "ad_personalization": "denied",
+        "wait_for_update": 500
+      });
+    </script>
   </head>
   <body>
     <div id="root"></div>
