@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { db } from '../../services/firebase';
-import { collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, setDoc, query, where, getDocs, writeBatch } from 'firebase/firestore';
+import { useDialogStore } from '../../store/useDialogStore';
 import { useCategoryStore, getIconComponent } from '../../store/useCategoryStore';
 import { 
   Plus, Edit2, Trash2, Check, X, GripVertical, 
@@ -33,10 +34,17 @@ const SUGGESTED_ICONS = [
 
 export default function AdminCategoriesTab() {
   const { categories, fetchAllForAdmin } = useCategoryStore();
+  const { showConfirm, showAlert } = useDialogStore();
   const [editingId, setEditingId] = useState(null);
   const [isAdding, setIsAdding] = useState(false);
-  const [formData, setFormData] = useState({ label: '', icon: 'CirclePlus', order: 0, active: true });
+  const [formData, setFormData] = useState({ label: '', icon: 'CirclePlus', order: 0, active: true, priceMode: 'price' });
   const [searchTerm, setSearchTerm] = useState('');
+  const [toastMsg, setToastMsg] = useState(null);
+
+  const showToast = (msg) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 3500);
+  };
 
   useEffect(() => {
     const unsubscribe = fetchAllForAdmin();
@@ -45,39 +53,79 @@ export default function AdminCategoriesTab() {
 
   const handleSave = async (id) => {
     try {
+      const dataToSave = {
+        ...formData,
+        name: formData.label, // alias de compatibilidad
+      };
       if (id) {
-        // Al editar, actualizamos label y sincronizamos name para retrocompatibilidad
         await updateDoc(doc(db, 'categories', id), {
-          ...formData,
-          name: formData.label,
+          ...dataToSave,
           updatedAt: serverTimestamp()
         });
         setEditingId(null);
       } else {
-        // Al crear, guardamos tanto label como name (mismo valor)
         await addDoc(collection(db, 'categories'), {
-          ...formData,
-          name: formData.label,
+          ...dataToSave,
           createdAt: serverTimestamp()
         });
         setIsAdding(false);
       }
-      setFormData({ label: '', icon: 'CirclePlus', order: 0, active: true });
+      setFormData({ label: '', icon: 'CirclePlus', order: 0, active: true, priceMode: 'price' });
+      showToast('✅ Categoría guardada correctamente');
     } catch (err) {
       console.error("Error saving category:", err);
-      alert("Error al guardar la categoría");
+      showAlert('Error al guardar la categoría', 'Error');
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("¿Estás seguro de eliminar esta categoría?")) {
-      await deleteDoc(doc(db, 'categories', id));
+  const handleDelete = async (cat) => {
+    const catLabel = cat.label || cat.name;
+    const confirmed = await showConfirm(
+      `¿Eliminar "${catLabel}"?\nLos anuncios de esta categoría pasarán automáticamente a "Otros".`,
+      'Eliminar Categoría',
+      'Eliminar',
+      'Cancelar'
+    );
+    if (!confirmed) return;
+
+    try {
+      // 1. Buscar todos los productos afectados (por label y por name para compatibilidad)
+      const q1 = query(collection(db, 'products'), where('category', '==', catLabel));
+      const snap = await getDocs(q1);
+      const affected = snap.docs;
+
+      // 2. mover en batches de 500 si hay productos
+      let movedCount = 0;
+      if (affected.length > 0) {
+        const BATCH_SIZE = 500;
+        for (let i = 0; i < affected.length; i += BATCH_SIZE) {
+          const batch = writeBatch(db);
+          affected.slice(i, i + BATCH_SIZE).forEach(docSnap => {
+            batch.update(docSnap.ref, { category: 'Otros' });
+          });
+          await batch.commit();
+        }
+        movedCount = affected.length;
+      }
+
+      // 3. Eliminar la categoría
+      await deleteDoc(doc(db, 'categories', cat.id));
+
+      // 4. Toast de éxito
+      if (movedCount > 0) {
+        showToast(`🗑️ Categoría eliminada. ${movedCount} anuncio${movedCount !== 1 ? 's' : ''} movido${movedCount !== 1 ? 's' : ''} a "Otros".`);
+      } else {
+        showToast('🗑️ Categoría eliminada.');
+      }
+    } catch (err) {
+      console.error('Error eliminando categoría:', err);
+      showAlert('Error al eliminar la categoría. Intenta de nuevo.', 'Error');
     }
   };
 
   const startEdit = (cat) => {
     setEditingId(cat.id);
-    setFormData({ label: cat.label, icon: cat.icon, order: cat.order, active: cat.active });
+    setFormData({ label: cat.label || cat.name || '', icon: cat.icon || 'CirclePlus', order: cat.order || 0, active: cat.active !== false, priceMode: cat.priceMode || 'price' });
   };
 
   const filteredCategories = categories.filter(c => 
@@ -86,17 +134,17 @@ export default function AdminCategoriesTab() {
 
   const handleSeed = async () => {
     const STATIC_CATEGORIES = [
-      { id: "Comida",        label: "Comida",       name: "Comida",       icon: "Coffee",     active: true, order: 1  },
-      { id: "Envios",        label: "Envíos",        name: "Envíos",        icon: "Package",    active: true, order: 2  },
-      { id: "Inmobiliaria",  label: "Inmobiliaria", name: "Inmobiliaria", icon: "Home",       active: true, order: 3  },
-      { id: "Formacion",     label: "Formación",     name: "Formación",     icon: "BookCheck", active: true, order: 4  },
-      { id: "Deporte",       label: "Deporte",      name: "Deporte",      icon: "Dumbbell",  active: true, order: 5  },
-      { id: "Empleo",        label: "Empleo",       name: "Empleo",       icon: "Briefcase", active: true, order: 6  },
-      { id: "Servicios",     label: "Servicios",    name: "Servicios",    icon: "Tool",      active: true, order: 7  },
-      { id: "Ventas",        label: "Ventas",       name: "Ventas",       icon: "ShoppingBag", active: true, order: 8 },
-      { id: "Legal",         label: "Legal",        name: "Legal",        icon: "Scale",     active: true, order: 9  },
-      { id: "Salud",         label: "Salud",        name: "Salud",        icon: "Heart",     active: true, order: 10 },
-      { id: "Otros",         label: "Otros",        name: "Otros",        icon: "CirclePlus", active: true, order: 11 },
+      { id: "Comida",        label: "Comida",       name: "Comida",       icon: "Coffee",      active: true, order: 1,  priceMode: 'price'   },
+      { id: "Envios",        label: "Envíos",        name: "Envíos",        icon: "Package",     active: true, order: 2,  priceMode: 'price'   },
+      { id: "Inmobiliaria",  label: "Inmobiliaria", name: "Inmobiliaria", icon: "Home",        active: true, order: 3,  priceMode: 'price'   },
+      { id: "Formacion",     label: "Formación",     name: "Formación",     icon: "BookCheck",  active: true, order: 4,  priceMode: 'consult' },
+      { id: "Deporte",       label: "Deporte",      name: "Deporte",      icon: "Dumbbell",   active: true, order: 5,  priceMode: 'price'   },
+      { id: "Empleo",        label: "Empleo",       name: "Empleo",       icon: "Briefcase",  active: true, order: 6,  priceMode: 'price'   },
+      { id: "Servicios",     label: "Servicios",    name: "Servicios",    icon: "Tool",       active: true, order: 7,  priceMode: 'consult' },
+      { id: "Ventas",        label: "Ventas",       name: "Ventas",       icon: "ShoppingBag", active: true, order: 8,  priceMode: 'price'   },
+      { id: "Legal",         label: "Legal",        name: "Legal",        icon: "Scale",      active: true, order: 9,  priceMode: 'consult' },
+      { id: "Salud",         label: "Salud",        name: "Salud",        icon: "Heart",      active: true, order: 10, priceMode: 'price'   },
+      { id: "Otros",         label: "Otros",        name: "Otros",        icon: "CirclePlus", active: true, order: 11, priceMode: 'price'   },
     ];
 
     if (!window.confirm("¿Deseas poblar la base de datos con las categorías iniciales?")) return;
@@ -116,7 +164,13 @@ export default function AdminCategoriesTab() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-[2.5rem] shadow-sm border border-gray-50 overflow-hidden">
+    <div className="flex flex-col h-full bg-white rounded-[2.5rem] shadow-sm border border-gray-50 overflow-hidden relative">
+      {/* Toast de éxito/error */}
+      {toastMsg && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[200] bg-[#1A1A3A] text-white text-xs font-bold px-5 py-3 rounded-2xl shadow-xl animate-in fade-in slide-in-from-top-2 duration-300 whitespace-nowrap">
+          {toastMsg}
+        </div>
+      )}
       <div className="p-6 border-b border-gray-50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-xl font-black text-gray-800">Gestión de Categorías</h2>
@@ -193,7 +247,16 @@ export default function AdminCategoriesTab() {
                     </div>
                     <div>
                       <h4 className="font-black text-gray-800">{cat.label || cat.name}</h4>
-                      <p className="text-[10px] font-black text-gray-400 uppercase">Orden: {cat.order}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <p className="text-[10px] font-black text-gray-400 uppercase">Orden: {cat.order}</p>
+                        <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wide ${
+                          (cat.priceMode || 'price') === 'consult'
+                            ? 'bg-purple-50 text-purple-500'
+                            : 'bg-green-50 text-green-600'
+                        }`}>
+                          {(cat.priceMode || 'price') === 'consult' ? '💬 Consultar' : '€ Precio'}
+                        </span>
+                      </div>
                     </div>
                   </div>
                   
@@ -201,7 +264,7 @@ export default function AdminCategoriesTab() {
                     <button onClick={() => startEdit(cat)} className="p-2 bg-gray-50 text-blue-500 rounded-xl hover:bg-blue-50">
                       <Edit2 size={16} />
                     </button>
-                    <button onClick={() => handleDelete(cat.id)} className="p-2 bg-gray-50 text-red-500 rounded-xl hover:bg-red-50">
+                    <button onClick={() => handleDelete(cat)} className="p-2 bg-gray-50 text-red-500 rounded-xl hover:bg-red-50">
                       <Trash2 size={16} />
                     </button>
                   </div>
@@ -318,6 +381,35 @@ function CategoryForm({ formData, setFormData, onSave, onCancel }) {
           </div>
           <span className="text-xs font-bold text-gray-600 uppercase tracking-widest">{formData.active ? 'Activa' : 'Inactiva'}</span>
         </label>
+      </div>
+
+      {/* Selector de Modo Precio */}
+      <div className="flex flex-col gap-1.5 px-1">
+        <label className="text-[10px] font-black uppercase text-gray-400 block">Precio del Anuncio</label>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setFormData({...formData, priceMode: 'price'})}
+            className={`flex-1 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all active:scale-95 ${
+              (formData.priceMode || 'price') === 'price'
+                ? 'bg-[#1A1A3A] text-white shadow-[4px_4px_10px_rgba(26,26,58,0.25),-2px_-2px_6px_rgba(255,255,255,0.5)]'
+                : 'bg-gray-100 text-gray-400 hover:bg-gray-200 shadow-[2px_2px_5px_rgba(180,180,210,0.3),-2px_-2px_5px_rgba(255,255,255,0.8)]'
+            }`}
+          >
+            € Precio
+          </button>
+          <button
+            type="button"
+            onClick={() => setFormData({...formData, priceMode: 'consult'})}
+            className={`flex-1 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all active:scale-95 ${
+              (formData.priceMode || 'price') === 'consult'
+                ? 'bg-[#1A1A3A] text-white shadow-[4px_4px_10px_rgba(26,26,58,0.25),-2px_-2px_6px_rgba(255,255,255,0.5)]'
+                : 'bg-gray-100 text-gray-400 hover:bg-gray-200 shadow-[2px_2px_5px_rgba(180,180,210,0.3),-2px_-2px_5px_rgba(255,255,255,0.8)]'
+            }`}
+          >
+            💬 Consultar
+          </button>
+        </div>
       </div>
 
       <div className="flex gap-2 pt-2">

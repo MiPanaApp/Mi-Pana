@@ -57,6 +57,7 @@ export default function CreateListing() {
   const [location, setLocation] = useState({ level1: '', level2: '', level3: '' }); // lugar del anuncio
 
   const [categories, setCategories] = useState([]);
+  const [priceModeMap, setPriceModeMap] = useState({});
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
   const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
@@ -108,13 +109,18 @@ export default function CreateListing() {
         // Filtrar inactivas y duplicados por label
         const uniqueCats = [];
         const seenLabels = new Set();
+        const pMap = {}; // para priceMode
+        
         cats.forEach(c => {
           if (c.active !== false && c.label && !seenLabels.has(c.label)) {
             seenLabels.add(c.label);
             uniqueCats.push(c);
+            pMap[c.label] = c.priceMode || 'price';
+            if (c.name) pMap[c.name] = c.priceMode || 'price';
           }
         });
         cats = uniqueCats;
+        setPriceModeMap(pMap);
 
         const sortedCats = sortCategories(cats);
         setCategories(sortedCats);
@@ -251,11 +257,9 @@ export default function CreateListing() {
     }
   }, [editId]);
 
-  // Lógica Automática: Consultar para Servicios y Formación
-  // Comparamos con label (ej: "Servicios", "Formación") por retrocompatibilidad
-  const isConsultarCategory = (cat) => {
-    const normalized = (cat || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    return normalized === 'servicios' || normalized === 'formacion';
+  // Lógica Automática: Consultar dinámico desde Firebase (priceModeMap)
+  const isConsultarCategory = (catStr) => {
+    return priceModeMap[catStr] === 'consult';
   };
 
   useEffect(() => {
