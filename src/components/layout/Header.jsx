@@ -3,6 +3,7 @@ import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-
 import { useState, useRef, useEffect, forwardRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
+import { useLocationStore } from '../../store/useLocationStore';
 import logoTexto from '../../assets/solotexto.png';
 import useAuthFlow from '../../hooks/useAuthFlow';
 import { useAuth } from '../../context/AuthContext';
@@ -60,6 +61,7 @@ const Header = forwardRef((props, ref) => {
   const [userName, setUserName] = useState('');
   
   const { categories } = useCategoryStore();
+  const { countries } = useLocationStore();
 
   const dbCategories = useMemo(() => [
     { id: 'Todas', name: 'Todas', iconComponent: FiPlusCircle },
@@ -205,23 +207,29 @@ const Header = forwardRef((props, ref) => {
                         exit={{ opacity: 0, y: 5, scale: 0.95 }}
                         className="absolute top-full left-0 mt-4 bg-[#E0E5EC] rounded-3xl shadow-[8px_8px_16px_rgba(163,177,198,0.7),-8px_-8px_16px_rgba(255,255,255,0.9)] border-[0.5px] border-white/60 p-2.5 z-[1001] flex flex-col gap-3 max-h-[300px] overflow-y-auto custom-scrollbar"
                       >
-                        {Object.entries(COUNTRY_INFO).map(([code, info]) => (
+                        {countries
+                          .filter(c => c.status === 'active')
+                          .map((c) => (
                           <button
-                            key={code}
-                            onClick={() => handleCountryChange(code, info.defaultRegion)}
+                            key={c.id}
+                            onClick={() => handleCountryChange(c.id, c.config?.level1 || c.name)}
                             className={`w-12 h-12 flex items-center justify-center rounded-full transition-all flex-shrink-0 ${
-                              selectedCountry === code 
+                              selectedCountry === c.id 
                                 ? 'shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.9)]' 
                                 : 'shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.8)] hover:scale-105 active:scale-95'
                             }`}
-                            title={info.defaultRegion}
+                            title={c.name}
                           >
-                            <div className="w-6 h-6 rounded-full overflow-hidden border-[0.5px] border-[#003366]/20 relative">
-                              <img 
-                                src={`https://flagcdn.com/w80/${code.toLowerCase()}.png`} 
-                                alt={code}
-                                className="w-full h-full object-cover absolute inset-0" 
-                              />
+                            <div className="w-6 h-6 rounded-full overflow-hidden border-[0.5px] border-[#003366]/20 relative flex items-center justify-center">
+                              {c.flag ? (
+                                <span className="text-base leading-none">{c.flag}</span>
+                              ) : (
+                                <img 
+                                  src={`https://flagcdn.com/w80/${c.id.toLowerCase()}.png`} 
+                                  alt={c.id}
+                                  className="w-full h-full object-cover absolute inset-0" 
+                                />
+                              )}
                             </div>
                           </button>
                         ))}
