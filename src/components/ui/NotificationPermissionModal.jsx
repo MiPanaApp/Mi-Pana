@@ -61,7 +61,7 @@ export default function NotificationPermissionModal({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9999] w-full max-w-sm bg-[#E8E8F0] rounded-[2rem] p-8 shadow-[20px_20px_60px_rgba(0,0,0,0.15)] flex flex-col items-center"
+            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9999] w-[90vw] max-w-[360px] bg-[#E8E8F0] rounded-[2rem] p-8 shadow-[20px_20px_60px_rgba(0,0,0,0.15)] flex flex-col items-center"
           >
             {/* Botón cerrar opcional si prefieres mantenerlo, el UI description no lo pide pero es buena práctica no tener bloqueantes. */}
             
