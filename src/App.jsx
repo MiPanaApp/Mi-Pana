@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from './store/useAuthStore';
 import { useCategoryStore } from './store/useCategoryStore';
 import { useLocationStore } from './store/useLocationStore';
@@ -133,15 +133,26 @@ function App() {
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <AppOverlays notifDecided={notifDecided} showModal={showModal} closeModal={closeModal} />
+    </Router>
+  );
+}
+
+function AppOverlays({ notifDecided, showModal, closeModal }) {
+  const location = useLocation();
+  const isSplash = location.pathname === '/';
+
+  return (
+    <>
       <NotificationPermissionModal isOpen={showModal} onClose={closeModal} />
       <AnimatePresence>
-        {notifDecided && !showModal && !Capacitor.isNativePlatform() && 
+        {notifDecided && !showModal && !isSplash && !Capacitor.isNativePlatform() && 
           <CookieConsentBanner key="cookie-banner" />
         }
       </AnimatePresence>
       <CookieSettingsButton />
       <CustomDialog />
-    </Router>
+    </>
   );
 }
 
