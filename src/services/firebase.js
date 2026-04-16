@@ -38,15 +38,19 @@ facebookProvider.addScope('public_profile');
 
 // Inicializar Analytics solo si es soportado y hay appId
 let analytics = null;
-if (typeof window !== 'undefined' && firebaseConfig.appId) {
-  isSupported().then(yes => {
-    if (yes) {
-      analytics = getAnalytics(app);
+export const analyticsReady = (async () => {
+  try {
+    if (typeof window !== 'undefined' && firebaseConfig.appId) {
+      const yes = await isSupported();
+      if (yes) {
+        analytics = getAnalytics(app);
+      }
     }
-  }).catch(err => {
+  } catch (err) {
     console.warn("Firebase Analytics no disponible:", err);
-  });
-}
+  }
+  return analytics;
+})();
 
 export { analytics };
 

@@ -67,17 +67,23 @@ function App() {
 
   // Inicializar el listener de Firebase Auth al arrancar la app
   useEffect(() => {
-    // Aplicar consentimientos guardados o los default (denied)
-    try {
-      const saved = localStorage.getItem('mipana_cookie_consent');
-      if (saved) {
-        applyAllConsents(JSON.parse(saved));
-      } else {
-        applyAllConsents({ analytics: false, googleAnalytics: false });
+    const initConsent = async () => {
+      try {
+        const saved = localStorage.getItem('mipana_cookie_consent');
+        if (saved) {
+          const consent = JSON.parse(saved);
+          if (consent.decided) {
+            await applyAllConsents(consent);
+          }
+        } else {
+          await applyAllConsents({ analytics: false, googleAnalytics: false });
+        }
+      } catch (err) {
+        console.warn("Cookie consent apply error:", err);
       }
-    } catch (err) {
-      console.warn("Cookie consent apply error:", err);
-    }
+    };
+    
+    initConsent();
 
     const unsubAuth = init();
     const unsubCats = useCategoryStore.getState().init();

@@ -1,27 +1,33 @@
-import { analytics } from './firebase';
+import { analyticsReady } from './firebase';
 import { setAnalyticsCollectionEnabled } from 'firebase/analytics';
 
-export function applyAllConsents(consentObj) {
-  // 1. Firebase Analytics
+export async function applyAllConsents(consentObj) {
+
+  // 1. Firebase Analytics — esperar a que esté inicializado
   try {
-    // Si la inicialización de firebase/analytics fue exitosa o no nula
-    if (analytics) {
-      setAnalyticsCollectionEnabled(analytics, consentObj.analytics);
+    const analyticsInstance = await analyticsReady;
+    if (analyticsInstance) {
+      setAnalyticsCollectionEnabled(
+        analyticsInstance, 
+        consentObj.analytics === true
+      );
     }
-  } catch(e) { console.warn('Firebase analytics consent:', e); }
+  } catch(e) { 
+    console.warn('Firebase analytics consent:', e);
+  }
 
   // 2. Google Consent Mode v2
   if (typeof window.gtag === 'function') {
     window.gtag('consent', 'update', {
-      analytics_storage: consentObj.googleAnalytics ? 'granted' : 'denied',
-      ad_storage: consentObj.googleAnalytics ? 'granted' : 'denied',
-      ad_user_data: consentObj.googleAnalytics ? 'granted' : 'denied',
-      ad_personalization: consentObj.googleAnalytics ? 'granted' : 'denied'
+      analytics_storage: consentObj.googleAnalytics === true ? 'granted' : 'denied',
+      ad_storage: consentObj.googleAnalytics === true ? 'granted' : 'denied',
+      ad_user_data: consentObj.googleAnalytics === true ? 'granted' : 'denied',
+      ad_personalization: consentObj.googleAnalytics === true ? 'granted' : 'denied'
     });
   }
 
   // 3. Inyectar script GA4 solo si se acepta y no existe
-  if (consentObj.googleAnalytics) {
+  if (consentObj.googleAnalytics === true) {
     const existingScript = document.getElementById('ga4-script');
     if (!existingScript) {
       const script = document.createElement('script');
