@@ -19,6 +19,8 @@ export default function AdminCountriesTab() {
   const { countries, init } = useLocationStore();
   const [editingId, setEditingId] = useState(null);
   const [isAdding, setIsAdding] = useState(false);
+  const [countryToDelete, setCountryToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const [formData, setFormData] = useState({ 
     name: '', 
     status: 'active', 
@@ -56,6 +58,20 @@ export default function AdminCountriesTab() {
     } catch (err) {
       console.error(err);
       alert("Error al guardar país");
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!countryToDelete) return;
+    setDeleting(true);
+    try {
+      await deleteDoc(doc(db, 'countries', countryToDelete.id));
+      setCountryToDelete(null);
+    } catch (err) {
+      console.error(err);
+      alert('Error al eliminar el país');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -155,9 +171,22 @@ export default function AdminCountriesTab() {
                       </div>
                     </div>
                     
-                    <button onClick={() => { setEditingId(c.id); setFormData(c); }} className="p-1.5 bg-gray-50 hover:bg-gray-100 rounded-lg text-blue-500 transition-colors shrink-0">
-                      <Edit2 size={14} />
-                    </button>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button 
+                        onClick={() => { setEditingId(c.id); setFormData(c); }} 
+                        className="p-1.5 bg-gray-50 hover:bg-gray-100 rounded-lg text-blue-500 transition-colors"
+                        title="Editar"
+                      >
+                        <Edit2 size={14} />
+                      </button>
+                      <button 
+                        onClick={() => setCountryToDelete(c)} 
+                        className="p-1.5 bg-red-50 hover:bg-red-100 rounded-lg text-red-400 hover:text-red-600 transition-colors"
+                        title="Eliminar país"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-4 bg-gray-50 rounded-xl p-3 border border-gray-100">
@@ -184,6 +213,70 @@ export default function AdminCountriesTab() {
           ))}
         </div>
       </div>
+
+      {/* Modal de confirmación de borrado */}
+      <AnimatePresence>
+        {countryToDelete && (
+          <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setCountryToDelete(null)}
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.85, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.85, y: 20 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+              className="relative w-full max-w-sm bg-white rounded-[2rem] shadow-2xl overflow-hidden"
+            >
+              {/* Header */}
+              <div className="bg-red-50 px-6 pt-8 pb-6 flex flex-col items-center text-center gap-3">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+                  <Trash2 className="w-8 h-8 text-red-500" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-gray-800">¿Eliminar país?</h3>
+                  <p className="text-sm font-bold text-gray-500 mt-1">
+                    Estás a punto de eliminar <span className="text-gray-800">{countryToDelete.flag} {countryToDelete.name}</span> permanentemente de la plataforma.
+                  </p>
+                </div>
+              </div>
+
+              {/* Warning */}
+              <div className="px-6 py-4 bg-amber-50 border-y border-amber-100 flex items-start gap-3">
+                <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                <p className="text-[11px] font-bold text-amber-700 leading-snug">
+                  Esta acción es irreversible. El país desaparecerá de los selectores de la app en tiempo real.
+                </p>
+              </div>
+
+              {/* Actions */}
+              <div className="p-6 flex flex-col gap-3">
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="w-full bg-red-500 hover:bg-red-600 text-white font-black py-3.5 rounded-2xl transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {deleting ? (
+                    <span className="animate-pulse">Eliminando...</span>
+                  ) : (
+                    <><Trash2 size={16} /> Sí, eliminar {countryToDelete.name}</>
+                  )}
+                </button>
+                <button
+                  onClick={() => setCountryToDelete(null)}
+                  className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-black py-3.5 rounded-2xl transition-all active:scale-95"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
