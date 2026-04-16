@@ -12,6 +12,11 @@ export function useNotifications() {
   );
 
   useEffect(() => {
+    if (!currentUser) {
+      setLoading(false);
+      return;
+    }
+
     const fetchNotifications = async () => {
       setLoading(true);
       try {
@@ -62,7 +67,7 @@ export function useNotifications() {
     };
 
     fetchNotifications();
-  }, [userData?.country, userData?.createdAt, currentUser?.metadata?.creationTime]);
+  }, [currentUser, userData?.country, userData?.createdAt, currentUser?.metadata?.creationTime]);
 
   const dismissOne = (id) => {
     const newDismissed = [...dismissedIds, id];
