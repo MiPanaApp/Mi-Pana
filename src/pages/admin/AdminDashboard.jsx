@@ -38,7 +38,9 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalProducts: 0,
-    categories: []
+    categories: [],
+    userTrend: { val: '0%', pos: true },
+    productTrend: { val: '0%', pos: true }
   });
   const [loading, setLoading] = useState(true);
   const [isReportsModalOpen, setIsReportsModalOpen] = useState(false);
@@ -256,6 +258,30 @@ export default function AdminDashboard() {
     });
 
     setStats(prev => ({ ...prev, growth: growthData }));
+
+    // Calcular Tendencias Reales (esta semana vs la anterior)
+    const uThis = rawUsers.filter(u => getWeeksAgo(u.createdAt) === 0).length;
+    const uLast = rawUsers.filter(u => getWeeksAgo(u.createdAt) === 1).length;
+    const pThis = rawProducts.filter(p => getWeeksAgo(p.createdAt) === 0).length;
+    const pLast = rawProducts.filter(p => getWeeksAgo(p.createdAt) === 1).length;
+
+    const calcTrend = (curr, prev) => {
+      if (prev === 0) return curr > 0 ? { val: '+100%', pos: true } : { val: '0%', pos: true };
+      const diff = ((curr - prev) / prev) * 100;
+      return { 
+        val: `${diff >= 0 ? '+' : ''}${diff.toFixed(1)}%`, 
+        pos: diff >= 0 
+      };
+    };
+
+    const userTrend = calcTrend(uThis, uLast);
+    const productTrend = calcTrend(pThis, pLast);
+
+    setStats(prev => ({ 
+      ...prev, 
+      userTrend,
+      productTrend
+    }));
   }, [growthWeeks, rawUsers, rawProducts]);
 
   const formatCount = (n) => {
@@ -266,8 +292,8 @@ export default function AdminDashboard() {
   };
 
   const metrics = [
-    { id: 1, label: "Panas Activos", val: stats.totalUsers.toLocaleString(), trend: "+5.2%", isPositive: true },
-    { id: 2, label: "Ofertas", val: stats.totalProducts.toLocaleString(), trend: "+1.1%", isPositive: true },
+    { id: 1, label: "Panas Activos", val: stats.totalUsers.toLocaleString(), trend: stats.userTrend?.val || '0%', isPositive: stats.userTrend?.pos ?? true },
+    { id: 2, label: "Anuncios", val: stats.totalProducts.toLocaleString(), trend: stats.productTrend?.val || '0%', isPositive: stats.productTrend?.pos ?? true },
     { id: 3, label: "Vistas Totales", val: formatCount(totalViews), trend: "acumulado", isPositive: true },
     { id: 4, label: "Favoritos (Likes)", val: formatCount(totalLikes), trend: "acumulado", isPositive: true },
   ];
