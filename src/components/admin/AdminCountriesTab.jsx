@@ -5,7 +5,7 @@ import { useLocationStore } from '../../store/useLocationStore';
 import { 
   Plus, Edit2, Trash2, Check, X, 
   MapPin, Globe, Shield, RefreshCw, Save,
-  AlertTriangle, Eye, EyeOff, ChevronDown
+  AlertTriangle, Eye, EyeOff, ChevronDown, Search
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -14,6 +14,66 @@ const STATUS_COLORS = {
   suspended: 'bg-orange-50 text-orange-600 border-orange-200',
   hidden: 'bg-gray-50 text-gray-400 border-gray-200'
 };
+
+const WORLD_COUNTRIES = [
+  { id: 'AF', name: 'Afganistán', flag: '🇦🇫' }, { id: 'AL', name: 'Albania', flag: '🇦🇱' }, { id: 'DE', name: 'Alemania', flag: '🇩🇪' }, { id: 'AD', name: 'Andorra', flag: '🇦🇩' },
+  { id: 'AO', name: 'Angola', flag: '🇦🇴' }, { id: 'AI', name: 'Anguila', flag: '🇦🇮' }, { id: 'AQ', name: 'Antártida', flag: '🇦🇶' }, { id: 'AG', name: 'Antigua y Barbuda', flag: '🇦🇬' },
+  { id: 'SA', name: 'Arabia Saudita', flag: '🇸🇦' }, { id: 'DZ', name: 'Argelia', flag: '🇩🇿' }, { id: 'AR', name: 'Argentina', flag: '🇦🇷' }, { id: 'AM', name: 'Armenia', flag: '🇦🇲' },
+  { id: 'AW', name: 'Aruba', flag: '🇦🇼' }, { id: 'AU', name: 'Australia', flag: '🇦🇺' }, { id: 'AT', name: 'Austria', flag: '🇦🇹' }, { id: 'AZ', name: 'Azerbaiyán', flag: '🇦🇿' },
+  { id: 'BS', name: 'Bahamas', flag: '🇧🇸' }, { id: 'BD', name: 'Bangladés', flag: '🇧🇩' }, { id: 'BB', name: 'Barbados', flag: '🇧🇧' }, { id: 'BH', name: 'Baréin', flag: '🇧🇭' },
+  { id: 'BE', name: 'Bélgica', flag: '🇧🇪' }, { id: 'BZ', name: 'Belice', flag: '🇧🇿' }, { id: 'BJ', name: 'Benín', flag: '🇧🇯' }, { id: 'BM', name: 'Bermudas', flag: '🇧🇲' },
+  { id: 'BY', name: 'Bielorrusia', flag: '🇧🇾' }, { id: 'MM', name: 'Birmania', flag: '🇲🇲' }, { id: 'BO', name: 'Bolivia', flag: '🇧🇴' }, { id: 'BA', name: 'Bosnia y Herzegovina', flag: '🇧🇦' },
+  { id: 'BW', name: 'Botsuana', flag: '🇧🇼' }, { id: 'BR', name: 'Brasil', flag: '🇧🇷' }, { id: 'BN', name: 'Brunéi', flag: '🇧🇳' }, { id: 'BG', name: 'Bulgaria', flag: '🇧🇬' },
+  { id: 'BF', name: 'Burkina Faso', flag: '🇧🇫' }, { id: 'BI', name: 'Burundi', flag: '🇧🇮' }, { id: 'BT', name: 'Bután', flag: '🇧🇹' }, { id: 'CV', name: 'Cabo Verde', flag: '🇨🇻' },
+  { id: 'KH', name: 'Camboya', flag: '🇰🇭' }, { id: 'CM', name: 'Camerún', flag: '🇨🇲' }, { id: 'CA', name: 'Canadá', flag: '🇨🇦' }, { id: 'BQ', name: 'Caribe Neerlandés', flag: '🇧🇶' },
+  { id: 'QA', name: 'Catar', flag: '🇶🇦' }, { id: 'TD', name: 'Chad', flag: '🇹🇩' }, { id: 'CZ', name: 'Chequia', flag: '🇨🇿' }, { id: 'CL', name: 'Chile', flag: '🇨🇱' },
+  { id: 'CN', name: 'China', flag: '🇨🇳' }, { id: 'CY', name: 'Chipre', flag: '🇨🇾' }, { id: 'VA', name: 'Ciudad del Vaticano', flag: '🇻🇦' }, { id: 'CO', name: 'Colombia', flag: '🇨🇴' },
+  { id: 'KM', name: 'Comoras', flag: '🇰🇲' }, { id: 'KP', name: 'Corea del Norte', flag: '🇰🇵' }, { id: 'KR', name: 'Corea del Sur', flag: '🇰🇷' }, { id: 'CI', name: 'Costa de Marfil', flag: '🇨🇮' },
+  { id: 'CR', name: 'Costa Rica', flag: '🇨🇷' }, { id: 'HR', name: 'Croacia', flag: '🇭🇷' }, { id: 'CU', name: 'Cuba', flag: '🇨🇺' }, { id: 'CW', name: 'Curazao', flag: '🇨🇼' },
+  { id: 'DK', name: 'Dinamarca', flag: '🇩🇰' }, { id: 'DM', name: 'Dominica', flag: '🇩🇲' }, { id: 'EC', name: 'Ecuador', flag: '🇪🇨' }, { id: 'EG', name: 'Egipto', flag: '🇪🇬' },
+  { id: 'SV', name: 'El Salvador', flag: '🇸🇻' }, { id: 'AE', name: 'Emiratos Árabes Unidos', flag: '🇦🇪' }, { id: 'ER', name: 'Eritrea', flag: '🇪🇷' }, { id: 'SK', name: 'Eslovaquia', flag: '🇸🇰' },
+  { id: 'SI', name: 'Eslovenia', flag: '🇸🇮' }, { id: 'ES', name: 'España', flag: '🇪🇸' }, { id: 'US', name: 'Estados Unidos', flag: '🇺🇸' }, { id: 'EE', name: 'Estonia', flag: '🇪🇪' },
+  { id: 'ET', name: 'Etiopía', flag: '🇪🇹' }, { id: 'PH', name: 'Filipinas', flag: '🇵🇭' }, { id: 'FI', name: 'Finlandia', flag: '🇫🇮' }, { id: 'FJ', name: 'Fiyi', flag: '🇫🇯' },
+  { id: 'FR', name: 'Francia', flag: '🇫🇷' }, { id: 'GA', name: 'Gabón', flag: '🇬🇦' }, { id: 'GM', name: 'Gambia', flag: '🇬🇲' }, { id: 'GE', name: 'Georgia', flag: '🇬🇪' },
+  { id: 'GH', name: 'Ghana', flag: '🇬🇭' }, { id: 'GI', name: 'Gibraltar', flag: '🇬🇮' }, { id: 'GD', name: 'Granada', flag: '🇬🇩' }, { id: 'GR', name: 'Grecia', flag: '🇬🇷' },
+  { id: 'GL', name: 'Groenlandia', flag: '🇬🇱' }, { id: 'GP', name: 'Guadalupe', flag: '🇬🇵' }, { id: 'GU', name: 'Guam', flag: '🇬🇺' }, { id: 'GT', name: 'Guatemala', flag: '🇬🇹' },
+  { id: 'GF', name: 'Guayana Francesa', flag: '🇬🇫' }, { id: 'GG', name: 'Guernsey', flag: '🇬🇬' }, { id: 'GN', name: 'Guinea', flag: '🇬🇳' }, { id: 'GW', name: 'Guinea-Bisáu', flag: '🇬🇼' },
+  { id: 'GQ', name: 'Guinea Ecuatorial', flag: '🇬🇶' }, { id: 'GY', name: 'Guyana', flag: '🇬🇾' }, { id: 'HT', name: 'Haití', flag: '🇭🇹' }, { id: 'HN', name: 'Honduras', flag: '🇭🇳' },
+  { id: 'HK', name: 'Hong Kong', flag: '🇭🇰' }, { id: 'HU', name: 'Hungría', flag: '🇭🇺' }, { id: 'IN', name: 'India', flag: '🇮🇳' }, { id: 'ID', name: 'Indonesia', flag: '🇮🇩' },
+  { id: 'IQ', name: 'Irak', flag: '🇮🇶' }, { id: 'IR', name: 'Irán', flag: '🇮🇷' }, { id: 'IE', name: 'Irlanda', flag: '🇮🇪' }, { id: 'IS', name: 'Islandia', flag: '🇮🇸' },
+  { id: 'IL', name: 'Israel', flag: '🇮🇱' }, { id: 'IT', name: 'Italia', flag: '🇮🇹' }, { id: 'JM', name: 'Jamaica', flag: '🇯🇲' }, { id: 'JP', name: 'Japón', flag: '🇯🇵' },
+  { id: 'JE', name: 'Jersey', flag: '🇯🇪' }, { id: 'JO', name: 'Jordania', flag: '🇯🇴' }, { id: 'KZ', name: 'Kazajistán', flag: '🇰🇿' }, { id: 'KE', name: 'Kenia', flag: '🇰🇪' },
+  { id: 'KG', name: 'Kirguistán', flag: '🇰🇬' }, { id: 'KI', name: 'Kiribati', flag: '🇰🇮' }, { id: 'KW', name: 'Kuwait', flag: '🇰🇼' }, { id: 'LA', name: 'Laos', flag: '🇱🇦' },
+  { id: 'LS', name: 'Lesoto', flag: '🇱🇸' }, { id: 'LV', name: 'Letonia', flag: '🇱🇻' }, { id: 'LB', name: 'Líbano', flag: '🇱🇧' }, { id: 'LR', name: 'Liberia', flag: '🇱🇷' },
+  { id: 'LY', name: 'Libia', flag: '🇱🇾' }, { id: 'LI', name: 'Liechtenstein', flag: '🇱🇮' }, { id: 'LT', name: 'Lituania', flag: '🇱🇹' }, { id: 'LU', name: 'Luxemburgo', flag: '🇱🇺' },
+  { id: 'MO', name: 'Macao', flag: '🇲🇴' }, { id: 'MK', name: 'Macedonia del Norte', flag: '🇲🇰' }, { id: 'MG', name: 'Madagascar', flag: '🇲🇬' }, { id: 'MY', name: 'Malasia', flag: '🇲🇾' },
+  { id: 'MW', name: 'Malaui', flag: '🇲🇼' }, { id: 'MV', name: 'Maldivas', flag: '🇲🇻' }, { id: 'ML', name: 'Malí', flag: '🇲🇱' }, { id: 'MT', name: 'Malta', flag: '🇲🇹' },
+  { id: 'MA', name: 'Marruecos', flag: '🇲🇦' }, { id: 'MQ', name: 'Martinica', flag: '🇲🇶' }, { id: 'MU', name: 'Mauricio', flag: '🇲🇺' }, { id: 'MR', name: 'Mauritania', flag: '🇲🇷' },
+  { id: 'YT', name: 'Mayotte', flag: '🇾🇹' }, { id: 'MX', name: 'México', flag: '🇲🇽' }, { id: 'FM', name: 'Micronesia', flag: '🇫🇲' }, { id: 'MD', name: 'Moldavia', flag: '🇲🇩' },
+  { id: 'MC', name: 'Mónaco', flag: '🇲🇨' }, { id: 'MN', name: 'Mongolia', flag: '🇲🇳' }, { id: 'ME', name: 'Montenegro', flag: '🇲🇪' }, { id: 'MS', name: 'Montserrat', flag: '🇲🇸' },
+  { id: 'MZ', name: 'Mozambique', flag: '🇲🇿' }, { id: 'NA', name: 'Namibia', flag: '🇳🇦' }, { id: 'NR', name: 'Nauru', flag: '🇳🇷' }, { id: 'NP', name: 'Nepal', flag: '🇳🇵' },
+  { id: 'NI', name: 'Nicaragua', flag: '🇳🇮' }, { id: 'NE', name: 'Níger', flag: '🇳🇪' }, { id: 'NG', name: 'Nigeria', flag: '🇳🇬' }, { id: 'NU', name: 'Niue', flag: '🇳🇺' },
+  { id: 'NO', name: 'Noruega', flag: '🇳🇴' }, { id: 'NC', name: 'Nueva Caledonia', flag: '🇳🇨' }, { id: 'NZ', name: 'Nueva Zelanda', flag: '🇳🇿' }, { id: 'OM', name: 'Omán', flag: '🇴🇲' },
+  { id: 'NL', name: 'Países Bajos', flag: '🇳🇱' }, { id: 'PK', name: 'Pakistán', flag: '🇵🇰' }, { id: 'PW', name: 'Palaos', flag: '🇵🇼' }, { id: 'PS', name: 'Palestina', flag: '🇵🇸' },
+  { id: 'PA', name: 'Panamá', flag: '🇵🇦' }, { id: 'PG', name: 'Papúa Nueva Guinea', flag: '🇵🇬' }, { id: 'PY', name: 'Paraguay', flag: '🇵🇾' }, { id: 'PE', name: 'Perú', flag: '🇵🇪' },
+  { id: 'PF', name: 'Polinesia Francesa', flag: '🇵🇫' }, { id: 'PL', name: 'Polonia', flag: '🇵🇱' }, { id: 'PT', name: 'Portugal', flag: '🇵🇹' }, { id: 'PR', name: 'Puerto Rico', flag: '🇵🇷' },
+  { id: 'GB', name: 'Reino Unido', flag: '🇬🇧' }, { id: 'CF', name: 'República Centroafricana', flag: '🇨🇫' }, { id: 'CG', name: 'República del Congo', flag: '🇨🇬' }, { id: 'CD', name: 'República Democrática del Congo', flag: '🇨🇩' },
+  { id: 'DO', name: 'República Dominicana', flag: '🇩🇴' }, { id: 'RE', name: 'Reunión', flag: '🇷🇪' }, { id: 'RO', name: 'Rumania', flag: '🇷🇴' }, { id: 'RU', name: 'Rusia', flag: '🇷🇺' },
+  { id: 'RW', name: 'Ruanda', flag: '🇷🇼' }, { id: 'EH', name: 'Sahara Occidental', flag: '🇪🇭' }, { id: 'WS', name: 'Samoa', flag: '🇼🇸' }, { id: 'AS', name: 'Samoa Americana', flag: '🇦🇸' },
+  { id: 'KN', name: 'San Cristóbal y Nieves', flag: '🇰🇳' }, { id: 'SM', name: 'San Marino', flag: '🇸🇲' }, { id: 'PM', name: 'San Pedro y Miquelón', flag: '🇵🇲' }, { id: 'VC', name: 'San Vicente y las Granadinas', flag: '🇻🇨' },
+  { id: 'SH', name: 'Santa Elena', flag: '🇸🇭' }, { id: 'LC', name: 'Santa Lucía', flag: '🇱🇨' }, { id: 'ST', name: 'Santo Tomé y Príncipe', flag: '🇸🇹' }, { id: 'SN', name: 'Senegal', flag: '🇸🇳' },
+  { id: 'RS', name: 'Serbia', flag: '🇷🇸' }, { id: 'SC', name: 'Seychelles', flag: '🇸🇨' }, { id: 'SL', name: 'Sierra Leona', flag: '🇸🇱' }, { id: 'SG', name: 'Singapur', flag: '🇸🇬' },
+  { id: 'SX', name: 'San Martín', flag: '🇸🇽' }, { id: 'SY', name: 'Siria', flag: '🇸🇾' }, { id: 'SO', name: 'Somalia', flag: '🇸🇴' }, { id: 'LK', name: 'Sri Lanka', flag: '🇱🇰' },
+  { id: 'SZ', name: 'Suazilandia', flag: '🇸🇿' }, { id: 'ZA', name: 'Sudáfrica', flag: '🇿🇦' }, { id: 'SD', name: 'Sudán', flag: '🇸🇩' }, { id: 'SS', name: 'Sudán del Sur', flag: '🇸🇸' },
+  { id: 'SE', name: 'Suecia', flag: '🇸🇪' }, { id: 'CH', name: 'Suiza', flag: '🇨🇭' }, { id: 'SR', name: 'Surinam', flag: '🇸🇷' }, { id: 'SJ', name: 'Svalbard y Jan Mayen', flag: '🇸🇯' },
+  { id: 'TH', name: 'Tailandia', flag: '🇹🇭' }, { id: 'TW', name: 'Taiwán', flag: '🇹🇼' }, { id: 'TZ', name: 'Tanzania', flag: '🇹🇿' }, { id: 'TJ', name: 'Tayikistán', flag: '🇹🇯' },
+  { id: 'IO', name: 'Territorio Británico del Océano Índico', flag: '🇮🇴' }, { id: 'TF', name: 'Territorios Franceses del Sur', flag: '🇹🇫' }, { id: 'TL', name: 'Timor Oriental', flag: '🇹🇱' }, { id: 'TG', name: 'Togo', flag: '🇹🇬' },
+  { id: 'TK', name: 'Tokelau', flag: '🇹🇰' }, { id: 'TO', name: 'Tonga', flag: '🇹🇴' }, { id: 'TT', name: 'Trinidad y Tobago', flag: '🇹🇹' }, { id: 'TN', name: 'Tunez', flag: '🇹🇳' },
+  { id: 'TM', name: 'Turkmenistán', flag: '🇹🇲' }, { id: 'TR', name: 'Turquía', flag: '🇹🇷' }, { id: 'TV', name: 'Tuvalu', flag: '🇹🇻' }, { id: 'UA', name: 'Ucrania', flag: '🇺🇦' },
+  { id: 'UG', name: 'Uganda', flag: '🇺🇬' }, { id: 'UY', name: 'Uruguay', flag: '🇺🇾' }, { id: 'UZ', name: 'Uzbekistán', flag: '🇺🇿' }, { id: 'VU', name: 'Vanuatu', flag: '🇻🇺' },
+  { id: 'VE', name: 'Venezuela', flag: '🇻🇪' }, { id: 'VN', name: 'Vietnam', flag: '🇻🇳' }, { id: 'WF', name: 'Wallis y Futuna', flag: '🇼🇫' }, { id: 'YE', name: 'Yemen', flag: '🇾🇪' },
+  { id: 'DJ', name: 'Yibuti', flag: '🇩🇯' }, { id: 'ZM', name: 'Zambia', flag: '🇿🇲' }, { id: 'ZW', name: 'Zimbabue', flag: '🇿🇼' }
+];
 
 export default function AdminCountriesTab() {
   const { countries, init } = useLocationStore();
@@ -44,17 +104,23 @@ export default function AdminCountriesTab() {
         });
         setEditingId(null);
       } else {
-        // Para crear uno nuevo necesitamos un ISO
-        const iso = prompt("Introduce el código ISO (ej: MX, VE):")?.toUpperCase();
+        // Usar el ISO seleccionado en el formulario si existe, sino pedirlo
+        let iso = formData.id?.toUpperCase();
+        if (!iso) {
+           iso = prompt("Introduce el código ISO (ej: MX, VE):")?.toUpperCase();
+        }
         if (!iso) return;
         
+        // Limpiamos el ID temporal de formData antes de guardar para no duplicarlo en los campos
+        const { id: tempId, ...saveData } = formData;
+        
         await setDoc(doc(db, 'countries', iso), {
-          ...formData,
+          ...saveData,
           createdAt: serverTimestamp()
         });
         setIsAdding(false);
       }
-      setFormData({ name: '', status: 'active', flag: '', config: { level1: 'Región', level2: 'Ciudad' }, suspendedMessage: '', quote: '' });
+      setFormData({ name: '', status: 'active', flag: '', config: { level1: 'Región', level2: 'Ciudad' }, suspendedMessage: '', quote: '', capital: '' });
     } catch (err) {
       console.error(err);
       alert("Error al guardar país");
@@ -281,6 +347,87 @@ export default function AdminCountriesTab() {
   );
 }
 
+function FlagPicker({ selectedFlag, onSelect }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  
+  const filtered = WORLD_COUNTRIES.filter(c => 
+    c.name.toLowerCase().includes(search.toLowerCase()) || 
+    c.id.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full bg-[#F4F7FE] border-none text-gray-700 px-4 py-3.5 rounded-2xl text-sm font-bold flex items-center justify-between outline-none focus:ring-2 focus:ring-[#FFD700]/50 transition-all"
+      >
+        <span className="flex items-center gap-2">
+          {selectedFlag ? (
+            <>
+              <span className="text-xl leading-none">{selectedFlag}</span>
+              <Check className="w-3 h-3 text-green-500" />
+            </>
+          ) : (
+             <span className="text-gray-400">Seleccionar Bandera</span>
+          )}
+        </span>
+        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            <div className="fixed inset-0 z-[100]" onClick={() => setIsOpen(false)} />
+            <motion.div
+              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 5, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="absolute top-full left-0 right-0 bg-white border border-gray-100 rounded-2xl shadow-2xl z-[101] overflow-hidden"
+            >
+              <div className="p-2 border-b border-gray-50 flex items-center gap-2">
+                <Search className="w-4 h-4 text-gray-400 ml-2" />
+                <input 
+                  autoFocus
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Buscar país..."
+                  className="w-full bg-transparent border-none p-2 text-sm font-bold outline-none"
+                />
+              </div>
+              <div className="max-h-64 overflow-y-auto custom-scrollbar p-1">
+                {filtered.map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => {
+                      onSelect(c);
+                      setIsOpen(false);
+                      setSearch('');
+                    }}
+                    className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left transition-colors ${selectedFlag === c.flag ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'}`}
+                  >
+                    <span className="text-xl leading-none">{c.flag}</span>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-bold">{c.name}</span>
+                      <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{c.id}</span>
+                    </div>
+                  </button>
+                ))}
+                {filtered.length === 0 && (
+                  <div className="p-4 text-center text-xs font-bold text-gray-400 uppercase italic">
+                    Sin resultados
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 function CountryForm({ formData, setFormData, onSave, onCancel }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -298,12 +445,27 @@ function CountryForm({ formData, setFormData, onSave, onCancel }) {
       </div>
 
       <div>
+        <label className="text-[9px] font-black uppercase text-gray-400 mb-1 block">Bandera del Mundo (Autocompleta nombre e ISO)</label>
+        <FlagPicker 
+          selectedFlag={formData.flag} 
+          onSelect={(country) => {
+            setFormData({
+              ...formData,
+              flag: country.flag,
+              name: formData.name || country.name,
+              id: country.id // Temporal para handleSave
+            });
+          }} 
+        />
+      </div>
+
+      <div>
         <label className="text-[9px] font-black uppercase text-gray-400 mb-1 block">Frase de Bienvenida (Quote)</label>
         <input 
           type="text" 
           value={formData.quote}
           onChange={(e) => setFormData({...formData, quote: e.target.value})}
-          className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-[11px] font-bold outline-none"
+          className="w-full bg-[#F4F7FE] border-none text-gray-700 px-4 py-3.5 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-[#FFD700]/50 placeholder:font-medium placeholder:text-gray-400 transition-all"
           placeholder="Ej: La Arepa es Venezolana 😜"
         />
       </div>
@@ -315,7 +477,7 @@ function CountryForm({ formData, setFormData, onSave, onCancel }) {
             type="text" 
             value={formData.name}
             onChange={(e) => setFormData({...formData, name: e.target.value})}
-            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm font-bold outline-none"
+            className="w-full bg-[#F4F7FE] border-none text-gray-700 px-4 py-3.5 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-[#FFD700]/50 placeholder:font-medium placeholder:text-gray-400 transition-all"
             placeholder="Ej: Venezuela"
           />
         </div>
@@ -325,18 +487,19 @@ function CountryForm({ formData, setFormData, onSave, onCancel }) {
             type="text" 
             value={formData.capital || ''}
             onChange={(e) => setFormData({...formData, capital: e.target.value})}
-            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm font-bold outline-none"
+            className="w-full bg-[#F4F7FE] border-none text-gray-700 px-4 py-3.5 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-[#FFD700]/50 placeholder:font-medium placeholder:text-gray-400 transition-all"
             placeholder="Ej: Caracas"
           />
         </div>
         <div>
-          <label className="text-[9px] font-black uppercase text-gray-400 mb-1 block">Emoji/Flag</label>
+          <label className="text-[9px] font-black uppercase text-gray-400 mb-1 block">Código ISO (Ej: VE)</label>
           <input 
             type="text" 
-            value={formData.flag}
-            onChange={(e) => setFormData({...formData, flag: e.target.value})}
-            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm font-bold outline-none"
-            placeholder="🇻🇪"
+            readOnly={!!formData.id}
+            value={formData.id || ''}
+            onChange={(e) => setFormData({...formData, id: e.target.value.toUpperCase()})}
+            className={`w-full bg-[#F4F7FE] border-none text-gray-700 px-4 py-3.5 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-[#FFD700]/50 placeholder:font-medium placeholder:text-gray-400 transition-all ${formData.id ? 'opacity-60 grayscale cursor-not-allowed' : ''}`}
+            placeholder="VE"
           />
         </div>
         <div>
@@ -344,7 +507,7 @@ function CountryForm({ formData, setFormData, onSave, onCancel }) {
           <div className="relative">
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm font-bold outline-none flex items-center justify-between text-left"
+              className="w-full bg-[#F4F7FE] border-none text-gray-700 px-4 py-3.5 rounded-2xl text-sm font-bold flex items-center justify-between outline-none focus:ring-2 focus:ring-[#FFD700]/50 transition-all text-left"
             >
               <span className="truncate">{statusOptions.find(o => o.value === formData.status)?.label || 'Seleccionar'}</span>
               <ChevronDown size={14} className={`text-gray-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
@@ -358,7 +521,7 @@ function CountryForm({ formData, setFormData, onSave, onCancel }) {
                     initial={{ opacity: 0, y: -5, scale: 0.95 }}
                     animate={{ opacity: 1, y: 5, scale: 1 }}
                     exit={{ opacity: 0, y: -5, scale: 0.95 }}
-                    className="absolute top-full left-0 right-0 bg-white border border-gray-100 rounded-xl shadow-lg z-50 overflow-hidden"
+                    className="absolute top-full left-0 right-0 bg-white border border-gray-100 rounded-2xl shadow-2xl z-50 overflow-hidden"
                   >
                     {statusOptions.map(option => (
                       <button
@@ -367,7 +530,7 @@ function CountryForm({ formData, setFormData, onSave, onCancel }) {
                           setFormData({ ...formData, status: option.value });
                           setIsDropdownOpen(false);
                         }}
-                        className={`w-full text-left px-4 py-2 text-sm font-bold hover:bg-gray-50 flex items-center justify-between ${
+                        className={`w-full text-left px-4 py-2.5 text-sm font-bold hover:bg-gray-50 flex items-center justify-between ${
                           formData.status === option.value ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
                         }`}
                       >
@@ -390,7 +553,7 @@ function CountryForm({ formData, setFormData, onSave, onCancel }) {
             type="text" 
             value={formData.config?.level1}
             onChange={(e) => setFormData({...formData, config: { ...formData.config, level1: e.target.value }})}
-            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-[11px] font-bold outline-none"
+            className="w-full bg-[#F4F7FE] border-none text-gray-700 px-4 py-3.5 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-[#FFD700]/50 placeholder:font-medium placeholder:text-gray-400 transition-all"
             placeholder="Provincia"
           />
         </div>
@@ -400,7 +563,7 @@ function CountryForm({ formData, setFormData, onSave, onCancel }) {
             type="text" 
             value={formData.config?.level2}
             onChange={(e) => setFormData({...formData, config: { ...formData.config, level2: e.target.value }})}
-            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-[11px] font-bold outline-none"
+            className="w-full bg-[#F4F7FE] border-none text-gray-700 px-4 py-3.5 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-[#FFD700]/50 placeholder:font-medium placeholder:text-gray-400 transition-all"
             placeholder="Municipio"
           />
         </div>
@@ -412,13 +575,13 @@ function CountryForm({ formData, setFormData, onSave, onCancel }) {
           <textarea 
             value={formData.suspendedMessage}
             onChange={(e) => setFormData({...formData, suspendedMessage: e.target.value})}
-            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-[11px] font-bold outline-none h-16 resize-none"
+            className="w-full bg-[#F4F7FE] border-none text-gray-700 px-4 py-3.5 rounded-2xl text-sm font-bold outline-none h-16 resize-none focus:ring-2 focus:ring-[#FFD700]/50 placeholder:font-medium placeholder:text-gray-400 transition-all"
             placeholder="Frase satírica..."
           />
         </div>
       )}
 
-      <button onClick={onSave} className="w-full bg-black text-white py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-gray-800 transition-all">
+      <button onClick={onSave} className="w-full h-14 bg-black text-white rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-gray-800 active:scale-95 transition-all shadow-lg mt-4">
         <Save size={14} /> Guardar Cambios
       </button>
     </div>
