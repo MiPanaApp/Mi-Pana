@@ -289,8 +289,8 @@ export default function AdminScheduledNotifsTab() {
                 type="url"
                 value={formData.actionUrl || ''}
                 onChange={e => setFormData({...formData, actionUrl: e.target.value})}
-                placeholder="https://play.google.com/store/apps/..."
-                className="w-full bg-[#F4F7FE] border-none text-gray-700 px-4 py-3 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-[#FFD700]/50"
+                placeholder="https://google.com/..."
+                className="w-full bg-[#F4F7FE] border-none text-gray-700 pl-4 pr-20 py-3 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-[#FFD700]/50"
               />
               <span className="absolute right-4 top-3 text-[10px] font-black text-gray-400 uppercase">
                 Opcional
