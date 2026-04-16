@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { collection, query, getDocs, addDoc, updateDoc, doc, serverTimestamp, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '../../services/firebase';
-import { CalendarClock, Plus, Pencil, Trash2, Clock, Users, ArrowLeft, Send } from 'lucide-react';
+import { CalendarClock, Plus, Pencil, Trash2, Clock, Users, ArrowLeft, Send, ExternalLink } from 'lucide-react';
 
 const PRELOAD_TEMPLATES = [
   {
@@ -12,7 +12,8 @@ const PRELOAD_TEMPLATES = [
     delayHours: 168,
     targetSegment: "sellers",
     targetCountry: "all",
-    active: false
+    active: false,
+    actionUrl: ''
   },
   {
     name: "Recordatorio valoración (1 hora)",
@@ -22,7 +23,8 @@ const PRELOAD_TEMPLATES = [
     delayHours: 1,
     targetSegment: "buyers",
     targetCountry: "all",
-    active: false
+    active: false,
+    actionUrl: ''
   },
   {
     name: "Usuario inactivo (14 días)",
@@ -32,7 +34,8 @@ const PRELOAD_TEMPLATES = [
     delayHours: 336,
     targetSegment: "all",
     targetCountry: "all",
-    active: false
+    active: false,
+    actionUrl: ''
   },
   {
     name: "Perfil incompleto (2 horas)",
@@ -42,7 +45,8 @@ const PRELOAD_TEMPLATES = [
     delayHours: 2,
     targetSegment: "all",
     targetCountry: "all",
-    active: false
+    active: false,
+    actionUrl: ''
   }
 ];
 
@@ -67,7 +71,8 @@ export default function AdminScheduledNotifsTab() {
     delayHours: 168,
     targetSegment: 'sellers',
     targetCountry: 'all',
-    active: true
+    active: true,
+    actionUrl: ''
   });
 
   const loadTemplates = async () => {
@@ -276,6 +281,25 @@ export default function AdminScheduledNotifsTab() {
               </select>
             </div>
           </div>
+          
+          <div>
+            <label className="block text-xs font-extrabold text-gray-500 uppercase tracking-wide mb-1.5 ml-1">URL de Acción (opcional)</label>
+            <div className="relative">
+              <input
+                type="url"
+                value={formData.actionUrl || ''}
+                onChange={e => setFormData({...formData, actionUrl: e.target.value})}
+                placeholder="https://play.google.com/store/apps/..."
+                className="w-full bg-[#F4F7FE] border-none text-gray-700 px-4 py-3 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-[#FFD700]/50"
+              />
+              <span className="absolute right-4 top-3 text-[10px] font-black text-gray-400 uppercase">
+                Opcional
+              </span>
+            </div>
+            <p className="text-[10px] text-gray-400 font-bold mt-1 ml-1">
+              Si se especifica, al pulsar la notificación se abrirá esta URL. Útil para valoraciones en tiendas de apps.
+            </p>
+          </div>
 
           <div className="flex items-center justify-between p-4 bg-[#F4F7FE] rounded-2xl">
             <span className="text-sm font-extrabold text-gray-700">Estado de Plantilla</span>
@@ -326,7 +350,8 @@ export default function AdminScheduledNotifsTab() {
               delayHours: 168,
               targetSegment: 'sellers',
               targetCountry: 'all',
-              active: true
+              active: true,
+              actionUrl: ''
             });
             setShowForm(true);
           }}
@@ -357,6 +382,16 @@ export default function AdminScheduledNotifsTab() {
                     <span className="bg-gray-50 text-gray-400 text-[9px] font-black uppercase px-2 py-0.5 rounded-md border border-gray-100 flex items-center gap-1 text-nowrap">
                       <Users size={9} /> {t.targetSegment}
                     </span>
+                    {t.actionUrl && (
+                      <a 
+                        href={t.actionUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-[9px] font-black text-blue-500 bg-blue-50 border border-blue-100 px-2 py-1 rounded-lg"
+                      >
+                        <ExternalLink size={9} /> Ver enlace
+                      </a>
+                    )}
                   </div>
                 </div>
 
