@@ -342,41 +342,55 @@ export default function AdminScheduledNotifsTab() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {templates.map(t => (
-            <div key={t.id} className="bg-white p-5 rounded-[2rem] border border-gray-100 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-start mb-3">
-                <span className="font-extrabold text-gray-800 text-lg">{t.name}</span>
+            <div key={t.id} className="bg-white rounded-[1.5rem] p-4 border border-gray-100 shadow-sm hover:shadow-md transition-shadow flex flex-col gap-3">
+              {/* FILA 1: Header */}
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex flex-col">
+                  <span className="font-black text-sm text-gray-800 leading-tight">{t.name}</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    <span className="bg-indigo-50 text-indigo-500 text-[9px] font-black uppercase px-2 py-0.5 rounded-md border border-indigo-100">
+                      {TRIGGERS[t.trigger]}
+                    </span>
+                    <span className="bg-gray-50 text-gray-400 text-[9px] font-black uppercase px-2 py-0.5 rounded-md border border-gray-100 flex items-center gap-1">
+                      <Clock size={9} /> {Math.floor(t.delayHours/24)}d
+                    </span>
+                    <span className="bg-gray-50 text-gray-400 text-[9px] font-black uppercase px-2 py-0.5 rounded-md border border-gray-100 flex items-center gap-1 text-nowrap">
+                      <Users size={9} /> {t.targetSegment}
+                    </span>
+                  </div>
+                </div>
+
                 <button 
                   onClick={() => toggleActive(t)}
-                  className={`px-3 py-1 text-[10px] font-black uppercase rounded-lg border flex items-center gap-1.5 transition-colors ${t.active ? 'bg-green-50 text-green-600 border-green-100' : 'bg-gray-100 text-gray-500 border-gray-200'}`}
+                  className={`shrink-0 px-2 py-0.5 text-[9px] font-black uppercase rounded-md border flex items-center gap-1.5 transition-colors ${t.active ? 'bg-green-50 text-green-600 border-green-100' : 'bg-gray-100 text-gray-500 border-gray-200'}`}
                 >
-                  <span className={`w-1.5 h-1.5 rounded-full ${t.active ? 'bg-green-500' : 'bg-gray-400'}`}></span>
+                  <span className={`w-1 h-1 rounded-full ${t.active ? 'bg-green-500' : 'bg-gray-400'}`}></span>
                   {t.active ? 'Activa' : 'Pausada'}
                 </button>
               </div>
 
-              <div className="bg-[#F4F7FE] p-3 rounded-2xl mb-3">
-                <span className="text-xs font-black text-blue-600 truncate block mb-1">{t.title}</span>
-                <p className="text-[11px] font-bold text-gray-500 line-clamp-2 leading-relaxed">{t.body}</p>
+              {/* FILA 2: Preview del mensaje */}
+              <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                <span className="text-[11px] font-black text-[#1A1A3A] truncate block">{t.title}</span>
+                <div className="border-b border-gray-200/50 my-1.5" />
+                <p className="text-[10px] text-gray-500 font-medium line-clamp-1">{t.body}</p>
               </div>
 
-              <div className="flex flex-wrap gap-2 text-[10px] font-black uppercase text-gray-500 mb-4">
-                <span className="bg-white border py-1 px-2.5 rounded-lg text-indigo-500 border-indigo-100">{TRIGGERS[t.trigger]}</span>
-                <span className="bg-white border py-1 px-2.5 rounded-lg flex items-center gap-1 border-gray-100"><Clock className="w-3 h-3"/> {Math.floor(t.delayHours/24)}d</span>
-                <span className="bg-white border py-1 px-2.5 rounded-lg flex items-center gap-1 border-gray-100"><Users className="w-3 h-3"/> {t.targetSegment}</span>
-              </div>
-
-              <div className="flex justify-end gap-2 mt-auto border-t border-gray-50 pt-3">
+              {/* FILA 3: Acciones */}
+              <div className="flex justify-end gap-2">
                 <button 
                   onClick={() => { setEditingTemplate(t); setFormData(t); setShowForm(true); }}
-                  className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-500 hover:text-black hover:bg-gray-100"
+                  className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center text-gray-400 hover:text-black hover:bg-gray-100 transition-colors"
+                  title="Editar"
                 >
-                  <Pencil className="w-4 h-4" />
+                  <Pencil size={13} />
                 </button>
                 <button 
                   onClick={() => deleteTemplate(t.id)}
-                  className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center text-red-500 hover:text-red-700 hover:bg-red-100"
+                  className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center text-red-300 hover:text-red-500 hover:bg-red-100 transition-colors"
+                  title="Eliminar"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 size={13} />
                 </button>
               </div>
             </div>
