@@ -6,7 +6,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { useAuth } from '../context/AuthContext';
 import { useStore } from '../store/useStore';
 import { db, storage } from '../services/firebase';
-import { collection, addDoc, getDoc, getDocs, doc, serverTimestamp, query, orderBy, where, updateDoc } from 'firebase/firestore';
+import { collection, getDoc, getDocs, doc, serverTimestamp, query, orderBy, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
@@ -95,7 +95,7 @@ export default function CreateListing() {
     let isMounted = true;
     const fetchCategories = async () => {
       try {
-        const q = query(collection(db, 'categories'), orderBy('name', 'asc'));
+        const q = query(collection(db, 'categories'), orderBy('label', 'asc'));
         const querySnapshot = await getDocs(q);
 
         if (!isMounted) return;
@@ -105,38 +105,21 @@ export default function CreateListing() {
           ...doc.data()
         }));
 
-        // Filtrar duplicados en el cliente por si acaso (evita mostrar repetidos si la DB está sucia)
+        // Filtrar inactivas y duplicados por label
         const uniqueCats = [];
-        const seenNames = new Set();
+        const seenLabels = new Set();
         cats.forEach(c => {
-          if (!seenNames.has(c.name)) {
-            seenNames.add(c.name);
+          if (c.active !== false && c.label && !seenLabels.has(c.label)) {
+            seenLabels.add(c.label);
             uniqueCats.push(c);
           }
         });
         cats = uniqueCats;
 
-        // Seeding si no hay ninguna
-        if (cats.length === 0) {
-          const defaultCats = ['Comida', 'Envios', 'Inmobiliaria', 'Formación', 'Deporte', 'Empleo', 'Servicios', 'Ventas', 'Legal', 'Salud', 'Otros'];
-          const newCats = [];
-
-          for (const name of defaultCats) {
-            // Verificamos por si otra instancia ya la creó
-            const checkQ = query(collection(db, 'categories'), where('name', '==', name));
-            const checkSnap = await getDocs(checkQ);
-            if (checkSnap.empty) {
-              const docRef = await addDoc(collection(db, 'categories'), { name });
-              newCats.push({ id: docRef.id, name });
-            }
-          }
-          if (newCats.length > 0) cats = newCats;
-        }
-
         const sortedCats = sortCategories(cats);
         setCategories(sortedCats);
         if (sortedCats.length > 0) {
-          setForm(prev => ({ ...prev, category: sortedCats[0].name }));
+          setForm(prev => ({ ...prev, category: sortedCats[0].label }));
         }
       } catch (err) {
         console.error("Error fetching categories:", err);
@@ -269,8 +252,14 @@ export default function CreateListing() {
   }, [editId]);
 
   // Lógica Automática: Consultar para Servicios y Formación
+  // Comparamos con label (ej: "Servicios", "Formación") por retrocompatibilidad
+  const isConsultarCategory = (cat) => {
+    const normalized = (cat || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return normalized === 'servicios' || normalized === 'formacion';
+  };
+
   useEffect(() => {
-    if (form.category === 'Servicios' || form.category === 'Formación') {
+    if (isConsultarCategory(form.category)) {
       if (form.price !== 'Consultar') {
         setForm(prev => ({ ...prev, price: 'Consultar' }));
       }
@@ -285,8 +274,8 @@ export default function CreateListing() {
   const getCategoryStyle = (cat, index) => {
     if (!cat) return { Icon: Tag, color: getBrandColor(index) };
 
-    // Si pasamos solo el string del nombre
-    const name = typeof cat === 'string' ? cat : cat.name;
+    // Soporta tanto string como objeto con .label o .name (retrocompatibilidad)
+    const name = typeof cat === 'string' ? cat : (cat.label || cat.name || '');
     // Si pasamos el objeto de la categoría desde Firestore
     const iconName = typeof cat === 'object' ? cat.icon : null;
 
@@ -297,8 +286,8 @@ export default function CreateListing() {
   };
 
   const selectedName = form.category;
-  const selectedCatObj = categories.find(c => c.name === selectedName);
-  const selectedStyle = getCategoryStyle(selectedCatObj || selectedName, categories.findIndex(c => c.name === selectedName));
+  const selectedCatObj = categories.find(c => (c.label || c.name) === selectedName);
+  const selectedStyle = getCategoryStyle(selectedCatObj || selectedName, categories.findIndex(c => (c.label || c.name) === selectedName));
 
   const handleMainClick = () => mainInputRef.current.click();
   const handleCarouselClick = () => carouselInputRef.current.click();
@@ -733,7 +722,7 @@ export default function CreateListing() {
                   className="aspect-square rounded-[2rem] bg-[#E0E5EC] shadow-[inset_6px_6px_12px_rgba(163,177,198,0.7),inset_-6px_-6px_12px_rgba(255,255,255,0.8)] flex items-center justify-center cursor-pointer text-[#1A1A3A]/30 hover:text-[#1A1A3A]/50 transition-all active:shadow-[inset_8px_8px_16px_rgba(163,177,198,0.8),inset_-8px_-8px_16px_rgba(255,255,255,0.9)]"
                 >
                   <ImagePlus size={24} strokeWidth={2} />
-                  
+
                   {/* Input file oculto (solo para web) */}
                   <input
                     type="file"
@@ -847,14 +836,15 @@ export default function CreateListing() {
                         {categories.length > 0 ? (
                           categories.map((cat, idx) => {
                             const style = getCategoryStyle(cat, idx);
-                            const isSelected = form.category === cat.name;
+                            const catLabel = cat.label || cat.name;
+                            const isSelected = form.category === catLabel;
 
                             return (
                               <button
                                 key={cat.id}
                                 type="button"
                                 onClick={() => {
-                                  setForm({ ...form, category: cat.name });
+                                  setForm({ ...form, category: catLabel });
                                   setIsDropdownOpen(false);
                                 }}
                                 className={`w-full px-4 py-3 rounded-xl text-left font-bold text-sm transition-all flex items-center justify-between group ${isSelected
@@ -868,7 +858,7 @@ export default function CreateListing() {
                                     style={{ color: isSelected ? '#fff' : style.color }}
                                     className="transition-colors"
                                   />
-                                  {cat.name}
+                                  {catLabel}
                                 </div>
                                 {isSelected && (
                                   <CheckCircle2 size={14} className="text-white" />
@@ -890,7 +880,7 @@ export default function CreateListing() {
 
             <div className="flex-col gap-2 w-[120px] flex">
               <span className="text-sm font-bold text-[#1A1A3A]/70 ml-2">Precio (€) <span className="text-red-500">*</span></span>
-              {form.category === 'Servicios' || form.category === 'Formación' ? (
+              {isConsultarCategory(form.category) ? (
                 <div className="w-full h-14 flex items-center justify-center bg-[#E0E5EC] rounded-2xl shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] text-[#1A1A3A]/40 font-bold text-sm tracking-tight transition-all">
                   Consultar
                 </div>

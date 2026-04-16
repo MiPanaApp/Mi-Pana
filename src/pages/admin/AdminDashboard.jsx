@@ -119,16 +119,27 @@ export default function AdminDashboard() {
         const productsList = productsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         const usersList = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         
-        // Mapeo de categorías Reales (ID -> Nombre)
+        // Mapeo de categorías: prioriza 'label', luego 'name', para compatibilidad
+        // con el nuevo sistema unificado (AdminCategoriesTab guarda label + name)
         const catNamesMap = {};
+        const knownCategoryValues = new Set(); // Set de labels/names conocidos
         categoriesSnap.docs.forEach(doc => {
           const data = doc.data();
-          const name = data.name || data.title || 'S/N';
-          catNamesMap[doc.id] = name;
-          // Si el ID es un número guardado como string en Firestore, o viceversa, lo mapeamos doble
-          catNamesMap[String(doc.id)] = name;
-          if (data.id) catNamesMap[String(data.id)] = name;
-          if (data.value) catNamesMap[String(data.value)] = name;
+          // label es el campo principal; name es el alias de compatibilidad
+          const displayName = data.label || data.name || data.title || null;
+          if (!displayName) return;
+
+          // Mapeamos por ID del documento
+          catNamesMap[doc.id] = displayName;
+          catNamesMap[String(doc.id)] = displayName;
+          // Mapeamos por el propio label/name (en caso de que el producto guarde ese string)
+          catNamesMap[displayName] = displayName;
+          if (data.name) catNamesMap[data.name] = displayName;
+          if (data.label) catNamesMap[data.label] = displayName;
+          // Retrocompatibilidad: IDs y otros valores legacy
+          if (data.id) catNamesMap[String(data.id)] = displayName;
+          if (data.value) catNamesMap[String(data.value)] = displayName;
+          knownCategoryValues.add(displayName);
         });
 
         const totals = productsList.reduce((acc, p) => ({
@@ -144,12 +155,24 @@ export default function AdminDashboard() {
            .slice(0, 5);
         setTopViewed(topViewedData);
 
-        // TOP CATEGORIES REALES (Traduciendo IDs a nombres)
+        // TOP CATEGORIES: resuelve label desde el mapa; si es número o ID desconocido → "Sin categoría"
         const catCountMap = {};
         productsList.forEach(data => {
-          const catId = data.category;
-          // Mapeamos ID a nombre real. Si no coincide, intentamos con string del ID.
-          const catName = catNamesMap[catId] || catNamesMap[String(catId)] || catId || 'Otros';
+          const rawCat = data.category;
+          let catName;
+          if (!rawCat) {
+            catName = 'Sin categoría';
+          } else if (catNamesMap[rawCat]) {
+            catName = catNamesMap[rawCat];
+          } else if (catNamesMap[String(rawCat)]) {
+            catName = catNamesMap[String(rawCat)];
+          } else if (!isNaN(rawCat)) {
+            // Era un índice numérico legacy
+            catName = 'Sin categoría';
+          } else {
+            // String no reconocido: usarlo tal cual (producto viejo con nombre directo)
+            catName = rawCat;
+          }
           catCountMap[catName] = (catCountMap[catName] || 0) + 1;
         });
 

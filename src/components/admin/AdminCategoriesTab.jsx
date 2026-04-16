@@ -46,14 +46,18 @@ export default function AdminCategoriesTab() {
   const handleSave = async (id) => {
     try {
       if (id) {
+        // Al editar, actualizamos label y sincronizamos name para retrocompatibilidad
         await updateDoc(doc(db, 'categories', id), {
           ...formData,
+          name: formData.label,
           updatedAt: serverTimestamp()
         });
         setEditingId(null);
       } else {
+        // Al crear, guardamos tanto label como name (mismo valor)
         await addDoc(collection(db, 'categories'), {
           ...formData,
+          name: formData.label,
           createdAt: serverTimestamp()
         });
         setIsAdding(false);
@@ -77,22 +81,22 @@ export default function AdminCategoriesTab() {
   };
 
   const filteredCategories = categories.filter(c => 
-    c.label.toLowerCase().includes(searchTerm.toLowerCase())
+    (c.label || c.name || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleSeed = async () => {
     const STATIC_CATEGORIES = [
-      { id: "Comida", label: "Comida", icon: "Coffee", active: true, order: 1 },
-      { id: "Envios", label: "Envíos", icon: "Package", active: true, order: 2 },
-      { id: "Inmobiliaria", label: "Inmobiliaria", icon: "Home", active: true, order: 3 },
-      { id: "Formacion", label: "Formación", icon: "BookCheck", active: true, order: 4 },
-      { id: "Deporte", label: "Deporte", icon: "Dumbbell", active: true, order: 5 },
-      { id: "Empleo", label: "Empleo", icon: "Briefcase", active: true, order: 6 },
-      { id: "Servicios", label: "Servicios", icon: "Tool", active: true, order: 7 },
-      { id: "Ventas", label: "Ventas", icon: "ShoppingBag", active: true, order: 8 },
-      { id: "Legal", label: "Legal", icon: "Scale", active: true, order: 9 },
-      { id: "Salud", label: "Salud", icon: "Heart", active: true, order: 10 },
-      { id: "Otros", label: "Otros", icon: "CirclePlus", active: true, order: 11 },
+      { id: "Comida",        label: "Comida",       name: "Comida",       icon: "Coffee",     active: true, order: 1  },
+      { id: "Envios",        label: "Envíos",        name: "Envíos",        icon: "Package",    active: true, order: 2  },
+      { id: "Inmobiliaria",  label: "Inmobiliaria", name: "Inmobiliaria", icon: "Home",       active: true, order: 3  },
+      { id: "Formacion",     label: "Formación",     name: "Formación",     icon: "BookCheck", active: true, order: 4  },
+      { id: "Deporte",       label: "Deporte",      name: "Deporte",      icon: "Dumbbell",  active: true, order: 5  },
+      { id: "Empleo",        label: "Empleo",       name: "Empleo",       icon: "Briefcase", active: true, order: 6  },
+      { id: "Servicios",     label: "Servicios",    name: "Servicios",    icon: "Tool",      active: true, order: 7  },
+      { id: "Ventas",        label: "Ventas",       name: "Ventas",       icon: "ShoppingBag", active: true, order: 8 },
+      { id: "Legal",         label: "Legal",        name: "Legal",        icon: "Scale",     active: true, order: 9  },
+      { id: "Salud",         label: "Salud",        name: "Salud",        icon: "Heart",     active: true, order: 10 },
+      { id: "Otros",         label: "Otros",        name: "Otros",        icon: "CirclePlus", active: true, order: 11 },
     ];
 
     if (!window.confirm("¿Deseas poblar la base de datos con las categorías iniciales?")) return;
@@ -188,7 +192,7 @@ export default function AdminCategoriesTab() {
                       })()}
                     </div>
                     <div>
-                      <h4 className="font-black text-gray-800">{cat.label}</h4>
+                      <h4 className="font-black text-gray-800">{cat.label || cat.name}</h4>
                       <p className="text-[10px] font-black text-gray-400 uppercase">Orden: {cat.order}</p>
                     </div>
                   </div>
