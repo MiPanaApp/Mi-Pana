@@ -20,6 +20,14 @@ export default function CookieConsentBanner() {
     localStorage.getItem('mipana_notifications_decided') === 'true'
   );
 
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   useEffect(() => {
     const handler = () => setNotificationDecided(true);
     window.addEventListener('notificationDecided', handler);
@@ -28,6 +36,8 @@ export default function CookieConsentBanner() {
 
   // Update prefs when consent changes if not decided (e.g. initial load)
   useEffect(() => {
+    if (isMobile) { // logic separator
+    }
     if (consent) {
       setPrefs({
         necessary: true,
@@ -35,7 +45,7 @@ export default function CookieConsentBanner() {
         googleAnalytics: consent.googleAnalytics || false
       });
     }
-  }, [consent]);
+  }, [consent, isMobile]);
 
   if (Capacitor.isNativePlatform()) return null;
   if (hasDecided || !notificationDecided) return null;
@@ -62,12 +72,23 @@ export default function CookieConsentBanner() {
 
   return (
     <>
+    <AnimatePresence>
+      {!isMobile && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-[#1A1A3A]/30 backdrop-blur-[2px] z-[9997]"
+        />
+      )}
+    </AnimatePresence>
+
     <motion.div
-      initial={{ y: '100%', opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      exit={{ y: '100%', opacity: 0 }}
+      initial={isMobile ? { y: '100%', opacity: 0 } : { y: '-45%', x: '-50%', opacity: 0, scale: 0.95 }}
+      animate={isMobile ? { y: 0, opacity: 1 } : { y: '-50%', x: '-50%', opacity: 1, scale: 1 }}
+      exit={isMobile ? { y: '100%', opacity: 0 } : { y: '-45%', x: '-50%', opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="fixed bottom-0 left-0 right-0 md:left-1/2 md:-translate-x-1/2 md:bottom-4 md:max-w-lg md:w-full bg-[#E8E8F0] z-[9998] p-6 rounded-t-[2rem] md:rounded-[2rem] shadow-[0_-8px_40px_rgba(0,0,0,0.12)]"
+      className="fixed bottom-0 left-0 right-0 md:top-1/2 md:left-1/2 md:bottom-auto md:max-w-lg md:w-full bg-[#E8E8F0] z-[9998] p-6 rounded-t-[2rem] md:rounded-[2rem] shadow-[20px_20px_60px_rgba(0,0,0,0.15)]"
     >
       <div className="flex items-start gap-3 mb-6">
         <Shield size={20} className="text-[#1A1A3A]/60 flex-shrink-0 mt-0.5" />
