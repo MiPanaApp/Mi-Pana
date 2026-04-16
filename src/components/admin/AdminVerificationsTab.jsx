@@ -163,19 +163,27 @@ export default function AdminVerificationsTab() {
           </div>
           
           {/* Filtros */}
-          <div className="flex bg-gray-50 p-1.5 rounded-xl border border-gray-100 overflow-x-auto custom-scrollbar no-scrollbar flex-shrink-0">
-            <button 
-              onClick={() => setFilter('pending')} 
-              className={`px-4 py-2 text-xs font-bold rounded-lg transition-colors whitespace-nowrap ${filter === 'pending' ? 'bg-white text-[#B8860B] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-            >Pendientes</button>
-            <button 
-              onClick={() => setFilter('approved')} 
-              className={`px-4 py-2 text-xs font-bold rounded-lg transition-colors whitespace-nowrap ${filter === 'approved' ? 'bg-white text-[#00C97A] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-            >Aprobados</button>
-            <button 
-              onClick={() => setFilter('rejected')} 
-              className={`px-4 py-2 text-xs font-bold rounded-lg transition-colors whitespace-nowrap ${filter === 'rejected' ? 'bg-white text-[#D90429] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-            >Rechazados</button>
+          <div className="w-full md:w-auto bg-gray-100 p-1 rounded-2xl flex items-center shadow-inner">
+            <div className="grid grid-cols-3 gap-1 w-full md:flex md:w-auto">
+              <button 
+                onClick={() => setFilter('pending')} 
+                className={`px-3 py-2.5 text-[10px] md:text-xs font-black rounded-xl transition-all ${filter === 'pending' ? 'bg-white text-[#B48A05] shadow-md scale-[1.02]' : 'text-gray-400 hover:text-gray-500'}`}
+              >
+                Pendientes
+              </button>
+              <button 
+                onClick={() => setFilter('approved')} 
+                className={`px-3 py-2.5 text-[10px] md:text-xs font-black rounded-xl transition-all ${filter === 'approved' ? 'bg-white text-[#00C97A] shadow-md scale-[1.02]' : 'text-gray-400 hover:text-gray-500'}`}
+              >
+                Aprobados
+              </button>
+              <button 
+                onClick={() => setFilter('rejected')} 
+                className={`px-3 py-2.5 text-[10px] md:text-xs font-black rounded-xl transition-all ${filter === 'rejected' ? 'bg-white text-[#D90429] shadow-md scale-[1.02]' : 'text-gray-400 hover:text-gray-500'}`}
+              >
+                Rechazados
+              </button>
+            </div>
           </div>
         </div>
 
