@@ -69,7 +69,6 @@ Esta acción borrará:
     );
     if (!confirmed) return;
 
-    const user = users.find(u => u.id === id);
     const userEmail = user?.email;
 
     try {
