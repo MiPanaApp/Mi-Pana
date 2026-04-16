@@ -44,7 +44,15 @@ export default function AdminStatsTab() {
         getDocs(buildQuery('views')),
       ]);
 
-      setTopRated(ratedSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+      setTopRated(
+        ratedSnap.docs
+          .map(d => ({ id: d.id, ...d.data() }))
+          .filter(p => (p.rating || 0) > 0 && (p.reviewCount || 0) > 0)
+          .sort((a, b) => {
+            if (b.rating !== a.rating) return (b.rating || 0) - (a.rating || 0);
+            return (b.reviewCount || 0) - (a.reviewCount || 0);
+          })
+      );
       setTopSearched(searchedSnap.docs.map(d => ({ id: d.id, ...d.data() })));
       setTopViewed(viewedSnap.docs.map(d => ({ id: d.id, ...d.data() })));
       setLastUpdated(new Date());
@@ -230,9 +238,9 @@ export default function AdminStatsTab() {
               </div>
             </div>
             <div className="divide-y divide-gray-50 max-h-[480px] overflow-y-auto hide-scrollbar">
-              {topRated.filter(i => (i.rating || 0) > 0).length === 0
+              {topRated.length === 0
                 ? <div className="py-12 text-center text-gray-300 font-bold text-sm">Sin valoraciones aún</div>
-                : topRated.filter(i => (i.rating || 0) > 0).map((item, i) =>
+                : topRated.map((item, i) =>
                     <RankItem key={item.id} item={item} i={i} valueKey="rating" icon={Star} iconColor="text-[#FFD700] fill-[#FFD700]" />
                   )
               }
