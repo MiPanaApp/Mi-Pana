@@ -28,6 +28,18 @@ const COUNTRY_INFO = {
   'AR': { flag: '🇦🇷', defaultRegion: 'Buenos Aires' }
 };
 
+// Capitales por defecto para países conocidos (fallback si el documento Firestore no tiene campo 'capital')
+const CAPITALS = {
+  'ES': 'Madrid', 'US': 'Washington D.C.', 'CO': 'Bogotá', 'EC': 'Quito',
+  'PA': 'Ciudad de Panamá', 'PE': 'Lima', 'DO': 'Santo Domingo',
+  'CL': 'Santiago', 'AR': 'Buenos Aires', 'VE': 'Caracas', 'MX': 'Ciudad de México',
+  'BR': 'Brasília', 'BO': 'La Paz', 'PY': 'Asunción', 'UY': 'Montevideo',
+  'CR': 'San José', 'GT': 'Ciudad de Guatemala', 'HN': 'Tegucigalpa',
+  'SV': 'San Salvador', 'NI': 'Managua', 'CU': 'La Habana',
+  'PR': 'San Juan', 'GB': 'Londres', 'DE': 'Berlín', 'FR': 'París',
+  'IT': 'Roma', 'PT': 'Lisboa', 'CA': 'Ottawa', 'AU': 'Canberra',
+};
+
 // Las categorías se cargan dinámicamente desde useCategoryStore
 
 const Header = forwardRef((props, ref) => {
@@ -212,7 +224,7 @@ const Header = forwardRef((props, ref) => {
                           .map((c) => (
                           <button
                             key={c.id}
-                            onClick={() => handleCountryChange(c.id, c.config?.level1 || c.name)}
+                            onClick={() => handleCountryChange(c.id, c.capital || CAPITALS[c.id] || '')}
                             className={`w-12 h-12 flex items-center justify-center rounded-full transition-all flex-shrink-0 ${
                               selectedCountry === c.id 
                                 ? 'shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.9)]' 

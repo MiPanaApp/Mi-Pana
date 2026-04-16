@@ -319,6 +319,16 @@ function CountryForm({ formData, setFormData, onSave, onCancel }) {
             placeholder="Ej: Venezuela"
           />
         </div>
+        <div className="col-span-2">
+          <label className="text-[9px] font-black uppercase text-gray-400 mb-1 block">Capital (región por defecto)</label>
+          <input 
+            type="text" 
+            value={formData.capital || ''}
+            onChange={(e) => setFormData({...formData, capital: e.target.value})}
+            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm font-bold outline-none"
+            placeholder="Ej: Caracas"
+          />
+        </div>
         <div>
           <label className="text-[9px] font-black uppercase text-gray-400 mb-1 block">Emoji/Flag</label>
           <input 
