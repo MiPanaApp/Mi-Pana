@@ -28,6 +28,7 @@ export default function LoginScreen() {
   // Usamos el store Zustand directamente (fuente de verdad)
   const login = useAuthStore((s) => s.login);
   const loginWithGoogle = useAuthStore((s) => s.loginWithGoogle);
+  const loginWithFacebook = useAuthStore((s) => s.loginWithFacebook);
   const { hasChosenCountry } = useStore();
   const { showAlert, showPrompt } = useDialogStore();
 
@@ -44,17 +45,17 @@ export default function LoginScreen() {
     setLoading(true);
     setError(null);
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      // Verificar si es un usuario nuevo
-      if (result) {
-        const additionalInfo = getAdditionalUserInfo(result);
-        if (additionalInfo?.isNewUser) {
-          navigate("/register", { state: { isGoogleUser: true, user: result.user } });
-          return;
-        }
+      const { result } = await loginWithGoogle();
+      const user = result.user;
+      
+      const additionalInfo = getAdditionalUserInfo(result);
+      if (additionalInfo?.isNewUser) {
+        navigate("/register", { state: { isGoogleUser: true, user } });
+        return;
       }
+      
       const fetchPrefs = useAuthStore.getState().fetchUserPreferences;
-      const { hasPrefs } = await fetchPrefs(result.user.uid);
+      const { hasPrefs } = await fetchPrefs(user.uid);
       if (hasPrefs || hasChosenCountry) {
         navigate("/home");
       } else {
@@ -73,26 +74,37 @@ export default function LoginScreen() {
   };
 
   const handleFacebookSignIn = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const result = await signInWithPopup(auth, facebookProvider)
-      const additionalInfo = getAdditionalUserInfo(result)
+      const { result } = await loginWithFacebook();
+      const user = result.user;
+
+      const additionalInfo = getAdditionalUserInfo(result);
       if (additionalInfo?.isNewUser) {
         navigate("/register", {
-          state: { isGoogleUser: true, user: result.user }
-        })
+          state: { isGoogleUser: true, user }
+        });
       } else {
-        navigate("/home")
+        const fetchPrefs = useAuthStore.getState().fetchUserPreferences;
+        const { hasPrefs } = await fetchPrefs(user.uid);
+        if (hasPrefs || hasChosenCountry) {
+          navigate("/home");
+        } else {
+          navigate("/onboarding");
+        }
       }
     } catch (error) {
-      if (error.code === 'auth/popup-closed-by-user') return
-      if (error.code === 
-          'auth/account-exists-with-different-credential') {
+      if (error.code === 'auth/popup-closed-by-user') return;
+      if (error.code === 'auth/account-exists-with-different-credential') {
         showAlert("Ya tienes cuenta con ese email. Usa Google o email/contraseña.", "Email ya registrado");
-        return
+        return;
       }
       showAlert("No se pudo iniciar sesión con Facebook.", "Error");
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
   const handleEmailLogin = async (e) => {
     e.preventDefault();

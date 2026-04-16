@@ -49,6 +49,16 @@ export const useAuthStore = create((set, get) => ({
     try {
       const result = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(result.user, { displayName: name });
+      
+      // Asegurar documento en Firestore con provider
+      await setDoc(doc(db, 'users', result.user.uid), {
+        email: result.user.email,
+        displayName: name,
+        provider: 'email',
+        notificationsEnabled: false,
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+
       set({ user: result.user, loading: false });
       return { success: true, user: result.user };
     } catch (err) {
@@ -87,6 +97,12 @@ export const useAuthStore = create((set, get) => ({
         localStorage.removeItem('remember_me_email');
       }
 
+      // 4. Actualizar provider en Firestore
+      await setDoc(doc(db, 'users', result.user.uid), {
+        provider: 'email',
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+
       set({ user: result.user, loading: false });
       return { success: true };
     } catch (err) {
@@ -106,19 +122,45 @@ export const useAuthStore = create((set, get) => ({
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
 
-      // Crear/actualizar documento con valores por defecto usando merge:true
-      // Garantiza que todos los usuarios de Google tengan el campo notificationsEnabled
-      // para que la query de Admin funcione de forma consistente.
       await setDoc(
         doc(db, 'users', user.uid),
         {
           email: user.email,
           displayName: user.displayName,
           photoURL: user.photoURL,
-          notificationsEnabled: false, // default: se actualiza a true cuando acepta el modal
+          provider: 'google',
+          notificationsEnabled: false,
           updatedAt: serverTimestamp(),
         },
-        { merge: true } // No sobreescribe campos existentes como fcmTokens, name, etc.
+        { merge: true }
+      );
+
+      set({ user, loading: false });
+      return { success: true, result };
+    } catch (err) {
+      set({ error: err.message, loading: false });
+      throw err;
+    }
+  },
+
+  loginWithFacebook: async () => {
+    set({ loading: true, error: null });
+    try {
+      const { facebookProvider } = await import('../services/firebase');
+      const result = await signInWithPopup(auth, facebookProvider);
+      const user = result.user;
+
+      await setDoc(
+        doc(db, 'users', user.uid),
+        {
+          email: user.email,
+          displayName: user.displayName,
+          photoURL: user.photoURL,
+          provider: 'facebook',
+          notificationsEnabled: false,
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
       );
 
       set({ user, loading: false });
