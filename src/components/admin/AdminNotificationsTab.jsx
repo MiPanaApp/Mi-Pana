@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
-import { db } from '../../services/firebase';
+import { db, auth } from '../../services/firebase';
+import { collection, query, orderBy, limit, getDocs, writeBatch, doc } from 'firebase/firestore';
 import { Bell, Send, Loader2, ChevronDown, Check, Users, X, Mail } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -62,6 +62,21 @@ export default function AdminNotificationsTab() {
       alert('Error al enviar la notificación');
     } finally {
       setSending(false);
+    }
+  };
+
+  const clearHistory = async () => {
+    if (!confirm('¿Seguro que quieres borrar todo el historial?')) return;
+    try {
+      const q = query(collection(db, 'adminNotifications'));
+      const snap = await getDocs(q);
+      const batch = writeBatch(db);
+      snap.docs.forEach(d => batch.delete(d.ref));
+      await batch.commit();
+      setNotifHistory([]);
+      alert('Historial borrado');
+    } catch (e) {
+      alert('Error al borrar el historial');
     }
   };
 
@@ -182,14 +197,22 @@ export default function AdminNotificationsTab() {
         <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-[#F4F7FE] to-transparent pointer-events-none z-10 opacity-50"></div>
         
         <h3 className="text-base font-black text-gray-800 mb-4 flex items-center justify-between relative z-20">
-          <span>Historial de Envíos</span>
-          <span className="text-[10px] uppercase font-black tracking-wider bg-white px-3 py-1.5 rounded-xl shadow-sm border border-gray-100 text-gray-400">Recientes</span>
+          <div className="flex flex-col">
+            <span>Historial de Envíos</span>
+            <span className="text-[9px] text-gray-400 font-bold uppercase">Recientes (Scroll 👇)</span>
+          </div>
+          <button 
+            onClick={clearHistory}
+            className="text-[9px] uppercase font-black tracking-wider bg-white text-red-500 px-3 py-1.5 rounded-xl shadow-sm border border-red-50 hover:bg-red-50 transition-colors"
+          >
+            Borrar todo
+          </button>
         </h3>
         
-        <div className="flex-1 overflow-y-auto hide-scrollbar space-y-3 relative z-20 pb-4">
+        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2.5 relative z-20 pb-4 pr-1 max-h-[380px] md:max-h-none">
           {notifHistory.map((n) => (
-            <div key={n.id} className="bg-white p-4 rounded-2xl shadow-[0_5px_15px_rgba(0,0,0,0.02)] border border-gray-50 transition-all hover:shadow-[0_8px_25px_rgba(0,0,0,0.06)] hover:border-gray-100">
-              <div className="flex justify-between items-start mb-1.5 gap-2">
+            <div key={n.id} className="bg-white p-3.5 rounded-2xl shadow-sm border border-gray-50 hover:border-gray-100">
+              <div className="flex justify-between items-start mb-1 gap-2">
                 <span className="font-black text-sm text-gray-800 line-clamp-1">{n.title}</span>
                 <span 
                   onClick={() => n.recipients && setShowRecipients(n)}
