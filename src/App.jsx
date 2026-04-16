@@ -43,9 +43,21 @@ function App() {
   const { init, user } = useAuthStore();
   const { showModal, closeModal } = useNotificationPrompt(user);
 
-  const [notifDecided, setNotifDecided] = useState(() => 
-    localStorage.getItem('mipana_notifications_decided') === 'true'
-  );
+  const [notifDecided, setNotifDecided] = useState(() => {
+    if (localStorage.getItem('mipana_notifications_decided') === 'true') return true;
+    
+    // Retrocompatibilidad: Si el usuario ya había aceptado/denegado notificaciones 
+    // antes de que creáramos esta flag, marcamos como decidida automáticamente.
+    const hasLegacyDecision = 
+      (typeof Notification !== 'undefined' && Notification.permission !== 'default') || 
+      !!localStorage.getItem('notif_dismissed_at');
+      
+    if (hasLegacyDecision) {
+      localStorage.setItem('mipana_notifications_decided', 'true');
+      return true;
+    }
+    return false;
+  });
 
   useEffect(() => {
     const handler = () => setNotifDecided(true);
