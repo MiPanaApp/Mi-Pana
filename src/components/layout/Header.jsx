@@ -220,16 +220,12 @@ const Header = forwardRef((props, ref) => {
                             }`}
                             title={c.name}
                           >
-                            <div className="w-6 h-6 rounded-full overflow-hidden border-[0.5px] border-[#003366]/20 relative flex items-center justify-center">
-                              {c.flag ? (
-                                <span className="text-base leading-none">{c.flag}</span>
-                              ) : (
-                                <img 
-                                  src={`https://flagcdn.com/w80/${c.id.toLowerCase()}.png`} 
-                                  alt={c.id}
-                                  className="w-full h-full object-cover absolute inset-0" 
-                                />
-                              )}
+                            <div className="w-6 h-6 rounded-full overflow-hidden border-[0.5px] border-[#003366]/20 relative">
+                              <img 
+                                src={`https://flagcdn.com/w80/${c.id.toLowerCase()}.png`} 
+                                alt={c.id}
+                                className="w-full h-full object-cover absolute inset-0" 
+                              />
                             </div>
                           </button>
                         ))}
