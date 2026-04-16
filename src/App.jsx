@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/useAuthStore';
 import { useCategoryStore } from './store/useCategoryStore';
@@ -37,6 +37,16 @@ import CustomDialog from './components/ui/CustomDialog';
 function App() {
   const { init, user } = useAuthStore();
   const { showModal, closeModal } = useNotificationPrompt(user);
+
+  const [notifDecided, setNotifDecided] = useState(
+    localStorage.getItem('mipana_notifications_decided') === 'true'
+  );
+
+  useEffect(() => {
+    const handler = () => setNotifDecided(true);
+    window.addEventListener('notificationDecided', handler);
+    return () => window.removeEventListener('notificationDecided', handler);
+  }, []);
 
   // Inicializar el listener de Firebase Auth al arrancar la app
   useEffect(() => {
@@ -95,6 +105,7 @@ function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <NotificationPermissionModal isOpen={showModal} onClose={closeModal} />
+      {notifDecided && /* <CookieConsentModal /> */ null}
       <CustomDialog />
     </Router>
   );
