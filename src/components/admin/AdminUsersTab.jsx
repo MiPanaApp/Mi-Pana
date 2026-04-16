@@ -160,6 +160,12 @@ Esta acción borrará:
           <div key={u.id} className="flex flex-row items-center justify-between p-3 bg-gray-50 rounded-2xl border border-gray-100 gap-2 transition-all hover:bg-white hover:shadow-sm">
             <div className="flex items-center gap-3 overflow-hidden flex-1">
               <div className="w-10 h-10 bg-blue-100/50 rounded-full flex items-center justify-center shrink-0 overflow-hidden border border-blue-100">
+                {(u.avatar || u.photoURL) ? (
+                  <img src={u.avatar || u.photoURL} alt={u.name || u.displayName} className="w-full h-full object-cover"/>
+                ) : (
+                  <Users className="w-5 h-5 text-blue-500" />
+                )}
+              </div>
               <div className="flex flex-col min-w-0 flex-1">
                 <span className="font-bold text-sm text-gray-800 line-clamp-1">
                   {u.name || u.displayName || 'Sin nombre'} {u.lastName || ''}
