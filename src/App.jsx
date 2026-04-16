@@ -4,8 +4,12 @@ import { useAuthStore } from './store/useAuthStore';
 import { useCategoryStore } from './store/useCategoryStore';
 import { useLocationStore } from './store/useLocationStore';
 import NotificationPermissionModal from './components/ui/NotificationPermissionModal';
+import CookieConsentBanner from './components/CookieConsentBanner';
+import CookieSettingsButton from './components/CookieSettingsButton';
 import { useNotificationPrompt } from './hooks/useNotificationPrompt';
 import { usePushNotifications } from './hooks/usePushNotifications';
+import { applyAllConsents } from './services/analyticsConsent';
+import { Capacitor } from '@capacitor/core';
 
 import ScrollToTop from './components/ScrollToTop';
 import SplashScreen from './components/ui/SplashScreen';
@@ -50,6 +54,18 @@ function App() {
 
   // Inicializar el listener de Firebase Auth al arrancar la app
   useEffect(() => {
+    // Aplicar consentimientos guardados o los default (denied)
+    try {
+      const saved = localStorage.getItem('mipana_cookie_consent');
+      if (saved) {
+        applyAllConsents(JSON.parse(saved));
+      } else {
+        applyAllConsents({ analytics: false, googleAnalytics: false });
+      }
+    } catch (err) {
+      console.warn("Cookie consent apply error:", err);
+    }
+
     const unsubAuth = init();
     const unsubCats = useCategoryStore.getState().init();
     const unsubLocations = useLocationStore.getState().init();
@@ -105,7 +121,8 @@ function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <NotificationPermissionModal isOpen={showModal} onClose={closeModal} />
-      {notifDecided && /* <CookieConsentModal /> */ null}
+      {notifDecided && !Capacitor.isNativePlatform() && <CookieConsentBanner />}
+      <CookieSettingsButton />
       <CustomDialog />
     </Router>
   );
