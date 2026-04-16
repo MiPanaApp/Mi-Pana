@@ -16,7 +16,8 @@ export default function Onboarding() {
   
   const navigate = useNavigate();
   const { setCountry, setFilters, setHasChosenCountry } = useStore();
-  const { countries, init, loading } = useLocationStore();
+  const { getActiveCountries, init, loading } = useLocationStore();
+  const countries = getActiveCountries();
   
   useEffect(() => {
     const unsub = init();
@@ -24,11 +25,6 @@ export default function Onboarding() {
   }, [init]);
 
   const handleSelectCountry = (country) => {
-    if (country.status === 'suspended') {
-      setSuspendedCountry(country);
-      setIsCountryOpen(false);
-      return;
-    }
     setLocalCountry(country.id);
     setIsCountryOpen(false);
   };
@@ -84,7 +80,7 @@ export default function Onboarding() {
   }
 
   const activeCountryInfo = countries.find(c => c.id === localCountry);
-  const visibleCountries = countries.filter(c => c.status !== 'hidden');
+  const visibleCountries = countries;
 
   return (
     <div 

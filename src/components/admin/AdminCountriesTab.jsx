@@ -141,6 +141,19 @@ export default function AdminCountriesTab() {
     }
   };
 
+  const toggleSuspend = async (country) => {
+    const newStatus = country.status === 'suspended' ? 'active' : 'suspended';
+    try {
+      await updateDoc(doc(db, 'countries', country.id), {
+        status: newStatus,
+        updatedAt: serverTimestamp()
+      });
+    } catch (err) {
+      console.error(err);
+      alert('Error al cambiar estado del país');
+    }
+  };
+
   const handleSeed = async () => {
     const INITIAL_COUNTRIES = [
       { id: 'ES', name: 'España', flag: '🇪🇸', status: 'active', config: { level1: 'Comunidad Autónoma', level2: 'Ciudad' }, quote: 'El arroz con pollo es mejor que la paella 😂🤣' },
@@ -223,10 +236,12 @@ export default function AdminCountriesTab() {
                 <div className="space-y-3">
                   <div className="flex justify-between items-start gap-2">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <span className="text-2xl shrink-0">{c.flag}</span>
+                      <span className={`text-2xl shrink-0 transition-opacity ${c.status === 'suspended' ? 'opacity-30' : 'opacity-100'}`}>
+                        {c.flag}
+                      </span>
                       <div className="flex flex-col min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h4 className="font-black text-gray-800 text-sm md:text-base truncate">
+                          <h4 className={`font-black text-sm md:text-base truncate transition-opacity ${c.status === 'suspended' ? 'opacity-30' : 'opacity-100'}`}>
                             {c.name}
                           </h4>
                           <div className={`px-1.5 py-0.5 border rounded-md text-[8px] font-black uppercase shrink-0 ${STATUS_COLORS[c.status]}`}>
@@ -244,6 +259,17 @@ export default function AdminCountriesTab() {
                         title="Editar"
                       >
                         <Edit2 size={14} />
+                      </button>
+                      <button
+                        onClick={() => toggleSuspend(c)}
+                        title={c.status === 'suspended' ? 'Activar país' : 'Suspender país'}
+                        className={`p-1.5 rounded-lg transition-colors ${
+                          c.status === 'suspended'
+                            ? 'bg-orange-50 text-orange-500 hover:bg-orange-100'
+                            : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
+                        }`}
+                      >
+                        {c.status === 'suspended' ? <EyeOff size={14} /> : <Eye size={14} />}
                       </button>
                       <button 
                         onClick={() => setCountryToDelete(c)} 

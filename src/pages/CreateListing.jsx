@@ -9,6 +9,7 @@ import { db, storage } from '../services/firebase';
 import { collection, getDoc, getDocs, doc, serverTimestamp, query, orderBy, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { useLocationStore } from '../store/useLocationStore';
 
 import { ChevronDown, Tag } from 'lucide-react';
 import { getCategoryIcon, getBrandColor, sortCategories } from '../data/categories';
@@ -68,7 +69,13 @@ export default function CreateListing() {
   const suggestionsRef = useRef(null);
 
 
-  const [selectedPrefix, setSelectedPrefix] = useState(COUNTRY_CODES[0]);
+  const { getActiveCountries } = useLocationStore();
+  const activeCountries = getActiveCountries();
+  const activeCountryCodes = COUNTRY_CODES.filter(c => 
+    activeCountries.some(ac => ac.id === c.iso)
+  );
+
+  const [selectedPrefix, setSelectedPrefix] = useState(activeCountryCodes[0] || COUNTRY_CODES[0]);
   const [isPrefixOpen, setIsPrefixOpen] = useState(false);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -198,7 +205,7 @@ export default function CreateListing() {
           if (userData.country) {
             // "🇪🇸 España" -> match "España"
             const countryName = userData.country.split(' ').slice(1).join(' ');
-            const matchedPrefix = COUNTRY_CODES.find(c => c.name === countryName);
+            const matchedPrefix = activeCountryCodes.find(c => c.name === countryName);
             if (matchedPrefix) setSelectedPrefix(matchedPrefix);
           }
         }
@@ -227,7 +234,7 @@ export default function CreateListing() {
               keywords: data.keywords ? data.keywords.join(', ') : '',
             });
             if (data.whatsapp) {
-              const matchedPrefix = COUNTRY_CODES.find(c => data.whatsapp.startsWith(c.code));
+              const matchedPrefix = activeCountryCodes.find(c => data.whatsapp.startsWith(c.code));
               if (matchedPrefix) {
                 setSelectedPrefix(matchedPrefix);
                 setForm(prev => ({ ...prev, whatsapp: data.whatsapp.slice(matchedPrefix.code.length) }));
@@ -1195,7 +1202,7 @@ export default function CreateListing() {
                       className="absolute left-0 bottom-full z-[70] w-64 bg-[#E0E5EC] rounded-2xl shadow-[8px_8px_16px_rgba(0,0,0,0.1)] border border-white/40 overflow-hidden mb-1 p-2"
                     >
                       <div className="max-h-60 overflow-y-auto custom-scrollbar flex flex-col gap-1">
-                        {COUNTRY_CODES.map((item) => (
+                        {activeCountryCodes.map((item) => (
                           <button
                             key={item.name + item.code}
                             type="button"

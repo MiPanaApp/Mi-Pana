@@ -73,7 +73,8 @@ const Header = forwardRef((props, ref) => {
   const [userName, setUserName] = useState('');
   
   const { categories } = useCategoryStore();
-  const { countries } = useLocationStore();
+  const { getActiveCountries, isSuspended } = useLocationStore();
+  const activeCountries = getActiveCountries();
 
   const dbCategories = useMemo(() => [
     { id: 'Todas', name: 'Todas', iconComponent: FiPlusCircle },
@@ -89,6 +90,13 @@ const Header = forwardRef((props, ref) => {
 
 
   const isGoogleLogin = user?.providerData?.some(provider => provider.providerId === 'google.com');
+
+  useEffect(() => {
+    if (isSuspended(selectedCountry) && activeCountries.length > 0) {
+      const firstActive = activeCountries[0];
+      handleCountryChange(firstActive.id, firstActive.capital || CAPITALS[firstActive.id] || '');
+    }
+  }, [selectedCountry, activeCountries, isSuspended]);
 
   useEffect(() => {
     if (userData?.name) {
@@ -219,9 +227,7 @@ const Header = forwardRef((props, ref) => {
                         exit={{ opacity: 0, y: 5, scale: 0.95 }}
                         className="absolute top-full left-0 mt-4 bg-[#E0E5EC] rounded-3xl shadow-[8px_8px_16px_rgba(163,177,198,0.7),-8px_-8px_16px_rgba(255,255,255,0.9)] border-[0.5px] border-white/60 p-2.5 z-[1001] flex flex-col gap-3 max-h-[300px] overflow-y-auto custom-scrollbar"
                       >
-                        {countries
-                          .filter(c => c.status === 'active')
-                          .map((c) => (
+                        {activeCountries.map((c) => (
                           <button
                             key={c.id}
                             onClick={() => handleCountryChange(c.id, c.capital || CAPITALS[c.id] || '')}

@@ -7,6 +7,7 @@ import FilterPanel from '../components/ui/FilterPanel';
 import SkeletonGrid from '../components/ui/SkeletonGrid';
 import NotificationModal from '../components/ui/NotificationModal';
 import { useStore } from '../store/useStore';
+import { useLocationStore } from '../store/useLocationStore';
 import { collection, getDocs, query, doc, updateDoc, increment, orderBy, limit, startAfter } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { normalizeText } from '../utils/textUtils';
@@ -44,6 +45,7 @@ export default function Home() {
     userLocation,
     setUserLocation
   } = useStore();
+  const { countries } = useLocationStore();
   const sortRef = useRef(null);
   const { categoryId } = useParams();
 
@@ -176,12 +178,15 @@ export default function Home() {
     // REGLAS DE NEGOCIO (Guardadas para futura edición):
     // 1. Filtrar por país seleccionado por defecto si no hay filtro manual de ubicación.
     // 2. Orden default (relevance): Priorizar Capital del país, luego más recientes.
+    const suspendedCountryIds = countries
+      .filter(c => c.status === 'suspended')
+      .map(c => c.id);
 
     // Filtro estricto por país seleccionado
     // Cada producto DEBE tener location.country con el código ISO (ES, CO, US, etc.)
     result = result.filter(p => {
       const productCountry = p.location?.country || p.country || '';
-      return productCountry === selectedCountry;
+      return productCountry === selectedCountry && !suspendedCountryIds.includes(productCountry);
     });
 
     // Filtros de Ubicación Estrictos

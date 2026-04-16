@@ -39,5 +39,16 @@ export const useLocationStore = create((set, get) => ({
   getCountryStatus: (isoCode) => {
     const country = get().countries.find(c => c.id === isoCode);
     return country?.status || 'hidden';
+  },
+
+  // Obtener solo países activos (excluye suspended y hidden)
+  getActiveCountries: () => {
+    return get().countries.filter(c => c.status === 'active');
+  },
+
+  // Verificar si un país está suspendido
+  isSuspended: (isoCode) => {
+    const country = get().countries.find(c => c.id === isoCode);
+    return country?.status === 'suspended';
   }
 }));
