@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { collection, query, getDocs, addDoc, updateDoc, doc, serverTimestamp, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '../../services/firebase';
-import { CalendarClock, Plus, Pencil, Trash2, Clock, Users, ArrowLeft, Send, ExternalLink } from 'lucide-react';
+import { CalendarClock, Plus, Pencil, Trash2, Clock, Users, ArrowLeft, Send, ExternalLink, ChevronDown } from 'lucide-react';
 
 const PRELOAD_TEMPLATES = [
   {
@@ -226,15 +226,18 @@ export default function AdminScheduledNotifsTab() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
               <label className="block text-xs font-extrabold text-gray-500 uppercase tracking-wide mb-1.5 ml-1">Evento (Trigger)</label>
-              <select
-                value={formData.trigger}
-                onChange={e => setFormData({ ...formData, trigger: e.target.value })}
-                className="w-full bg-[#F4F7FE] border-none text-gray-700 p-4 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-[#FFD700]/50 appearance-none"
-              >
-                {Object.entries(TRIGGERS).map(([val, label]) => (
-                  <option key={val} value={val}>{label}</option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  value={formData.trigger}
+                  onChange={e => setFormData({ ...formData, trigger: e.target.value })}
+                  className="w-full bg-[#F4F7FE] border-none text-gray-700 p-4 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-[#FFD700]/50 appearance-none transition-all cursor-pointer hover:bg-[#EEF2FD]"
+                >
+                  {Object.entries(TRIGGERS).map(([val, label]) => (
+                    <option key={val} value={val}>{label}</option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none group-focus-within:rotate-180 transition-transform" />
+              </div>
             </div>
             <div>
               <label className="block text-xs font-extrabold text-gray-500 uppercase tracking-wide mb-1.5 ml-1">Tiempo de espera (Horas)</label>
@@ -256,29 +259,40 @@ export default function AdminScheduledNotifsTab() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
               <label className="block text-xs font-extrabold text-gray-500 uppercase tracking-wide mb-1.5 ml-1">Segmento</label>
-              <select
-                value={formData.targetSegment}
-                onChange={e => setFormData({ ...formData, targetSegment: e.target.value })}
-                className="w-full bg-[#F4F7FE] border-none text-gray-700 p-4 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-[#FFD700]/50 appearance-none"
-              >
-                <option value="sellers">Vendedores</option>
-                <option value="buyers">Compradores</option>
-                <option value="all">Todos</option>
-              </select>
+              <div className="relative">
+                <select
+                  value={formData.targetSegment}
+                  onChange={e => setFormData({ ...formData, targetSegment: e.target.value })}
+                  className="w-full bg-[#F4F7FE] border-none text-gray-700 p-4 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-[#FFD700]/50 appearance-none transition-all cursor-pointer hover:bg-[#EEF2FD]"
+                >
+                  <option value="sellers">Vendedores</option>
+                  <option value="buyers">Compradores</option>
+                  <option value="all">Todos</option>
+                </select>
+                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+              </div>
             </div>
             <div>
               <label className="block text-xs font-extrabold text-gray-500 uppercase tracking-wide mb-1.5 ml-1">País</label>
-              <select
-                value={formData.targetCountry}
-                onChange={e => setFormData({ ...formData, targetCountry: e.target.value })}
-                className="w-full bg-[#F4F7FE] border-none text-gray-700 p-4 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-[#FFD700]/50 appearance-none"
-              >
-                <option value="all">Todos los países</option>
-                <option value="España">España</option>
-                <option value="US">USA</option>
-                <option value="Colombia">Colombia</option>
-                <option value="Chile">Chile</option>
-              </select>
+              <div className="relative">
+                <select
+                  value={formData.targetCountry}
+                  onChange={e => setFormData({ ...formData, targetCountry: e.target.value })}
+                  className="w-full bg-[#F4F7FE] border-none text-gray-700 p-4 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-[#FFD700]/50 appearance-none transition-all cursor-pointer hover:bg-[#EEF2FD]"
+                >
+                  <option value="all">Todos los países</option>
+                  <option value="España">España 🇪🇸</option>
+                  <option value="US">Estados Unidos 🇺🇸</option>
+                  <option value="Colombia">Colombia 🇨🇴</option>
+                  <option value="Ecuador">Ecuador 🇪🇨</option>
+                  <option value="Panamá">Panamá 🇵🇦</option>
+                  <option value="Perú">Perú 🇵🇪</option>
+                  <option value="DO">República Dominicana 🇩🇴</option>
+                  <option value="Chile">Chile 🇨🇱</option>
+                  <option value="Argentina">Argentina 🇦🇷</option>
+                </select>
+                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+              </div>
             </div>
           </div>
           
