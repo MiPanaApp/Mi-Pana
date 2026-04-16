@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { collection, query, getDocs, addDoc, updateDoc, doc, serverTimestamp, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '../../services/firebase';
 import { CalendarClock, Plus, Pencil, Trash2, Clock, Users, ArrowLeft, Send, ExternalLink, ChevronDown } from 'lucide-react';
@@ -55,6 +56,81 @@ const TRIGGERS = {
   product_expiring: "Anuncio próximo a expirar",
   user_inactive: "Usuario inactivo",
   incomplete_profile: "Perfil incompleto"
+};
+
+const CustomSelect = ({ label, value, options, onChange, icon: Icon }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find(opt => opt.value === value) || options[0];
+
+  return (
+    <div className="flex flex-col gap-1.5" ref={dropdownRef}>
+      {label && (
+        <label className="block text-xs font-extrabold text-gray-400 uppercase tracking-wide ml-1">
+          {label}
+        </label>
+      )}
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className={`w-full bg-[#F4F7FE] border-2 transition-all duration-200 px-4 py-3.5 rounded-2xl text-sm font-bold flex items-center justify-between outline-none ${
+            isOpen ? 'border-[#FFD700] bg-white shadow-lg' : 'border-transparent text-gray-700 hover:bg-[#EEF2FD]'
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            {Icon && <Icon className={`w-4 h-4 ${isOpen ? 'text-[#FFD700]' : 'text-gray-400'}`} />}
+            <span>{selectedOption.label}</span>
+          </div>
+          <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+        </button>
+
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="absolute z-[100] mt-2 w-full bg-white border border-gray-100 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] overflow-hidden backdrop-blur-xl"
+            >
+              <div className="max-h-60 overflow-y-auto py-2 custom-scrollbar">
+                {options.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => {
+                      onChange(option.value);
+                      setIsOpen(false);
+                    }}
+                    className={`w-full px-5 py-3 text-left text-sm font-bold flex items-center justify-between transition-colors ${
+                      value === option.value 
+                        ? 'bg-[#FFD700]/10 text-[#FFD700]' 
+                        : 'text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    {option.label}
+                    {value === option.value && <div className="w-1.5 h-1.5 bg-[#FFD700] rounded-full shadow-[0_0_8px_#FFD700]" />}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
 };
 
 export default function AdminScheduledNotifsTab() {
@@ -224,21 +300,13 @@ export default function AdminScheduledNotifsTab() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div>
-              <label className="block text-xs font-extrabold text-gray-500 uppercase tracking-wide mb-1.5 ml-1">Evento (Trigger)</label>
-              <div className="relative">
-                <select
-                  value={formData.trigger}
-                  onChange={e => setFormData({ ...formData, trigger: e.target.value })}
-                  className="w-full bg-[#F4F7FE] border-none text-gray-700 p-4 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-[#FFD700]/50 appearance-none transition-all cursor-pointer hover:bg-[#EEF2FD]"
-                >
-                  {Object.entries(TRIGGERS).map(([val, label]) => (
-                    <option key={val} value={val}>{label}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none group-focus-within:rotate-180 transition-transform" />
-              </div>
-            </div>
+            <CustomSelect
+              label="Evento (Trigger)"
+              value={formData.trigger}
+              options={Object.entries(TRIGGERS).map(([value, label]) => ({ value, label }))}
+              onChange={(val) => setFormData({ ...formData, trigger: val })}
+              icon={Send}
+            />
             <div>
               <label className="block text-xs font-extrabold text-gray-500 uppercase tracking-wide mb-1.5 ml-1">Tiempo de espera (Horas)</label>
               <div className="relative">
@@ -257,43 +325,34 @@ export default function AdminScheduledNotifsTab() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div>
-              <label className="block text-xs font-extrabold text-gray-500 uppercase tracking-wide mb-1.5 ml-1">Segmento</label>
-              <div className="relative">
-                <select
-                  value={formData.targetSegment}
-                  onChange={e => setFormData({ ...formData, targetSegment: e.target.value })}
-                  className="w-full bg-[#F4F7FE] border-none text-gray-700 p-4 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-[#FFD700]/50 appearance-none transition-all cursor-pointer hover:bg-[#EEF2FD]"
-                >
-                  <option value="sellers">Vendedores</option>
-                  <option value="buyers">Compradores</option>
-                  <option value="all">Todos</option>
-                </select>
-                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-extrabold text-gray-500 uppercase tracking-wide mb-1.5 ml-1">País</label>
-              <div className="relative">
-                <select
-                  value={formData.targetCountry}
-                  onChange={e => setFormData({ ...formData, targetCountry: e.target.value })}
-                  className="w-full bg-[#F4F7FE] border-none text-gray-700 p-4 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-[#FFD700]/50 appearance-none transition-all cursor-pointer hover:bg-[#EEF2FD]"
-                >
-                  <option value="all">Todos los países</option>
-                  <option value="España">España 🇪🇸</option>
-                  <option value="US">Estados Unidos 🇺🇸</option>
-                  <option value="Colombia">Colombia 🇨🇴</option>
-                  <option value="Ecuador">Ecuador 🇪🇨</option>
-                  <option value="Panamá">Panamá 🇵🇦</option>
-                  <option value="Perú">Perú 🇵🇪</option>
-                  <option value="DO">República Dominicana 🇩🇴</option>
-                  <option value="Chile">Chile 🇨🇱</option>
-                  <option value="Argentina">Argentina 🇦🇷</option>
-                </select>
-                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-              </div>
-            </div>
+            <CustomSelect
+              label="Segmento"
+              value={formData.targetSegment}
+              options={[
+                { value: 'sellers', label: 'Vendedores' },
+                { value: 'buyers', label: 'Compradores' },
+                { value: 'all', label: 'Todos' }
+              ]}
+              onChange={(val) => setFormData({ ...formData, targetSegment: val })}
+              icon={Users}
+            />
+            <CustomSelect
+              label="País"
+              value={formData.targetCountry}
+              options={[
+                { value: 'all', label: 'Todos los países' },
+                { value: 'España', label: 'España 🇪🇸' },
+                { value: 'US', label: 'Estados Unidos 🇺🇸' },
+                { value: 'Colombia', label: 'Colombia 🇨🇴' },
+                { value: 'Ecuador', label: 'Ecuador 🇪🇨' },
+                { value: 'Panamá', label: 'Panamá 🇵🇦' },
+                { value: 'Perú', label: 'Perú 🇵🇪' },
+                { value: 'DO', label: 'República Dominicana 🇩🇴' },
+                { value: 'Chile', label: 'Chile 🇨🇱' },
+                { value: 'Argentina', label: 'Argentina 🇦🇷' }
+              ]}
+              onChange={(val) => setFormData({ ...formData, targetCountry: val })}
+            />
           </div>
           
           <div>
