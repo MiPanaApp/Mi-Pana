@@ -91,7 +91,7 @@ function App() {
   }, [init]);
 
   return (
-    <Router>
+    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <ScrollToTop />
       <Routes>
         {/* Main Auth Flow */}

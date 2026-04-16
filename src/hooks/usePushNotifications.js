@@ -31,6 +31,11 @@ export function usePushNotifications() {
       // Esto evita AbortError: "Subscription failed - no active Service Worker"
       await navigator.serviceWorker.register('/firebase-messaging-sw.js')
       const registration = await navigator.serviceWorker.ready
+      
+      if (!registration || !registration.pushManager) {
+        console.warn('[PushNotifications] Browser does not support pushManager');
+        return null;
+      }
 
       const messaging = getMessaging()
       

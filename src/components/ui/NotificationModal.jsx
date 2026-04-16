@@ -14,7 +14,11 @@ export default function NotificationModal({
 
   useEffect(() => {
     if (isOpen) {
-      playPopSound();
+      try {
+        playPopSound();
+      } catch (err) {
+        // Ignorar error de AudioContext si no hay gesto del usuario
+      }
     }
   }, [isOpen]);
 
