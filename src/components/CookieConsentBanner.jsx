@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, BarChart2, Lock, TrendingUp, SlidersHorizontal, Check, ExternalLink, Save } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { useCookieConsent } from '../hooks/useCookieConsent';
+import { LegalData } from '../data/LegalData';
+import LegalDrawer from './LegalDrawer';
 
 export default function CookieConsentBanner() {
   const { consent, hasDecided, updateConsent } = useCookieConsent();
@@ -12,6 +14,7 @@ export default function CookieConsentBanner() {
     analytics: consent?.analytics ?? false,
     googleAnalytics: consent?.googleAnalytics ?? false
   });
+  const [legalDocs, setLegalDocs] = useState({ isOpen: false, title: '', content: '' });
 
   const [notificationDecided, setNotificationDecided] = useState(
     localStorage.getItem('mipana_notifications_decided') === 'true'
@@ -49,7 +52,16 @@ export default function CookieConsentBanner() {
     updateConsent(prefs);
   };
 
+  const openLegal = (e, key) => {
+    e.preventDefault();
+    const doc = LegalData[key];
+    if (doc) {
+      setLegalDocs({ isOpen: true, title: doc.title, content: doc.content });
+    }
+  };
+
   return (
+    <>
     <motion.div
       initial={{ y: '100%', opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
@@ -158,7 +170,7 @@ export default function CookieConsentBanner() {
             {/* Legal Footer */}
             <div className="text-[10px] text-[#1A1A3A]/40 text-center mt-3 leading-relaxed">
               Responsable: Mi Pana (mipana.net) · RGPD (UE) 2016/679 · LSSI-CE · Puedes retirar tu consentimiento en cualquier momento desde el botón de ajuste en la esquina inferior izquierda. Transferencias internacionales bajo Cláusulas Contractuales Tipo UE.<br />
-              <a href="#" className="underline hover:text-[#1A1A3A]/60">Política de Privacidad</a> y <a href="#" className="underline hover:text-[#1A1A3A]/60">Política de Cookies</a>.
+              <button type="button" onClick={(e) => openLegal(e, 'privacy')} className="underline hover:text-[#1A1A3A]/60">Política de Privacidad</button> y <button type="button" onClick={(e) => openLegal(e, 'cookies')} className="underline hover:text-[#1A1A3A]/60">Política de Cookies</button>.
             </div>
           </motion.div>
         )}
@@ -189,5 +201,13 @@ export default function CookieConsentBanner() {
         </div>
       )}
     </motion.div>
+
+    <LegalDrawer 
+      isOpen={legalDocs.isOpen} 
+      onClose={() => setLegalDocs({ ...legalDocs, isOpen: false })} 
+      title={legalDocs.title} 
+      content={legalDocs.content} 
+    />
+    </>
   );
 }
