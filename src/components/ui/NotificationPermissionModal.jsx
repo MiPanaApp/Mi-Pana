@@ -82,9 +82,9 @@ export default function NotificationPermissionModal({
             {/* Botón principal */}
             <button
               onClick={handleActivate}
-              className="w-full h-14 rounded-2xl bg-[#1A1A3A] text-white font-black text-base shadow-[5px_5px_14px_rgba(20,20,60,0.35),-2px_-2px_8px_rgba(80,80,160,0.15)] active:scale-95 transition-transform mb-3 flex items-center justify-center"
+              className="w-full h-14 rounded-2xl bg-[#1A1A3A] text-white font-black text-base shadow-[5px_5px_14px_rgba(20,20,60,0.35),-2px_-2px_8px_rgba(80,80,160,0.15)] active:scale-95 transition-transform mb-3 flex items-center justify-center gap-2"
             >
-              Sí, activar 🔔
+              Sí, activar <Bell size={18} className="text-white" />
             </button>
 
             {/* Ahora no */}

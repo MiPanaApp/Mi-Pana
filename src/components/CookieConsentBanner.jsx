@@ -51,11 +51,11 @@ export default function CookieConsentBanner() {
 
   return (
     <motion.div
-      initial={{ y: 200 }}
-      animate={{ y: 0 }}
-      exit={{ y: 200 }}
+      initial={{ y: '100%', opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      exit={{ y: '100%', opacity: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="fixed bottom-0 left-0 right-0 z-[9998] w-full md:max-w-lg mx-auto md:mb-4 bg-[#E8E8F0] shadow-[0_-8px_40px_rgba(0,0,0,0.12)] rounded-t-[2rem] md:rounded-[2rem] p-6 pb-8 md:pb-6"
+      className="fixed bottom-0 left-0 right-0 md:left-1/2 md:-translate-x-1/2 md:bottom-4 md:max-w-lg md:w-full bg-[#E8E8F0] z-[9998] p-6 rounded-t-[2rem] md:rounded-[2rem] shadow-[0_-8px_40px_rgba(0,0,0,0.12)]"
     >
       <div className="flex items-start gap-3 mb-6">
         <Shield size={20} className="text-[#1A1A3A]/60 flex-shrink-0 mt-0.5" />
