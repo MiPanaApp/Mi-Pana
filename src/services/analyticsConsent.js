@@ -13,7 +13,10 @@ export function applyAllConsents(consentObj) {
   // 2. Google Consent Mode v2
   if (typeof window.gtag === 'function') {
     window.gtag('consent', 'update', {
-      analytics_storage: consentObj.googleAnalytics ? 'granted' : 'denied'
+      analytics_storage: consentObj.googleAnalytics ? 'granted' : 'denied',
+      ad_storage: consentObj.googleAnalytics ? 'granted' : 'denied',
+      ad_user_data: consentObj.googleAnalytics ? 'granted' : 'denied',
+      ad_personalization: consentObj.googleAnalytics ? 'granted' : 'denied'
     });
   }
 
