@@ -81,9 +81,9 @@ export default function AdminNotificationsTab() {
   };
 
   return (
-    <div className="bg-white p-6 md:p-8 rounded-[2.5rem] shadow-sm border border-gray-50 flex flex-col xl:flex-row gap-8 min-h-[500px]">
+    <div className="bg-white px-3 py-6 md:p-8 rounded-[2.5rem] shadow-sm border border-gray-50 flex flex-col xl:flex-row gap-6 min-h-[500px]">
       {/* Formulario de Envío */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col px-1 md:px-0">
         <div className="mb-6">
           <h2 className="text-2xl font-black text-gray-800 flex items-center gap-2">
             <Bell className="w-6 h-6 text-[#FFD700]" /> Notificaciones Push
@@ -193,7 +193,7 @@ export default function AdminNotificationsTab() {
       </div>
 
       {/* Historial Compactado */}
-      <div className="flex-1 bg-[#F4F7FE] p-6 lg:p-8 rounded-[2rem] border border-gray-100 flex flex-col h-[550px] xl:h-auto overflow-hidden relative">
+      <div className="flex-1 bg-[#F4F7FE] px-3 py-6 lg:p-8 rounded-[2rem] border border-gray-100 flex flex-col h-[550px] xl:h-auto overflow-hidden relative">
         <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-[#F4F7FE] to-transparent pointer-events-none z-10 opacity-50"></div>
         
         <h3 className="text-base font-black text-gray-800 mb-4 flex items-center justify-between relative z-20">
