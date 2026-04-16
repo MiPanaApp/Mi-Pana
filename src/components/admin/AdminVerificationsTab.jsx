@@ -163,18 +163,18 @@ export default function AdminVerificationsTab() {
           </div>
           
           {/* Filtros */}
-          <div className="flex bg-gray-50 p-1.5 rounded-xl border border-gray-100 flex-shrink-0">
+          <div className="flex bg-gray-50 p-1.5 rounded-xl border border-gray-100 overflow-x-auto custom-scrollbar no-scrollbar flex-shrink-0">
             <button 
               onClick={() => setFilter('pending')} 
-              className={`px-4 py-2 text-xs font-bold rounded-lg transition-colors ${filter === 'pending' ? 'bg-white text-[#B8860B] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+              className={`px-4 py-2 text-xs font-bold rounded-lg transition-colors whitespace-nowrap ${filter === 'pending' ? 'bg-white text-[#B8860B] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
             >Pendientes</button>
             <button 
               onClick={() => setFilter('approved')} 
-              className={`px-4 py-2 text-xs font-bold rounded-lg transition-colors ${filter === 'approved' ? 'bg-white text-[#00C97A] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+              className={`px-4 py-2 text-xs font-bold rounded-lg transition-colors whitespace-nowrap ${filter === 'approved' ? 'bg-white text-[#00C97A] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
             >Aprobados</button>
             <button 
               onClick={() => setFilter('rejected')} 
-              className={`px-4 py-2 text-xs font-bold rounded-lg transition-colors ${filter === 'rejected' ? 'bg-white text-[#D90429] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+              className={`px-4 py-2 text-xs font-bold rounded-lg transition-colors whitespace-nowrap ${filter === 'rejected' ? 'bg-white text-[#D90429] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
             >Rechazados</button>
           </div>
         </div>
@@ -188,26 +188,49 @@ export default function AdminVerificationsTab() {
             verifications.map((v) => (
               <div 
                 key={v.id} 
-                className="bg-[#EDEDF5] rounded-2xl p-4 shadow-[4px_4px_10px_rgba(180,180,210,0.5),-4px_-4px_10px_rgba(255,255,255,0.8)] flex items-center gap-4 cursor-pointer hover:scale-[1.01] transition-transform"
+                className="bg-white rounded-2xl p-4 border border-gray-50 shadow-sm flex items-start sm:items-center gap-4 cursor-pointer hover:border-[#FFD700]/30 transition-all active:scale-[0.98]"
                 onClick={() => setSelected(v)}
               >
-                <img src={v.selfieUrl} className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-sm shrink-0" alt="Selfie" />
-                <div className="flex-1 min-w-0">
-                  <p className="font-black text-[#1A1A3A] text-sm truncate">{v.user?.name || 'Usuario desconocido'}</p>
-                  <p className="text-[12px] font-bold text-[#1A1A3A]/50">
-                    {v.documentType?.toUpperCase()} · Score Liveness: {v.livenessScore}/100
-                  </p>
-                  <p className="text-[11px] font-bold text-[#1A1A3A]/40 mt-0.5">
-                    {formatDate(v.submittedAt)}
-                  </p>
+                {/* Avatar Section */}
+                <div className="relative shrink-0">
+                  <img 
+                    src={v.selfieUrl} 
+                    className="w-14 h-14 rounded-2xl object-cover shadow-sm bg-gray-100" 
+                    alt="Selfie" 
+                  />
+                  <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
+                    v.status === 'pending' ? 'bg-[#FFB400]' : 
+                    v.status === 'approved' ? 'bg-[#00C97A]' : 'bg-[#D90429]'
+                  }`} />
                 </div>
-                <span className={`text-[11px] font-black px-3 py-1.5 rounded-xl shrink-0 ${
-                  v.status === 'pending' ? 'bg-[#FFB400]/20 text-[#B8860B]' : 
-                  v.status === 'approved' ? 'bg-[#00C97A]/20 text-[#00C97A]' : 
-                  'bg-[#D90429]/20 text-[#D90429]'
-                }`}>
-                  {v.status === 'pending' ? 'Pendiente' : v.status === 'approved' ? 'Aprobado' : 'Rechazado'}
-                </span>
+
+                {/* Info Section */}
+                <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="min-w-0 pr-2">
+                    <p className="font-black text-[#1A1A3A] text-sm truncate pr-4">
+                      {v.user?.name || 'Usuario desconocido'}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5">
+                      <span className="text-[10px] font-black text-[#1A1A3A]/40 uppercase tracking-tight bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">
+                        {v.documentType?.toUpperCase()}
+                      </span>
+                      <span className="text-[11px] font-bold text-gray-400">
+                        Score: {v.livenessScore}%
+                      </span>
+                    </div>
+                    <p className="text-[10px] font-black text-gray-300 mt-1 uppercase">
+                      {formatDate(v.submittedAt)}
+                    </p>
+                  </div>
+
+                  <span className={`text-[9px] font-black uppercase px-3 py-1.5 rounded-xl border self-start sm:self-center shrink-0 tracking-wider ${
+                    v.status === 'pending' ? 'bg-amber-50 text-amber-600 border-amber-100' : 
+                    v.status === 'approved' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 
+                    'bg-red-50 text-red-600 border-red-100'
+                  }`}>
+                    {v.status === 'pending' ? 'Pendiente' : v.status === 'approved' ? 'Aprobado' : 'Rechazado'}
+                  </span>
+                </div>
               </div>
             ))
           )}
