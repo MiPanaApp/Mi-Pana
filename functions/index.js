@@ -5,12 +5,38 @@ const { defineSecret } = require("firebase-functions/params");
 const RESEND_API_KEY = defineSecret("RESEND_API_KEY");
 
 const { initializeApp, getApps } = require("firebase-admin/app");
-const { getFirestore } = require("firebase-admin/firestore");
+const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 const { getMessaging } = require("firebase-admin/messaging");
 
 if (getApps().length === 0) initializeApp();
 const getDb = () => getFirestore();
 const getTemplates = () => require("./emailTemplates");
+
+/**
+ * Limpia tokens FCM inválidos o expirados de Firestore después de un envío masivo.
+ * @param {string} userId - UID del usuario en Firestore
+ * @param {string[]} tokens - Array de tokens que se intentaron enviar
+ * @param {object[]} responses - Array de respuestas de sendEachForMulticast
+ */
+async function cleanupInvalidTokens(userId, tokens, responses) {
+  const INVALID_CODES = [
+    'messaging/invalid-registration-token',
+    'messaging/registration-token-not-registered',
+    'messaging/invalid-argument',
+  ]
+  const tokensToRemove = []
+  responses.forEach((resp, i) => {
+    if (!resp.success && resp.error && INVALID_CODES.includes(resp.error.code)) {
+      tokensToRemove.push(tokens[i])
+    }
+  })
+  if (tokensToRemove.length > 0) {
+    console.log(`[TokenCleanup] userId=${userId} — eliminando ${tokensToRemove.length} token(s) inválido(s).`)
+    await getDb().collection('users').doc(userId).update({
+      fcmTokens: FieldValue.arrayRemove(...tokensToRemove)
+    }).catch(err => console.error('[TokenCleanup] Error limpiando tokens:', err.message))
+  }
+}
 
 // --- 1. FUNCIÓN DE CONTACTO ---
 exports.sendContactEmail = onRequest({
@@ -118,7 +144,7 @@ exports.checkPendingReviews = onSchedule(
       if (!tokens.length) continue
 
       const messaging = getMessaging()
-      await messaging.sendEachForMulticast({
+      const result = await messaging.sendEachForMulticast({
         tokens,
         notification: {
           title: '¿Qué tal el pana? 🌟',
@@ -128,7 +154,8 @@ exports.checkPendingReviews = onSchedule(
           actionUrl: `/perfil-producto?id=${interaction.productId}`,
           type: 'review_reminder'
         }
-      }).catch(() => { }) // No fallar si hay error de tokens
+      }).catch(() => null)
+      if (result) await cleanupInvalidTokens(interaction.buyerId, tokens, result.responses)
     }
 
     console.log("✅ Reseñas habilitadas");
@@ -163,7 +190,7 @@ exports.onNewMessage = onDocumentCreated(
     const messaging = getMessaging()
 
     // Enviar a todos los dispositivos del usuario
-    await messaging.sendEachForMulticast({
+    const result = await messaging.sendEachForMulticast({
       tokens,
       notification: {
         title: conv.productName || 'Nuevo mensaje',
@@ -187,6 +214,7 @@ exports.onNewMessage = onDocumentCreated(
         }
       }
     })
+    await cleanupInvalidTokens(recipientId, tokens, result.responses)
   }
 )
 
@@ -249,6 +277,13 @@ exports.sendAdminNotification = onCall(
       batches.push(allTokens.slice(i, i + 500))
     }
 
+    // Mapa token → userId para limpiar tokens inválidos por usuario
+    const tokenUserMap = {}
+    usersSnap.docs.forEach(docSnap => {
+      const tokens = docSnap.data().fcmTokens || []
+      tokens.forEach(t => { tokenUserMap[t] = docSnap.id })
+    })
+
     let totalSent = 0
     for (const batch of batches) {
       const result = await messaging.sendEachForMulticast({
@@ -257,6 +292,26 @@ exports.sendAdminNotification = onCall(
         data: { actionUrl: actionUrl || '/home', type: 'admin' }
       })
       totalSent += result.successCount
+
+      // Agrupar tokens inválidos por usuario y limpiarlos
+      const failedByUser = {}
+      result.responses.forEach((resp, i) => {
+        const INVALID_CODES = [
+          'messaging/invalid-registration-token',
+          'messaging/registration-token-not-registered',
+          'messaging/invalid-argument',
+        ]
+        if (!resp.success && resp.error && INVALID_CODES.includes(resp.error.code)) {
+          const uid = tokenUserMap[batch[i]]
+          if (uid) {
+            if (!failedByUser[uid]) failedByUser[uid] = []
+            failedByUser[uid].push(batch[i])
+          }
+        }
+      })
+      for (const [uid, badTokens] of Object.entries(failedByUser)) {
+        await cleanupInvalidTokens(uid, badTokens, badTokens.map(() => ({ success: false, error: { code: 'messaging/invalid-registration-token' } })))
+      }
     }
 
     // Guardar registro en Firestore con detalle de receptores
@@ -340,7 +395,7 @@ exports.checkScheduledNotifications = onSchedule(
                 .replace('{{days}}',
                   Math.floor(template.delayHours / 24))
 
-              await messaging.sendEachForMulticast({
+              const sendResult = await messaging.sendEachForMulticast({
                 tokens,
                 notification: { title, body },
                 data: {
@@ -348,6 +403,7 @@ exports.checkScheduledNotifications = onSchedule(
                   type: template.trigger
                 }
               })
+              await cleanupInvalidTokens(userId, tokens, sendResult.responses)
 
               // Registrar envío para no repetir
               await getDb().collection('notificationsSent').add({
@@ -391,7 +447,7 @@ exports.checkScheduledNotifications = onSchedule(
 
               if (!recentSent.empty) continue
 
-              await messaging.sendEachForMulticast({
+              const sendResult = await messaging.sendEachForMulticast({
                 tokens,
                 notification: {
                   title: template.title,
@@ -404,6 +460,7 @@ exports.checkScheduledNotifications = onSchedule(
                   type: template.trigger
                 }
               })
+              await cleanupInvalidTokens(userDoc.id, tokens, sendResult.responses)
 
               await getDb().collection('notificationsSent').add({
                 templateId,
@@ -448,7 +505,7 @@ exports.checkScheduledNotifications = onSchedule(
               const tokens = userSnap.data()?.fcmTokens || []
               if (!tokens.length) continue
 
-              await messaging.sendEachForMulticast({
+              const sendResult = await messaging.sendEachForMulticast({
                 tokens,
                 notification: {
                   title: template.title,
@@ -461,6 +518,7 @@ exports.checkScheduledNotifications = onSchedule(
                   type: template.trigger
                 }
               })
+              await cleanupInvalidTokens(userId, tokens, sendResult.responses)
 
               await getDb().collection('notificationsSent').add({
                 templateId,
@@ -497,7 +555,7 @@ exports.checkScheduledNotifications = onSchedule(
 
               if (!alreadySent.empty) continue
 
-              await messaging.sendEachForMulticast({
+              const sendResult = await messaging.sendEachForMulticast({
                 tokens,
                 notification: {
                   title: template.title,
@@ -508,6 +566,7 @@ exports.checkScheduledNotifications = onSchedule(
                   type: template.trigger
                 }
               })
+              await cleanupInvalidTokens(userDoc.id, tokens, sendResult.responses)
 
               await getDb().collection('notificationsSent').add({
                 templateId,

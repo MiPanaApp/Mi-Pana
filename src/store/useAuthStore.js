@@ -11,7 +11,7 @@ import {
   browserLocalPersistence,
 } from 'firebase/auth';
 import { auth, googleProvider, db } from '../services/firebase';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, arrayRemove, serverTimestamp } from 'firebase/firestore';
 import { useStore } from './useStore';
 import { getCountryCodeFromName } from '../data/locations';
 
@@ -177,6 +177,32 @@ export const useAuthStore = create((set, get) => ({
       set({ user: null });
       return;
     }
+
+    // Limpiar el token FCM del dispositivo actual antes de cerrar sesión
+    try {
+      const currentUser = auth.currentUser
+      if (currentUser && 'serviceWorker' in navigator) {
+        const registration = await navigator.serviceWorker.ready
+        if (registration?.pushManager) {
+          const { getMessaging, getToken } = await import('firebase/messaging')
+          const messaging = getMessaging()
+          const token = await getToken(messaging, {
+            vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
+            serviceWorkerRegistration: registration
+          }).catch(() => null)
+          if (token) {
+            await updateDoc(doc(db, 'users', currentUser.uid), {
+              fcmTokens: arrayRemove(token)
+            }).catch(() => {})
+            console.log('[Logout] Token FCM eliminado de Firestore.')
+          }
+        }
+      }
+    } catch (e) {
+      // No bloquear el logout si falla la limpieza del token
+      console.warn('[Logout] No se pudo limpiar el token FCM:', e.message)
+    }
+
     await signOut(auth);
     set({ user: null });
     // Reset global store (favorites, etc.)
