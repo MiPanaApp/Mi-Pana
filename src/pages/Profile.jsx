@@ -369,7 +369,7 @@ export default function Profile() {
                           {product.price === 'Consultar' ? 'Consultar' : `${Number(product.price).toLocaleString('es-ES', { minimumFractionDigits: 2 })} €`}
                         </span>
                       )}
-                      {/* Botón de Menú de Tres Puntos */
+                      {/* Botón de Menú de Tres Puntos */}
                       <div className="relative product-menu-container shrink-0">
                         <button 
                           onClick={(e) => {
@@ -499,7 +499,7 @@ export default function Profile() {
                           {product.price === 'Consultar' ? 'Consultar' : `${Number(product.price).toLocaleString('es-ES', { minimumFractionDigits: 2 })} €`}
                         </span>
                       )}
-                      {/* Botón de Menú de Tres Puntos */
+                      {/* Botón de Menú de Tres Puntos */}
                       <div className="relative product-menu-container shrink-0">
                         <button 
                           onClick={(e) => {
