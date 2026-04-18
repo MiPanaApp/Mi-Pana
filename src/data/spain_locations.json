@@ -1,0 +1,583 @@
+{
+  "communities": [
+    {
+      "code": "AN",
+      "name": "Andalucía",
+      "provinces": [
+        {
+          "code": "AL",
+          "name": "Almería",
+          "municipalities": [
+            "Almería", "El Ejido", "Roquetas de Mar",
+            "Níjar", "Vícar", "Adra", "Berja",
+            "Huércal-Overa", "Huércal de Almería"
+          ]
+        },
+        {
+          "code": "CA",
+          "name": "Cádiz",
+          "municipalities": [
+            "Algeciras", "Cádiz", "Jerez de la Frontera",
+            "La Línea de la Concepción", "San Fernando",
+            "El Puerto de Santa María", "Chiclana de la Frontera",
+            "Sanlúcar de Barrameda", "Puerto Real",
+            "Los Barrios", "Rota", "Barbate"
+          ]
+        },
+        {
+          "code": "CO",
+          "name": "Córdoba",
+          "municipalities": [
+            "Córdoba", "Lucena", "Baena", "Montilla",
+            "Puente Genil", "Cabra", "Palma del Río",
+            "Pozoblanco", "Peñarroya-Pueblonuevo"
+          ]
+        },
+        {
+          "code": "GR",
+          "name": "Granada",
+          "municipalities": [
+            "Granada", "Motril", "Armilla", "Almuñécar",
+            "Maracena", "Loja", "Baza", "Guadix",
+            "Las Gabias", "Ogíjares", "Atarfe"
+          ]
+        },
+        {
+          "code": "HU",
+          "name": "Huelva",
+          "municipalities": [
+            "Huelva", "Lepe", "Almonte", "Moguer",
+            "Ayamonte", "Isla Cristina", "Aljaraque",
+            "Bollullos Par del Condado", "Palos de la Frontera"
+          ]
+        },
+        {
+          "code": "JA",
+          "name": "Jaén",
+          "municipalities": [
+            "Jaén", "Linares", "Andújar", "Úbeda",
+            "Baeza", "Alcalá la Real", "Martos",
+            "Villacarrillo", "Mengíbar"
+          ]
+        },
+        {
+          "code": "MA",
+          "name": "Málaga",
+          "municipalities": [
+            "Málaga", "Marbella", "Vélez-Málaga",
+            "Mijas", "Fuengirola", "Torremolinos",
+            "Benalmádena", "Antequera", "Ronda",
+            "Estepona", "Nerja", "Alhaurín de la Torre",
+            "Coin", "Alhaurín el Grande", "Manilva"
+          ]
+        },
+        {
+          "code": "SE",
+          "name": "Sevilla",
+          "municipalities": [
+            "Sevilla", "Dos Hermanas", "Alcalá de Guadaíra",
+            "Mairena del Aljarafe", "Utrera",
+            "San Juan de Aznalfarache", "La Rinconada",
+            "Carmona", "Écija", "Bormujos",
+            "Camas", "Tomares", "Coria del Río"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "AR",
+      "name": "Aragón",
+      "provinces": [
+        {
+          "code": "HU",
+          "name": "Huesca",
+          "municipalities": [
+            "Huesca", "Monzón", "Barbastro", "Sabiñánigo",
+            "Jaca", "Fraga", "Binéfar"
+          ]
+        },
+        {
+          "code": "TE",
+          "name": "Teruel",
+          "municipalities": [
+            "Teruel", "Alcañiz", "Andorra",
+            "Utrillas", "Calamocha"
+          ]
+        },
+        {
+          "code": "ZA",
+          "name": "Zaragoza",
+          "municipalities": [
+            "Zaragoza", "Calatayud", "Utebo",
+            "Ejea de los Caballeros", "Cuarte de Huerva",
+            "Tarazona", "Caspe", "Zuera", "La Muela"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "AS",
+      "name": "Asturias",
+      "provinces": [
+        {
+          "code": "O",
+          "name": "Asturias",
+          "municipalities": [
+            "Gijón", "Oviedo", "Avilés", "Siero",
+            "Langreo", "Mieres", "Carreño", "Castrillón",
+            "Llanera", "San Martín del Rey Aurelio",
+            "Corvera de Asturias"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "IB",
+      "name": "Islas Baleares",
+      "provinces": [
+        {
+          "code": "PM",
+          "name": "Islas Baleares",
+          "municipalities": [
+            "Palma", "Calvià", "Manacor", "Ibiza",
+            "Llucmajor", "Marratxí", "Sant Josep de sa Talaia",
+            "Inca", "Felanitx", "Ciutadella de Menorca",
+            "Mahón", "Sant Antoni de Portmany"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "CN",
+      "name": "Canarias",
+      "provinces": [
+        {
+          "code": "GC",
+          "name": "Las Palmas",
+          "municipalities": [
+            "Las Palmas de Gran Canaria", "Telde",
+            "Santa Lucía de Tirajana", "San Bartolomé de Tirajana",
+            "Arucas", "Ingenio", "Agüimes", "Gáldar",
+            "Mogán", "Arrecife", "Puerto del Rosario",
+            "San Bartolomé"
+          ]
+        },
+        {
+          "code": "TF",
+          "name": "Santa Cruz de Tenerife",
+          "municipalities": [
+            "Santa Cruz de Tenerife", "San Cristóbal de La Laguna",
+            "Arona", "Adeje", "Granadilla de Abona",
+            "Santa Úrsula", "Los Realejos", "Puerto de la Cruz",
+            "La Orotava", "Güímar", "San Miguel de Abona",
+            "Santiago del Teide", "Santa Cruz de La Palma"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "CB",
+      "name": "Cantabria",
+      "provinces": [
+        {
+          "code": "S",
+          "name": "Cantabria",
+          "municipalities": [
+            "Santander", "Torrelavega", "Castro-Urdiales",
+            "Camargo", "El Astillero", "Santa Cruz de Bezana",
+            "Piélagos", "Laredo", "San Vicente de la Barquera"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "CM",
+      "name": "Castilla-La Mancha",
+      "provinces": [
+        {
+          "code": "AB",
+          "name": "Albacete",
+          "municipalities": [
+            "Albacete", "Hellín", "Almansa", "La Roda",
+            "Villarrobledo", "Caudete"
+          ]
+        },
+        {
+          "code": "CR",
+          "name": "Ciudad Real",
+          "municipalities": [
+            "Ciudad Real", "Puertollano", "Tomelloso",
+            "Alcázar de San Juan", "Valdepeñas",
+            "Manzanares", "Daimiel", "Miguelturra"
+          ]
+        },
+        {
+          "code": "CU",
+          "name": "Cuenca",
+          "municipalities": [
+            "Cuenca", "Tarancón", "San Clemente",
+            "Motilla del Palancar"
+          ]
+        },
+        {
+          "code": "GU",
+          "name": "Guadalajara",
+          "municipalities": [
+            "Guadalajara", "Azuqueca de Henares",
+            "Cabanillas del Campo", "Alovera",
+            "Yunquera de Henares"
+          ]
+        },
+        {
+          "code": "TO",
+          "name": "Toledo",
+          "municipalities": [
+            "Toledo", "Talavera de la Reina",
+            "Illescas", "Seseña", "Madridejos",
+            "Consuegra", "Quintanar de la Orden",
+            "Sonseca", "Bargas"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "CL",
+      "name": "Castilla y León",
+      "provinces": [
+        {
+          "code": "AV",
+          "name": "Ávila",
+          "municipalities": ["Ávila", "Arévalo"]
+        },
+        {
+          "code": "BU",
+          "name": "Burgos",
+          "municipalities": [
+            "Burgos", "Miranda de Ebro", "Aranda de Duero",
+            "Villarcayo"
+          ]
+        },
+        {
+          "code": "LE",
+          "name": "León",
+          "municipalities": [
+            "León", "Ponferrada", "San Andrés del Rabanedo",
+            "Villaquilambre", "Astorga", "La Bañeza"
+          ]
+        },
+        {
+          "code": "PA",
+          "name": "Palencia",
+          "municipalities": ["Palencia", "Guardo", "Aguilar de Campoo"]
+        },
+        {
+          "code": "SA",
+          "name": "Salamanca",
+          "municipalities": [
+            "Salamanca", "Béjar", "Ciudad Rodrigo",
+            "Santa Marta de Tormes"
+          ]
+        },
+        {
+          "code": "SG",
+          "name": "Segovia",
+          "municipalities": ["Segovia", "Cuéllar", "El Espinar"]
+        },
+        {
+          "code": "SO",
+          "name": "Soria",
+          "municipalities": ["Soria", "Almazán"]
+        },
+        {
+          "code": "VA",
+          "name": "Valladolid",
+          "municipalities": [
+            "Valladolid", "Laguna de Duero",
+            "Medina del Campo", "Arroyo de la Encomienda",
+            "Tordesillas", "Medina de Rioseco"
+          ]
+        },
+        {
+          "code": "ZA",
+          "name": "Zamora",
+          "municipalities": ["Zamora", "Benavente"]
+        }
+      ]
+    },
+    {
+      "code": "CT",
+      "name": "Cataluña",
+      "provinces": [
+        {
+          "code": "B",
+          "name": "Barcelona",
+          "municipalities": [
+            "Barcelona", "L'Hospitalet de Llobregat",
+            "Badalona", "Terrassa", "Sabadell",
+            "Mataró", "Santa Coloma de Gramenet",
+            "Cornellà de Llobregat", "Sant Boi de Llobregat",
+            "Rubí", "Castelldefels", "Gavà",
+            "Viladecans", "El Prat de Llobregat",
+            "Granollers", "Manresa", "Vilanova i la Geltrú",
+            "Mollet del Vallès", "Cerdanyola del Vallès",
+            "Esplugues de Llobregat", "Igualada",
+            "Sant Cugat del Vallès", "Berga"
+          ]
+        },
+        {
+          "code": "GI",
+          "name": "Girona",
+          "municipalities": [
+            "Girona", "Blanes", "Lloret de Mar",
+            "Salt", "Figueres", "Olot",
+            "Roses", "Palafrugell"
+          ]
+        },
+        {
+          "code": "L",
+          "name": "Lleida",
+          "municipalities": [
+            "Lleida", "Balaguer", "Tàrrega",
+            "Mollerussa", "La Seu d'Urgell"
+          ]
+        },
+        {
+          "code": "T",
+          "name": "Tarragona",
+          "municipalities": [
+            "Tarragona", "Reus", "Tortosa",
+            "Salou", "Cambrils", "El Vendrell",
+            "Valls", "Vila-seca"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "EX",
+      "name": "Extremadura",
+      "provinces": [
+        {
+          "code": "BA",
+          "name": "Badajoz",
+          "municipalities": [
+            "Badajoz", "Mérida", "Don Benito",
+            "Villanueva de la Serena", "Almendralejo",
+            "Zafra", "Olivenza"
+          ]
+        },
+        {
+          "code": "CC",
+          "name": "Cáceres",
+          "municipalities": [
+            "Cáceres", "Plasencia", "Navalmoral de la Mata",
+            "Coria", "Miajadas"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "GA",
+      "name": "Galicia",
+      "provinces": [
+        {
+          "code": "C",
+          "name": "A Coruña",
+          "municipalities": [
+            "A Coruña", "Santiago de Compostela",
+            "Oleiros", "Arteixo", "Ferrol",
+            "Culleredo", "Narón", "Ames",
+            "Cambre", "Boiro", "Ribeira"
+          ]
+        },
+        {
+          "code": "LU",
+          "name": "Lugo",
+          "municipalities": [
+            "Lugo", "Monforte de Lemos",
+            "Vilalba", "Sarria"
+          ]
+        },
+        {
+          "code": "OU",
+          "name": "Ourense",
+          "municipalities": [
+            "Ourense", "O Barco de Valdeorras",
+            "Verín", "O Carballiño"
+          ]
+        },
+        {
+          "code": "PO",
+          "name": "Pontevedra",
+          "municipalities": [
+            "Vigo", "Pontevedra", "Vilagarcía de Arousa",
+            "Redondela", "O Porriño", "Marín",
+            "Cangas", "Moaña", "Sanxenxo"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "MD",
+      "name": "Comunidad de Madrid",
+      "provinces": [
+        {
+          "code": "M",
+          "name": "Madrid",
+          "municipalities": [
+            "Madrid", "Móstoles", "Alcalá de Henares",
+            "Fuenlabrada", "Leganés", "Getafe",
+            "Alcorcón", "Torrejón de Ardoz", "Parla",
+            "Alcobendas", "Las Rozas de Madrid",
+            "Pozuelo de Alarcón", "Coslada",
+            "San Sebastián de los Reyes",
+            "Rivas-Vaciamadrid", "Majadahonda",
+            "Valdemoro", "Collado Villalba",
+            "Aranjuez", "Arganda del Rey",
+            "Boadilla del Monte", "Tres Cantos",
+            "Pinto", "Torrelodones", "Galapagar"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "MU",
+      "name": "Región de Murcia",
+      "provinces": [
+        {
+          "code": "MU",
+          "name": "Murcia",
+          "municipalities": [
+            "Murcia", "Cartagena", "Lorca",
+            "Molina de Segura", "Alcantarilla",
+            "Mazarrón", "San Javier", "Torre-Pacheco",
+            "Yecla", "Cieza", "Jumilla",
+            "Caravaca de la Cruz", "Águilas",
+            "San Pedro del Pinatar", "La Unión"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "NC",
+      "name": "Comunidad Foral de Navarra",
+      "provinces": [
+        {
+          "code": "NA",
+          "name": "Navarra",
+          "municipalities": [
+            "Pamplona", "Tudela", "Barañáin",
+            "Burlada", "Villava", "Ansoáin",
+            "Estella-Lizarra", "Tafalla", "Zizur Mayor"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "PV",
+      "name": "País Vasco",
+      "provinces": [
+        {
+          "code": "VI",
+          "name": "Álava",
+          "municipalities": ["Vitoria-Gasteiz", "Llodio", "Amurrio"]
+        },
+        {
+          "code": "SS",
+          "name": "Gipuzkoa",
+          "municipalities": [
+            "Donostia-San Sebastián", "Irun",
+            "Errenteria", "Zarautz", "Eibar",
+            "Arrasate-Mondragón", "Tolosa",
+            "Hernani", "Pasaia"
+          ]
+        },
+        {
+          "code": "BI",
+          "name": "Bizkaia",
+          "municipalities": [
+            "Bilbao", "Barakaldo", "Getxo",
+            "Portugalete", "Santurtzi", "Basauri",
+            "Leioa", "Sestao", "Galdakao",
+            "Durango", "Ermua", "Erandio"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "LR",
+      "name": "La Rioja",
+      "provinces": [
+        {
+          "code": "LO",
+          "name": "La Rioja",
+          "municipalities": [
+            "Logroño", "Calahorra", "Arnedo",
+            "Alfaro", "Haro", "Lardero"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "VC",
+      "name": "Comunitat Valenciana",
+      "provinces": [
+        {
+          "code": "A",
+          "name": "Alicante",
+          "municipalities": [
+            "Alicante", "Elche", "Torrevieja",
+            "Orihuela", "Benidorm", "San Vicente del Raspeig",
+            "Elda", "Petrer", "Novelda",
+            "Villena", "Alcoy", "Denia",
+            "Calp", "Alfàs del Pi", "Crevillent",
+            "Santa Pola", "Aspe", "Guardamar del Segura"
+          ]
+        },
+        {
+          "code": "CS",
+          "name": "Castellón",
+          "municipalities": [
+            "Castelló de la Plana", "Vila-real",
+            "Burriana", "Onda", "Vinaròs",
+            "Benicàssim", "Almassora", "Nules"
+          ]
+        },
+        {
+          "code": "V",
+          "name": "Valencia",
+          "municipalities": [
+            "Valencia", "Torrent", "Gandía",
+            "Paterna", "Sagunto", "Mislata",
+            "Burjassot", "Alzira", "Aldaia",
+            "Xirivella", "Ontinyent", "Manises",
+            "Quart de Poblet", "Oliva", "Xàtiva",
+            "Requena", "Llíria", "Picassent",
+            "Sueca", "Cullera", "Tavernes de la Valldigna"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "CE",
+      "name": "Ceuta",
+      "provinces": [
+        {
+          "code": "CE",
+          "name": "Ceuta",
+          "municipalities": ["Ceuta"]
+        }
+      ]
+    },
+    {
+      "code": "ME",
+      "name": "Melilla",
+      "provinces": [
+        {
+          "code": "ME",
+          "name": "Melilla",
+          "municipalities": ["Melilla"]
+        }
+      ]
+    }
+  ]
+}

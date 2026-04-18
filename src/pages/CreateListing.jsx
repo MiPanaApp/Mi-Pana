@@ -15,6 +15,8 @@ import { ChevronDown, Tag } from 'lucide-react';
 import { getCategoryIcon, getBrandColor, sortCategories } from '../data/categories';
 import { getIconComponent } from '../store/useCategoryStore';
 import { LOCATION_DATA } from '../data/locations';
+import SpainLocationSelector from '../components/ui/SpainLocationSelector';
+import { useSpainLocations } from '../hooks/useSpainLocations';
 import { LegalData } from '../data/LegalData';
 import { getCoordsFromLocation } from '../utils/geoUtils';
 import LegalDrawer from '../components/LegalDrawer';
@@ -56,6 +58,9 @@ export default function CreateListing() {
 
   const [form, setForm] = useState({ title: '', category: '', price: '', whatsapp: '', description: '', keywords: '' });
   const [location, setLocation] = useState({ level1: '', level2: '', level3: '' }); // lugar del anuncio
+  // Spain 3-level hierarchy: community (code) → province (code) → municipality (name)
+  const [spainLocation, setSpainLocation] = useState({ community: '', province: '', municipality: '' });
+  const { getCommunityName, getProvinceName } = useSpainLocations();
 
   const [categories, setCategories] = useState([]);
   const [priceModeMap, setPriceModeMap] = useState({});
@@ -247,6 +252,14 @@ export default function CreateListing() {
               level2: data.location?.level2 || '',
               level3: data.location?.level3 || ''
             });
+            // Restore Spain location if editing a Spain listing
+            if (data.location?.community && data.location?.province) {
+              setSpainLocation({
+                community: data.location.community,
+                province: data.location.province,
+                municipality: data.location.municipality || ''
+              });
+            }
 
             if (data.image) {
               setInitialMainPhoto(data.image);
@@ -422,18 +435,25 @@ export default function CreateListing() {
       return;
     }
 
-    if (!location.level1 || !location.level2 || !location.level3) {
-      setError('Por favor, selecciona o ingresa todos los datos del Lugar del Anuncio.');
-      return;
-    }
-
-    // Validación mínima de caracteres para el nivel 3 si fue manual
-    const locKey = COUNTRY_TO_LOC[selectedCountry] || 'ES';
-    const locData = LOCATION_DATA[locKey];
-    const level3Options = location.level2 ? (locData.data[location.level1]?.[location.level2] || []) : [];
-    if (level3Options.length === 0 && location.level3.length < 3) {
-      setError('La zona o barrio debe tener al menos 3 caracteres.');
-      return;
+    const isSpain = selectedCountry === 'ES';
+    if (isSpain) {
+      if (!spainLocation.community || !spainLocation.province || !spainLocation.municipality) {
+        setError('Por favor, selecciona comunidad autónoma, provincia y municipio.');
+        return;
+      }
+    } else {
+      if (!location.level1 || !location.level2 || !location.level3) {
+        setError('Por favor, selecciona o ingresa todos los datos del Lugar del Anuncio.');
+        return;
+      }
+      // Validación mínima de caracteres para el nivel 3 si fue manual
+      const locKey = COUNTRY_TO_LOC[selectedCountry] || 'ES';
+      const locData = LOCATION_DATA[locKey];
+      const level3Options = location.level2 ? (locData.data[location.level1]?.[location.level2] || []) : [];
+      if (level3Options.length === 0 && location.level3.length < 3) {
+        setError('La zona o barrio debe tener al menos 3 caracteres.');
+        return;
+      }
     }
 
     const keywordsArray = form.keywords.split(',').map(k => k.trim()).filter(Boolean);
@@ -469,20 +489,27 @@ export default function CreateListing() {
       const finalCarouselImages = [...existingCarousel, ...newCarouselURLs];
 
       // 3.5. Obtener coordenadas silenciosamente para búsqueda por proximidad
+      const isSpain = selectedCountry === 'ES';
       let coords = null;
       try {
+        const geoLevel1 = isSpain ? getCommunityName(spainLocation.community) : location.level1;
+        const geoLevel2 = isSpain ? getProvinceName(spainLocation.community, spainLocation.province) : location.level2;
+        const geoLevel3 = isSpain ? spainLocation.municipality : location.level3;
         coords = await getCoordsFromLocation(
           COUNTRY_CODES.find(c => c.iso === selectedCountry)?.name || selectedCountry,
-          location.level1,
-          location.level2,
-          location.level3
+          geoLevel1,
+          geoLevel2,
+          geoLevel3
         );
-
       } catch (err) {
         console.warn('[CreateListing] Ignorando error geocoding:', err);
       }
 
       // 4. Guardar o Actualizar en Firestore
+      const isSpainCountry = selectedCountry === 'ES';
+      const communityName = isSpainCountry ? getCommunityName(spainLocation.community) : '';
+      const provinceName = isSpainCountry ? getProvinceName(spainLocation.community, spainLocation.province) : '';
+
       if (isEditing) {
         const updateData = {
           name: form.title,
@@ -493,14 +520,31 @@ export default function CreateListing() {
           keywords: form.keywords.split(',').map(k => k.trim()).filter(Boolean),
           image: mainImageURL,
           carouselImages: finalCarouselImages,
-          location: {
+          location: isSpainCountry ? {
+            country: 'ES',
+            community: spainLocation.community,
+            communityName,
+            province: spainLocation.province,
+            provinceName,
+            municipality: spainLocation.municipality,
+            // Compat con sistema legacy
+            level1: communityName,
+            level2: provinceName,
+            level3: spainLocation.municipality,
+            ...(coords && { coordinates: coords }),
+          } : {
             country: selectedCountry,
             level1: location.level1,
             level2: location.level2,
             level3: location.level3,
             ...(coords && { coordinates: coords }),
           },
-
+          // Campos planos para filtros de búsqueda
+          ...(isSpainCountry && {
+            city: spainLocation.municipality,
+            region: provinceName,
+            country: 'España'
+          }),
           updatedAt: serverTimestamp(),
         };
         await updateDoc(doc(db, 'products', editId), updateData);
@@ -514,14 +558,31 @@ export default function CreateListing() {
           keywords: form.keywords.split(',').map(k => k.trim()).filter(Boolean),
           image: mainImageURL,
           carouselImages: finalCarouselImages,
-          location: {
+          location: isSpainCountry ? {
+            country: 'ES',
+            community: spainLocation.community,
+            communityName,
+            province: spainLocation.province,
+            provinceName,
+            municipality: spainLocation.municipality,
+            // Compat con sistema legacy
+            level1: communityName,
+            level2: provinceName,
+            level3: spainLocation.municipality,
+            ...(coords && { coordinates: coords }),
+          } : {
             country: selectedCountry,
             level1: location.level1,
             level2: location.level2,
             level3: location.level3,
             ...(coords && { coordinates: coords }),
           },
-
+          // Campos planos para filtros de búsqueda
+          ...(isSpainCountry && {
+            city: spainLocation.municipality,
+            region: provinceName,
+            country: 'España'
+          }),
           userId: user?.uid || 'test-user-id',
           userName: user?.displayName || userData?.name || 'Usuario de Prueba',
           sellerAvatar: user?.photoURL || userData?.avatar || '',
@@ -916,260 +977,212 @@ export default function CreateListing() {
           </div>
 
           {/* LUGAR */}
-          {(() => {
-            const locKey = COUNTRY_TO_LOC[selectedCountry] || 'ES';
-            const locData = LOCATION_DATA[locKey];
-            const level1Options = Object.keys(locData.data);
-            const cities = location.level1 ? Object.keys(locData.data[location.level1] || {}) : [];
-            const level3Options = location.level2 ? (locData.data[location.level1]?.[location.level2] || []) : [];
-            const level3Label = locData.labels?.level3 || 'Barrio / Zona';
+          <div className="flex flex-col gap-3">
+            <span className="text-sm font-bold text-[#1A1A3A]/70 ml-2 flex items-center gap-1.5">
+              <MapPin size={14} className="text-[#D90429]" />
+              Lugar del Anuncio <span className="text-red-500">*</span>
+            </span>
 
-            const normalizeLevel3 = (str) => {
-              const cleanStr = str.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s\-']/g, '').substring(0, 50);
-              return cleanStr.replace(/\b[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]/g, c => c.toUpperCase());
-            };
-
-            const getLevel3Placeholder = () => {
-              switch (selectedCountry) {
-                case 'ES': return 'Ej: Ruzafa, El Carmen...';
-                case 'VE': return 'Ej: Chacao, Los Palos Grandes...';
-                case 'MX': return 'Ej: Polanco, Condesa...';
-                case 'CO': return 'Ej: El Poblado, Chapinero...';
-                case 'AR': return 'Ej: Palermo, Recoleta...';
-                case 'CL': return 'Ej: Providencia, Ñuñoa...';
-                default: return 'Ej: Centro, San Juan...';
-              }
-            };
-
-            return (
-              <div className="flex flex-col gap-3">
-                <span className="text-sm font-bold text-[#1A1A3A]/70 ml-2 flex items-center gap-1.5">
-                  <MapPin size={14} className="text-[#D90429]" />
-                  Lugar del Anuncio <span className="text-red-500">*</span>
-                </span>
-
-                <div className="flex flex-col sm:flex-row gap-3">
-                  {/* Selector Level 1 (Comunidad / Departamento / Estado / Región...) */}
-                  <div className="relative flex-1 min-w-0">
-                    <div
-                      onClick={() => { setIsLocationDropdownOpen(!isLocationDropdownOpen); setIsCityDropdownOpen(false); }}
-                      className={`w-full h-14 px-4 flex items-center justify-between bg-[#E0E5EC] rounded-2xl cursor-pointer transition-all ${isLocationDropdownOpen
-                        ? 'shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)]'
-                        : 'shadow-[6px_6px_12px_rgba(163,177,198,0.7),-6px_-6px_12px_rgba(255,255,255,0.9)]'
-                        }`}
-                    >
-                      <span className={`text-sm font-semibold truncate ${location.level1 ? 'text-[#1A1A3A]' : 'text-gray-400/70'}`}>
-                        {location.level1 || locData.level1Label}
-                      </span>
-                      <ChevronDown className={`w-4 h-4 text-[#1A1A3A]/50 flex-shrink-0 transition-transform duration-300 ${isLocationDropdownOpen ? 'rotate-180' : ''}`} />
-                    </div>
-
-                    <AnimatePresence>
-                      {isLocationDropdownOpen && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                          animate={{ opacity: 1, y: 5, scale: 1 }}
-                          exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                          className="absolute left-0 right-0 top-full z-[60] mt-1 bg-[#E0E5EC] rounded-2xl shadow-[8px_8px_16px_rgba(163,177,198,0.8),-8px_-8px_16px_rgba(255,255,255,1)] border border-white/40 overflow-hidden"
-                        >
-                          <div className="max-h-56 overflow-y-auto custom-scrollbar p-2 flex flex-col gap-1">
-                            {level1Options.map((regionName) => (
-                              <button
-                                key={regionName}
-                                type="button"
-                                onClick={() => {
-                                  setLocation({ level1: regionName, level2: '' });
-                                  setIsLocationDropdownOpen(false);
-                                }}
-                                className={`w-full px-4 py-2.5 rounded-xl text-left font-bold text-sm transition-all ${location.level1 === regionName
-                                  ? 'bg-[#1A1A3A] text-white'
-                                  : 'text-[#1A1A3A]/70 hover:bg-white/50'
-                                  }`}
-                              >
-                                {regionName}
-                              </button>
-                            ))}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-
-                  {/* Selector Level 2 (Ciudad) — solo si hay level1 */}
-                  <div className="relative flex-1 min-w-0">
-                    <div
-                      onClick={() => {
-                        if (!location.level1) return;
-                        setIsCityDropdownOpen(!isCityDropdownOpen);
-                        setIsLocationDropdownOpen(false);
-                      }}
-                      className={`w-full h-14 px-4 flex items-center justify-between bg-[#E0E5EC] rounded-2xl transition-all ${!location.level1
-                        ? 'opacity-50 cursor-not-allowed shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.6)]'
-                        : isCityDropdownOpen
-                          ? 'cursor-pointer shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)]'
-                          : 'cursor-pointer shadow-[6px_6px_12px_rgba(163,177,198,0.7),-6px_-6px_12px_rgba(255,255,255,0.9)]'
-                        }`}
-                    >
-                      <span className={`text-sm font-semibold truncate ${location.level2 ? 'text-[#1A1A3A]' : 'text-gray-400/70'}`}>
-                        {location.level2 || locData.level2Label}
-                      </span>
-                      <ChevronDown className={`w-4 h-4 text-[#1A1A3A]/50 flex-shrink-0 transition-transform duration-300 ${isCityDropdownOpen ? 'rotate-180' : ''}`} />
-                    </div>
-
-                    <AnimatePresence>
-                      {isCityDropdownOpen && cities.length > 0 && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                          animate={{ opacity: 1, y: 5, scale: 1 }}
-                          exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                          className="absolute left-0 right-0 top-full z-[60] mt-1 bg-[#E0E5EC] rounded-2xl shadow-[8px_8px_16px_rgba(163,177,198,0.8),-8px_-8px_16px_rgba(255,255,255,1)] border border-white/40 overflow-hidden"
-                        >
-                          <div className="max-h-56 overflow-y-auto custom-scrollbar p-2 flex flex-col gap-1">
-                            {cities.map((city) => (
-                              <button
-                                key={city}
-                                type="button"
-                                onClick={() => {
-                                  setLocation(prev => ({ ...prev, level2: city, level3: '' }));
-                                  setIsCityDropdownOpen(false);
-                                  setIsLevel3DropdownOpen(false);
-                                }}
-                                className={`w-full px-4 py-2.5 rounded-xl text-left font-bold text-sm transition-all ${location.level2 === city
-                                  ? 'bg-[#1A1A3A] text-white'
-                                  : 'text-[#1A1A3A]/70 hover:bg-white/50'
-                                  }`}
-                              >
-                                {city}
-                              </button>
-                            ))}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                </div>
+            {selectedCountry === 'ES' ? (
+              /* ── España: selector en cascada de 3 niveles ── */
+              <>
+                <SpainLocationSelector
+                  onChange={setSpainLocation}
+                  defaultCommunity={spainLocation.community}
+                  defaultProvince={spainLocation.province}
+                  defaultMunicipality={spainLocation.municipality}
+                  showMunicipality={true}
+                  disabled={loading}
+                />
                 <p className="text-[10px] text-[#1A1A3A]/40 font-bold ml-2 italic">
-                  * Primero selecciona {locData.level1Label.toLowerCase()}, luego la ciudad.
+                  * Selecciona comunidad → provincia → municipio.
                 </p>
+              </>
+            ) : (
+              /* ── Resto de países: selectores dinámicos originales ── */
+              (() => {
+                const locKey = COUNTRY_TO_LOC[selectedCountry] || 'ES';
+                const locData = LOCATION_DATA[locKey];
+                const level1Options = Object.keys(locData.data);
+                const cities = location.level1 ? Object.keys(locData.data[location.level1] || {}) : [];
+                const level3Options = location.level2 ? (locData.data[location.level1]?.[location.level2] || []) : [];
+                const level3Label = locData.labels?.level3 || 'Barrio / Zona';
 
-                {/* Selector Level 3 (Barrio / Zona) — dropdown si hay opciones, input si no */}
-                {level3Options.length > 0 ? (
-                  <div className="relative">
-                    <span className="text-[10px] font-bold text-[#1A1A3A]/50 uppercase tracking-wider ml-2 mb-1 block">{level3Label} <span className="text-red-500">*</span></span>
-                    <div
-                      onClick={() => {
-                        if (!location.level2) return;
-                        setIsLevel3DropdownOpen(!isLevel3DropdownOpen);
-                        setIsLocationDropdownOpen(false);
-                        setIsCityDropdownOpen(false);
-                      }}
-                      className={`w-full h-14 px-4 flex items-center justify-between bg-[#E0E5EC] rounded-2xl transition-all ${!location.level2
-                        ? 'opacity-50 cursor-not-allowed shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.6)]'
-                        : isLevel3DropdownOpen
-                          ? 'cursor-pointer shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)]'
-                          : 'cursor-pointer shadow-[6px_6px_12px_rgba(163,177,198,0.7),-6px_-6px_12px_rgba(255,255,255,0.9)]'
-                        }`}
-                    >
-                      <span className={`text-sm font-semibold truncate ${location.level3 ? 'text-[#1A1A3A]' : 'text-gray-400/70'}`}>
-                        {location.level3 || `Selecciona ${level3Label.toLowerCase()}...`}
-                      </span>
-                      <ChevronDown className={`w-4 h-4 text-[#1A1A3A]/50 flex-shrink-0 transition-transform duration-300 ${isLevel3DropdownOpen ? 'rotate-180' : ''}`} />
-                    </div>
+                const normalizeLevel3 = (str) => {
+                  const cleanStr = str.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s\-']/g, '').substring(0, 50);
+                  return cleanStr.replace(/\b[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]/g, c => c.toUpperCase());
+                };
 
-                    <AnimatePresence>
-                      {isLevel3DropdownOpen && level3Options.length > 0 && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                          animate={{ opacity: 1, y: 5, scale: 1 }}
-                          exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                          className="absolute left-0 right-0 top-full z-[60] mt-1 bg-[#E0E5EC] rounded-2xl shadow-[8px_8px_16px_rgba(163,177,198,0.8),-8px_-8px_16px_rgba(255,255,255,1)] border border-white/40 overflow-hidden"
+                const getLevel3Placeholder = () => {
+                  switch (selectedCountry) {
+                    case 'VE': return 'Ej: Chacao, Los Palos Grandes...';
+                    case 'MX': return 'Ej: Polanco, Condesa...';
+                    case 'CO': return 'Ej: El Poblado, Chapinero...';
+                    case 'AR': return 'Ej: Palermo, Recoleta...';
+                    case 'CL': return 'Ej: Providencia, Ñuñoa...';
+                    default: return 'Ej: Centro, San Juan...';
+                  }
+                };
+
+                return (
+                  <>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      {/* Selector Level 1 */}
+                      <div className="relative flex-1 min-w-0">
+                        <div
+                          onClick={() => { setIsLocationDropdownOpen(!isLocationDropdownOpen); setIsCityDropdownOpen(false); }}
+                          className={`w-full h-14 px-4 flex items-center justify-between bg-[#E0E5EC] rounded-2xl cursor-pointer transition-all ${isLocationDropdownOpen
+                            ? 'shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)]'
+                            : 'shadow-[6px_6px_12px_rgba(163,177,198,0.7),-6px_-6px_12px_rgba(255,255,255,0.9)]'
+                          }`}
                         >
-                          <div className="max-h-56 overflow-y-auto custom-scrollbar p-2 flex flex-col gap-1">
-                            {level3Options.map((zone) => (
-                              <button
-                                key={zone}
-                                type="button"
-                                onClick={() => {
-                                  setLocation(prev => ({ ...prev, level3: zone }));
-                                  setIsLevel3DropdownOpen(false);
-                                }}
-                                className={`w-full px-4 py-2.5 rounded-xl text-left font-bold text-sm transition-all ${location.level3 === zone
-                                  ? 'bg-[#1A1A3A] text-white'
-                                  : 'text-[#1A1A3A]/70 hover:bg-white/50'
-                                  }`}
-                              >
-                                {zone}
-                              </button>
-                            ))}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                ) : (
-                  location.level2 && (
-                    <div className="flex flex-col gap-1 mt-1 relative" ref={suggestionsRef}>
-                      <label className="text-[10px] font-bold text-[#1A1A3A]/50 uppercase tracking-wider ml-2 block">
-                        {level3Label} <span className="text-red-500">*</span>
-                        {location.level3.length > 0 && location.level3.length < 3 && (
-                          <span className="text-red-500 normal-case tracking-normal ml-2">(Mín. 3 caracteres)</span>
-                        )}
-                      </label>
-                      <input
-                        type="text"
-                        value={location.level3}
-                        onChange={(e) => {
-                          const normalized = normalizeLevel3(e.target.value);
-                          setLocation({ ...location, level3: normalized });
-                          setIsTypingLevel3(true);
-                          setIsLevel3SuggestionsOpen(true);
-                        }}
-                        onFocus={() => {
-                          if (level3Suggestions.length > 0) setIsLevel3SuggestionsOpen(true);
-                        }}
-                        placeholder={getLevel3Placeholder()}
-                        required
-                        minLength={3}
-                        maxLength={50}
-                        className="w-full h-14 px-4 bg-[#E0E5EC] rounded-2xl shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] text-[#1A1A3A] font-bold focus:outline-none transition-all"
-                      />
+                          <span className={`text-sm font-semibold truncate ${location.level1 ? 'text-[#1A1A3A]' : 'text-gray-400/70'}`}>
+                            {location.level1 || locData.level1Label}
+                          </span>
+                          <ChevronDown className={`w-4 h-4 text-[#1A1A3A]/50 flex-shrink-0 transition-transform duration-300 ${isLocationDropdownOpen ? 'rotate-180' : ''}`} />
+                        </div>
+                        <AnimatePresence>
+                          {isLocationDropdownOpen && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                              animate={{ opacity: 1, y: 5, scale: 1 }}
+                              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                              className="absolute left-0 right-0 top-full z-[60] mt-1 bg-[#E0E5EC] rounded-2xl shadow-[8px_8px_16px_rgba(163,177,198,0.8),-8px_-8px_16px_rgba(255,255,255,1)] border border-white/40 overflow-hidden"
+                            >
+                              <div className="max-h-56 overflow-y-auto custom-scrollbar p-2 flex flex-col gap-1">
+                                {level1Options.map((regionName) => (
+                                  <button key={regionName} type="button"
+                                    onClick={() => { setLocation({ level1: regionName, level2: '' }); setIsLocationDropdownOpen(false); }}
+                                    className={`w-full px-4 py-2.5 rounded-xl text-left font-bold text-sm transition-all ${location.level1 === regionName ? 'bg-[#1A1A3A] text-white' : 'text-[#1A1A3A]/70 hover:bg-white/50'}`}
+                                  >{regionName}</button>
+                                ))}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
 
-                      <AnimatePresence>
-                        {isLevel3SuggestionsOpen && level3Suggestions.length > 0 && (
-                          <motion.div
-                            initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 5, scale: 1 }}
-                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                            className="absolute left-0 right-0 top-full z-[60] mt-1 bg-[#E0E5EC] rounded-2xl shadow-[8px_8px_16px_rgba(163,177,198,0.8),-8px_-8px_16px_rgba(255,255,255,1)] border border-white/40 overflow-hidden"
-                          >
-                            <div className="max-h-56 overflow-y-auto custom-scrollbar p-2 flex flex-col gap-1">
-                              {level3Suggestions.map((zone) => (
-                                <button
-                                  key={zone}
-                                  type="button"
-                                  onClick={() => {
-                                    setLocation(prev => ({ ...prev, level3: zone }));
-                                    setIsLevel3SuggestionsOpen(false);
-                                    setIsTypingLevel3(false);
-                                  }}
-                                  className={`w-full px-4 py-2.5 rounded-xl text-left font-bold text-sm transition-all text-[#1A1A3A]/70 hover:bg-white/50`}
-                                >
-                                  {zone}
-                                </button>
-                              ))}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                      {/* Selector Level 2 */}
+                      <div className="relative flex-1 min-w-0">
+                        <div
+                          onClick={() => { if (!location.level1) return; setIsCityDropdownOpen(!isCityDropdownOpen); setIsLocationDropdownOpen(false); }}
+                          className={`w-full h-14 px-4 flex items-center justify-between bg-[#E0E5EC] rounded-2xl transition-all ${!location.level1 ? 'opacity-50 cursor-not-allowed shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.6)]' : isCityDropdownOpen ? 'cursor-pointer shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)]' : 'cursor-pointer shadow-[6px_6px_12px_rgba(163,177,198,0.7),-6px_-6px_12px_rgba(255,255,255,0.9)]'}`}
+                        >
+                          <span className={`text-sm font-semibold truncate ${location.level2 ? 'text-[#1A1A3A]' : 'text-gray-400/70'}`}>
+                            {location.level2 || locData.level2Label}
+                          </span>
+                          <ChevronDown className={`w-4 h-4 text-[#1A1A3A]/50 flex-shrink-0 transition-transform duration-300 ${isCityDropdownOpen ? 'rotate-180' : ''}`} />
+                        </div>
+                        <AnimatePresence>
+                          {isCityDropdownOpen && cities.length > 0 && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                              animate={{ opacity: 1, y: 5, scale: 1 }}
+                              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                              className="absolute left-0 right-0 top-full z-[60] mt-1 bg-[#E0E5EC] rounded-2xl shadow-[8px_8px_16px_rgba(163,177,198,0.8),-8px_-8px_16px_rgba(255,255,255,1)] border border-white/40 overflow-hidden"
+                            >
+                              <div className="max-h-56 overflow-y-auto custom-scrollbar p-2 flex flex-col gap-1">
+                                {cities.map((city) => (
+                                  <button key={city} type="button"
+                                    onClick={() => { setLocation(prev => ({ ...prev, level2: city, level3: '' })); setIsCityDropdownOpen(false); setIsLevel3DropdownOpen(false); }}
+                                    className={`w-full px-4 py-2.5 rounded-xl text-left font-bold text-sm transition-all ${location.level2 === city ? 'bg-[#1A1A3A] text-white' : 'text-[#1A1A3A]/70 hover:bg-white/50'}`}
+                                  >{city}</button>
+                                ))}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
                     </div>
-                  )
-                )}
+                    <p className="text-[10px] text-[#1A1A3A]/40 font-bold ml-2 italic">
+                      * Primero selecciona {locData.level1Label.toLowerCase()}, luego la ciudad.
+                    </p>
 
-
-              </div>
-            );
-
-          })()}
+                    {/* Selector Level 3 */}
+                    {level3Options.length > 0 ? (
+                      <div className="relative">
+                        <span className="text-[10px] font-bold text-[#1A1A3A]/50 uppercase tracking-wider ml-2 mb-1 block">{level3Label} <span className="text-red-500">*</span></span>
+                        <div
+                          onClick={() => { if (!location.level2) return; setIsLevel3DropdownOpen(!isLevel3DropdownOpen); setIsLocationDropdownOpen(false); setIsCityDropdownOpen(false); }}
+                          className={`w-full h-14 px-4 flex items-center justify-between bg-[#E0E5EC] rounded-2xl transition-all ${!location.level2 ? 'opacity-50 cursor-not-allowed shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.6)]' : isLevel3DropdownOpen ? 'cursor-pointer shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)]' : 'cursor-pointer shadow-[6px_6px_12px_rgba(163,177,198,0.7),-6px_-6px_12px_rgba(255,255,255,0.9)]'}`}
+                        >
+                          <span className={`text-sm font-semibold truncate ${location.level3 ? 'text-[#1A1A3A]' : 'text-gray-400/70'}`}>
+                            {location.level3 || `Selecciona ${level3Label.toLowerCase()}...`}
+                          </span>
+                          <ChevronDown className={`w-4 h-4 text-[#1A1A3A]/50 flex-shrink-0 transition-transform duration-300 ${isLevel3DropdownOpen ? 'rotate-180' : ''}`} />
+                        </div>
+                        <AnimatePresence>
+                          {isLevel3DropdownOpen && level3Options.length > 0 && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                              animate={{ opacity: 1, y: 5, scale: 1 }}
+                              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                              className="absolute left-0 right-0 top-full z-[60] mt-1 bg-[#E0E5EC] rounded-2xl shadow-[8px_8px_16px_rgba(163,177,198,0.8),-8px_-8px_16px_rgba(255,255,255,1)] border border-white/40 overflow-hidden"
+                            >
+                              <div className="max-h-56 overflow-y-auto custom-scrollbar p-2 flex flex-col gap-1">
+                                {level3Options.map((zone) => (
+                                  <button key={zone} type="button"
+                                    onClick={() => { setLocation(prev => ({ ...prev, level3: zone })); setIsLevel3DropdownOpen(false); }}
+                                    className={`w-full px-4 py-2.5 rounded-xl text-left font-bold text-sm transition-all ${location.level3 === zone ? 'bg-[#1A1A3A] text-white' : 'text-[#1A1A3A]/70 hover:bg-white/50'}`}
+                                  >{zone}</button>
+                                ))}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    ) : (
+                      location.level2 && (
+                        <div className="flex flex-col gap-1 mt-1 relative" ref={suggestionsRef}>
+                          <label className="text-[10px] font-bold text-[#1A1A3A]/50 uppercase tracking-wider ml-2 block">
+                            {level3Label} <span className="text-red-500">*</span>
+                            {location.level3.length > 0 && location.level3.length < 3 && (
+                              <span className="text-red-500 normal-case tracking-normal ml-2">(Mín. 3 caracteres)</span>
+                            )}
+                          </label>
+                          <input
+                            type="text"
+                            value={location.level3}
+                            onChange={(e) => {
+                              const normalized = normalizeLevel3(e.target.value);
+                              setLocation({ ...location, level3: normalized });
+                              setIsTypingLevel3(true);
+                              setIsLevel3SuggestionsOpen(true);
+                            }}
+                            onFocus={() => { if (level3Suggestions.length > 0) setIsLevel3SuggestionsOpen(true); }}
+                            placeholder={getLevel3Placeholder()}
+                            required
+                            minLength={3}
+                            maxLength={50}
+                            className="w-full h-14 px-4 bg-[#E0E5EC] rounded-2xl shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] text-[#1A1A3A] font-bold focus:outline-none transition-all"
+                          />
+                          <AnimatePresence>
+                            {isLevel3SuggestionsOpen && level3Suggestions.length > 0 && (
+                              <motion.div
+                                initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                                animate={{ opacity: 1, y: 5, scale: 1 }}
+                                exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                                className="absolute left-0 right-0 top-full z-[60] mt-1 bg-[#E0E5EC] rounded-2xl shadow-[8px_8px_16px_rgba(163,177,198,0.8),-8px_-8px_16px_rgba(255,255,255,1)] border border-white/40 overflow-hidden"
+                              >
+                                <div className="max-h-56 overflow-y-auto custom-scrollbar p-2 flex flex-col gap-1">
+                                  {level3Suggestions.map((zone) => (
+                                    <button key={zone} type="button"
+                                      onClick={() => { setLocation(prev => ({ ...prev, level3: zone })); setIsLevel3SuggestionsOpen(false); setIsTypingLevel3(false); }}
+                                      className="w-full px-4 py-2.5 rounded-xl text-left font-bold text-sm transition-all text-[#1A1A3A]/70 hover:bg-white/50"
+                                    >{zone}</button>
+                                  ))}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      )
+                    )}
+                  </>
+                );
+              })()
+            )}
+          </div>
 
           {/* WHATSAPP */}
           <div className="flex flex-col gap-2">
