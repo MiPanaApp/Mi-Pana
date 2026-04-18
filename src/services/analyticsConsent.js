@@ -2,42 +2,37 @@ import { analyticsReady } from './firebase';
 import { setAnalyticsCollectionEnabled } from 'firebase/analytics';
 
 export async function applyAllConsents(consentObj) {
+  const isAccepted = consentObj.analytics === true || consentObj.googleAnalytics === true;
 
-  // 1. Firebase Analytics — esperar a que esté inicializado
+  // 1. Firebase Analytics & Google Analytics 4
+  // Al usar Firebase, setAnalyticsCollectionEnabled controla la recolección de datos.
   try {
     const analyticsInstance = await analyticsReady;
     if (analyticsInstance) {
-      setAnalyticsCollectionEnabled(
-        analyticsInstance, 
-        consentObj.analytics === true
-      );
+      setAnalyticsCollectionEnabled(analyticsInstance, isAccepted);
     }
   } catch(e) { 
-    console.warn('Firebase analytics consent:', e);
+    console.warn('Firebase analytics consent error:', e);
   }
 
-  // 2. Google Consent Mode v2
+  // 2. Google Consent Mode v2 (Update global)
+  // Siempre usamos gtag() que está pre-definido en index.html como shim
   if (typeof window.gtag === 'function') {
+    const status = isAccepted ? 'granted' : 'denied';
     window.gtag('consent', 'update', {
-      analytics_storage: consentObj.googleAnalytics === true ? 'granted' : 'denied',
-      ad_storage: consentObj.googleAnalytics === true ? 'granted' : 'denied',
-      ad_user_data: consentObj.googleAnalytics === true ? 'granted' : 'denied',
-      ad_personalization: consentObj.googleAnalytics === true ? 'granted' : 'denied'
+      analytics_storage: status,
+      ad_storage: status,
+      ad_user_data: status,
+      ad_personalization: status
     });
-  }
-
-  // 3. Inyectar script GA4 solo si se acepta y no existe
-  if (consentObj.googleAnalytics === true) {
-    const existingScript = document.getElementById('ga4-script');
-    if (!existingScript) {
-      const script = document.createElement('script');
-      script.id = 'ga4-script';
-      script.async = true;
-      script.src = 'https://www.googletagmanager.com/gtag/js?id=G-DR5ZDRW90N';
-      document.head.appendChild(script);
-      script.onload = () => {
-        window.gtag('config', 'G-DR5ZDRW90N');
-      };
+    
+    // Si se aceptó, enviamos un evento de actualización de consentimiento
+    if (isAccepted) {
+      window.gtag('event', 'consent_updated', {
+        'analytics': consentObj.analytics,
+        'google_analytics': consentObj.googleAnalytics
+      });
     }
   }
 }
+

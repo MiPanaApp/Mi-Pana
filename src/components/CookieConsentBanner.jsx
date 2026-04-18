@@ -90,10 +90,10 @@ export default function CookieConsentBanner() {
       transition={{ duration: 0.4, ease: "easeOut" }}
       className="fixed bottom-0 left-0 right-0 md:top-1/2 md:left-1/2 md:bottom-auto md:max-w-lg md:w-full bg-[#E8E8F0] z-[9998] p-6 rounded-t-[2rem] md:rounded-[2rem] shadow-[20px_20px_60px_rgba(0,0,0,0.15)]"
     >
-      <div className="flex items-start gap-3 mb-6">
-        <Shield size={20} className="text-[#1A1A3A]/60 flex-shrink-0 mt-0.5" />
+      <div className="flex items-start gap-2 mb-4">
+        <Shield size={26} className="text-[#1A1A3A]/60 flex-shrink-0" />
         <p className="text-sm text-[#1A1A3A]/70 font-medium leading-relaxed">
-          Usamos cookies necesarias y analíticas (Firebase + Google Analytics) para mejorar tu experiencia.
+          Usamos cookies necesarias y analíticas para mejorar tu experiencia.
         </p>
       </div>
 
@@ -103,11 +103,11 @@ export default function CookieConsentBanner() {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden mb-6 flex flex-col gap-3"
+            className="overflow-hidden mb-4 flex flex-col gap-2"
           >
             {/* Card 1 */}
-            <div className="bg-white/60 rounded-2xl p-4 shadow-[inset_2px_2px_5px_rgba(0,0,0,0.02)]">
-               <div className="flex items-center justify-between mb-2">
+            <div className="bg-white/60 rounded-2xl p-3 shadow-[inset_2px_2px_5px_rgba(0,0,0,0.02)]">
+               <div className="flex items-center justify-between mb-1.5">
                  <div className="flex items-center gap-2">
                    <Lock size={18} className="text-[#1A1A3A]" />
                    <span className="font-black text-sm text-[#1A1A3A]">Cookies Necesarias</span>
@@ -116,7 +116,7 @@ export default function CookieConsentBanner() {
                    <div className="absolute top-1 left-5 w-4 h-4 bg-white rounded-full" />
                  </div>
                </div>
-               <p className="text-xs text-[#1A1A3A]/60 mb-2">
+               <p className="text-xs text-[#1A1A3A]/60 mb-1.5">
                  Autenticación y sesión de usuario. Imprescindibles para el funcionamiento.
                </p>
                <span className="text-[10px] bg-green-100 text-green-700 rounded-full px-2 py-0.5 font-bold uppercase tracking-wide">
@@ -125,8 +125,8 @@ export default function CookieConsentBanner() {
             </div>
 
             {/* Card 2 */}
-            <div className="bg-white/60 rounded-2xl p-4 shadow-[inset_2px_2px_5px_rgba(0,0,0,0.02)]">
-               <div className="flex items-center justify-between mb-2">
+            <div className="bg-white/60 rounded-2xl p-3 shadow-[inset_2px_2px_5px_rgba(0,0,0,0.02)]">
+               <div className="flex items-center justify-between mb-1.5">
                  <div className="flex items-center gap-2">
                    <BarChart2 size={18} className="text-[#1A1A3A]" />
                    <span className="font-black text-sm text-[#1A1A3A]">Firebase Analytics</span>
@@ -139,17 +139,14 @@ export default function CookieConsentBanner() {
                    <div className={`absolute top-1 w-4 h-4 rounded-full transition-all bg-white ${prefs.analytics ? 'left-5' : 'left-1'}`} />
                  </button>
                </div>
-               <p className="text-xs text-[#1A1A3A]/60 mb-2">
+               <p className="text-xs text-[#1A1A3A]/60">
                  Mide el uso de la app para mejorar la experiencia. No se comparte con terceros.
                </p>
-               <span className="text-[10px] text-[#1A1A3A]/40 uppercase tracking-wide font-bold">
-                 Firebase (Google) · 2 años · ID: G-DR5ZDRW90N
-               </span>
             </div>
 
             {/* Card 3 */}
-            <div className="bg-white/60 rounded-2xl p-4 shadow-[inset_2px_2px_5px_rgba(0,0,0,0.02)]">
-               <div className="flex items-center justify-between mb-2">
+            <div className="bg-white/60 rounded-2xl p-3 shadow-[inset_2px_2px_5px_rgba(0,0,0,0.02)]">
+               <div className="flex items-center justify-between mb-1.5">
                  <div className="flex items-center gap-2">
                    <TrendingUp size={18} className="text-[#1A1A3A]" />
                    <span className="font-black text-sm text-[#1A1A3A]">Google Analytics</span>
@@ -162,13 +159,10 @@ export default function CookieConsentBanner() {
                    <div className={`absolute top-1 w-4 h-4 rounded-full transition-all bg-white ${prefs.googleAnalytics ? 'left-5' : 'left-1'}`} />
                  </button>
                </div>
-               <p className="text-xs text-[#1A1A3A]/60 mb-2">
+               <p className="text-xs text-[#1A1A3A]/60 mb-1.5">
                  Analítica web para optimizar el rendimiento de mipana.net.
                </p>
-               <div className="flex items-center justify-between mt-3">
-                 <span className="text-[10px] text-[#1A1A3A]/40 uppercase tracking-wide font-bold">
-                   Google LLC · _ga 2 años / _gid 24h
-                 </span>
+               <div className="flex justify-end">
                  <a 
                    href="https://policies.google.com/privacy" 
                    target="_blank" 
