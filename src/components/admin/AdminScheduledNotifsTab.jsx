@@ -52,6 +52,7 @@ const PRELOAD_TEMPLATES = [
 ];
 
 const TRIGGERS = {
+  new_user: "Nuevo usuario registrado",
   product_inactive: "Anuncio sin actividad",
   product_expiring: "Anuncio próximo a expirar",
   user_inactive: "Usuario inactivo",

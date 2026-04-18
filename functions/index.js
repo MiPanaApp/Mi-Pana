@@ -1,6 +1,6 @@
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { onRequest, onCall, HttpsError } = require("firebase-functions/v2/https");
-const { onDocumentCreated } = require("firebase-functions/v2/firestore");
+const { onDocumentCreated, onDocumentUpdated } = require("firebase-functions/v2/firestore");
 const { defineSecret } = require("firebase-functions/params");
 const RESEND_API_KEY = defineSecret("RESEND_API_KEY");
 
@@ -1119,5 +1119,57 @@ exports.sendVerificationResultEmail = onCall(
     })
 
     return { success: true }
+  }
+);
+
+// --- 7. FUNCIÓN: Bienvenida a nuevo usuario registrado (Push Notification) ---
+exports.onNewUserTrigger = onDocumentUpdated(
+  { document: "users/{uid}" },
+  async (event) => {
+    const before = event.data.before.data();
+    const after = event.data.after.data();
+
+    // 🔴 REGLA DE ORO DE LAS PUSH EN WEB 🔴
+    // No podemos dispararlo en "auth().onCreate()" ni enviarlo en el segundo 0,
+    // porque en ese momento el usuario NO TIENE NINGÚN TOKEN FCM TODAVÍA. 
+    // Los permisos Push se otorgan e insertan en Firestore SEGUNDOS DESPUES 
+    // del registro, cuando el usuario interactúa con la app por primera vez.
+    
+    // Por eso, disparamos la Bienvenida al detectar que el usuario ha guardado su PRIMER token.
+    const hadTokens = before.fcmTokens && before.fcmTokens.length > 0;
+    const hasTokens = after.fcmTokens && after.fcmTokens.length > 0;
+
+    if (!hadTokens && hasTokens) {
+      // 1. Busca en la colección 'templates' la que tenga trigger == 'new_user'
+      const querySnap = await getDb()
+        .collection('notificationTemplates')
+        .where('trigger', '==', 'new_user')
+        .where('active', '==', true)
+        .limit(1)
+        .get();
+
+      if (querySnap.empty) return;
+      const template = querySnap.docs[0].data();
+
+      // 2. Procesa el texto (cambia {{USERNAME}} por user.displayName)
+      const title = template.title;
+      const body = template.body
+        .replace('{{userName}}', after.displayName || after.email?.split('@')[0] || 'pana');
+
+      console.log(`[Push] Pana nuevo con token detectado: ${after.email}. Disparando bienvenida...`);
+
+      // 3. Envía la notificación push vía FCM
+      const messaging = getMessaging();
+      const result = await messaging.sendEachForMulticast({
+        tokens: after.fcmTokens,
+        notification: { title, body },
+        data: {
+          actionUrl: template.actionUrl || '/home',
+          type: 'new_user'
+        }
+      });
+      
+      await cleanupInvalidTokens(event.params.uid, after.fcmTokens, result.responses);
+    }
   }
 );
