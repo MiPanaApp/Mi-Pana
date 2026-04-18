@@ -1,18 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSpainLocations } from '../../hooks/useSpainLocations';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, CheckCircle2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 /**
  * SpainLocationSelector — Selector en cascada de 3 niveles para España
  * Comunidad Autónoma → Provincia → Municipio
- *
- * Props:
- *   onChange(location)       — callback cuando cambia cualquier nivel
- *   defaultCommunity         — código inicial de comunidad (ej: 'MD')
- *   defaultProvince          — código inicial de provincia (ej: 'M')
- *   defaultMunicipality      — nombre inicial del municipio
- *   showMunicipality         — mostrar tercer selector (default: true)
- *   disabled                 — deshabilitar todos los selectores
+ * Estilo premium Soft UI / Neumorphism
  */
 export default function SpainLocationSelector({
   onChange,
@@ -22,114 +16,188 @@ export default function SpainLocationSelector({
   showMunicipality = true,
   disabled = false
 }) {
-  const { getCommunities, getProvinces, getMunicipalities } = useSpainLocations();
+  const { getCommunities, getProvinces, getMunicipalities, getCommunityName, getProvinceName } = useSpainLocations();
 
   const [community, setCommunity] = useState(defaultCommunity);
   const [province, setProvince] = useState(defaultProvince);
   const [municipality, setMunicipality] = useState(defaultMunicipality);
+
+  // Estados para controlar qué dropdown está abierto
+  const [openDropdown, setOpenDropdown] = useState(null); // 'community', 'province', 'municipality'
+
+  const containerRef = useRef(null);
 
   // Notificar cambios al componente padre
   useEffect(() => {
     onChange?.({ community, province, municipality });
   }, [community, province, municipality]);
 
-  // Clases reutilizables para los selects (Soft UI coherente con la app)
-  const baseSelectClass = [
-    'w-full px-4 py-3 rounded-2xl',
-    'bg-[#E0E5EC] text-[#1A1A3A] font-semibold',
-    'text-sm appearance-none cursor-pointer',
-    'focus:outline-none focus:ring-2 focus:ring-[#FFB400]/50',
-    'transition-all',
-  ].join(' ');
+  // Cerrar dropdowns al hacer click fuera
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setOpenDropdown(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
-  const activeSelectClass = baseSelectClass +
-    ' shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)]';
-
-  const disabledSelectClass = baseSelectClass +
-    ' opacity-50 cursor-not-allowed shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.6)]';
-
+  const communities = getCommunities();
   const provinces = getProvinces(community);
   const municipalities = getMunicipalities(community, province);
 
+  // Helper para renderizar un item del dropdown
+  const DropdownItem = ({ label, isSelected, onClick }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full px-4 py-3 rounded-xl text-left font-bold text-sm transition-all flex items-center justify-between group ${isSelected
+        ? 'bg-[#1A1A3A] text-white shadow-lg'
+        : 'text-[#1A1A3A]/70 hover:bg-white/50'
+        }`}
+    >
+      <span className="truncate">{label}</span>
+      {isSelected && <CheckCircle2 size={14} className="text-white flex-shrink-0" />}
+    </button>
+  );
+
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3" ref={containerRef}>
 
       {/* Nivel 1: Comunidad Autónoma */}
       <div className="relative">
-        <select
-          value={community}
-          disabled={disabled}
-          onChange={(e) => {
-            setCommunity(e.target.value);
-            setProvince('');
-            setMunicipality('');
-          }}
-          className={community ? activeSelectClass : disabledSelectClass.replace('opacity-50 cursor-not-allowed', 'cursor-pointer opacity-100')}
+        <div
+          onClick={() => !disabled && setOpenDropdown(openDropdown === 'community' ? null : 'community')}
+          className={`w-full h-14 px-5 flex items-center justify-between bg-[#E0E5EC] rounded-2xl cursor-pointer transition-all ${openDropdown === 'community'
+            ? 'shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)]'
+            : 'shadow-[6px_6px_12px_rgba(163,177,198,0.7),-6px_-6px_12px_rgba(255,255,255,0.9)]'
+            } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          <option value="">Selecciona comunidad autónoma</option>
-          {getCommunities().map(c => (
-            <option key={c.code} value={c.code}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-        <ChevronDown
-          size={16}
-          className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1A1A3A]/40 pointer-events-none"
-        />
+          <span className={`text-base font-semibold truncate ${community ? 'text-[#1A1A3A]' : 'text-gray-400/70'}`}>
+            {getCommunityName(community) || 'Selecciona comunidad autónoma'}
+          </span>
+          <ChevronDown className={`w-5 h-5 text-[#1A1A3A] transition-transform duration-300 ${openDropdown === 'community' ? 'rotate-180' : ''}`} />
+        </div>
+
+        <AnimatePresence>
+          {openDropdown === 'community' && (
+            <motion.div
+              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 5, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              className="absolute left-0 right-0 top-full z-[70] mt-2 bg-[#E0E5EC] rounded-2xl shadow-[8px_8px_16px_rgba(163,177,198,0.8),-8px_-8px_16px_rgba(255,255,255,1)] border border-white/40 overflow-hidden"
+            >
+              <div className="max-h-60 overflow-y-auto custom-scrollbar p-2 flex flex-col gap-1">
+                {communities.map((c) => (
+                  <DropdownItem
+                    key={c.code}
+                    label={c.name}
+                    isSelected={community === c.code}
+                    onClick={() => {
+                      setCommunity(c.code);
+                      setProvince('');
+                      setMunicipality('');
+                      setOpenDropdown(null);
+                    }}
+                  />
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
-      {/* Nivel 2: Provincia (solo si se eligió comunidad) */}
+      {/* Nivel 2: Provincia */}
       <div className="relative">
-        <select
-          value={province}
-          disabled={disabled || !community}
-          onChange={(e) => {
-            setProvince(e.target.value);
-            setMunicipality('');
-          }}
-          className={!community ? disabledSelectClass : activeSelectClass}
+        <div
+          onClick={() => !disabled && community && setOpenDropdown(openDropdown === 'province' ? null : 'province')}
+          className={`w-full h-14 px-5 flex items-center justify-between bg-[#E0E5EC] rounded-2xl transition-all ${!community || disabled
+            ? 'opacity-50 cursor-not-allowed shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.6)]'
+            : openDropdown === 'province'
+              ? 'cursor-pointer shadow-[inset_4px_4px_8_rgba(163,177,198,0.6),inset_-4px_-4px_8_rgba(255,255,255,0.8)]'
+              : 'cursor-pointer shadow-[6px_6px_12px_rgba(163,177,198,0.7),-6px_-6px_12px_rgba(255,255,255,0.9)]'
+            }`}
         >
-          <option value="">
-            {community ? 'Selecciona provincia' : 'Primero selecciona comunidad'}
-          </option>
-          {provinces.map(p => (
-            <option key={p.code} value={p.code}>
-              {p.name}
-            </option>
-          ))}
-        </select>
-        <ChevronDown
-          size={16}
-          className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1A1A3A]/40 pointer-events-none"
-        />
+          <span className={`text-base font-semibold truncate ${province ? 'text-[#1A1A3A]' : 'text-gray-400/70'}`}>
+            {getProvinceName(community, province) || (community ? 'Selecciona provincia' : 'Selecciona comunidad primero')}
+          </span>
+          <ChevronDown className={`w-5 h-5 text-[#1A1A3A] transition-transform duration-300 ${openDropdown === 'province' ? 'rotate-180' : ''}`} />
+        </div>
+
+        <AnimatePresence>
+          {openDropdown === 'province' && (
+            <motion.div
+              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 5, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              className="absolute left-0 right-0 top-full z-[69] mt-2 bg-[#E0E5EC] rounded-2xl shadow-[8px_8px_16px_rgba(163,177,198,0.8),-8px_-8px_16px_rgba(255,255,255,1)] border border-white/40 overflow-hidden"
+            >
+              <div className="max-h-60 overflow-y-auto custom-scrollbar p-2 flex flex-col gap-1">
+                {provinces.map((p) => (
+                  <DropdownItem
+                    key={p.code}
+                    label={p.name}
+                    isSelected={province === p.code}
+                    onClick={() => {
+                      setProvince(p.code);
+                      setMunicipality('');
+                      setOpenDropdown(null);
+                    }}
+                  />
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
-      {/* Nivel 3: Municipio (solo si se eligió provincia y showMunicipality=true) */}
+      {/* Nivel 3: Municipio */}
       {showMunicipality && (
         <div className="relative">
-          <select
-            value={municipality}
-            disabled={disabled || !province}
-            onChange={(e) => setMunicipality(e.target.value)}
-            className={!province ? disabledSelectClass : activeSelectClass}
+          <div
+            onClick={() => !disabled && province && setOpenDropdown(openDropdown === 'municipality' ? null : 'municipality')}
+            className={`w-full h-14 px-5 flex items-center justify-between bg-[#E0E5EC] rounded-2xl transition-all ${!province || disabled
+              ? 'opacity-50 cursor-not-allowed shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.6)]'
+              : openDropdown === 'municipality'
+                ? 'cursor-pointer shadow-[inset_4px_4px_8_rgba(163,177,198,0.6),inset_-4px_-4px_8_rgba(255,255,255,0.8)]'
+                : 'cursor-pointer shadow-[6px_6px_12px_rgba(163,177,198,0.7),-6px_-6px_12px_rgba(255,255,255,0.9)]'
+              }`}
           >
-            <option value="">
-              {province ? 'Selecciona municipio' : 'Primero selecciona provincia'}
-            </option>
-            {municipalities.map(m => (
-              <option key={m.code} value={m.name}>
-                {m.name}
-              </option>
-            ))}
-          </select>
-          <ChevronDown
-            size={16}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1A1A3A]/40 pointer-events-none"
-          />
+            <span className={`text-base font-semibold truncate ${municipality ? 'text-[#1A1A3A]' : 'text-gray-400/70'}`}>
+              {municipality || (province ? 'Selecciona municipio' : 'Selecciona provincia primero')}
+            </span>
+            <ChevronDown className={`w-5 h-5 text-[#1A1A3A] transition-transform duration-300 ${openDropdown === 'municipality' ? 'rotate-180' : ''}`} />
+          </div>
+
+          <AnimatePresence>
+            {openDropdown === 'municipality' && (
+              <motion.div
+                initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 5, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                className="absolute left-0 right-0 top-full z-[68] mt-2 bg-[#E0E5EC] rounded-2xl shadow-[8px_8px_16px_rgba(163,177,198,0.8),-8px_-8px_16px_rgba(255,255,255,1)] border border-white/40 overflow-hidden"
+              >
+                <div className="max-h-60 overflow-y-auto custom-scrollbar p-2 flex flex-col gap-1">
+                  {municipalities.map((m) => (
+                    <DropdownItem
+                      key={m.code}
+                      label={m.name}
+                      isSelected={municipality === m.name}
+                      onClick={() => {
+                        setMunicipality(m.name);
+                        setOpenDropdown(null);
+                      }}
+                    />
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
 
     </div>
   );
 }
+

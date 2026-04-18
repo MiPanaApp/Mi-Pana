@@ -333,32 +333,43 @@ export default function Profile() {
   }
 
   const renderAdsContent = (isDesktop = false) => (
-    <div className={`space-y-6 ${isDesktop ? "grid grid-cols-1 xl:grid-cols-2 gap-6 space-y-0" : ""}`}>
+    <div className={`space-y-6 ${isDesktop ? "grid grid-cols-2 gap-5 space-y-0 items-start" : ""}`}>
       {/* Categoría: ACTIVOS */}
-      <div className={isDesktop ? "bg-white/30 rounded-[30px] p-6 shadow-sm border border-white/50" : ""}>
-        <h3 className="text-[10px] sm:text-xs font-black text-[#0056B3] uppercase tracking-widest mb-4 flex items-center gap-2">
-          <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-          Activos ({activeProducts.length})
-        </h3>
-        <div className={`space-y-4 ${isDesktop ? "max-h-[580px] overflow-y-auto pr-5 custom-scrollbar scroll-smooth" : ""}`}>
+      <div className={isDesktop ? "bg-white/25 rounded-[28px] p-5 border border-white/60 shadow-[inset_1px_1px_4px_rgba(163,177,198,0.2)]" : ""}>
+        <div className={`flex items-center justify-between ${isDesktop ? "mb-3 pb-3 border-b border-white/50" : "mb-4"}`}>
+          <h3 className="text-[10px] sm:text-xs font-black text-[#0056B3] uppercase tracking-widest flex items-center gap-2">
+            <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+            Activos ({activeProducts.length})
+          </h3>
+          {isDesktop && activeProducts.length > 0 && (
+            <span className="text-[10px] font-bold text-[#1A1A3A]/30 uppercase tracking-widest">
+              {activeProducts.length} anuncio{activeProducts.length > 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
+        <div className={`${isDesktop ? "space-y-2.5 max-h-[520px] overflow-y-auto pr-1 custom-scrollbar scroll-smooth" : "space-y-4"}`}>
           {activeProducts.length === 0 ? (
-            <p className="text-[11px] text-gray-400 italic">No tienes anuncios activos.</p>
+            <p className="text-[11px] text-gray-400 italic">{isDesktop ? <span className="block text-center py-8 opacity-40">No tienes anuncios activos.</span> : 'No tienes anuncios activos.'}</p>
           ) : (
             activeProducts.map(product => (
-              <div key={product.id} className="bg-[#E0E5EC] p-3.5 md:p-5 rounded-[1.5rem] md:rounded-[2rem] shadow-[4px_4px_8px_#b8b9be,-4px_-4px_8px_#ffffff] flex flex-col gap-3 md:gap-4 transition-transform hover:scale-[1.01]">
-                <div className="flex items-start gap-4">
+              <div key={product.id} className={`bg-[#E0E5EC] shadow-[4px_4px_8px_#b8b9be,-4px_-4px_8px_#ffffff] flex items-center gap-3 transition-transform hover:scale-[1.01] ${isDesktop ? 'p-3 rounded-2xl' : 'p-3.5 md:p-5 rounded-[1.5rem] md:rounded-[2rem] flex-col sm:flex-row'}`}>
+                <div className={isDesktop ? 'contents' : 'flex items-start gap-4 w-full'}>
                   <img 
                     src={product.image || product.images?.[0] || 'https://via.placeholder.com/150'} 
                     alt={product.name}
-                    className="w-14 h-14 md:w-16 md:h-16 rounded-2xl object-cover bg-white shadow-sm flex-shrink-0"
+                    className={`rounded-xl object-cover bg-white shadow-sm flex-shrink-0 ${isDesktop ? 'w-12 h-12' : 'w-14 h-14 md:w-16 md:h-16'}`}
                   />
                   <div className="flex flex-col min-w-0 flex-1">
-                    <div className="flex justify-between items-start gap-2">
-                      <span className="text-sm md:text-base font-black text-[#1A1A3A] line-clamp-2 leading-tight flex-1">
+                    <div className={`flex gap-2 ${isDesktop ? 'items-center justify-between' : 'justify-between items-start'}`}>
+                      <span className={`font-black text-[#1A1A3A] leading-tight ${isDesktop ? 'text-sm truncate flex-1' : 'text-sm md:text-base line-clamp-2'}`}>
                         {product.name || product.title}
                       </span>
-                      
-                      {/* Botón de Menú de Tres Puntos - Reposicionado */}
+                      {isDesktop && (
+                        <span className="text-sm font-black text-[#0056B3] shrink-0 tabular-nums">
+                          {product.price === 'Consultar' ? 'Consultar' : `${Number(product.price).toLocaleString('es-ES', { minimumFractionDigits: 2 })} €`}
+                        </span>
+                      )}
+                      {/* Botón de Menú de Tres Puntos */
                       <div className="relative product-menu-container shrink-0">
                         <button 
                           onClick={(e) => {
@@ -440,9 +451,11 @@ export default function Profile() {
                         </AnimatePresence>
                       </div>
                     </div>
-                    <span className="text-[13px] md:text-sm font-black text-[#0056B3] mt-1">
-                      {product.price === 'Consultar' ? 'Consultar' : `${Number(product.price).toLocaleString('es-ES', { minimumFractionDigits: 2 })} €`}
-                    </span>
+                    {!isDesktop && (
+                      <span className="text-[13px] md:text-sm font-black text-[#0056B3] mt-1">
+                        {product.price === 'Consultar' ? 'Consultar' : `${Number(product.price).toLocaleString('es-ES', { minimumFractionDigits: 2 })} €`}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -452,29 +465,41 @@ export default function Profile() {
       </div>
 
       {/* Categoría: NO ACTIVOS */}
-      <div className={isDesktop ? "bg-white/30 rounded-[30px] p-6 shadow-sm border border-white/50" : ""}>
-        <h3 className="text-[10px] sm:text-xs font-black text-[#D90429] uppercase tracking-widest mb-4">
-          No Activos ({inactiveProducts.length})
-        </h3>
-        <div className={`space-y-4 ${isDesktop ? "max-h-[580px] overflow-y-auto pr-5 custom-scrollbar scroll-smooth" : ""}`}>
+      <div className={isDesktop ? "bg-white/25 rounded-[28px] p-5 border border-white/60 shadow-[inset_1px_1px_4px_rgba(163,177,198,0.2)]" : ""}>
+        <div className={`flex items-center justify-between ${isDesktop ? "mb-3 pb-3 border-b border-white/50" : "mb-4"}`}>
+          <h3 className="text-[10px] sm:text-xs font-black text-[#D90429] uppercase tracking-widest flex items-center gap-2">
+            <div className="w-1.5 h-1.5 bg-[#D90429]/60 rounded-full" />
+            No Activos ({inactiveProducts.length})
+          </h3>
+          {isDesktop && inactiveProducts.length > 0 && (
+            <span className="text-[10px] font-bold text-[#1A1A3A]/30 uppercase tracking-widest">
+              {inactiveProducts.length} suspendido{inactiveProducts.length > 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
+        <div className={`${isDesktop ? "space-y-2.5 max-h-[520px] overflow-y-auto pr-1 custom-scrollbar scroll-smooth" : "space-y-4"}`}>
           {inactiveProducts.length === 0 ? (
             <p className="text-[11px] text-gray-400 italic">No tienes anuncios suspendidos.</p>
           ) : (
             inactiveProducts.map(product => (
-              <div key={product.id} className="bg-[#E0E5EC] p-3.5 md:p-5 rounded-[1.5rem] md:rounded-[2rem] shadow-[4px_4px_8px_#b8b9be,-4px_-4px_8px_#ffffff] flex flex-col gap-3 md:gap-4 opacity-80 backdrop-grayscale-[0.5] transition-transform hover:scale-[1.01]">
-                <div className="flex items-start gap-4">
+              <div key={product.id} className={`bg-[#E0E5EC] shadow-[4px_4px_8px_#b8b9be,-4px_-4px_8px_#ffffff] flex items-center gap-3 opacity-70 transition-transform hover:scale-[1.01] ${isDesktop ? 'p-3 rounded-2xl' : 'p-3.5 md:p-5 rounded-[1.5rem] md:rounded-[2rem] flex-col sm:flex-row'}`}>
+                <div className={isDesktop ? 'contents' : 'flex items-start gap-4 w-full'}>
                   <img 
                     src={product.image || product.images?.[0] || 'https://via.placeholder.com/150'} 
                     alt={product.name}
-                    className="w-14 h-14 md:w-16 md:h-16 rounded-2xl object-cover grayscale shadow-sm flex-shrink-0"
+                    className={`rounded-xl object-cover grayscale bg-white shadow-sm flex-shrink-0 ${isDesktop ? 'w-12 h-12' : 'w-14 h-14 md:w-16 md:h-16'}`}
                   />
                   <div className="flex flex-col min-w-0 flex-1">
-                    <div className="flex justify-between items-start gap-2">
-                      <span className="text-sm md:text-base font-bold text-gray-500 line-clamp-2 leading-tight flex-1">
+                    <div className={`flex gap-2 ${isDesktop ? 'items-center justify-between' : 'justify-between items-start'}`}>
+                      <span className={`font-bold text-gray-500 leading-tight ${isDesktop ? 'text-sm truncate flex-1' : 'text-sm md:text-base line-clamp-2'}`}>
                         {product.name || product.title}
                       </span>
-                      
-                      {/* Botón de Menú de Tres Puntos - Reposicionado */}
+                      {isDesktop && (
+                        <span className="text-sm font-black text-gray-400 shrink-0 tabular-nums">
+                          {product.price === 'Consultar' ? 'Consultar' : `${Number(product.price).toLocaleString('es-ES', { minimumFractionDigits: 2 })} €`}
+                        </span>
+                      )}
+                      {/* Botón de Menú de Tres Puntos */
                       <div className="relative product-menu-container shrink-0">
                         <button 
                           onClick={(e) => {
@@ -556,11 +581,13 @@ export default function Profile() {
                         </AnimatePresence>
                       </div>
                     </div>
-                    <span className="text-[13px] md:text-sm font-black text-gray-400 mt-1">
-                      {product.price === 'Consultar' ? 'Consultar' : `${Number(product.price).toLocaleString('es-ES', { minimumFractionDigits: 2 })} €`}
-                    </span>
+                    {!isDesktop && (
+                      <span className="text-[13px] md:text-sm font-black text-gray-400 mt-1">
+                        {product.price === 'Consultar' ? 'Consultar' : `${Number(product.price).toLocaleString('es-ES', { minimumFractionDigits: 2 })} €`}
+                      </span>
+                    )}
                   </div>
-                  <span className="px-2 py-0.5 rounded-full bg-[#D90429]/10 text-[9px] font-black text-[#D90429] uppercase tracking-tighter shrink-0 border border-[#D90429]/20 hidden xs:block">Suspendido</span>
+                  {!isDesktop && <span className="px-2 py-0.5 rounded-full bg-[#D90429]/10 text-[9px] font-black text-[#D90429] uppercase tracking-tighter shrink-0 border border-[#D90429]/20 hidden xs:block">Suspendido</span>}
                 </div>
 
               </div>
