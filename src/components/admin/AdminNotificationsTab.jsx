@@ -396,46 +396,83 @@ export default function AdminNotificationsTab() {
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               className="relative w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col"
             >
-              <div className="bg-[#FFD700] p-6 flex items-center justify-between">
-                <div>
-                  <h4 className="font-black text-lg text-black">Pana Receptores</h4>
-                  <p className="text-black/60 text-[10px] uppercase font-black tracking-widest">{showRecipients.title}</p>
+              <div className="bg-[#FFD700] p-6 pb-8 flex items-center justify-between relative overflow-hidden">
+                {/* Círculos decorativos de fondo */}
+                <div className="absolute -top-4 -right-4 w-24 h-24 bg-black/5 rounded-full blur-2xl" />
+                <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-white/10 rounded-full blur-3xl" />
+                
+                <div className="relative z-10">
+                  <h4 className="font-black text-xl text-black">Pana Receptores</h4>
+                  <p className="text-black/60 text-[10px] uppercase font-black tracking-widest line-clamp-1">{showRecipients.title}</p>
                 </div>
                 <button 
                   onClick={() => setShowRecipients(null)}
-                  className="w-10 h-10 bg-black/10 rounded-full flex items-center justify-center hover:bg-black/20 transition-colors"
+                  className="w-10 h-10 bg-black/10 rounded-full flex items-center justify-center hover:bg-black/20 transition-colors relative z-10"
                 >
                   <X className="w-5 h-5 text-black" />
                 </button>
               </div>
 
-              <div className="p-6 max-h-[400px] overflow-y-auto custom-scrollbar space-y-2">
+              {/* Resumen de envíos - Nueva sección */}
+              <div className="px-6 -mt-4 relative z-20">
+                <div className="bg-white rounded-2xl shadow-[0_10px_25px_rgba(0,0,0,0.05)] p-4 flex items-center justify-evenly border border-gray-50">
+                  <div className="text-center">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Envíos Totales</p>
+                    <p className="text-lg font-black text-blue-600">{showRecipients.sentTo}</p>
+                  </div>
+                  <div className="w-[1px] h-8 bg-gray-100" />
+                  <div className="text-center">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Panas Únicos</p>
+                    <p className="text-lg font-black text-gray-800">{showRecipients.recipients?.length || 0}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Lista con Scroll mejorado */}
+              <div className="p-6 pt-4 max-h-[45vh] overflow-y-auto custom-scrollbar-thin space-y-3">
                 {showRecipients.recipients?.map((user, i) => (
-                  <div key={user.uid || i} className="flex items-center gap-3 p-3 bg-gray-50 rounded-2xl border border-gray-100">
-                    <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-blue-600 shrink-0">
-                      <Users className="w-5 h-5" />
+                  <motion.div 
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: Math.min(i * 0.05, 0.5) }}
+                    key={user.uid || i} 
+                    className="flex items-center gap-3 p-3.5 bg-gray-50/50 rounded-2xl border border-gray-100/50 hover:bg-white hover:shadow-md transition-all group"
+                  >
+                    <div className="w-11 h-11 bg-white rounded-xl shadow-sm flex items-center justify-center text-blue-500 shrink-0 group-hover:scale-110 transition-transform">
+                      <Users className="w-5.5 h-5.5" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-sm text-gray-800 truncate">{user.name}</p>
-                      <p className="text-[11px] font-medium text-gray-400 flex items-center gap-1">
-                        <Mail className="w-3 h-3" /> {user.email}
+                      <p className="text-[11px] font-medium text-gray-400 flex items-center gap-1.5 mt-0.5">
+                        <Mail className="w-3 h-3 text-gray-300" /> {user.email}
                       </p>
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
+                
                 {(!showRecipients.recipients || showRecipients.recipients.length === 0) && (
-                  <div className="text-center p-8 text-gray-400 italic text-sm">
-                    No se guardó el detalle de receptores para esta notificación.
+                  <div className="text-center p-12 text-gray-400 flex flex-col items-center">
+                    <div className="p-4 bg-gray-50 rounded-full mb-3">
+                      <Search className="w-6 h-6 opacity-30" />
+                    </div>
+                    <p className="italic text-xs font-bold uppercase tracking-widest opacity-60">Sin detalle de receptores</p>
+                  </div>
+                )}
+
+                {/* Indicador de más contenido si hay muchos */}
+                {showRecipients.recipients?.length > 3 && (
+                  <div className="text-center py-2">
+                    <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest animate-pulse">Sigue bajando para ver más</p>
                   </div>
                 )}
               </div>
 
-              <div className="p-6 bg-gray-50 border-t border-gray-100 flex justify-center">
+              <div className="p-6 bg-gray-50/50 border-t border-gray-100 flex justify-center">
                 <button 
                   onClick={() => setShowRecipients(null)}
-                  className="px-8 py-3 bg-black text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg"
+                  className="px-10 py-3.5 bg-black text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.15em] hover:scale-105 active:scale-95 transition-all shadow-xl shadow-black/10"
                 >
-                  Cerrar
+                  Cerrar Panel
                 </button>
               </div>
             </motion.div>
