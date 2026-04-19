@@ -86,9 +86,8 @@ const CustomSelect = ({ label, value, options, onChange, icon: Icon }) => {
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className={`w-full bg-[#F4F7FE] border-2 transition-all duration-200 px-4 py-3.5 rounded-2xl text-sm font-bold flex items-center justify-between outline-none ${
-            isOpen ? 'border-[#FFD700] bg-white shadow-lg' : 'border-transparent text-gray-700 hover:bg-[#EEF2FD]'
-          }`}
+          className={`w-full bg-[#F4F7FE] border-2 transition-all duration-200 px-4 py-3.5 rounded-2xl text-sm font-bold flex items-center justify-between outline-none ${isOpen ? 'border-[#FFD700] bg-white shadow-lg' : 'border-transparent text-gray-700 hover:bg-[#EEF2FD]'
+            }`}
         >
           <div className="flex items-center gap-3">
             {Icon && <Icon className={`w-4 h-4 ${isOpen ? 'text-[#FFD700]' : 'text-gray-400'}`} />}
@@ -115,11 +114,10 @@ const CustomSelect = ({ label, value, options, onChange, icon: Icon }) => {
                       onChange(option.value);
                       setIsOpen(false);
                     }}
-                    className={`w-full px-5 py-3 text-left text-sm font-bold flex items-center justify-between transition-colors ${
-                      value === option.value 
-                        ? 'bg-[#FFD700]/10 text-[#FFD700]' 
+                    className={`w-full px-5 py-3 text-left text-sm font-bold flex items-center justify-between transition-colors ${value === option.value
+                        ? 'bg-[#FFD700]/10 text-[#FFD700]'
                         : 'text-gray-600 hover:bg-gray-50'
-                    }`}
+                      }`}
                   >
                     {option.label}
                     {value === option.value && <div className="w-1.5 h-1.5 bg-[#FFD700] rounded-full shadow-[0_0_8px_#FFD700]" />}
@@ -239,7 +237,7 @@ export default function AdminScheduledNotifsTab() {
   if (showForm) {
     return (
       <div className="bg-white p-6 md:p-8 rounded-[2.5rem] shadow-sm border border-gray-50 max-w-4xl max-h-[80vh] overflow-y-auto m-auto mt-4">
-        <button 
+        <button
           onClick={() => { setShowForm(false); setEditingTemplate(null); }}
           className="flex items-center gap-2 text-gray-500 font-bold mb-6 hover:text-gray-800 transition-colors"
         >
@@ -264,8 +262,8 @@ export default function AdminScheduledNotifsTab() {
           </div>
 
           <div>
-             <div className="flex justify-between items-end mb-1.5 ml-1 mr-1">
-                <label className="text-xs font-extrabold text-gray-500 uppercase tracking-wide">Título ({formData.title.length}/65)</label>
+            <div className="flex justify-between items-end mb-1.5 ml-1 mr-1">
+              <label className="text-xs font-extrabold text-gray-500 uppercase tracking-wide">Título ({formData.title.length}/65)</label>
             </div>
             <input
               type="text"
@@ -275,10 +273,10 @@ export default function AdminScheduledNotifsTab() {
               className="w-full bg-[#F4F7FE] border-none text-gray-700 px-4 py-3 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-[#FFD700]/50"
             />
           </div>
-          
+
           <div>
             <div className="flex justify-between items-end mb-1.5 ml-1 mr-1">
-                <label className="text-xs font-extrabold text-gray-500 uppercase tracking-wide">Cuerpo del mensaje ({formData.body.length}/178)</label>
+              <label className="text-xs font-extrabold text-gray-500 uppercase tracking-wide">Cuerpo del mensaje ({formData.body.length}/178)</label>
             </div>
             <textarea
               rows="3"
@@ -355,14 +353,14 @@ export default function AdminScheduledNotifsTab() {
               onChange={(val) => setFormData({ ...formData, targetCountry: val })}
             />
           </div>
-          
+
           <div>
             <label className="block text-xs font-extrabold text-gray-500 uppercase tracking-wide mb-1.5 ml-1">URL de Acción (opcional)</label>
             <div className="relative">
               <input
                 type="url"
                 value={formData.actionUrl || ''}
-                onChange={e => setFormData({...formData, actionUrl: e.target.value})}
+                onChange={e => setFormData({ ...formData, actionUrl: e.target.value })}
                 placeholder="https://google.com/..."
                 className="w-full bg-[#F4F7FE] border-none text-gray-700 pl-4 pr-20 py-3 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-[#FFD700]/50"
               />
@@ -377,7 +375,7 @@ export default function AdminScheduledNotifsTab() {
 
           <div className="flex items-center justify-between p-4 bg-[#F4F7FE] rounded-2xl">
             <span className="text-sm font-extrabold text-gray-700">Estado de Plantilla</span>
-            <button 
+            <button
               onClick={() => setFormData({ ...formData, active: !formData.active })}
               className={`w-12 h-6 flex items-center rounded-full transition-colors ${formData.active ? 'bg-green-500' : 'bg-gray-300'}`}
             >
@@ -413,7 +411,7 @@ export default function AdminScheduledNotifsTab() {
             </p>
           </div>
         </div>
-        
+
         <button
           onClick={() => {
             setFormData({
@@ -451,15 +449,15 @@ export default function AdminScheduledNotifsTab() {
                       {TRIGGERS[t.trigger]}
                     </span>
                     <span className="bg-gray-50 text-gray-400 text-[9px] font-black uppercase px-2 py-0.5 rounded-md border border-gray-100 flex items-center gap-1">
-                      <Clock size={9} /> {Math.floor(t.delayHours/24)}d
+                      <Clock size={9} /> {Math.floor(t.delayHours / 24)}d
                     </span>
                     <span className="bg-gray-50 text-gray-400 text-[9px] font-black uppercase px-2 py-0.5 rounded-md border border-gray-100 flex items-center gap-1 text-nowrap">
                       <Users size={9} /> {t.targetSegment}
                     </span>
                     {t.actionUrl && (
-                      <a 
-                        href={t.actionUrl} 
-                        target="_blank" 
+                      <a
+                        href={t.actionUrl}
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-1 text-[9px] font-black text-blue-500 bg-blue-50 border border-blue-100 px-2 py-1 rounded-lg"
                       >
@@ -469,7 +467,7 @@ export default function AdminScheduledNotifsTab() {
                   </div>
                 </div>
 
-                <button 
+                <button
                   onClick={() => toggleActive(t)}
                   className={`shrink-0 px-2 py-0.5 text-[9px] font-black uppercase rounded-md border flex items-center gap-1.5 transition-colors ${t.active ? 'bg-green-50 text-green-600 border-green-100' : 'bg-gray-100 text-gray-500 border-gray-200'}`}
                 >
@@ -487,14 +485,14 @@ export default function AdminScheduledNotifsTab() {
 
               {/* FILA 3: Acciones */}
               <div className="flex justify-end gap-2">
-                <button 
+                <button
                   onClick={() => { setEditingTemplate(t); setFormData(t); setShowForm(true); }}
                   className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center text-gray-400 hover:text-black hover:bg-gray-100 transition-colors"
                   title="Editar"
                 >
                   <Pencil size={13} />
                 </button>
-                <button 
+                <button
                   onClick={() => deleteTemplate(t.id)}
                   className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center text-red-300 hover:text-red-500 hover:bg-red-100 transition-colors"
                   title="Eliminar"

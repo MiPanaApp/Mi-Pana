@@ -147,12 +147,37 @@ exports.checkPendingReviews = onSchedule(
       const result = await messaging.sendEachForMulticast({
         tokens,
         notification: {
-          title: '¿Qué tal el pana? 🌟',
+          title: '¿Qué tal el pana?',
           body: `¿Cómo te fue con "${interaction.productName}"? ¡Valóralo ahora!`,
         },
         data: {
           actionUrl: `/perfil-producto?id=${interaction.productId}`,
           type: 'review_reminder'
+        },
+        android: {
+          priority: 'high',
+          notification: {
+            channelId: 'general',
+            priority: 'high', 
+            sound: 'default',
+            title: '¿Qué tal el pana?',
+            body: `¿Cómo te fue con "${interaction.productName}"? ¡Valóralo ahora!`,
+            ticker: 'Mi Pana',
+            clickAction: 'FLUTTER_NOTIFICATION_CLICK'
+          }
+        },
+        apns: {
+          headers: { 'apns-priority': '10' },
+          payload: {
+            aps: {
+              sound: 'default',
+              badge: 1,
+              alert: { 
+                title: '¿Qué tal el pana?', 
+                body: `¿Cómo te fue con "${interaction.productName}"? ¡Valóralo ahora!` 
+              }
+            }
+          }
         }
       }).catch(() => null)
       if (result) await cleanupInvalidTokens(interaction.buyerId, tokens, result.responses)
@@ -194,7 +219,7 @@ exports.onNewMessage = onDocumentCreated(
       tokens,
       notification: {
         title: conv.productName || 'Nuevo mensaje',
-        body: message.text?.substring(0, 100) || '📎 Archivo',
+        body: message.text?.substring(0, 100) || 'Archivo adjunto',
       },
       data: {
         actionUrl: `/chat?id=${convId}`,
@@ -202,15 +227,31 @@ exports.onNewMessage = onDocumentCreated(
         convId
       },
       android: {
+        priority: 'high',
         notification: {
           channelId: 'messages',
           priority: 'high',
-          sound: 'default'
+          sound: 'default',
+          title: conv.productName || 'Nuevo mensaje',
+          body: message.text?.substring(0, 100) || 'Archivo adjunto',
+          ticker: 'Nuevo mensaje en Mi Pana',
+          tag: convId,
+          clickAction: 'FLUTTER_NOTIFICATION_CLICK'
         }
       },
       apns: {
+        headers: {
+          'apns-priority': '10'
+        },
         payload: {
-          aps: { sound: 'default', badge: 1 }
+          aps: {
+            sound: 'default',
+            badge: 1,
+            alert: {
+              title: conv.productName || 'Nuevo mensaje',
+              body: message.text?.substring(0, 100) || 'Archivo adjunto'
+            }
+          }
         }
       }
     })
@@ -289,7 +330,34 @@ exports.sendAdminNotification = onCall(
       const result = await messaging.sendEachForMulticast({
         tokens: batch,
         notification: { title, body },
-        data: { actionUrl: actionUrl || '/home', type: 'admin' }
+        data: { 
+          actionUrl: actionUrl || '/home', 
+          type: 'admin' 
+        },
+        android: {
+          priority: 'high',
+          notification: {
+            channelId: 'general',
+            priority: 'high',
+            sound: 'default',
+            title,
+            body,
+            ticker: 'Notificación de Mi Pana',
+            clickAction: 'FLUTTER_NOTIFICATION_CLICK'
+          }
+        },
+        apns: {
+          headers: {
+            'apns-priority': '10'
+          },
+          payload: {
+            aps: {
+              sound: 'default',
+              badge: 1,
+              alert: { title, body }
+            }
+          }
+        }
       })
       totalSent += result.successCount
 
@@ -401,6 +469,28 @@ exports.checkScheduledNotifications = onSchedule(
                 data: {
                   actionUrl: `/perfil-producto?id=${productDoc.id}`,
                   type: template.trigger
+                },
+                android: {
+                  priority: 'high',
+                  notification: {
+                    channelId: 'general',
+                    priority: 'high', 
+                    sound: 'default',
+                    title,
+                    body,
+                    ticker: 'Mi Pana',
+                    clickAction: 'FLUTTER_NOTIFICATION_CLICK'
+                  }
+                },
+                apns: {
+                  headers: { 'apns-priority': '10' },
+                  payload: {
+                    aps: {
+                      sound: 'default',
+                      badge: 1,
+                      alert: { title, body }
+                    }
+                  }
                 }
               })
               await cleanupInvalidTokens(userId, tokens, sendResult.responses)
@@ -447,17 +537,39 @@ exports.checkScheduledNotifications = onSchedule(
 
               if (!recentSent.empty) continue
 
+              const title = template.title
+              const body = template.body
+                .replace('{{userName}}',
+                  user.name || 'pana')
+
               const sendResult = await messaging.sendEachForMulticast({
                 tokens,
-                notification: {
-                  title: template.title,
-                  body: template.body
-                    .replace('{{userName}}',
-                      user.name || 'pana')
-                },
+                notification: { title, body },
                 data: {
                   actionUrl: '/home',
                   type: template.trigger
+                },
+                android: {
+                  priority: 'high',
+                  notification: {
+                    channelId: 'general',
+                    priority: 'high', 
+                    sound: 'default',
+                    title,
+                    body,
+                    ticker: 'Mi Pana',
+                    clickAction: 'FLUTTER_NOTIFICATION_CLICK'
+                  }
+                },
+                apns: {
+                  headers: { 'apns-priority': '10' },
+                  payload: {
+                    aps: {
+                      sound: 'default',
+                      badge: 1,
+                      alert: { title, body }
+                    }
+                  }
                 }
               })
               await cleanupInvalidTokens(userDoc.id, tokens, sendResult.responses)
@@ -505,17 +617,39 @@ exports.checkScheduledNotifications = onSchedule(
               const tokens = userSnap.data()?.fcmTokens || []
               if (!tokens.length) continue
 
+              const title = template.title
+              const body = template.body
+                .replace('{{productName}}',
+                  product.name || 'tu anuncio')
+
               const sendResult = await messaging.sendEachForMulticast({
                 tokens,
-                notification: {
-                  title: template.title,
-                  body: template.body
-                    .replace('{{productName}}',
-                      product.name || 'tu anuncio')
-                },
+                notification: { title, body },
                 data: {
                   actionUrl: `/perfil-producto?id=${productDoc.id}`,
                   type: template.trigger
+                },
+                android: {
+                  priority: 'high',
+                  notification: {
+                    channelId: 'general',
+                    priority: 'high', 
+                    sound: 'default',
+                    title,
+                    body,
+                    ticker: 'Mi Pana',
+                    clickAction: 'FLUTTER_NOTIFICATION_CLICK'
+                  }
+                },
+                apns: {
+                  headers: { 'apns-priority': '10' },
+                  payload: {
+                    aps: {
+                      sound: 'default',
+                      badge: 1,
+                      alert: { title, body }
+                    }
+                  }
                 }
               })
               await cleanupInvalidTokens(userId, tokens, sendResult.responses)
@@ -555,15 +689,37 @@ exports.checkScheduledNotifications = onSchedule(
 
               if (!alreadySent.empty) continue
 
+              const title = template.title
+              const body = template.body
+
               const sendResult = await messaging.sendEachForMulticast({
                 tokens,
-                notification: {
-                  title: template.title,
-                  body: template.body
-                },
+                notification: { title, body },
                 data: {
                   actionUrl: '/profile/edit',
                   type: template.trigger
+                },
+                android: {
+                  priority: 'high',
+                  notification: {
+                    channelId: 'general',
+                    priority: 'high', 
+                    sound: 'default',
+                    title,
+                    body,
+                    ticker: 'Mi Pana',
+                    clickAction: 'FLUTTER_NOTIFICATION_CLICK'
+                  }
+                },
+                apns: {
+                  headers: { 'apns-priority': '10' },
+                  payload: {
+                    aps: {
+                      sound: 'default',
+                      badge: 1,
+                      alert: { title, body }
+                    }
+                  }
                 }
               })
               await cleanupInvalidTokens(userDoc.id, tokens, sendResult.responses)
@@ -1166,6 +1322,28 @@ exports.onNewUserTrigger = onDocumentUpdated(
         data: {
           actionUrl: template.actionUrl || '/home',
           type: 'new_user'
+        },
+        android: {
+          priority: 'high',
+          notification: {
+            channelId: 'general',
+            priority: 'high', 
+            sound: 'default',
+            title,
+            body,
+            ticker: 'Mi Pana',
+            clickAction: 'FLUTTER_NOTIFICATION_CLICK'
+          }
+        },
+        apns: {
+          headers: { 'apns-priority': '10' },
+          payload: {
+            aps: {
+              sound: 'default',
+              badge: 1,
+              alert: { title, body }
+            }
+          }
         }
       });
       
