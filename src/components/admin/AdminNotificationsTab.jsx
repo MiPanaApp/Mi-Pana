@@ -304,22 +304,21 @@ export default function AdminNotificationsTab() {
 
             {/* Input Date Mejorado */}
             <div className="relative flex-1">
-              <div className="relative cursor-pointer w-full h-full">
-                <div className={`w-full h-full bg-white border ${filterDate !== '' ? 'border-[#FFD700] ring-1 ring-[#FFD700]/50' : 'border-gray-200'} px-4 py-3 rounded-2xl flex items-center transition-shadow hover:bg-gray-50`}>
-                  <span className={`text-sm font-bold flex items-center gap-2 truncate ${filterDate ? 'text-gray-700' : 'text-gray-400'}`}>
-                    <CalendarDays className="w-4 h-4 shrink-0" />
-                    <span className="truncate">{filterDate ? new Date(filterDate + 'T00:00:00').toLocaleDateString() : 'Fecha...'}</span>
-                  </span>
-                </div>
-                {/* Input nativo oculto superpuesto para abrir selector al tocar */}
-                <input 
-                  type="date"
-                  value={filterDate}
-                  onChange={e => { setFilterDate(e.target.value); setVisibleCount(5); }}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer [color-scheme:light] z-10"
-                />
-              </div>
-              
+              <CalendarDays className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10" />
+              <input 
+                 type={filterDate ? "date" : "text"}
+                 onFocus={(e) => { 
+                   e.target.type = 'date'; 
+                   try { e.target.showPicker(); } catch(err) {} 
+                 }}
+                 onBlur={(e) => { 
+                   if(!e.target.value) e.target.type = 'text'; 
+                 }}
+                 placeholder="Fecha..."
+                 value={filterDate}
+                 onChange={e => { setFilterDate(e.target.value); setVisibleCount(5); }}
+                 className={`w-full bg-white border ${filterDate !== '' ? 'border-[#FFD700] ring-1 ring-[#FFD700]/50 text-gray-700' : 'border-gray-200 text-gray-700'} py-3 rounded-2xl text-sm font-bold outline-none transition-shadow hover:bg-gray-50 cursor-pointer pl-10 pr-3 placeholder:text-gray-400 placeholder:font-bold [color-scheme:light]`}
+              />
               {filterDate !== '' && (
                 <button 
                   onClick={() => { setFilterDate(''); setVisibleCount(5); }}
