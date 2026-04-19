@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Capacitor } from '@capacitor/core'
+import { useLocation } from 'react-router-dom'
 
 export function useNotificationPrompt(user) {
   const [showModal, setShowModal] = useState(false)
   const [decided, setDecided] = useState(() => 
     localStorage.getItem('mipana_notifications_decided') === 'true'
   )
+  const location = useLocation()
 
   useEffect(() => {
     // En nativo o sin soporte: marcar como decidido inmediatamente
@@ -35,12 +37,20 @@ export function useNotificationPrompt(user) {
       }
     }
 
+    // No mostrar si está en proceso de verificación de email
+    if (location.pathname.includes('verificacion') || 
+        location.pathname.includes('verify') ||
+        location.pathname === '/auth') return
+
+    // No mostrar si está en splash
+    if (location.pathname === '/') return
+
     // Mostrar después de 3 segundos
     const timer = setTimeout(() => {
       setShowModal(true)
     }, 3000)
     return () => clearTimeout(timer)
-  }, [user, decided])
+  }, [user, decided, location.pathname])
 
   const markAsDecided = useCallback(() => {
     localStorage.setItem('mipana_notifications_decided', 'true')
