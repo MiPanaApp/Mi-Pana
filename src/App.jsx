@@ -40,41 +40,7 @@ import CustomDialog from './components/ui/CustomDialog';
 
 function App() {
   const { init, user } = useAuthStore();
-  const { showModal, closeModal } = useNotificationPrompt(user);
-
-  const [notifDecided, setNotifDecided] = useState(() => {
-    if (localStorage.getItem('mipana_notifications_decided') === 'true') return true;
-    
-    // Si la plataforma es nativa, marcamos la decisión como verdadera para no bloquear módulos web
-    if (Capacitor.isNativePlatform()) {
-      localStorage.setItem('mipana_notifications_decided', 'true');
-      return true;
-    }
-
-    // O si estamos en un navegador que simplemente no soporta Notification en window
-    if (typeof Notification === 'undefined') {
-      localStorage.setItem('mipana_notifications_decided', 'true');
-      return true;
-    }
-
-    // Retrocompatibilidad
-    const hasLegacyDecision = 
-      (Notification.permission !== 'default') || 
-      !!localStorage.getItem('notif_dismissed_at');
-      
-    if (hasLegacyDecision) {
-      localStorage.setItem('mipana_notifications_decided', 'true');
-      return true;
-    }
-    return false;
-  });
-
-  useEffect(() => {
-    const handler = () => setNotifDecided(true);
-    window.addEventListener('notificationDecided', handler);
-    return () => window.removeEventListener('notificationDecided', handler);
-  }, []);
-
+  const { showModal, closeModal, notifDecided } = useNotificationPrompt(user);
   // Inicializar el listener de Firebase Auth al arrancar la app
   useEffect(() => {
     const initConsent = async () => {

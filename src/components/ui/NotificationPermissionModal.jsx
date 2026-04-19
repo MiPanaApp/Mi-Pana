@@ -22,11 +22,6 @@ export default function NotificationPermissionModal({
   if (!isSupported) return null
   if (Capacitor.isNativePlatform()) return null
 
-  const markDecided = () => {
-    localStorage.setItem('mipana_notifications_decided', 'true')
-    window.dispatchEvent(new Event('notificationDecided'))
-  }
-
   const handleActivate = async () => {
     console.log('[DEBUG] Botón "Activar" clickeado en el Modal')
     setUiState('loading')
@@ -35,23 +30,20 @@ export default function NotificationPermissionModal({
 
     if (result.status === 'granted') {
       setUiState('granted')
-      markDecided()
-      // Cerrar el modal tras mostrar confirmación breve
-      setTimeout(onClose, 1500)
+      // Cerrar el modal tras mostrar confirmación breve pasándole false (no fue descartado)
+      setTimeout(() => onClose(false), 1500)
     } else if (result.status === 'denied') {
       setUiState('denied')
-      // No cerramos el modal — mostramos instrucciones
+      // No cerramos el modal — mostramos instrucciones manuales
     } else {
       // error o unsupported — cerramos
-      markDecided()
-      onClose()
+      onClose(false)
     }
   }
 
   const handleDismiss = () => {
-    localStorage.setItem('notif_dismissed_at', Date.now().toString())
-    markDecided()
-    onClose()
+    // Al pasar true indicamos al hook padre que el modal fue descartado (dismiss)
+    onClose(true)
   }
 
   const openBrowserSettings = () => {
