@@ -40,7 +40,6 @@ import CustomDialog from './components/ui/CustomDialog';
 
 function App() {
   const { init, user } = useAuthStore();
-  const { showModal, closeModal, notifDecided } = useNotificationPrompt(user);
   // Inicializar el listener de Firebase Auth al arrancar la app
   useEffect(() => {
     const initConsent = async () => {
@@ -115,12 +114,13 @@ function App() {
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      <AppOverlays notifDecided={notifDecided} showModal={showModal} closeModal={closeModal} />
+      <AppOverlays user={user} />
     </Router>
   );
 }
 
-function AppOverlays({ notifDecided, showModal, closeModal }) {
+function AppOverlays({ user }) {
+  const { showModal, closeModal, notifDecided } = useNotificationPrompt(user);
   const location = useLocation();
   const isSplash = location.pathname === '/';
 
