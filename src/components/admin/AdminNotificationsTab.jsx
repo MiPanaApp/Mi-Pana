@@ -225,7 +225,7 @@ export default function AdminNotificationsTab() {
       </div>
 
       {/* Historial Compactado */}
-      <div className="flex-1 bg-[#F4F7FE] px-3 py-5 lg:p-6 rounded-[2rem] border border-gray-100 flex flex-col min-h-[550px] relative overflow-hidden h-full">
+      <div className="flex-1 bg-[#F4F7FE] px-3 py-5 lg:p-6 rounded-[2rem] border border-gray-100 flex flex-col min-h-[550px] relative h-full">
         
         <div className="flex justify-between items-center mb-4 relative z-20">
           <div>
@@ -302,19 +302,28 @@ export default function AdminNotificationsTab() {
               </AnimatePresence>
             </div>
 
-            {/* Input Date */}
+            {/* Input Date Mejorado */}
             <div className="relative flex-1">
-               {filterDate === "" && <CalendarDays className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />}
-              <input 
-                 type="date"
-                 value={filterDate}
-                 onChange={e => { setFilterDate(e.target.value); setVisibleCount(5); }}
-                 className={`w-full bg-white border ${filterDate !== '' ? 'border-[#FFD700] ring-1 ring-[#FFD700]/50 text-gray-700' : 'border-gray-200 text-transparent'} py-3 rounded-2xl text-sm font-bold outline-none transition-shadow [color-scheme:light] hover:bg-gray-50 cursor-pointer ${filterDate === '' ? 'pl-10 pr-3' : 'px-4'}`}
-              />
+              <div className="relative cursor-pointer w-full h-full">
+                <div className={`w-full h-full bg-white border ${filterDate !== '' ? 'border-[#FFD700] ring-1 ring-[#FFD700]/50' : 'border-gray-200'} px-4 py-3 rounded-2xl flex items-center transition-shadow hover:bg-gray-50`}>
+                  <span className={`text-sm font-bold flex items-center gap-2 truncate ${filterDate ? 'text-gray-700' : 'text-gray-400'}`}>
+                    <CalendarDays className="w-4 h-4 shrink-0" />
+                    <span className="truncate">{filterDate ? new Date(filterDate + 'T00:00:00').toLocaleDateString() : 'Fecha...'}</span>
+                  </span>
+                </div>
+                {/* Input nativo oculto superpuesto para abrir selector al tocar */}
+                <input 
+                  type="date"
+                  value={filterDate}
+                  onChange={e => { setFilterDate(e.target.value); setVisibleCount(5); }}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer [color-scheme:light] z-10"
+                />
+              </div>
+              
               {filterDate !== '' && (
                 <button 
                   onClick={() => { setFilterDate(''); setVisibleCount(5); }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 bg-white pl-2"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 bg-white p-1 rounded-md z-20"
                 >
                   <X className="w-4 h-4" />
                 </button>
