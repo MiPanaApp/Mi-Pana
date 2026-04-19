@@ -286,7 +286,7 @@ exports.sendAdminNotification = onCall(
     let query = getFirestore().collection('users')
 
     if (targetCountry) {
-      query = query.where('country', '==', targetCountry)
+      query = query.where('lastViewedCountry', '==', targetCountry)
     }
 
     const usersSnap = await query.limit(500).get()

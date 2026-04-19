@@ -5,12 +5,18 @@ import { collection, query, orderBy, limit, getDocs, writeBatch, doc } from 'fir
 import { Bell, Send, Loader2, ChevronDown, Check, Users, X, Mail, Search, Globe, MapPin, CalendarDays } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+// Las claves deben coincidir EXACTAMENTE con el valor guardado en 'lastViewedCountry' en Firestore
 const COUNTRIES = {
   all: { name: 'Todos los países' },
   España: { name: 'España' },
-  USA: { name: 'Estados Unidos' },
+  'Estados Unidos': { name: 'Estados Unidos' },
   Colombia: { name: 'Colombia' },
-  Chile: { name: 'Chile' }
+  Chile: { name: 'Chile' },
+  Argentina: { name: 'Argentina' },
+  Perú: { name: 'Perú' },
+  Ecuador: { name: 'Ecuador' },
+  Panamá: { name: 'Panamá' },
+  'Rep. Dominicana': { name: 'Rep. Dominicana' },
 };
 
 export default function AdminNotificationsTab() {
