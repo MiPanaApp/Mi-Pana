@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { getMessaging, getToken, onMessage } from 'firebase/messaging'
 import { doc, setDoc, updateDoc, arrayUnion, arrayRemove, serverTimestamp } from 'firebase/firestore'
 import { auth, db } from '../services/firebase'
+import { Capacitor } from '@capacitor/core'
+import { PushNotifications } from '@capacitor/push-notifications'
 
 export function usePushNotifications() {
   const [permission, setPermission] = useState(
@@ -26,7 +28,34 @@ export function usePushNotifications() {
   const requestPermission = async () => {
     console.log('[PushNotifications] Iniciando requestPermission...')
 
-    // 1. Comprobar soporte del navegador
+    // 1. LÓGICA NATIVA (iOS / Android)
+    if (Capacitor.isNativePlatform()) {
+      try {
+        console.log('[PushNotifications] Usando lógica Nativa Capacitor...')
+        let permStatus = await PushNotifications.checkPermissions()
+        
+        if (permStatus.receive === 'prompt') {
+          permStatus = await PushNotifications.requestPermissions()
+        }
+
+        if (permStatus.receive !== 'granted') {
+          console.warn('[PushNotifications] Permiso Nativo DENEGADO.')
+          setPermission('denied')
+          return { status: 'denied', token: null }
+        }
+
+        setPermission('granted')
+        
+        // El Token de FCM/APNs se registrará vía Listener asíncrono
+        await PushNotifications.register()
+        return { status: 'granted', token: 'native_pending' } 
+      } catch (error) {
+        console.error('[PushNotifications] ❌ Error en requestPermission Nativo:', error)
+        return { status: 'error', token: null }
+      }
+    }
+
+    // 2. LÓGICA WEB (Chrome Desktop, etc)
     if (!('Notification' in window) || !('serviceWorker' in navigator)) {
       console.warn('[PushNotifications] Navegador no soporta notificaciones o Service Worker.')
       return { status: 'unsupported', token: null }
@@ -125,10 +154,42 @@ export function usePushNotifications() {
     }
   }
 
-  // Escuchar notificaciones en PRIMER PLANO
+  // Escuchar notificaciones en PRIMER PLANO (Web & Nativo)
   useEffect(() => {
     if (permission !== 'granted') return
 
+    // === Listener Nativo ===
+    if (Capacitor.isNativePlatform()) {
+      const addNativeListeners = async () => {
+        await PushNotifications.addListener('registration', async (token) => {
+          console.log('[PushNotifications] Token Capacitor nativo obtenido:', token.value)
+          
+          if (auth.currentUser && token.value !== fcmToken) {
+            await setDoc(doc(db, 'users', auth.currentUser.uid), {
+              fcmTokens: arrayUnion(token.value),
+              fcmTokenUpdatedAt: serverTimestamp(),
+              notificationsEnabled: true
+            }, { merge: true })
+            setFcmToken(token.value)
+          }
+        })
+        
+        await PushNotifications.addListener('pushNotificationReceived', (notification) => {
+          console.log('[PushNotifications] Mensaje nativo recibido:', notification)
+          setForegroundMessage({
+            notification: {
+              title: notification.title,
+              body: notification.body
+            }
+          })
+        })
+      }
+      
+      addNativeListeners()
+      return
+    }
+
+    // === Listener Web ===
     try {
       const messaging = getMessaging()
       const unsubscribe = onMessage(messaging, (payload) => {
@@ -146,7 +207,7 @@ export function usePushNotifications() {
     } catch (e) {
       // Ignorar errores de contexto (e.g. navegadores sin soporte completo)
     }
-  }, [permission])
+  }, [permission, fcmToken])
 
   return {
     permission,

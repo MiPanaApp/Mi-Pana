@@ -45,10 +45,21 @@ function App() {
   const [notifDecided, setNotifDecided] = useState(() => {
     if (localStorage.getItem('mipana_notifications_decided') === 'true') return true;
     
-    // Retrocompatibilidad: Si el usuario ya había aceptado/denegado notificaciones 
-    // antes de que creáramos esta flag, marcamos como decidida automáticamente.
+    // Si la plataforma es nativa, marcamos la decisión como verdadera para no bloquear módulos web
+    if (Capacitor.isNativePlatform()) {
+      localStorage.setItem('mipana_notifications_decided', 'true');
+      return true;
+    }
+
+    // O si estamos en un navegador que simplemente no soporta Notification en window
+    if (typeof Notification === 'undefined') {
+      localStorage.setItem('mipana_notifications_decided', 'true');
+      return true;
+    }
+
+    // Retrocompatibilidad
     const hasLegacyDecision = 
-      (typeof Notification !== 'undefined' && Notification.permission !== 'default') || 
+      (Notification.permission !== 'default') || 
       !!localStorage.getItem('notif_dismissed_at');
       
     if (hasLegacyDecision) {

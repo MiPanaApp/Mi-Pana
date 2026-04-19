@@ -750,16 +750,22 @@ exports.checkScheduledNotifications = onSchedule(
 // EMAIL 1 — Bienvenida (automático al crear usuario)
 // ════════════════════════════════════════════════
 
-exports.sendWelcomeEmail = onDocumentCreated(
+exports.sendWelcomeEmail = onDocumentWritten(
   { 
     document: "users/{userId}", // Especificamos la ruta para mayor claridad si es necesario
     secrets: [RESEND_API_KEY] 
   },
   async (event) => {
-    const userData = event.data.data()
+    // Si se borró el documento no hacemos nada
+    if (!event.data.after.exists) return;
+
+    const userData = event.data.after.data()
     const email = userData?.email
     const displayName = userData?.name || userData?.displayName || "pana"
-    if (!email) return
+    const welcomeEmailSent = userData?.welcomeEmailSent
+
+    // Si aún no hay email cargado en este tick o si ya se le envió, cortamos ejecución
+    if (!email || welcomeEmailSent) return
 
     const { Resend } = require("resend")
     const resend = new Resend(RESEND_API_KEY.value())
@@ -787,6 +793,9 @@ exports.sendWelcomeEmail = onDocumentCreated(
         })
       })
       console.log(`✅ sendWelcomeEmail enviado exitosamente a ${email}:`, JSON.stringify(result))
+
+      // Evitamos disparos repetitivos para este mismo usuario actualizando el flag
+      await event.data.after.ref.update({ welcomeEmailSent: true })
     } catch (emailError) {
       console.error(`❌ sendWelcomeEmail error enviando a ${email}:`, emailError.message, emailError)
       throw emailError
