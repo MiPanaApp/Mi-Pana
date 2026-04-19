@@ -42,14 +42,12 @@ export const useAuthStore = create((set, get) => ({
 
       if (user) {
         // Tracker de usuario activo para notificaciones automáticas
-        // throttle de 24h usando localStorage
-        const todayStr = new Date().toDateString();
-        const lastSeenKey = `lastSeen_${user.uid}`;
-        if (localStorage.getItem(lastSeenKey) !== todayStr) {
+        // Solo escribe en Firestore si no lo hizo en esta sesión
+        if (!sessionStorage.getItem('lastSeenUpdated')) {
           updateDoc(doc(db, 'users', user.uid), {
             lastSeenAt: serverTimestamp()
           }).then(() => {
-            localStorage.setItem(lastSeenKey, todayStr);
+            sessionStorage.setItem('lastSeenUpdated', 'true');
           }).catch(e => console.warn('No se pudo registrar lastSeenAt', e));
         }
       }
