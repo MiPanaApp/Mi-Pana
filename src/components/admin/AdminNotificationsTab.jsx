@@ -256,6 +256,33 @@ export default function AdminNotificationsTab() {
           </div>
           
           <div className="flex gap-3">
+            {/* Input Date Mejorado (Movido a la izquierda para evitar corte del popup nativo) */}
+            <div className="relative flex-1">
+              <CalendarDays className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10" />
+              <input 
+                 type={filterDate ? "date" : "text"}
+                 onFocus={(e) => { 
+                   e.target.type = 'date'; 
+                   try { e.target.showPicker(); } catch(err) {} 
+                 }}
+                 onBlur={(e) => { 
+                   if(!e.target.value) e.target.type = 'text'; 
+                 }}
+                 placeholder="Fecha..."
+                 value={filterDate}
+                 onChange={e => { setFilterDate(e.target.value); setVisibleCount(5); }}
+                 className={`w-full bg-white border ${filterDate !== '' ? 'border-[#FFD700] ring-1 ring-[#FFD700]/50 text-gray-700' : 'border-gray-200 text-gray-700'} py-3 rounded-2xl text-sm font-bold outline-none transition-shadow hover:bg-gray-50 cursor-pointer pl-10 pr-3 placeholder:text-gray-400 placeholder:font-bold [color-scheme:light]`}
+              />
+              {filterDate !== '' && (
+                <button 
+                  onClick={() => { setFilterDate(''); setVisibleCount(5); }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 bg-white p-1 rounded-md z-20"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
             {/* Dropdown Custom País */}
             <div className="relative flex-1">
               <div 
@@ -300,33 +327,6 @@ export default function AdminNotificationsTab() {
                   </>
                 )}
               </AnimatePresence>
-            </div>
-
-            {/* Input Date Mejorado */}
-            <div className="relative flex-1">
-              <CalendarDays className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10" />
-              <input 
-                 type={filterDate ? "date" : "text"}
-                 onFocus={(e) => { 
-                   e.target.type = 'date'; 
-                   try { e.target.showPicker(); } catch(err) {} 
-                 }}
-                 onBlur={(e) => { 
-                   if(!e.target.value) e.target.type = 'text'; 
-                 }}
-                 placeholder="Fecha..."
-                 value={filterDate}
-                 onChange={e => { setFilterDate(e.target.value); setVisibleCount(5); }}
-                 className={`w-full bg-white border ${filterDate !== '' ? 'border-[#FFD700] ring-1 ring-[#FFD700]/50 text-gray-700' : 'border-gray-200 text-gray-700'} py-3 rounded-2xl text-sm font-bold outline-none transition-shadow hover:bg-gray-50 cursor-pointer pl-10 pr-3 placeholder:text-gray-400 placeholder:font-bold [color-scheme:light]`}
-              />
-              {filterDate !== '' && (
-                <button 
-                  onClick={() => { setFilterDate(''); setVisibleCount(5); }}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 bg-white p-1 rounded-md z-20"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
             </div>
           </div>
         </div>
