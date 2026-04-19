@@ -178,7 +178,6 @@ const Footer = ({ onContactClick }) => {
               <li><button onClick={onContactClick} className="hover:text-pana-yellow transition-colors">Contactar</button></li>
               <li><button onClick={() => openLegal('terms')} className="hover:text-pana-yellow transition-colors text-left">Condiciones de Contratación</button></li>
               <li><button onClick={() => openLegal('privacy')} className="hover:text-pana-yellow transition-colors text-left">Políticas de Privacidad</button></li>
-              <li><button onClick={() => openLegal('cookies')} className="hover:text-pana-yellow transition-colors text-left">Gestión de Cookies</button></li>
               <li><button onClick={() => window.dispatchEvent(new CustomEvent('open-info', { 
                 detail: { 
                   title: 'Seguridad Mi Pana', 

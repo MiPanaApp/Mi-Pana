@@ -938,12 +938,6 @@ export default function Profile() {
                   <Lock size={16}/> Políticas de Privacidad
                 </button>
                 <button 
-                  onClick={() => openLegal('cookies')}
-                  className="flex items-center gap-3 p-3 text-sm font-bold text-[#555577] hover:bg-white/50 rounded-xl transition-colors"
-                >
-                  <Cookie size={16}/> Gestión de Cookies
-                </button>
-                <button 
                   onClick={() => window.dispatchEvent(new CustomEvent('open-info', { 
                     detail: { 
                       title: 'Seguridad Mi Pana', 

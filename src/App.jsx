@@ -6,7 +6,6 @@ import { useCategoryStore } from './store/useCategoryStore';
 import { useLocationStore } from './store/useLocationStore';
 import NotificationPermissionModal from './components/ui/NotificationPermissionModal';
 import CookieConsentBanner from './components/CookieConsentBanner';
-import CookieSettingsButton from './components/CookieSettingsButton';
 import { useNotificationPrompt } from './hooks/useNotificationPrompt';
 import { usePushNotifications } from './hooks/usePushNotifications';
 import { applyAllConsents } from './services/analyticsConsent';
@@ -156,7 +155,6 @@ function AppOverlays({ notifDecided, showModal, closeModal }) {
           <CookieConsentBanner key="cookie-banner" />
         }
       </AnimatePresence>
-      <CookieSettingsButton />
       <CustomDialog />
     </>
   );
