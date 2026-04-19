@@ -68,13 +68,25 @@ export default function Profile() {
     return () => unsub();
   }, [initLocations]);
 
-  // Resolviendo datos de país para mostrar
   let userCountryCode = userData?.country || 'ES';
   
   // Normalizador para migraciones: Si el country guardado es el NOMBRE largo, sacamos el ISO code
   if (userCountryCode.length > 3 || userCountryCode.includes(' ')) {
     userCountryCode = getCountryCodeFromName(userCountryCode);
   }
+
+  // Auto-marcar Perfil Completo para evitar notificaciones de 'Perfil incompleto'
+  useEffect(() => {
+    if (userData && currentUser && !userData.profileComplete) {
+      const isComplete = Boolean(userData.name && userData.region && userData.country && userData.avatar);
+      if (isComplete) {
+        updateDoc(doc(db, 'users', currentUser.uid), {
+          profileComplete: true,
+          updatedAt: new Date()
+        }).catch(err => console.error('Error auto-marcando profileComplete:', err));
+      }
+    }
+  }, [userData, currentUser]);
 
   const userCountryInfo = countries.find(c => c.id === userCountryCode);
   const countryDisplayName = userCountryInfo ? `${userCountryInfo.flag} ${userCountryInfo.name}` : getCountryNameFromCode(userCountryCode);

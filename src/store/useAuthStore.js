@@ -39,6 +39,20 @@ export const useAuthStore = create((set, get) => ({
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       set({ user, loading: false });
+
+      if (user) {
+        // Tracker de usuario activo para notificaciones automáticas
+        // throttle de 24h usando localStorage
+        const todayStr = new Date().toDateString();
+        const lastSeenKey = `lastSeen_${user.uid}`;
+        if (localStorage.getItem(lastSeenKey) !== todayStr) {
+          updateDoc(doc(db, 'users', user.uid), {
+            lastSeenAt: serverTimestamp()
+          }).then(() => {
+            localStorage.setItem(lastSeenKey, todayStr);
+          }).catch(e => console.warn('No se pudo registrar lastSeenAt', e));
+        }
+      }
     });
     return unsubscribe;
   },
@@ -56,6 +70,7 @@ export const useAuthStore = create((set, get) => ({
         displayName: name,
         provider: 'email',
         notificationsEnabled: false,
+        profileComplete: false,
         updatedAt: serverTimestamp(),
       }, { merge: true });
 
@@ -130,6 +145,7 @@ export const useAuthStore = create((set, get) => ({
           photoURL: user.photoURL,
           provider: 'google',
           notificationsEnabled: false,
+          profileComplete: false,
           updatedAt: serverTimestamp(),
         },
         { merge: true }
@@ -158,6 +174,7 @@ export const useAuthStore = create((set, get) => ({
           photoURL: user.photoURL,
           provider: 'facebook',
           notificationsEnabled: false,
+          profileComplete: false,
           updatedAt: serverTimestamp(),
         },
         { merge: true }

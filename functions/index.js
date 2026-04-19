@@ -430,7 +430,7 @@ exports.checkScheduledNotifications = onSchedule(
             )
             const productsSnap = await getDb()
               .collection('products')
-              .where('active', '==', true)
+              .where('status', '==', 'active')
               .where('updatedAt', '<=', daysAgo)
               .limit(100)
               .get()
@@ -594,7 +594,7 @@ exports.checkScheduledNotifications = onSchedule(
 
             const productsSnap = await getDb()
               .collection('products')
-              .where('active', '==', true)
+              .where('status', '==', 'active')
               .where('createdAt', '<=', publishedBefore)
               .where('createdAt', '>=', publishedAfter)
               .limit(100).get()

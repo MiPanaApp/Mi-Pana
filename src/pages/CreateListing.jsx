@@ -592,6 +592,7 @@ export default function CreateListing() {
           reviewCount: 0,
           premium: false,
           verified: false,
+          status: 'active',
         };
         const newDocRef = await addDoc(collection(db, 'products'), newProduct);
 
