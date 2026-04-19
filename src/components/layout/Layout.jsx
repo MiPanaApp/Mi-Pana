@@ -10,7 +10,6 @@ import { useLocationStore } from '../../store/useLocationStore';
 import { useStore } from '../../store/useStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertCircle, ArrowRight } from 'lucide-react';
-import { LegalData } from '../../data/LegalData';
 
 export default function Layout() {
   const [showLocation, setShowLocation] = useState(false);
@@ -48,17 +47,6 @@ export default function Layout() {
     
     window.addEventListener('open-contact', handleOpenContact);
     window.addEventListener('open-info', handleOpenInfo);
-
-    // Revisar los params URL para interactuar desde e-mails
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('contacto') === 'true') {
-      setIsContactOpen(true);
-      window.history.replaceState({}, '', window.location.pathname);
-    } else if (urlParams.get('privacidad') === 'true') {
-      setInfoData({ title: LegalData.privacy.title, content: LegalData.privacy.content });
-      setIsInfoOpen(true);
-      window.history.replaceState({}, '', window.location.pathname);
-    }
     
     return () => {
       window.removeEventListener('open-contact', handleOpenContact);

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from './store/useAuthStore';
 import { useCategoryStore } from './store/useCategoryStore';
 import { useLocationStore } from './store/useLocationStore';
@@ -122,7 +122,24 @@ function App() {
 function AppOverlays({ user }) {
   const { showModal, closeModal, notifDecided } = useNotificationPrompt(user);
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const isSplash = location.pathname === '/';
+
+  useEffect(() => {
+    const privacidad = searchParams.get('privacidad');
+    const contacto = searchParams.get('contacto');
+
+    if (privacidad === 'true') {
+      // Disparar el evento que ya usa Profile.jsx para abrir el drawer legal
+      window.dispatchEvent(new CustomEvent('open-legal', { detail: { key: 'privacy' } }));
+      setSearchParams({});
+    }
+
+    if (contacto === 'true') {
+      window.dispatchEvent(new CustomEvent('open-contact'));
+      setSearchParams({});
+    }
+  }, [searchParams, setSearchParams]);
 
   return (
     <>
