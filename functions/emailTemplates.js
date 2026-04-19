@@ -43,9 +43,9 @@ function emailTemplate({ title, preheader, content, ctaText, ctaUrl }) {
                 &copy; 2025 Mi Pana &middot; Juntos somos más
               </p>
               <p style="margin:0;font-size:12px">
-                <a href="https://mipana.net/privacidad" style="color:#1A1A3A;opacity:0.4;text-decoration:none">Privacidad</a>
+                <a href="https://mipana.net/?privacidad=true" style="color:#1A1A3A;opacity:0.4;text-decoration:none">Privacidad</a>
                 &nbsp;&middot;&nbsp;
-                <a href="mailto:hola@mipana.net" style="color:#1A1A3A;opacity:0.4;text-decoration:none">Contacto</a>
+                <a href="https://mipana.net/?contacto=true" style="color:#1A1A3A;opacity:0.4;text-decoration:none">Contacto</a>
                 &nbsp;&middot;&nbsp;
                 <a href="https://mipana.net" style="color:#1A1A3A;opacity:0.4;text-decoration:none">mipana.net</a>
               </p>
