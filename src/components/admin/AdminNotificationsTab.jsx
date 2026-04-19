@@ -2,15 +2,15 @@ import { useState, useEffect } from 'react';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db, auth } from '../../services/firebase';
 import { collection, query, orderBy, limit, getDocs, writeBatch, doc } from 'firebase/firestore';
-import { Bell, Send, Loader2, ChevronDown, Check, Users, X, Mail } from 'lucide-react';
+import { Bell, Send, Loader2, ChevronDown, Check, Users, X, Mail, Search, Globe, MapPin, CalendarDays } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const COUNTRIES = {
-  all: { name: 'Todos los países', flag: '🌍' },
-  España: { name: 'España', flag: '🇪🇸' },
-  USA: { name: 'Estados Unidos', flag: '🇺🇸' },
-  Colombia: { name: 'Colombia', flag: '🇨🇴' },
-  Chile: { name: 'Chile', flag: '🇨🇱' }
+  all: { name: 'Todos los países' },
+  España: { name: 'España' },
+  USA: { name: 'Estados Unidos' },
+  Colombia: { name: 'Colombia' },
+  Chile: { name: 'Chile' }
 };
 
 export default function AdminNotificationsTab() {
@@ -23,12 +23,19 @@ export default function AdminNotificationsTab() {
   const [notifHistory, setNotifHistory] = useState([]);
   const [showRecipients, setShowRecipients] = useState(null);
 
+  // Filtros de historial
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterCountry, setFilterCountry] = useState('all');
+  const [filterDate, setFilterDate] = useState('');
+  const [visibleCount, setVisibleCount] = useState(5);
+  const [isFilterCountryOpen, setIsFilterCountryOpen] = useState(false);
+
   const loadHistory = async () => {
     try {
       const q = query(
         collection(db, 'adminNotifications'),
         orderBy('sentAt', 'desc'),
-        limit(20)
+        limit(100) // Se aumentó a 100 para permitir busquedas en historial extenso
       );
       const snap = await getDocs(q);
       const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -80,6 +87,31 @@ export default function AdminNotificationsTab() {
     }
   };
 
+  const filteredHistory = notifHistory.filter(n => {
+    let matches = true;
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      matches = matches && ((n.title?.toLowerCase().includes(term)) || (n.body?.toLowerCase().includes(term)));
+    }
+    if (filterCountry !== 'all') {
+      matches = matches && n.targetCountry === filterCountry;
+    }
+    if (filterDate) {
+      const dateObj = n.sentAt?.toDate ? n.sentAt.toDate() : null;
+      if (dateObj) {
+        // Compensate format
+        const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+        const dateString = (new Date(dateObj - tzoffset)).toISOString().split('T')[0];
+        matches = matches && dateString === filterDate;
+      } else {
+        matches = false;
+      }
+    }
+    return matches;
+  });
+
+  const visibleHistory = filteredHistory.slice(0, visibleCount);
+
   return (
     <div className="bg-white px-3 py-6 md:p-8 rounded-[2.5rem] shadow-sm border border-gray-50 flex flex-col xl:flex-row gap-6 min-h-[500px]">
       {/* Formulario de Envío */}
@@ -118,7 +150,7 @@ export default function AdminNotificationsTab() {
                 className="w-full bg-[#F4F7FE] px-4 py-3.5 rounded-2xl flex items-center justify-between cursor-pointer focus:ring-2 focus:ring-[#FFD700]/50 transition-shadow hover:bg-[#EEF2FC]"
                >
                  <span className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                   <span className="text-lg leading-none">{COUNTRIES[notifCountry]?.flag}</span>
+                   {notifCountry === 'all' ? <Globe className="w-5 h-5 text-blue-500" /> : <MapPin className="w-5 h-5 text-red-500" />}
                    {COUNTRIES[notifCountry]?.name}
                  </span>
                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isCountryOpen ? 'rotate-180' : ''}`} />
@@ -135,7 +167,7 @@ export default function AdminNotificationsTab() {
                         className={`w-full px-4 py-3 text-left text-sm font-bold rounded-xl transition-colors flex items-center justify-between ${notifCountry === key ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'}`}
                       >
                         <span className="flex items-center gap-2">
-                           <span className="text-lg leading-none">{data.flag}</span> 
+                           {key === 'all' ? <Globe className="w-5 h-5 text-blue-500" /> : <MapPin className="w-5 h-5 text-gray-400" />}
                            {data.name}
                         </span>
                         {notifCountry === key && <Check className="w-4 h-4 text-blue-500" />}
@@ -193,39 +225,121 @@ export default function AdminNotificationsTab() {
       </div>
 
       {/* Historial Compactado */}
-      <div className="flex-1 bg-[#F4F7FE] px-3 py-6 lg:p-8 rounded-[2rem] border border-gray-100 flex flex-col h-[550px] xl:h-auto overflow-hidden relative">
-        <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-[#F4F7FE] to-transparent pointer-events-none z-10 opacity-50"></div>
+      <div className="flex-1 bg-[#F4F7FE] px-3 py-5 lg:p-6 rounded-[2rem] border border-gray-100 flex flex-col min-h-[550px] relative overflow-hidden h-full">
         
-        <h3 className="text-base font-black text-gray-800 mb-4 flex items-center justify-between relative z-20">
-          <div className="flex flex-col">
-            <span>Historial de Envíos</span>
-            <span className="text-[9px] text-gray-400 font-bold uppercase">Recientes (Scroll 👇)</span>
+        <div className="flex justify-between items-center mb-4 relative z-20">
+          <div>
+            <h3 className="text-base font-black text-gray-800 flex items-center gap-2">
+              Historial de Envíos 
+              <span className="bg-blue-100 text-blue-700 py-0.5 px-2 rounded-full text-[10px] font-black">{filteredHistory.length}</span>
+            </h3>
           </div>
           <button 
             onClick={clearHistory}
-            className="text-[9px] uppercase font-black tracking-wider bg-white text-red-500 px-3 py-1.5 rounded-xl shadow-sm border border-red-50 hover:bg-red-50 transition-colors"
+            className="text-[10px] uppercase font-black tracking-wider bg-white text-red-500 px-4 py-2 rounded-xl shadow-sm border border-red-100 hover:bg-red-50 transition-colors shrink-0"
           >
-            Borrar todo
+            Borrar
           </button>
-        </h3>
+        </div>
+
+        {/* Búsqueda Avanzada */}
+        <div className="flex flex-col gap-3 mb-5 relative z-30">
+          <div className="relative w-full">
+            <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input 
+              type="text" 
+              placeholder="Buscar título o mensaje..."
+              value={searchTerm}
+              onChange={e => { setSearchTerm(e.target.value); setVisibleCount(5); }}
+              className="w-full bg-white border border-gray-200 text-gray-700 pl-10 pr-4 py-3 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-[#FFD700]/50 transition-shadow placeholder:font-medium placeholder:text-gray-400"
+            />
+          </div>
+          
+          <div className="flex gap-3">
+            {/* Dropdown Custom País */}
+            <div className="relative flex-1">
+              <div 
+                onClick={() => setIsFilterCountryOpen(!isFilterCountryOpen)}
+                className={`w-full bg-white border ${filterCountry !== 'all' ? 'border-[#FFD700] ring-1 ring-[#FFD700]/50' : 'border-gray-200'} px-4 py-3 rounded-2xl flex items-center justify-between cursor-pointer transition-shadow hover:bg-gray-50`}
+               >
+                 <span className="text-sm font-bold text-gray-700 flex items-center gap-2 truncate">
+                   {COUNTRIES[filterCountry]?.name || 'Todos los países'}
+                 </span>
+                 <ChevronDown className={`w-4 h-4 text-gray-400 shrink-0 transition-transform ${isFilterCountryOpen ? 'rotate-180' : ''}`} />
+              </div>
+              
+              <AnimatePresence>
+                {isFilterCountryOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setIsFilterCountryOpen(false)} />
+                    <motion.div 
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute top-full mt-2 left-0 right-0 bg-white border border-gray-100 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.08)] z-50 overflow-hidden p-1.5"
+                    >
+                      <button
+                          onClick={() => { setFilterCountry('all'); setIsFilterCountryOpen(false); setVisibleCount(5); }}
+                          className={`w-full px-3 py-2.5 text-left text-sm font-bold rounded-xl transition-colors flex items-center justify-between ${filterCountry === 'all' ? 'bg-[#F4F7FE] text-blue-600' : 'text-gray-600 hover:bg-gray-50'}`}
+                        >
+                          <span className="truncate">Todos los países</span>
+                          {filterCountry === 'all' && <Check className="w-4 h-4 text-blue-500 shrink-0" />}
+                      </button>
+                      {Object.entries(COUNTRIES).filter(([k]) => k !== 'all').map(([key, data]) => (
+                        <button
+                          key={key}
+                          onClick={() => { setFilterCountry(key); setIsFilterCountryOpen(false); setVisibleCount(5); }}
+                          className={`w-full px-3 py-2.5 text-left text-sm font-bold rounded-xl transition-colors flex items-center justify-between ${filterCountry === key ? 'bg-[#F4F7FE] text-blue-600' : 'text-gray-600 hover:bg-gray-50'}`}
+                        >
+                          <span className="truncate">{data.name}</span>
+                          {filterCountry === key && <Check className="w-4 h-4 text-blue-500 shrink-0" />}
+                        </button>
+                      ))}
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Input Date */}
+            <div className="relative flex-1">
+               {filterDate === "" && <CalendarDays className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />}
+              <input 
+                 type="date"
+                 value={filterDate}
+                 onChange={e => { setFilterDate(e.target.value); setVisibleCount(5); }}
+                 className={`w-full bg-white border ${filterDate !== '' ? 'border-[#FFD700] ring-1 ring-[#FFD700]/50 text-gray-700' : 'border-gray-200 text-transparent'} py-3 rounded-2xl text-sm font-bold outline-none transition-shadow [color-scheme:light] hover:bg-gray-50 cursor-pointer ${filterDate === '' ? 'pl-10 pr-3' : 'px-4'}`}
+              />
+              {filterDate !== '' && (
+                <button 
+                  onClick={() => { setFilterDate(''); setVisibleCount(5); }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 bg-white pl-2"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
         
-        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2.5 relative z-20 pb-4 pr-1 max-h-[380px] md:max-h-none">
-          {notifHistory.map((n) => (
-            <div key={n.id} className="bg-white p-3.5 rounded-2xl shadow-sm border border-gray-50 hover:border-gray-100">
-              <div className="flex justify-between items-start mb-1 gap-2">
+        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2.5 relative z-20 pb-4 pr-1 min-h-0">
+          {visibleHistory.map((n) => (
+            <div key={n.id} className="bg-white p-3 rounded-2xl shadow-sm border border-gray-50 flex flex-col gap-2">
+              <div className="flex justify-between items-start gap-2">
                 <span className="font-black text-sm text-gray-800 line-clamp-1">{n.title}</span>
                 <span 
                   onClick={() => n.recipients && setShowRecipients(n)}
-                  className={`text-[10px] font-black px-2.5 py-1 rounded-xl shrink-0 flex items-center gap-1.5 border transition-all ${n.recipients ? 'bg-blue-100 text-blue-700 border-blue-200 cursor-pointer hover:scale-105 active:scale-95' : 'bg-blue-50 text-blue-600 border-blue-100 opacity-60'}`}
+                  className={`text-[10px] font-black px-2 py-1 rounded-lg shrink-0 flex items-center gap-1 border transition-all ${n.recipients ? 'bg-blue-100 text-blue-700 border-blue-200 cursor-pointer hover:bg-blue-200 active:scale-95' : 'bg-gray-50 text-gray-500 border-gray-100 opacity-60'}`}
                 >
-                  <Send className="w-3 h-3" /> {n.sentTo}
+                  <Send className="w-3 h-3" /> {n.sentTo} envíos
                 </span>
               </div>
-              <p className="text-[12px] font-medium text-gray-500 line-clamp-2 mb-3 leading-relaxed">{n.body}</p>
-              <div className="flex justify-between items-center text-[10px] uppercase font-black border-t border-gray-50 pt-3 text-gray-400">
-                <span className="flex items-center gap-1.5 truncate max-w-[60%]">
-                  <span className="text-sm leading-none">{n.targetCountry === 'all' ? '🌍' : COUNTRIES[n.targetCountry]?.flag}</span>
-                  {n.targetCountry === 'all' ? 'Todos Los Países' : COUNTRIES[n.targetCountry]?.name || n.targetCountry}
+              <p className="text-[11px] font-medium text-gray-500 line-clamp-2 leading-relaxed">{n.body}</p>
+              <div className="flex justify-between items-center text-[10px] uppercase font-black pt-2 border-t border-gray-50/50 text-gray-400 mt-1">
+                <span className="flex items-center gap-1 truncate max-w-[60%]">
+                  {n.targetCountry === 'all' ? <Globe className="w-3.5 h-3.5 text-blue-400" /> : <MapPin className="w-3.5 h-3.5 text-gray-400" />}
+                  {n.targetCountry === 'all' ? 'Todos' : COUNTRIES[n.targetCountry]?.name || n.targetCountry}
                 </span>
                 <span className="shrink-0 bg-gray-50 px-2 py-1 rounded-lg">
                   {n.sentAt?.toDate ? new Date(n.sentAt.toDate()).toLocaleDateString() + ' ' + new Date(n.sentAt.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}
@@ -233,11 +347,20 @@ export default function AdminNotificationsTab() {
               </div>
             </div>
           ))}
-          {notifHistory.length === 0 && (
-            <div className="flex flex-col items-center justify-center h-full text-center text-gray-400 p-8 opacity-60">
-               <Bell className="w-10 h-10 mb-3 text-gray-300" />
-               <p className="font-black text-sm uppercase tracking-wide">No hay envíos recientes</p>
-               <p className="text-xs font-medium mt-1">Los envíos aparecerán aquí</p>
+
+          {filteredHistory.length > visibleCount && (
+            <button 
+              onClick={() => setVisibleCount(c => c + 5)}
+              className="w-full mt-3 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-xl text-xs font-bold hover:bg-gray-50 transition-colors shadow-sm flex items-center justify-center gap-2"
+            >
+              Mostrar 5 más <ChevronDown className="w-4 h-4" />
+            </button>
+          )}
+
+          {filteredHistory.length === 0 && (
+            <div className="flex flex-col items-center justify-center h-40 text-center text-gray-400 opacity-60">
+               <Search className="w-8 h-8 mb-2 text-gray-300" />
+               <p className="font-black text-xs uppercase tracking-wide">No se encontraron resultados</p>
             </div>
           )}
         </div>
