@@ -75,6 +75,7 @@ export default function ProductDetail() {
    const { favorites, toggleFavorite } = useStore();
    const [product, setProduct] = useState(null);
    const [relatedProducts, setRelatedProducts] = useState([]);
+   const relatedFetchedRef = useRef(false); // FIX 1: evitar fetch repetido en cada snapshot
    const [reviews, setReviews] = useState([]);
    const [loading, setLoading] = useState(true);
    const [error, setError] = useState('');
@@ -389,6 +390,7 @@ export default function ProductDetail() {
 
    useEffect(() => {
       window.scrollTo(0, 0);
+      relatedFetchedRef.current = false; // FIX 1: resetear al cambiar de producto
       if (!productId) {
          setError('Anuncio no encontrado');
          setLoading(false);
@@ -405,11 +407,19 @@ export default function ProductDetail() {
                const productData = { id: docSnap.id, ...docSnap.data() };
                setProduct(productData);
                
-               // Una vez tenemos el producto, buscamos relacionados y reviews (una sola vez)
-               fetchRelated(productData.category, productData.id);
-               getProductReviews(productData.id)
-                  .then(setReviews)
-                  .catch(err => console.warn('Error fetching reviews:', err));
+               // FIX 1: Solo cargar relacionados y reviews la primera vez
+               if (!relatedFetchedRef.current) {
+                  relatedFetchedRef.current = true;
+                  fetchRelated(
+                    productData.category,
+                    productData.id,
+                    productData.userId,
+                    productData.location?.country
+                  );
+                  getProductReviews(productData.id)
+                     .then(setReviews)
+                     .catch(err => console.warn('Error fetching reviews:', err));
+               }
             } else {
                setError('El anuncio ya no existe o fue eliminado.');
             }
@@ -423,33 +433,91 @@ export default function ProductDetail() {
          return unsubscribe;
       };
 
-      const fetchRelated = async (category, currentId) => {
+      // FIX 2: fetchRelated mejorado con 6 pasos
+      const fetchRelated = async (category, currentId, sellerId, country) => {
          try {
-            const q = query(
-               collection(db, 'products'),
-               where('category', '==', category || 'otros'),
-               limit(10)
-            );
-            const relatedSnap = await getDocs(q);
-            const relatedList = relatedSnap.docs
-               .map(doc => ({ id: doc.id, ...doc.data() }))
-               .filter(p => p.id !== currentId && p.status !== 'inactive' && p.status !== 'hidden');
+            const results = [];
+            const seenIds = new Set([currentId]);
 
-            // Si hay pocos de la misma categoría, traer unos genéricos
-            if (relatedList.length < 4) {
-               const qGeneral = query(collection(db, 'products'), limit(10));
-               const genSnap = await getDocs(qGeneral);
-               const genList = genSnap.docs
-                  .map(doc => ({ id: doc.id, ...doc.data() }))
-                  .filter(p => p.id !== currentId && p.status !== 'inactive' && p.status !== 'hidden');
-
-               // Mezclar y eliminar duplicados por ID
-               const merged = [...relatedList, ...genList];
-               const unique = Array.from(new Map(merged.map(p => [p.id, p])).values());
-               setRelatedProducts(unique.slice(0, 10));
-            } else {
-               setRelatedProducts(relatedList);
+            // PASO 1: Misma categoría + estado active (más relevantes)
+            if (category && category !== 'Otros') {
+               const q1 = query(
+                  collection(db, 'products'),
+                  where('category', '==', category),
+                  where('status', '==', 'active'),
+                  limit(15)
+               );
+               const snap1 = await getDocs(q1);
+               snap1.docs.forEach(d => {
+                  if (!seenIds.has(d.id)) {
+                     seenIds.add(d.id);
+                     results.push({ id: d.id, ...d.data() });
+                  }
+               });
             }
+
+            // PASO 2: Si hay menos de 4, buscar misma categoría sin filtro de status
+            if (results.length < 4 && category) {
+               const q2 = query(
+                  collection(db, 'products'),
+                  where('category', '==', category),
+                  limit(15)
+               );
+               const snap2 = await getDocs(q2);
+               snap2.docs.forEach(d => {
+                  if (!seenIds.has(d.id)) {
+                     const data = d.data();
+                     if (data.status !== 'inactive' &&
+                         data.status !== 'hidden' &&
+                         data.status !== 'suspended') {
+                        seenIds.add(d.id);
+                        results.push({ id: d.id, ...data });
+                     }
+                  }
+               });
+            }
+
+            // PASO 3: Si todavía hay menos de 4, traer productos activos recientes como fallback
+            if (results.length < 4) {
+               const q3 = query(
+                  collection(db, 'products'),
+                  where('status', '==', 'active'),
+                  limit(20)
+               );
+               const snap3 = await getDocs(q3);
+               snap3.docs.forEach(d => {
+                  if (!seenIds.has(d.id)) {
+                     const data = d.data();
+                     if (data.image) { // Solo con imagen
+                        seenIds.add(d.id);
+                        results.push({ id: d.id, ...data });
+                     }
+                  }
+               });
+            }
+
+            // PASO 4: Máximo 2 productos del mismo vendedor para dar variedad
+            const sellerCount = {};
+            const filtered = results.filter(p => {
+               const pSeller = p.userId || p.sellerId;
+               if (pSeller === sellerId) {
+                  sellerCount[pSeller] = (sellerCount[pSeller] || 0) + 1;
+                  return sellerCount[pSeller] <= 2;
+               }
+               return true;
+            });
+
+            // PASO 5: Solo productos con imagen
+            const withImage = filtered.filter(p => p.image);
+
+            // PASO 6: Aleatorizar con Fisher-Yates para variedad en cada visita
+            const shuffled = [...withImage];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+               const j = Math.floor(Math.random() * (i + 1));
+               [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+
+            setRelatedProducts(shuffled.slice(0, 8));
          } catch (err) {
             console.warn("Error fetching related products:", err);
             setRelatedProducts([]);
@@ -1100,9 +1168,18 @@ tlfno contacto: 672 593 950`}
 
          {/* 5. SECCIÓN DE RELACIONADOS (Carrusel Horizontal) */}
          <div className="max-w-7xl mx-auto px-5 md:px-8 mb-20 md:mb-24">
-            <h3 className="text-2xl font-black text-[#1A1A3A] mb-8 pt-10 border-t border-[#1A1A3A]/5">
-               Anuncios relacionados{" "}
+            <h3 className="text-2xl font-black text-[#1A1A3A] mb-8 pt-10 border-t border-[#1A1A3A]/5 flex items-center gap-2">
+               {/* FIX 3: Título dinámico según contenido */}
+               {relatedProducts.some(p => p.category === product.category)
+                  ? `Más en ${product.category}`
+                  : 'También te puede interesar'}{" "}
                <span className="inline-block h-1.5 w-6 bg-gradient-to-r from-[#FFC200] to-[#FFAA00] rounded-full translate-y-[-4px] ml-1"></span>
+               {/* FIX 4: Contador de relacionados */}
+               {relatedProducts.length > 0 && (
+                  <span className="text-xs font-bold text-[#1A1A3A]/40 uppercase tracking-widest ml-2">
+                     {relatedProducts.length} anuncios
+                  </span>
+               )}
             </h3>
 
             <div className="flex overflow-x-auto gap-4 md:gap-6 pb-4 hide-scrollbar snap-x snap-mandatory -mx-5 px-5 md:mx-0 md:px-0">
