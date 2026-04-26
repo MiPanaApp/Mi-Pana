@@ -1168,19 +1168,23 @@ tlfno contacto: 672 593 950`}
 
          {/* 5. SECCIÓN DE RELACIONADOS (Carrusel Horizontal) */}
          <div className="max-w-7xl mx-auto px-5 md:px-8 mb-20 md:mb-24">
-            <h3 className="text-2xl font-black text-[#1A1A3A] mb-8 pt-10 border-t border-[#1A1A3A]/5 flex items-center gap-2">
-               {/* FIX 3: Título dinámico según contenido */}
-               {relatedProducts.some(p => p.category === product.category)
-                  ? `Más en ${product.category}`
-                  : 'También te puede interesar'}{" "}
-               <span className="inline-block h-1.5 w-6 bg-gradient-to-r from-[#FFC200] to-[#FFAA00] rounded-full translate-y-[-4px] ml-1"></span>
-               {/* FIX 4: Contador de relacionados */}
+            <div className="flex flex-wrap items-end justify-between gap-4 mb-8 pt-10 border-t border-[#1A1A3A]/5">
+               <h3 className="text-2xl font-black text-[#1A1A3A] leading-[1.1] max-w-[75%] md:max-w-none">
+                  {relatedProducts.some(p => p.category === product.category)
+                     ? `Más en ${product.category}`
+                     : 'También te puede interesar'}
+               </h3>
+               
                {relatedProducts.length > 0 && (
-                  <span className="text-xs font-bold text-[#1A1A3A]/40 uppercase tracking-widest ml-2">
-                     {relatedProducts.length} anuncios
-                  </span>
+                  <div className="flex items-center gap-2 mb-1">
+                     <span className="inline-block h-1.5 w-6 bg-gradient-to-r from-[#FFC200] to-[#FFAA00] rounded-full"></span>
+                     <div className="flex flex-col leading-[1.1]">
+                        <span className="text-[15px] font-black text-[#1A1A3A]">{relatedProducts.length}</span>
+                        <span className="text-[9px] font-extrabold text-[#1A1A3A]/40 uppercase tracking-wider">anuncios</span>
+                     </div>
+                  </div>
                )}
-            </h3>
+            </div>
 
             <div className="flex overflow-x-auto gap-4 md:gap-6 pb-4 hide-scrollbar snap-x snap-mandatory -mx-5 px-5 md:mx-0 md:px-0">
                {relatedProducts.map((relatedProd) => (
