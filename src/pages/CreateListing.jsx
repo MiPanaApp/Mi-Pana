@@ -588,6 +588,7 @@ export default function CreateListing() {
           sellerAvatar: user?.photoURL || userData?.avatar || '',
           sellerEmail: user?.email || '',
           createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(), // FIX 7: necesario para product_inactive query
           rating: 0,
           reviewCount: 0,
           premium: false,

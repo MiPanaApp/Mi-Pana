@@ -14,11 +14,21 @@ export function usePushNotifications() {
   const [fcmToken, setFcmToken] = useState(null)
   const [foregroundMessage, setForegroundMessage] = useState(null)
 
-  // Registrar token automáticamente si ya hay permiso concedido (al montar o cambiar usuario)
+  // FIX 6: Auto-registro robusto con guard isMounted para evitar race conditions
   useEffect(() => {
-    if (typeof Notification !== 'undefined' && Notification.permission === 'granted' && auth.currentUser) {
-      requestPermission()
-    }
+    if (typeof Notification === 'undefined') return;
+    if (Notification.permission !== 'granted') return;
+    if (!auth.currentUser) return;
+    if (Capacitor.isNativePlatform()) return; // nativo lo maneja el listener
+
+    let isMounted = true;
+    const autoRegister = async () => {
+      if (isMounted) {
+        await requestPermission();
+      }
+    };
+    autoRegister();
+    return () => { isMounted = false; };
   }, [auth.currentUser?.uid])
 
   /**
