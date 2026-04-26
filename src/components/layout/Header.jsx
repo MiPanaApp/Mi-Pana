@@ -44,10 +44,10 @@ const CAPITALS = {
 
 const Header = forwardRef((props, ref) => {
   const navigate = useNavigate();
-  const { 
-    activeCategory, 
-    setActiveCategory, 
-    setIsFilterOpen, 
+  const {
+    activeCategory,
+    setActiveCategory,
+    setIsFilterOpen,
     setSortBy,
     selectedCountry,
     selectedRegion,
@@ -58,7 +58,7 @@ const Header = forwardRef((props, ref) => {
     addRecentSearch,
     userLocation
   } = useStore();
-  
+
   const [hidden, setHidden] = useState(false);
   const [isCountryOpen, setIsCountryOpen] = useState(false);
   const [isRegionOpen, setIsRegionOpen] = useState(false);
@@ -71,7 +71,7 @@ const Header = forwardRef((props, ref) => {
 
   const { currentUser: user, userData, userAvatar } = useAuth();
   const [userName, setUserName] = useState('');
-  
+
   const { categories } = useCategoryStore();
   const { getActiveCountries, isSuspended } = useLocationStore();
   const activeCountries = getActiveCountries();
@@ -139,9 +139,9 @@ const Header = forwardRef((props, ref) => {
 
   const handleRegionChange = async (newRegion) => {
     setRegion(newRegion);
-    setFilters({ 
-      ...filters, 
-      location: { level1: newRegion, level2: '', level3: '' } 
+    setFilters({
+      ...filters,
+      location: { level1: newRegion, level2: '', level3: '' }
     });
     setIsRegionOpen(false);
 
@@ -193,28 +193,28 @@ const Header = forwardRef((props, ref) => {
       <div className="bg-[#E0E5EC] pt-safe safe-area-pt shadow-[0_5px_15px_rgba(163,177,198,0.3)]">
         <div className="max-w-7xl mx-auto px-4 pt-3 pb-3">
           <div className="flex items-center gap-4">
-                        {/* Logo y Ubicación */}
+            {/* Logo y Ubicación */}
             <div className="flex flex-col items-center md:items-start flex-shrink-0 relative md:min-w-[180px]">
-              <img 
-                src={logoTexto} 
-                alt="miPana" 
-                style={{ objectFit: 'contain' }} 
+              <img
+                src={logoTexto}
+                alt="miPana"
+                style={{ objectFit: 'contain' }}
                 className="h-10 md:h-[72px] header-logo cursor-pointer active:scale-95 transition-transform"
                 onClick={() => navigate('/')}
               />
-              
+
               <div className="flex items-center gap-1.5 md:gap-2 mt-1 md:mt-2 md:pl-1">
                 {/* 1. Botón Bandera (Selector de País) */}
                 <div className="relative" ref={countryRef}>
-                  <button 
+                  <button
                     onClick={() => setIsCountryOpen(!isCountryOpen)}
                     className="flex items-center justify-center cursor-pointer active:scale-95 transition-transform opacity-90"
                   >
                     <div className="w-5 h-5 md:w-6 md:h-6 rounded-full overflow-hidden border-[0.5px] border-[#003366]/20 bg-[#E0E5EC] shadow-[2px_2px_4px_rgba(163,177,198,0.5),-2px_-2px_4px_rgba(255,255,255,0.8)] relative flex-shrink-0">
-                      <img 
-                        src={`https://flagcdn.com/w80/${selectedCountry.toLowerCase()}.png`} 
+                      <img
+                        src={`https://flagcdn.com/w80/${selectedCountry.toLowerCase()}.png`}
                         alt={selectedCountry}
-                        className="w-full h-full object-cover absolute inset-0" 
+                        className="w-full h-full object-cover absolute inset-0"
                       />
                     </div>
                   </button>
@@ -231,18 +231,17 @@ const Header = forwardRef((props, ref) => {
                           <button
                             key={c.id}
                             onClick={() => handleCountryChange(c.id, c.capital || CAPITALS[c.id] || '')}
-                            className={`w-12 h-12 flex items-center justify-center rounded-full transition-all flex-shrink-0 ${
-                              selectedCountry === c.id 
-                                ? 'shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.9)]' 
+                            className={`w-12 h-12 flex items-center justify-center rounded-full transition-all flex-shrink-0 ${selectedCountry === c.id
+                                ? 'shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.9)]'
                                 : 'shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.8)] hover:scale-105 active:scale-95'
-                            }`}
+                              }`}
                             title={c.name}
                           >
                             <div className="w-6 h-6 rounded-full overflow-hidden border-[0.5px] border-[#003366]/20 relative">
-                              <img 
-                                src={`https://flagcdn.com/w80/${c.id.toLowerCase()}.png`} 
+                              <img
+                                src={`https://flagcdn.com/w80/${c.id.toLowerCase()}.png`}
                                 alt={c.id}
-                                className="w-full h-full object-cover absolute inset-0" 
+                                className="w-full h-full object-cover absolute inset-0"
                               />
                             </div>
                           </button>
@@ -254,7 +253,7 @@ const Header = forwardRef((props, ref) => {
 
                 {/* 2. Botón Región Dropdown */}
                 <div className="relative" ref={regionRef}>
-                  <button 
+                  <button
                     onClick={() => setIsRegionOpen(!isRegionOpen)}
                     className="flex items-center gap-1.5 cursor-pointer active:scale-95 transition-transform opacity-90 group"
                   >
@@ -277,11 +276,10 @@ const Header = forwardRef((props, ref) => {
                             <button
                               key={regionName}
                               onClick={() => handleRegionChange(regionName)}
-                              className={`w-full px-4 py-2.5 rounded-2xl text-left font-bold text-xs sm:text-sm transition-all flex items-center justify-between ${
-                                (filters?.location?.level1 || selectedRegion) === regionName
+                              className={`w-full px-4 py-2.5 rounded-2xl text-left font-bold text-xs sm:text-sm transition-all flex items-center justify-between ${(filters?.location?.level1 || selectedRegion) === regionName
                                   ? 'bg-[#1A1A3A] text-white shadow-lg'
                                   : 'text-[#1A1A3A]/70 hover:bg-white/50'
-                              }`}
+                                }`}
                             >
                               {regionName}
                             </button>
@@ -299,9 +297,9 @@ const Header = forwardRef((props, ref) => {
               <div className="flex items-center gap-3 md:gap-4 w-full">
                 {/* Buscador Claymorphism Amarillo */}
                 <div className="relative flex-1">
-                  <input 
-                    type="text" 
-                    placeholder="¿Qué necesitas, pana?" 
+                  <input
+                    type="text"
+                    placeholder="¿Qué necesitas, pana?"
                     value={filters.searchQuery || ''}
                     onChange={(e) => {
                       const val = e.target.value;
@@ -322,9 +320,9 @@ const Header = forwardRef((props, ref) => {
                     className="w-full h-11 md:h-14 pl-11 md:pl-16 pr-12 bg-[#FFCC00] rounded-xl md:rounded-2xl text-sm md:text-lg text-[#1A1A3A] font-bold placeholder:text-[#1A1A3A] shadow-[inset_4px_4px_8px_rgba(204,163,0,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] focus:outline-none focus:ring-2 focus:ring-[#0056B3]/40 transition-all"
                   />
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white w-5 h-5 md:w-7 md:h-7" />
-                  
+
                   {filters.searchQuery && (
-                    <button 
+                    <button
                       onClick={() => setFilters({ searchQuery: '' })}
                       className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 bg-[#1A1A3A]/10 rounded-full hover:bg-[#1A1A3A]/20 transition-colors"
                     >
@@ -337,11 +335,10 @@ const Header = forwardRef((props, ref) => {
                 <div className="hidden md:flex relative flex-shrink-0" ref={desktopMenuRef}>
                   <button
                     onClick={() => setIsDesktopMenuOpen(!isDesktopMenuOpen)}
-                    className={`w-10 h-10 md:h-14 md:w-14 rounded-xl md:rounded-2xl flex items-center justify-center transition-all ${
-                      isDesktopMenuOpen 
-                      ? 'bg-[#1A1A3A] text-white shadow-[inset_4px_4px_8px_rgba(26,26,58,0.8),inset_-4px_-4px_8px_rgba(40,40,80,0.5)]' 
-                      : 'bg-[#E0E5EC] text-[#1A1A3A] shadow-[6px_6px_12px_rgba(163,177,198,0.7),-6px_-6px_12px_rgba(255,255,255,0.9)] hover:bg-[#1A1A3A] hover:text-white'
-                    }`}
+                    className={`w-10 h-10 md:h-14 md:w-14 rounded-xl md:rounded-2xl flex items-center justify-center transition-all ${isDesktopMenuOpen
+                        ? 'bg-[#1A1A3A] text-white shadow-[inset_4px_4px_8px_rgba(26,26,58,0.8),inset_-4px_-4px_8px_rgba(40,40,80,0.5)]'
+                        : 'bg-[#E0E5EC] text-[#1A1A3A] shadow-[6px_6px_12px_rgba(163,177,198,0.7),-6px_-6px_12px_rgba(255,255,255,0.9)] hover:bg-[#1A1A3A] hover:text-white'
+                      }`}
                   >
                     {isDesktopMenuOpen ? <X className="w-5 h-5 md:w-6 md:h-6" /> : <Menu className="w-5 h-5 md:w-6 md:h-6" />}
                   </button>
@@ -356,38 +353,38 @@ const Header = forwardRef((props, ref) => {
                         className="absolute top-[120%] right-0 w-[240px] bg-[#E0E5EC] rounded-3xl shadow-[8px_8px_20px_rgba(163,177,198,0.7),-8px_-8px_20px_rgba(255,255,255,0.9)] border-[0.5px] border-white/60 p-3 z-50 flex flex-col gap-2"
                       >
                         <button onClick={() => { setIsDesktopMenuOpen(false); navigate('/home'); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#E0E5EC] text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3),inset_-4px_-4px_8px_rgba(255,255,255,0.5)] hover:shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.7)] transition-all active:scale-95 group">
-                           <Home className="w-5 h-5 text-[#0056B3] group-hover:scale-110 transition-transform" /> Inicio
+                          <Home className="w-5 h-5 text-[#0056B3] group-hover:scale-110 transition-transform" /> Inicio
                         </button>
                         <button onClick={() => { setIsDesktopMenuOpen(false); navigate('/favoritos'); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#E0E5EC] text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3),inset_-4px_-4px_8px_rgba(255,255,255,0.5)] hover:shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.7)] transition-all active:scale-95 group">
-                           <LucideHeart className="w-5 h-5 text-[#D90429] group-hover:scale-110 transition-transform" /> Favoritos
+                          <LucideHeart className="w-5 h-5 text-[#D90429] group-hover:scale-110 transition-transform" /> Favoritos
                         </button>
                         <button onClick={() => { setIsDesktopMenuOpen(false); navigate('/anunciar'); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#E0E5EC] text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3),inset_-4px_-4px_8px_rgba(255,255,255,0.5)] hover:shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.7)] transition-all active:scale-95 group">
-                           <PlusCircle className="w-5 h-5 text-[#1A1A3A] group-hover:scale-110 transition-transform" /> Anunciar
+                          <PlusCircle className="w-5 h-5 text-[#1A1A3A] group-hover:scale-110 transition-transform" /> Anunciar
                         </button>
                         <button onClick={() => { setIsDesktopMenuOpen(false); navigate('/mensajes'); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#E0E5EC] text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3),inset_-4px_-4px_8px_rgba(255,255,255,0.5)] hover:shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.7)] transition-all active:scale-95 group">
-                           <MessageCircle className="w-5 h-5 text-[#FFB400] group-hover:scale-110 transition-transform" /> Mensajes
+                          <MessageCircle className="w-5 h-5 text-[#FFB400] group-hover:scale-110 transition-transform" /> Mensajes
                         </button>
                         <button onClick={() => { setIsDesktopMenuOpen(false); navigate('/perfil'); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#E0E5EC] text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3),inset_-4px_-4px_8px_rgba(255,255,255,0.5)] hover:shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.7)] transition-all active:scale-95 group">
-                           {userAvatar ? (
-                             <img src={userAvatar} className="w-5 h-5 rounded-full object-cover group-hover:scale-110 transition-transform" referrerPolicy="no-referrer" alt="" />
-                           ) : (
-                             <LucideUser className="w-5 h-5 text-[#0056B3] group-hover:scale-110 transition-transform" />
-                           )}
-                           Mi Perfil
+                          {userAvatar ? (
+                            <img src={userAvatar} className="w-5 h-5 rounded-full object-cover group-hover:scale-110 transition-transform" referrerPolicy="no-referrer" alt="" />
+                          ) : (
+                            <LucideUser className="w-5 h-5 text-[#0056B3] group-hover:scale-110 transition-transform" />
+                          )}
+                          Mi Perfil
                         </button>
                       </motion.div>
                     )}
                   </AnimatePresence>
                 </div>
               </div>
-              
+
               {userName && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: -5 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="mt-1.5 self-end mr-0 md:mr-[64px] flex flex-col items-end gap-0"
                 >
-                  <p 
+                  <p
                     onClick={() => navigate('/perfil')}
                     className="text-[12px] md:text-[14px] font-medium text-[#1A1A3A]/80 tracking-tight cursor-pointer hover:text-[#0056B3] transition-colors flex items-center gap-1"
                   >
@@ -420,13 +417,13 @@ const Header = forwardRef((props, ref) => {
             className={`bg-[#E0E5EC]/95 backdrop-blur-md ${isDesktopMenuOpen ? 'overflow-visible' : 'overflow-hidden'}`}
           >
             <div className="max-w-7xl mx-auto py-2">
-              <div 
+              <div
                 ref={categoriesRef}
                 className="flex items-center gap-3 overflow-x-auto py-2 px-5 w-full [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               >
                 {dbCategories.map((cat, index) => {
                   const isActive = activeCategory === cat.id;
-                  
+
                   // Brand Color Pattern: Blue, Yellow, Red
                   let iconColor;
                   if (index % 3 === 0) iconColor = '#0056B3';      // Blue
@@ -442,8 +439,8 @@ const Header = forwardRef((props, ref) => {
                       whileTap={{ scale: 0.95 }}
                       className={`
                         flex items-center gap-2 px-4 py-2 rounded-full flex-shrink-0 transition-all duration-300
-                        ${isActive 
-                          ? 'bg-[#D1D9E6] text-[#1A1A3A] border-2 border-[#0056B3] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.7)]' 
+                        ${isActive
+                          ? 'bg-[#D1D9E6] text-[#1A1A3A] border-2 border-[#0056B3] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.7)]'
                           : 'bg-[#E0E5EC] text-gray-500 border-2 border-transparent shadow-[5px_5px_10px_rgba(163,177,198,0.6),-5px_-5px_10px_rgba(255,255,255,0.8)]'
                         }
                       `}

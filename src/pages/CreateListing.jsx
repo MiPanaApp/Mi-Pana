@@ -6,7 +6,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { useAuth } from '../context/AuthContext';
 import { useStore } from '../store/useStore';
 import { db, storage } from '../services/firebase';
-import { collection, getDoc, getDocs, doc, serverTimestamp, query, orderBy, updateDoc } from 'firebase/firestore';
+import { collection, getDoc, getDocs, doc, addDoc, serverTimestamp, query, orderBy, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { useLocationStore } from '../store/useLocationStore';
