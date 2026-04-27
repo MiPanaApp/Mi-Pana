@@ -597,6 +597,20 @@ export default function CreateListing() {
         };
         const newDocRef = await addDoc(collection(db, 'products'), newProduct);
 
+        // Meta Pixel — evento de anuncio publicado
+        try {
+          if (typeof window.fbq === 'function') {
+            window.fbq('track', 'SubmitApplication', {
+              content_name: form.title,
+              content_category: form.category,
+              value: parseFloat(form.price) || 0,
+              currency: 'EUR'
+            });
+          }
+        } catch (pixelErr) {
+          console.warn('Meta Pixel error:', pixelErr);
+        }
+
         // Enviar email de anuncio creado
         try {
           if (!user?.email) {

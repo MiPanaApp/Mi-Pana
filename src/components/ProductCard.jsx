@@ -64,12 +64,12 @@ export default function ProductCard({ product }) {
                   </linearGradient>
                 </defs>
                 <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"
-                  fill={product.reviewCount > 0 ? "url(#starGrad)" : "currentColor"} 
+                  fill={product.reviewCount > 0 ? "url(#starGrad)" : "currentColor"}
                   className={product.reviewCount > 0 ? "stroke-none" : "text-[#1A1A3A]/10"} />
               </svg>
               <span className="text-[10px] font-bold text-[#1A1A3A]/50 leading-none">
-                {product.reviewCount > 0 
-                  ? parseFloat(product.rating || 0).toFixed(1).replace('.', ',') 
+                {product.reviewCount > 0
+                  ? parseFloat(product.rating || 0).toFixed(1).replace('.', ',')
                   : "0,0"}
               </span>
             </div>
@@ -91,10 +91,10 @@ export default function ProductCard({ product }) {
               {sortBy === 'distance' && (
                 <>
                   {' • '}
-                  {product._distanceKm != null 
+                  {product._distanceKm != null
                     ? `${product._distanceKm.toFixed(1)} km`
-                    : product._distanceScore === 0 
-                      ? '📍 Cerca de ti' 
+                    : product._distanceScore === 0
+                      ? '📍 Cerca de ti'
                       : product._distanceScore === 500
                         ? 'En tu región'
                         : ''}

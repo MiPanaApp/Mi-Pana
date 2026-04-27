@@ -424,23 +424,37 @@ exports.checkScheduledNotifications = onSchedule(
         switch (template.trigger) {
 
           case 'product_inactive': {
-            // Productos sin views en X días
+            // FIX 3: Dual query usando updatedAt con fallback a createdAt
             const daysAgo = new Date(
               Date.now() - template.delayHours * 3600000
             )
-            const productsSnap = await getDb()
-              .collection('products')
-              .where('status', '==', 'active')
-              .where('updatedAt', '<=', daysAgo)
-              .limit(100)
-              .get()
+            const [byUpdated, byCreated] = await Promise.all([
+              getDb().collection('products')
+                .where('status', '==', 'active')
+                .where('updatedAt', '<=', daysAgo)
+                .limit(100).get(),
+              getDb().collection('products')
+                .where('status', '==', 'active')
+                .where('createdAt', '<=', daysAgo)
+                .limit(100).get()
+            ])
 
-            for (const productDoc of productsSnap.docs) {
+            // Combinar y deduplicar por ID
+            const seenIds = new Set()
+            const allDocs = []
+            ;[...byUpdated.docs, ...byCreated.docs].forEach(d => {
+              if (!seenIds.has(d.id)) {
+                seenIds.add(d.id)
+                allDocs.push(d)
+              }
+            })
+
+            for (const productDoc of allDocs) {
               const product = productDoc.data()
               const userId = product.userId || product.sellerId
               if (!userId) continue
 
-              // Verificar que no se haya enviado antes
+              // Verificar que no se haya enviado antes (sin TTL para productos: un anuncio solo se notifica una vez)
               const alreadySent = await getDb()
                 .collection('notificationsSent')
                 .where('templateId', '==', templateId)
@@ -460,8 +474,7 @@ exports.checkScheduledNotifications = onSchedule(
               const title = template.title
               const body = template.body
                 .replace('{{productName}}', product.name || 'tu anuncio')
-                .replace('{{days}}',
-                  Math.floor(template.delayHours / 24))
+                .replace('{{days}}', Math.floor(template.delayHours / 24))
 
               const sendResult = await messaging.sendEachForMulticast({
                 tokens,
@@ -474,7 +487,7 @@ exports.checkScheduledNotifications = onSchedule(
                   priority: 'high',
                   notification: {
                     channelId: 'general',
-                    priority: 'high', 
+                    priority: 'high',
                     sound: 'default',
                     title,
                     body,
@@ -507,16 +520,16 @@ exports.checkScheduledNotifications = onSchedule(
           }
 
           case 'user_inactive': {
-            // Usuarios sin actividad en X días
+            // FIX 4: Eliminada condición notificationsEnabled; filtramos por tokens en cliente
+            // Esto incluye usuarios Google con tokens nativos que nunca activaron el modal web
             const daysAgo = new Date(
               Date.now() - template.delayHours * 3600000
             )
             let usersQuery = getDb().collection('users')
               .where('lastSeenAt', '<=', daysAgo)
-              .where('notificationsEnabled', '==', true)
               .limit(200)
 
-            if (template.targetCountry !== 'all') {
+            if (template.targetCountry && template.targetCountry !== 'all') {
               usersQuery = usersQuery
                 .where('country', '==', template.targetCountry)
             }
@@ -525,22 +538,25 @@ exports.checkScheduledNotifications = onSchedule(
 
             for (const userDoc of usersSnap.docs) {
               const user = userDoc.data()
+              // FIX 4: Filtrar por tokens en cliente (no en query)
               const tokens = user.fcmTokens || []
               if (!tokens.length) continue
 
-              // Verificar no enviada en los últimos 7 días
+              // FIX 5: TTL de 30 días — permite reenviar si han pasado más de 30 días
+              const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 3600000)
               const recentSent = await getDb()
                 .collection('notificationsSent')
                 .where('templateId', '==', templateId)
                 .where('userId', '==', userDoc.id)
+                .where('sentAt', '>=', thirtyDaysAgo)
                 .limit(1).get()
 
               if (!recentSent.empty) continue
 
-              const title = template.title
-              const body = template.body
-                .replace('{{userName}}',
-                  user.name || 'pana')
+              // FIX 2: Reemplazar {{userName}} también en title
+              const userName = user.name || user.displayName || user.email?.split('@')[0] || 'pana'
+              const title = template.title.replace('{{userName}}', userName)
+              const body = template.body.replace('{{userName}}', userName)
 
               const sendResult = await messaging.sendEachForMulticast({
                 tokens,
@@ -553,7 +569,7 @@ exports.checkScheduledNotifications = onSchedule(
                   priority: 'high',
                   notification: {
                     channelId: 'general',
-                    priority: 'high', 
+                    priority: 'high',
                     sound: 'default',
                     title,
                     body,
@@ -669,11 +685,11 @@ exports.checkScheduledNotifications = onSchedule(
             const hoursAgo = new Date(
               Date.now() - template.delayHours * 3600000
             )
+            // FIX 4: Eliminada condición notificationsEnabled; filtramos por tokens en cliente
             const usersSnap = await getDb()
               .collection('users')
               .where('createdAt', '<=', hoursAgo)
               .where('profileComplete', '==', false)
-              .where('notificationsEnabled', '==', true)
               .limit(200).get()
 
             for (const userDoc of usersSnap.docs) {
@@ -681,16 +697,21 @@ exports.checkScheduledNotifications = onSchedule(
               const tokens = user.fcmTokens || []
               if (!tokens.length) continue
 
+              // FIX 5: TTL de 30 días para incomplete_profile
+              const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 3600000)
               const alreadySent = await getDb()
                 .collection('notificationsSent')
                 .where('templateId', '==', templateId)
                 .where('userId', '==', userDoc.id)
+                .where('sentAt', '>=', thirtyDaysAgo)
                 .limit(1).get()
 
               if (!alreadySent.empty) continue
 
-              const title = template.title
-              const body = template.body
+              // FIX 2: Reemplazar {{userName}} en title y body
+              const userName = user.name || user.displayName || user.email?.split('@')[0] || 'pana'
+              const title = template.title.replace('{{userName}}', userName)
+              const body = template.body.replace('{{userName}}', userName)
 
               const sendResult = await messaging.sendEachForMulticast({
                 tokens,
@@ -703,7 +724,7 @@ exports.checkScheduledNotifications = onSchedule(
                   priority: 'high',
                   notification: {
                     channelId: 'general',
-                    priority: 'high', 
+                    priority: 'high',
                     sound: 'default',
                     title,
                     body,
@@ -1296,67 +1317,74 @@ exports.onNewUserTrigger = onDocumentUpdated(
 
     // 🔴 REGLA DE ORO DE LAS PUSH EN WEB 🔴
     // No podemos dispararlo en "auth().onCreate()" ni enviarlo en el segundo 0,
-    // porque en ese momento el usuario NO TIENE NINGÚN TOKEN FCM TODAVÍA. 
-    // Los permisos Push se otorgan e insertan en Firestore SEGUNDOS DESPUES 
+    // porque en ese momento el usuario NO TIENE NINGÚN TOKEN FCM TODAVÍA.
+    // Los permisos Push se otorgan e insertan en Firestore SEGUNDOS DESPUÉS
     // del registro, cuando el usuario interactúa con la app por primera vez.
-    
-    // Por eso, disparamos la Bienvenida al detectar que el usuario ha guardado su PRIMER token.
-    const hadTokens = before.fcmTokens && before.fcmTokens.length > 0;
-    const hasTokens = after.fcmTokens && after.fcmTokens.length > 0;
 
-    if (!hadTokens && hasTokens) {
-      // 1. Busca en la colección 'templates' la que tenga trigger == 'new_user'
-      const querySnap = await getDb()
-        .collection('notificationTemplates')
-        .where('trigger', '==', 'new_user')
-        .where('active', '==', true)
-        .limit(1)
-        .get();
+    // FIX 1: Condición más robusta + guard de idempotencia con welcomePushSent
+    const beforeTokens = before.fcmTokens || [];
+    const afterTokens = after.fcmTokens || [];
+    const isFirstToken = beforeTokens.length === 0 && afterTokens.length > 0;
+    const welcomeSent = after.welcomePushSent === true;
 
-      if (querySnap.empty) return;
-      const template = querySnap.docs[0].data();
+    if (!isFirstToken || welcomeSent) return;
 
-      // 2. Procesa el texto (cambia {{USERNAME}} por user.displayName)
-      const title = template.title;
-      const body = template.body
-        .replace('{{userName}}', after.displayName || after.email?.split('@')[0] || 'pana');
+    // 1. Busca la plantilla con trigger == 'new_user'
+    const querySnap = await getDb()
+      .collection('notificationTemplates')
+      .where('trigger', '==', 'new_user')
+      .where('active', '==', true)
+      .limit(1)
+      .get();
 
-      console.log(`[Push] Pana nuevo con token detectado: ${after.email}. Disparando bienvenida...`);
+    if (querySnap.empty) return;
+    const template = querySnap.docs[0].data();
 
-      // 3. Envía la notificación push vía FCM
-      const messaging = getMessaging();
-      const result = await messaging.sendEachForMulticast({
-        tokens: after.fcmTokens,
-        notification: { title, body },
-        data: {
-          actionUrl: template.actionUrl || '/home',
-          type: 'new_user'
-        },
-        android: {
+    // FIX 2: Reemplazar {{userName}} tanto en title como en body
+    const userName = after.name || after.displayName || after.email?.split('@')[0] || 'pana';
+    const title = template.title.replace('{{userName}}', userName);
+    const body = template.body.replace('{{userName}}', userName);
+
+    console.log(`[Push] Pana nuevo con token detectado: ${after.email}. Disparando bienvenida...`);
+
+    // Envía la notificación push vía FCM
+    const messaging = getMessaging();
+    const result = await messaging.sendEachForMulticast({
+      tokens: afterTokens,
+      notification: { title, body },
+      data: {
+        actionUrl: template.actionUrl || '/home',
+        type: 'new_user'
+      },
+      android: {
+        priority: 'high',
+        notification: {
+          channelId: 'general',
           priority: 'high',
-          notification: {
-            channelId: 'general',
-            priority: 'high', 
+          sound: 'default',
+          title,
+          body,
+          ticker: 'Mi Pana',
+          clickAction: 'FLUTTER_NOTIFICATION_CLICK'
+        }
+      },
+      apns: {
+        headers: { 'apns-priority': '10' },
+        payload: {
+          aps: {
             sound: 'default',
-            title,
-            body,
-            ticker: 'Mi Pana',
-            clickAction: 'FLUTTER_NOTIFICATION_CLICK'
-          }
-        },
-        apns: {
-          headers: { 'apns-priority': '10' },
-          payload: {
-            aps: {
-              sound: 'default',
-              badge: 1,
-              alert: { title, body }
-            }
+            badge: 1,
+            alert: { title, body }
           }
         }
-      });
-      
-      await cleanupInvalidTokens(event.params.uid, after.fcmTokens, result.responses);
-    }
+      }
+    });
+
+    await cleanupInvalidTokens(event.params.uid, afterTokens, result.responses);
+
+    // FIX 1: Marcar que ya se envió la bienvenida para evitar duplicados
+    await getDb().collection('users').doc(event.params.uid).update({
+      welcomePushSent: true
+    });
   }
 );

@@ -43,7 +43,7 @@ export function usePushNotifications() {
       try {
         console.log('[PushNotifications] Usando lógica Nativa Capacitor...')
         let permStatus = await PushNotifications.checkPermissions()
-        
+
         if (permStatus.receive === 'prompt') {
           permStatus = await PushNotifications.requestPermissions()
         }
@@ -55,10 +55,10 @@ export function usePushNotifications() {
         }
 
         setPermission('granted')
-        
+
         // El Token de FCM/APNs se registrará vía Listener asíncrono
         await PushNotifications.register()
-        return { status: 'granted', token: 'native_pending' } 
+        return { status: 'granted', token: 'native_pending' }
       } catch (error) {
         console.error('[PushNotifications] ❌ Error en requestPermission Nativo:', error)
         return { status: 'error', token: null }
@@ -173,7 +173,7 @@ export function usePushNotifications() {
       const addNativeListeners = async () => {
         await PushNotifications.addListener('registration', async (token) => {
           console.log('[PushNotifications] Token Capacitor nativo obtenido:', token.value)
-          
+
           if (auth.currentUser && token.value !== fcmToken) {
             await setDoc(doc(db, 'users', auth.currentUser.uid), {
               fcmTokens: arrayUnion(token.value),
@@ -183,7 +183,7 @@ export function usePushNotifications() {
             setFcmToken(token.value)
           }
         })
-        
+
         await PushNotifications.addListener('pushNotificationReceived', (notification) => {
           console.log('[PushNotifications] Mensaje nativo recibido:', notification)
           setForegroundMessage({
@@ -194,7 +194,7 @@ export function usePushNotifications() {
           })
         })
       }
-      
+
       addNativeListeners()
       return
     }

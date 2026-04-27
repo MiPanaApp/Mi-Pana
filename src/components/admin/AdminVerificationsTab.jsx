@@ -223,7 +223,7 @@ export default function AdminVerificationsTab() {
                         {v.documentType?.toUpperCase()}
                       </span>
                       <span className="text-[11px] font-bold text-gray-400">
-                        Score: {v.livenessScore}%
+                        Nivel Real: {v.livenessScore}%
                       </span>
                     </div>
                     <p className="text-[10px] font-black text-gray-300 mt-1 uppercase">
@@ -296,10 +296,10 @@ export default function AdminVerificationsTab() {
                   </div>
 
                   <div>
-                     <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Liveness Score</p>
-                     <p className={`text-xl font-black ${selected.livenessScore >= 70 ? 'text-[#00C97A]' : 'text-[#FFB400]'}`}>
-                       {selected.livenessScore}/100
-                     </p>
+                    <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Nivel de Realidad</p>
+                    <p className={`text-xl font-black ${selected.livenessScore >= 70 ? 'text-[#00C97A]' : 'text-[#FFB400]'}`}>
+                      {selected.livenessScore}/100
+                    </p>
                   </div>
 
                   <div>

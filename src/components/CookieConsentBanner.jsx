@@ -12,7 +12,8 @@ export default function CookieConsentBanner() {
   const [prefs, setPrefs] = useState({
     necessary: true,
     analytics: consent?.analytics ?? false,
-    googleAnalytics: consent?.googleAnalytics ?? false
+    googleAnalytics: consent?.googleAnalytics ?? false,
+    metaPixel: consent?.metaPixel ?? false
   });
   const [legalDocs, setLegalDocs] = useState({ isOpen: false, title: '', content: '' });
 
@@ -51,11 +52,11 @@ export default function CookieConsentBanner() {
   if (hasDecided || !notificationDecided) return null;
 
   const handleAcceptAll = () => {
-    updateConsent({ necessary: true, analytics: true, googleAnalytics: true });
+    updateConsent({ necessary: true, analytics: true, googleAnalytics: true, metaPixel: true });
   };
 
   const handleRejectAll = () => {
-    updateConsent({ necessary: true, analytics: false, googleAnalytics: false });
+    updateConsent({ necessary: true, analytics: false, googleAnalytics: false, metaPixel: false });
   };
 
   const handleSavePrefs = () => {
@@ -93,7 +94,7 @@ export default function CookieConsentBanner() {
       <div className="flex items-start gap-2 mb-4">
         <Shield size={26} className="text-[#1A1A3A]/60 flex-shrink-0" />
         <p className="text-sm text-[#1A1A3A]/70 font-medium leading-relaxed">
-          Usamos cookies necesarias y analíticas para mejorar tu experiencia.
+          Usamos cookies necesarias, analíticas y publicitarias (Meta Pixel) para mejorar tu experiencia y medir el rendimiento de campañas.
         </p>
       </div>
 
@@ -171,6 +172,39 @@ export default function CookieConsentBanner() {
                  >
                    <ExternalLink size={10} />
                    Ver política de Google
+                 </a>
+               </div>
+            </div>
+
+            {/* Card 4 — Meta Pixel */}
+            <div className="bg-white/60 rounded-2xl p-3 shadow-[inset_2px_2px_5px_rgba(0,0,0,0.02)]">
+               <div className="flex items-center justify-between mb-1.5">
+                 <div className="flex items-center gap-2">
+                   <svg viewBox="0 0 24 24" className="w-[18px] h-[18px]" fill="#1877F2">
+                     <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                   </svg>
+                   <span className="font-black text-sm text-[#1A1A3A]">Meta Pixel</span>
+                 </div>
+                 <button
+                   type="button"
+                   onClick={() => setPrefs(prev => ({ ...prev, metaPixel: !prev.metaPixel }))}
+                   className={`w-10 h-6 rounded-full transition-colors relative outline-none ${prefs.metaPixel ? 'bg-green-500' : 'bg-gray-300'}`}
+                 >
+                   <div className={`absolute top-1 w-4 h-4 rounded-full transition-all bg-white ${prefs.metaPixel ? 'left-5' : 'left-1'}`} />
+                 </button>
+               </div>
+               <p className="text-xs text-[#1A1A3A]/60 mb-1.5">
+                 Permite medir conversiones y mostrar anuncios relevantes en Facebook e Instagram.
+               </p>
+               <div className="flex justify-end">
+                 <a
+                   href="https://www.facebook.com/privacy/policy/"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   className="flex items-center gap-1 text-[10px] text-blue-500 hover:underline"
+                 >
+                   <ExternalLink size={10} />
+                   Ver política de Meta
                  </a>
                </div>
             </div>

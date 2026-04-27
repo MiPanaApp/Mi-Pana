@@ -2,7 +2,7 @@ export const LegalData = {
   terms: {
     title: 'Condiciones de Contratación',
     content: `CONDICIONES GENERALES DE CONTRATACIÓN – APP MI PANA
-Última actualización: 28 de marzo de 2026
+Última actualización: abril 2026
 
 1. OBJETO Y ALCANCE DEL SERVICIO
 
@@ -71,7 +71,7 @@ Para cualquier controversia derivada del uso de App Mi Pana, las partes se somet
   privacy: {
     title: 'Políticas de Privacidad',
     content: `POLÍTICA DE PRIVACIDAD – APP MI PANA
-Última actualización: abril 2025
+Última actualización: abril 2026
 
 I. CONDICIONES GENERALES DE USO
 1. IDENTIFICACIÓN DEL TITULAR
@@ -219,7 +219,7 @@ Técnicos: dirección IP, tipo de dispositivo, sistema operativo, datos de naveg
 Tokens de notificación: identificadores FCM para el envío de notificaciones push
 
 3. FINALIDAD Y BASE LEGAL
-FinalidadBase legalGestión de cuenta y autenticaciónEjecución contractual (Art. 6.1.b RGPD)Verificación de identidad (KYC)Consentimiento + Interés legítimo (Art. 6.1.a y 6.1.f RGPD)Envío de emails transaccionalesEjecución contractual (Art. 6.1.b RGPD)Notificaciones pushConsentimiento (Art. 6.1.a RGPD)Prevención de fraudeInterés legítimo (Art. 6.1.f RGPD)Marketing y comunicacionesConsentimiento (Art. 6.1.a RGPD)Mejora del servicio y análisisInterés legítimo (Art. 6.1.f RGPD)
+FinalidadBase legalGestión de cuenta y autenticaciónEjecución contractual (Art. 6.1.b RGPD)Verificación de identidad (KYC)Consentimiento + Interés legítimo (Art. 6.1.a y 6.1.f RGPD)Envío de emails transaccionalesEjecución contractual (Art. 6.1.b RGPD)Notificaciones pushConsentimiento (Art. 6.1.a RGPD)Prevención de fraudeInterés legítimo (Art. 6.1.f RGPD)Publicidad y medición de campañasConsentimiento (Art. 6.1.a RGPD)Marketing y comunicacionesConsentimiento (Art. 6.1.a RGPD)Mejora del servicio y análisisInterés legítimo (Art. 6.1.f RGPD)
 
 4. DESTINATARIOS
 Los datos podrán ser tratados por los siguientes proveedores tecnológicos:
@@ -228,6 +228,7 @@ Google Firebase (Google LLC) — autenticación, base de datos, almacenamiento y
 Vercel Inc. — alojamiento web y dominio
 Resend Inc. — envío de emails transaccionales
 Google Analytics — análisis de uso de la App
+Meta Platforms Inc. (Facebook/Instagram) — píxel de seguimiento publicitario y medición de conversiones
 
 Todos los proveedores cuentan con garantías adecuadas de protección de datos conforme al RGPD.
 
@@ -352,7 +353,10 @@ Analíticas:
 
 Publicitarias:
 • Google Ads
-• Meta (Facebook Pixel)
+• Meta Pixel (Facebook/Instagram) — ID: 2028891707665809
+  Finalidad: medición de conversiones y remarketing
+  Duración: hasta 180 días
+  Transferencia: Meta Platforms Inc. (EEUU), bajo Cláusulas Contractuales Tipo UE
 • Otros partners publicitarios
 
 5. CONSENTIMIENTO

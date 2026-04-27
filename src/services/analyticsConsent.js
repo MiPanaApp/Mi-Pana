@@ -34,5 +34,14 @@ export async function applyAllConsents(consentObj) {
       });
     }
   }
+
+  // 3. Meta Pixel — activar/desactivar según consentimiento
+  if (typeof window.fbq === 'function') {
+    if (consentObj.metaPixel === true) {
+      window.fbq('consent', 'grant');
+    } else {
+      window.fbq('consent', 'revoke');
+    }
+  }
 }
 
