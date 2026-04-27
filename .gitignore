@@ -66,3 +66,19 @@ service-account.json
 
 # Sensitive documents / credentials
 *.rtf
+
+# Archivos multimedia y proyectos de video
+POST REDES/
+Animacion logo Mi pana/
+*.mp4
+*.mov
+*.mp3
+*.wav
+*.aep
+*.prproj
+*.PRV
+*.mpeg
+*.xmp
+*.cfa
+*.pek
+*.aegraphic
