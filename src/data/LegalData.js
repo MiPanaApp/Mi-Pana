@@ -386,10 +386,10 @@ Estos terceros pueden realizar transferencias internacionales de datos fuera del
 
 8. ACTUALIZACIONES
 
-La presente Política de Cookies podrá modificarse en función de cambios legales, nuevas cookies o tecnologías, e instrucciones de la AEPD. Se recomienda revisarla periódicamente.
+La presente Política de Cookies podrá modificarse en función de cambios legales, nuevas cookies o tecnologías, e instrucciones de la AEPD. Se recomienda revisarla periódicamente en https://mipana.net/cookies
 
 9. MÁS INFORMACIÓN
 
-Para más información sobre el tratamiento de datos personales, consulta nuestra Política de Privacidad.`
+Para más información sobre el tratamiento de datos personales, consulta nuestra Política de Privacidad en https://mipana.net/privacidad.`
   }
 };

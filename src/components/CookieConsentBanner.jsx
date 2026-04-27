@@ -220,6 +220,25 @@ export default function CookieConsentBanner() {
             <div className="text-[10px] text-[#1A1A3A]/40 text-center mt-3 leading-relaxed">
               Responsable: Mi Pana (mipana.net) · RGPD (UE) 2016/679 · LSSI-CE · Puedes retirar tu consentimiento en cualquier momento desde el botón de ajuste en la esquina inferior izquierda. Transferencias internacionales bajo Cláusulas Contractuales Tipo UE.<br />
               <button type="button" onClick={(e) => openLegal(e, 'privacy')} className="underline hover:text-[#1A1A3A]/60">Política de Privacidad</button> y <button type="button" onClick={(e) => openLegal(e, 'cookies')} className="underline hover:text-[#1A1A3A]/60">Política de Cookies</button>.
+              <div className="flex justify-center gap-3 mt-1">
+                <a 
+                  href="https://mipana.net/privacidad"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[10px] text-[#1A1A3A]/50 underline hover:text-[#1A1A3A]/70"
+                >
+                  Ver Política completa
+                </a>
+                <span className="text-[10px] text-[#1A1A3A]/30">·</span>
+                <a 
+                  href="https://mipana.net/cookies"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[10px] text-[#1A1A3A]/50 underline hover:text-[#1A1A3A]/70"
+                >
+                  Ver Cookies completa
+                </a>
+              </div>
             </div>
           </motion.div>
         )}

@@ -36,6 +36,10 @@ import Messages from './pages/Messages';
 import Profile from './pages/Profile';
 import Verification from './pages/Verification';
 
+// Public Legal Pages
+import PrivacyPage from './pages/PrivacyPage';
+import CookiesPage from './pages/CookiesPage';
+
 import CustomDialog from './components/ui/CustomDialog';
 
 function App() {
@@ -85,6 +89,10 @@ function App() {
         <Route path="/" element={<SplashScreen />} />
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/auth" element={<Navigate to="/login" replace />} />
+
+        {/* Public Legal Pages */}
+        <Route path="/privacidad" element={<PrivacyPage />} />
+        <Route path="/cookies" element={<CookiesPage />} />
 
         {/* Main Application with Header and Footer */}
         <Route element={<Layout />}>
