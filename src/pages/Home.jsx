@@ -119,12 +119,6 @@ export default function Home() {
           limit(PAGE_SIZE)
         );
         const snap = await getDocs(q);
-        // DEBUG TEMPORAL — eliminar después
-        console.log('Total Firestore:', snap.docs.length);
-        snap.docs.forEach(d => {
-          const data = d.data();
-          console.log(d.id, '|', data.name, '| status:', data.status, '| country:', data.location?.country);
-        });
         const firestoreData = snap.docs
           .map(d => ({ ...d.data(), id: d.id }))
           .filter(p => p.status !== 'hidden' && p.status !== 'inactive')
@@ -227,8 +221,6 @@ export default function Home() {
 
   const filteredProducts = useMemo(() => {
     let result = [...products];
-    // DEBUG TEMPORAL
-    console.log('products en useMemo:', products.length);
 
     // REGLAS DE NEGOCIO (Guardadas para futura edición):
     // 1. Filtrar por país seleccionado por defecto si no hay filtro manual de ubicación.
@@ -242,9 +234,6 @@ export default function Home() {
     result = result.filter(p =>
       !suspendedCountryIds.includes(p.location?.country)
     );
-    // DEBUG TEMPORAL
-    console.log('suspendedCountryIds:', suspendedCountryIds);
-    console.log('después de filter suspendidos:', result.length);
 
     // Filtros de Ubicación Estrictos
     const normalizeL1 = (text) => {
@@ -265,7 +254,6 @@ export default function Home() {
                targetL1.includes(pCommunity);
       });
     }
-    console.log('después de filter level1:', result.length, 'filtro:', filters.location?.level1);
 
     if (filters.location?.level2) {
       const targetL2 = normalizeText(filters.location.level2);
@@ -274,23 +262,14 @@ export default function Home() {
         return pL2 === targetL2 || pL2.includes(targetL2) || targetL2.includes(pL2);
       });
     }
-    console.log('después de filter level2:', result.length, 'filtro:', filters.location?.level2);
 
     // Filtro por Categoría
     if (activeCategory && activeCategory !== 'Todas') {
       const activeCatNorm = normalizeText(activeCategory);
-      console.log('categoria buscada raw:', JSON.stringify(activeCategory), 'normalizada:', JSON.stringify(activeCatNorm));
-      result = result.filter(p => {
-        const pCat = normalizeText(p.category);
-        if (pCat === activeCatNorm) console.log('MATCH:', p.name, p.category);
-        else console.log('NO match:', p.name, '|', JSON.stringify(p.category), 'vs', JSON.stringify(activeCategory));
-        return pCat === activeCatNorm;
-      });
+      result = result.filter(p => normalizeText(p.category) === activeCatNorm);
     }
-    console.log('después de filter categoria:', result.length, 'cat:', activeCategory);
 
     if (filters.onlyVerified) result = result.filter(p => p.verified);
-    console.log('después de filter verified:', result.length);
 
     if (filters.searchQuery) {
       const q = normalizeText(filters.searchQuery);
@@ -301,11 +280,9 @@ export default function Home() {
         return matchesName || matchesDesc || matchesKeyword;
       });
     }
-    console.log('después de filter search:', result.length);
 
     if (filters.price?.min) result = result.filter(p => parseFloat(p.price) >= parseFloat(filters.price.min));
     if (filters.price?.max) result = result.filter(p => parseFloat(p.price) <= parseFloat(filters.price.max));
-    console.log('después de filter precio:', result.length);
 
     // Lógica de Ordenación
     switch (sortBy) {
@@ -393,8 +370,6 @@ export default function Home() {
         });
     }
 
-    // DEBUG TEMPORAL
-    console.log('resultado final filteredProducts:', result.length);
     return result;
   }, [products, filters, activeCategory, sortBy, selectedCountry, userLocation]);
 
