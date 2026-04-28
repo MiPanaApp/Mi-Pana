@@ -30,6 +30,34 @@ const CAPITALS = {
   AR: 'Buenos Aires'
 };
 
+// Mapa de equivalencias para comunidades autónomas españolas
+const COMMUNITY_ALIASES = {
+  'comunitat valenciana': 'comunidad valenciana',
+  'comunidad valenciana': 'comunidad valenciana',
+  'catalunya': 'cataluna',
+  'cataluna': 'cataluna',
+  'cataluna': 'cataluna',
+  'illes balears': 'islas baleares',
+  'islas baleares': 'islas baleares',
+  'euskadi': 'pais vasco',
+  'pais vasco': 'pais vasco',
+  'galicia': 'galicia',
+  'navarra': 'navarra',
+  'aragon': 'aragon',
+  'cantabria': 'cantabria',
+  'asturias': 'asturias',
+  'extremadura': 'extremadura',
+  'andalucia': 'andalucia',
+  'murcia': 'murcia',
+  'rioja': 'rioja',
+  'madrid': 'madrid',
+  'castilla la mancha': 'castilla la mancha',
+  'castilla y leon': 'castilla y leon',
+  'canarias': 'canarias',
+  'ceuta': 'ceuta',
+  'melilla': 'melilla',
+};
+
 export default function Home() {
   const {
     activeCategory,
@@ -219,17 +247,20 @@ export default function Home() {
     console.log('después de filter suspendidos:', result.length);
 
     // Filtros de Ubicación Estrictos
+    const normalizeL1 = (text) => {
+      const norm = normalizeText(text || '');
+      return COMMUNITY_ALIASES[norm] || norm;
+    };
+
     if (filters.location?.level1) {
-      const targetL1 = normalizeText(filters.location.level1);
+      const targetL1 = normalizeL1(filters.location.level1);
       result = result.filter(p => {
-        const pL1 = normalizeText(p.location?.level1 || p.state || '');
-        const pCommunity = normalizeText(p.location?.communityName || '');
-        // Comparación flexible: coincidencia exacta, inclusión,
-        // o coincidencia por communityName
+        const pL1 = normalizeL1(p.location?.level1 || p.state || '');
+        const pCommunity = normalizeL1(p.location?.communityName || '');
         return pL1 === targetL1 ||
+               pCommunity === targetL1 ||
                pL1.includes(targetL1) ||
                targetL1.includes(pL1) ||
-               pCommunity === targetL1 ||
                pCommunity.includes(targetL1) ||
                targetL1.includes(pCommunity);
       });
