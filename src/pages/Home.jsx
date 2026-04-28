@@ -88,12 +88,13 @@ export default function Home() {
         const q = query(
           productsRef,
           where('location.country', '==', selectedCountry),
-          where('status', '==', 'active'),
           orderBy('createdAt', 'desc'),
           limit(PAGE_SIZE)
         );
         const snap = await getDocs(q);
-        const firestoreData = snap.docs.map(d => ({ ...d.data(), id: d.id }));
+        const firestoreData = snap.docs
+          .map(d => ({ ...d.data(), id: d.id }))
+          .filter(p => p.status !== 'hidden' && p.status !== 'inactive');
         setProducts(firestoreData);
         setLastDoc(snap.docs[snap.docs.length - 1] || null);
         setHasMore(snap.docs.length === PAGE_SIZE);
@@ -115,13 +116,14 @@ export default function Home() {
       const q = query(
         productsRef,
         where('location.country', '==', selectedCountry),
-        where('status', '==', 'active'),
         orderBy('createdAt', 'desc'),
         startAfter(lastDoc),
         limit(PAGE_SIZE)
       );
       const snap = await getDocs(q);
-      const moreData = snap.docs.map(d => ({ ...d.data(), id: d.id }));
+      const moreData = snap.docs
+        .map(d => ({ ...d.data(), id: d.id }))
+        .filter(p => p.status !== 'hidden' && p.status !== 'inactive');
       setProducts(prev => [...prev, ...moreData]);
       setLastDoc(snap.docs[snap.docs.length - 1] || null);
       setHasMore(snap.docs.length === PAGE_SIZE);
