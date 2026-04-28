@@ -91,6 +91,12 @@ export default function Home() {
           limit(PAGE_SIZE)
         );
         const snap = await getDocs(q);
+        // DEBUG TEMPORAL — eliminar después
+        console.log('Total Firestore:', snap.docs.length);
+        snap.docs.forEach(d => {
+          const data = d.data();
+          console.log(d.id, '|', data.name, '| status:', data.status, '| country:', data.location?.country);
+        });
         const firestoreData = snap.docs
           .map(d => ({ ...d.data(), id: d.id }))
           .filter(p => p.status !== 'hidden' && p.status !== 'inactive')
