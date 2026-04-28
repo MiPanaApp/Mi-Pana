@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { collection, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
-import { ShoppingBag, Trash2, EyeOff, Eye, Filter, Search, X, Info, Copy, Check, ChevronDown } from 'lucide-react';
+import { ShoppingBag, Trash2, EyeOff, Eye, Filter, Search, X, Info, Copy, Check, ChevronDown, ExternalLink } from 'lucide-react';
 import { CATEGORIES } from '../../data/categories';
 
 const countryData = {
@@ -17,6 +18,7 @@ const countryData = {
 };
 
 export default function AdminAdsTab({ searchQuery = '' }) {
+  const navigate = useNavigate();
   const [ads, setAds] = useState([]);
   const [loading, setLoading] = useState(true);
   
@@ -311,11 +313,17 @@ export default function AdminAdsTab({ searchQuery = '' }) {
           {filteredAds.map(ad => (
             <div key={ad.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100 gap-4 transition-all hover:bg-white hover:shadow-md">
               <div className="flex items-center gap-4 overflow-hidden flex-1">
-                <div className="w-14 h-14 bg-blue-100/50 rounded-xl flex items-center justify-center shrink-0 overflow-hidden border border-blue-100">
+                <div 
+                  onClick={() => navigate(`/perfil-producto?id=${ad.id}`)}
+                  className="w-14 h-14 bg-blue-100/50 rounded-xl flex items-center justify-center shrink-0 overflow-hidden border border-blue-100 cursor-pointer hover:opacity-80 transition-opacity"
+                >
                   {ad.image ? <img src={ad.image} alt={ad.name} className="w-full h-full object-cover"/> : <ShoppingBag className="w-6 h-6 text-blue-500" />}
                 </div>
                 <div className="flex flex-col min-w-0 flex-1">
-                  <span className="font-black text-[15px] text-gray-800 line-clamp-1">{ad.name}</span>
+                  <span 
+                    onClick={() => navigate(`/perfil-producto?id=${ad.id}`)}
+                    className="font-black text-[15px] text-gray-800 line-clamp-1 cursor-pointer hover:text-blue-600 transition-colors"
+                  >{ad.name}</span>
                   <span className="text-xs text-gray-500 font-bold line-clamp-1 mt-0.5">€ {ad.price} • Publicado por: <span className="text-gray-700">{ad.userName}</span></span>
                   <div className="flex gap-2 mt-1.5 overflow-x-auto hide-scrollbar block">
                     <span className={`text-[10px] min-w-max font-black uppercase px-2 py-0.5 rounded-lg ${
@@ -349,6 +357,14 @@ export default function AdminAdsTab({ searchQuery = '' }) {
               </div>
               
               <div className="flex gap-2 shrink-0 sm:ml-2 justify-end">
+                <button 
+                  onClick={() => navigate(`/perfil-producto?id=${ad.id}`)}
+                  className="p-2.5 bg-yellow-50 text-yellow-600 rounded-xl hover:bg-yellow-100 transition-colors shadow-sm flex items-center gap-2" 
+                  title="Ver Anuncio"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  <span className="text-xs font-black sm:hidden">Ver</span>
+                </button>
                 {ad.status === 'hidden' ? (
                   <button onClick={() => handleUpdateStatus(ad.id, 'active')} className="p-2.5 bg-blue-100 text-blue-600 rounded-xl hover:bg-blue-200 transition-colors shadow-sm flex items-center gap-2" title="Mostrar Anuncio (Hacer Público)">
                     <Eye className="w-4 h-4" />
