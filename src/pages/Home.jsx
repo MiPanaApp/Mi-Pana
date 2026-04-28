@@ -248,7 +248,13 @@ export default function Home() {
     // Filtro por Categoría
     if (activeCategory && activeCategory !== 'Todas') {
       const activeCatNorm = normalizeText(activeCategory);
-      result = result.filter(p => normalizeText(p.category) === activeCatNorm);
+      console.log('categoria buscada raw:', JSON.stringify(activeCategory), 'normalizada:', JSON.stringify(activeCatNorm));
+      result = result.filter(p => {
+        const pCat = normalizeText(p.category);
+        if (pCat === activeCatNorm) console.log('MATCH:', p.name, p.category);
+        else console.log('NO match:', p.name, '|', JSON.stringify(p.category), 'vs', JSON.stringify(activeCategory));
+        return pCat === activeCatNorm;
+      });
     }
     console.log('después de filter categoria:', result.length, 'cat:', activeCategory);
 
