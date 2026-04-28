@@ -226,6 +226,7 @@ export default function Home() {
         return pL1 === targetL1 || pL1.includes(targetL1) || targetL1.includes(pL1);
       });
     }
+    console.log('después de filter level1:', result.length, 'filtro:', filters.location?.level1);
 
     if (filters.location?.level2) {
       const targetL2 = normalizeText(filters.location.level2);
@@ -234,13 +235,18 @@ export default function Home() {
         return pL2 === targetL2 || pL2.includes(targetL2) || targetL2.includes(pL2);
       });
     }
+    console.log('después de filter level2:', result.length, 'filtro:', filters.location?.level2);
 
     // Filtro por Categoría
     if (activeCategory && activeCategory !== 'Todas') {
       const activeCatNorm = normalizeText(activeCategory);
       result = result.filter(p => normalizeText(p.category) === activeCatNorm);
     }
+    console.log('después de filter categoria:', result.length, 'cat:', activeCategory);
+
     if (filters.onlyVerified) result = result.filter(p => p.verified);
+    console.log('después de filter verified:', result.length);
+
     if (filters.searchQuery) {
       const q = normalizeText(filters.searchQuery);
       result = result.filter(p => {
@@ -250,9 +256,11 @@ export default function Home() {
         return matchesName || matchesDesc || matchesKeyword;
       });
     }
+    console.log('después de filter search:', result.length);
 
     if (filters.price?.min) result = result.filter(p => parseFloat(p.price) >= parseFloat(filters.price.min));
     if (filters.price?.max) result = result.filter(p => parseFloat(p.price) <= parseFloat(filters.price.max));
+    console.log('después de filter precio:', result.length);
 
     // Lógica de Ordenación
     switch (sortBy) {
