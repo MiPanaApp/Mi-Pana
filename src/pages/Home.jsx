@@ -199,6 +199,8 @@ export default function Home() {
 
   const filteredProducts = useMemo(() => {
     let result = [...products];
+    // DEBUG TEMPORAL
+    console.log('products en useMemo:', products.length);
 
     // REGLAS DE NEGOCIO (Guardadas para futura edición):
     // 1. Filtrar por país seleccionado por defecto si no hay filtro manual de ubicación.
@@ -212,6 +214,9 @@ export default function Home() {
     result = result.filter(p =>
       !suspendedCountryIds.includes(p.location?.country)
     );
+    // DEBUG TEMPORAL
+    console.log('suspendedCountryIds:', suspendedCountryIds);
+    console.log('después de filter suspendidos:', result.length);
 
     // Filtros de Ubicación Estrictos
     if (filters.location?.level1) {
@@ -335,6 +340,8 @@ export default function Home() {
         });
     }
 
+    // DEBUG TEMPORAL
+    console.log('resultado final filteredProducts:', result.length);
     return result;
   }, [products, filters, activeCategory, sortBy, selectedCountry, userLocation]);
 
