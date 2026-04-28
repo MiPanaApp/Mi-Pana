@@ -88,13 +88,17 @@ export default function Home() {
         const q = query(
           productsRef,
           where('location.country', '==', selectedCountry),
-          orderBy('createdAt', 'desc'),
           limit(PAGE_SIZE)
         );
         const snap = await getDocs(q);
         const firestoreData = snap.docs
           .map(d => ({ ...d.data(), id: d.id }))
-          .filter(p => p.status !== 'hidden' && p.status !== 'inactive');
+          .filter(p => p.status !== 'hidden' && p.status !== 'inactive')
+          .sort((a, b) => {
+            const timeA = a.createdAt?.seconds || 0;
+            const timeB = b.createdAt?.seconds || 0;
+            return timeB - timeA;
+          });
         setProducts(firestoreData);
         setLastDoc(snap.docs[snap.docs.length - 1] || null);
         setHasMore(snap.docs.length === PAGE_SIZE);
@@ -116,14 +120,18 @@ export default function Home() {
       const q = query(
         productsRef,
         where('location.country', '==', selectedCountry),
-        orderBy('createdAt', 'desc'),
         startAfter(lastDoc),
         limit(PAGE_SIZE)
       );
       const snap = await getDocs(q);
       const moreData = snap.docs
         .map(d => ({ ...d.data(), id: d.id }))
-        .filter(p => p.status !== 'hidden' && p.status !== 'inactive');
+        .filter(p => p.status !== 'hidden' && p.status !== 'inactive')
+        .sort((a, b) => {
+          const timeA = a.createdAt?.seconds || 0;
+          const timeB = b.createdAt?.seconds || 0;
+          return timeB - timeA;
+        });
       setProducts(prev => [...prev, ...moreData]);
       setLastDoc(snap.docs[snap.docs.length - 1] || null);
       setHasMore(snap.docs.length === PAGE_SIZE);
