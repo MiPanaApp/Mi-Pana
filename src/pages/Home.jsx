@@ -8,7 +8,7 @@ import SkeletonGrid from '../components/ui/SkeletonGrid';
 import NotificationModal from '../components/ui/NotificationModal';
 import { useStore } from '../store/useStore';
 import { useLocationStore } from '../store/useLocationStore';
-import { collection, getDocs, query, doc, updateDoc, increment, orderBy, limit, startAfter } from 'firebase/firestore';
+import { collection, getDocs, query, doc, updateDoc, increment, orderBy, limit, startAfter, where } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { normalizeText } from '../utils/textUtils';
 import emptyHammock from '../assets/empty_hammock.png';
@@ -76,7 +76,7 @@ export default function Home() {
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  const PAGE_SIZE = 10;
+  const PAGE_SIZE = 20;
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -85,11 +85,15 @@ export default function Home() {
       setHasMore(true);
       try {
         const productsRef = collection(db, 'products');
-        const q = query(productsRef, orderBy('createdAt', 'desc'), limit(PAGE_SIZE));
+        const q = query(
+          productsRef,
+          where('location.country', '==', selectedCountry),
+          where('status', '==', 'active'),
+          orderBy('createdAt', 'desc'),
+          limit(PAGE_SIZE)
+        );
         const snap = await getDocs(q);
-        const firestoreData = snap.docs
-          .map(d => ({ ...d.data(), id: d.id }))
-          .filter(p => p.status !== 'hidden' && p.status !== 'inactive');
+        const firestoreData = snap.docs.map(d => ({ ...d.data(), id: d.id }));
         setProducts(firestoreData);
         setLastDoc(snap.docs[snap.docs.length - 1] || null);
         setHasMore(snap.docs.length === PAGE_SIZE);
@@ -108,11 +112,16 @@ export default function Home() {
     setLoadingMore(true);
     try {
       const productsRef = collection(db, 'products');
-      const q = query(productsRef, orderBy('createdAt', 'desc'), startAfter(lastDoc), limit(PAGE_SIZE));
+      const q = query(
+        productsRef,
+        where('location.country', '==', selectedCountry),
+        where('status', '==', 'active'),
+        orderBy('createdAt', 'desc'),
+        startAfter(lastDoc),
+        limit(PAGE_SIZE)
+      );
       const snap = await getDocs(q);
-      const moreData = snap.docs
-        .map(d => ({ ...d.data(), id: d.id }))
-        .filter(p => p.status !== 'hidden' && p.status !== 'inactive');
+      const moreData = snap.docs.map(d => ({ ...d.data(), id: d.id }));
       setProducts(prev => [...prev, ...moreData]);
       setLastDoc(snap.docs[snap.docs.length - 1] || null);
       setHasMore(snap.docs.length === PAGE_SIZE);
@@ -182,12 +191,11 @@ export default function Home() {
       .filter(c => c.status === 'suspended')
       .map(c => c.id);
 
-    // Filtro estricto por país seleccionado
-    // Cada producto DEBE tener location.country con el código ISO (ES, CO, US, etc.)
-    result = result.filter(p => {
-      const productCountry = p.location?.country || p.country || '';
-      return productCountry === selectedCountry && !suspendedCountryIds.includes(productCountry);
-    });
+    // Firestore ya filtra por país y status=active.
+    // Solo se excluyen productos de países suspendidos (edge case de cambio de estado en tiempo real).
+    result = result.filter(p =>
+      !suspendedCountryIds.includes(p.location?.country)
+    );
 
     // Filtros de Ubicación Estrictos
     if (filters.location?.level1) {
