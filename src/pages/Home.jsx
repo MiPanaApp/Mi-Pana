@@ -223,7 +223,15 @@ export default function Home() {
       const targetL1 = normalizeText(filters.location.level1);
       result = result.filter(p => {
         const pL1 = normalizeText(p.location?.level1 || p.state || '');
-        return pL1 === targetL1 || pL1.includes(targetL1) || targetL1.includes(pL1);
+        const pCommunity = normalizeText(p.location?.communityName || '');
+        // Comparación flexible: coincidencia exacta, inclusión,
+        // o coincidencia por communityName
+        return pL1 === targetL1 ||
+               pL1.includes(targetL1) ||
+               targetL1.includes(pL1) ||
+               pCommunity === targetL1 ||
+               pCommunity.includes(targetL1) ||
+               targetL1.includes(pCommunity);
       });
     }
     console.log('después de filter level1:', result.length, 'filtro:', filters.location?.level1);
