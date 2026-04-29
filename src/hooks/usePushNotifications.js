@@ -14,21 +14,45 @@ export function usePushNotifications() {
   const [fcmToken, setFcmToken] = useState(null)
   const [foregroundMessage, setForegroundMessage] = useState(null)
 
-  // FIX 6: Auto-registro robusto con guard isMounted para evitar race conditions
+  // Auto-renovación del token FCM cuando el usuario inicia sesión con permiso ya concedido
   useEffect(() => {
     if (typeof Notification === 'undefined') return;
-    if (Notification.permission !== 'granted') return;
     if (!auth.currentUser) return;
-    if (Capacitor.isNativePlatform()) return; // nativo lo maneja el listener
+    if (Capacitor.isNativePlatform()) return;
 
-    let isMounted = true;
-    const autoRegister = async () => {
-      if (isMounted) {
-        await requestPermission();
-      }
-    };
-    autoRegister();
-    return () => { isMounted = false; };
+    // Si el permiso ya está granted, renovar token automáticamente
+    if (Notification.permission === 'granted') {
+      let isMounted = true;
+      const renewToken = async () => {
+        if (!isMounted) return;
+        try {
+          await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+          const registration = await navigator.serviceWorker.ready;
+          const messaging = getMessaging();
+          const token = await getToken(messaging, {
+            vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
+            serviceWorkerRegistration: registration
+          });
+          if (token && isMounted && auth.currentUser) {
+            await setDoc(
+              doc(db, 'users', auth.currentUser.uid),
+              {
+                fcmTokens: arrayUnion(token),
+                fcmTokenUpdatedAt: serverTimestamp(),
+                notificationsEnabled: true
+              },
+              { merge: true }
+            );
+            setFcmToken(token);
+            console.log('[PushNotifications] ✅ Token renovado automáticamente');
+          }
+        } catch (err) {
+          console.warn('[PushNotifications] No se pudo renovar token:', err);
+        }
+      };
+      renewToken();
+      return () => { isMounted = false; };
+    }
   }, [auth.currentUser?.uid])
 
   /**
