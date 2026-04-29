@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
-import { ShoppingBag, Trash2, EyeOff, Eye, Filter, Search, X, Info, Copy, Check, ChevronDown, ExternalLink } from 'lucide-react';
+import { ShoppingBag, Trash2, EyeOff, Eye, Filter, Search, X, Info, Copy, Check, ChevronDown, ExternalLink, ArrowUpDown, Calendar } from 'lucide-react';
 import { CATEGORIES } from '../../data/categories';
 
 const countryData = {
@@ -28,8 +28,12 @@ export default function AdminAdsTab({ searchQuery = '' }) {
     status: 'all',
     category: '',
     country: '',
-    keyword: ''
+    keyword: '',
+    sortBy: 'latest',
+    startDate: '',
+    endDate: ''
   });
+  const [showSort, setShowSort] = useState(false);
 
   // Controls custom dropdowns
   const [openSelect, setOpenSelect] = useState(null); // 'category' | 'country' | null
@@ -128,7 +132,38 @@ export default function AdminAdsTab({ searchQuery = '' }) {
       }
     }
 
+    // Date Range Filter
+    if (filters.startDate || filters.endDate) {
+      let adDate = null;
+      if (ad.createdAt) {
+        adDate = ad.createdAt.seconds ? new Date(ad.createdAt.seconds * 1000) : new Date(ad.createdAt);
+      }
+      
+      if (adDate) {
+        if (filters.startDate) {
+          const start = new Date(filters.startDate);
+          start.setHours(0, 0, 0, 0);
+          if (adDate < start) return false;
+        }
+        if (filters.endDate) {
+          const end = new Date(filters.endDate);
+          end.setHours(23, 59, 59, 999);
+          if (adDate > end) return false;
+        }
+      } else if (filters.startDate || filters.endDate) {
+        // If we have no date but we are filtering by date, we hide it
+        return false;
+      }
+    }
+
     return true;
+  }).sort((a, b) => {
+    let dateA = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
+    let dateB = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
+
+    if (filters.sortBy === 'latest') return dateB - dateA;
+    if (filters.sortBy === 'oldest') return dateA - dateB;
+    return 0;
   });
 
   return (
@@ -156,15 +191,98 @@ export default function AdminAdsTab({ searchQuery = '' }) {
               ))}
             </div>
             
-            <button 
-              onClick={() => setShowFilters(!showFilters)}
-              className={`p-2.5 rounded-xl flex items-center justify-center transition-all flex-shrink-0 ${showFilters ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-              title="Filtros Avanzados"
-            >
-              <Filter className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button 
+                onClick={() => { setShowFilters(!showFilters); setShowSort(false); }}
+                className={`p-2.5 rounded-xl flex items-center justify-center transition-all ${showFilters ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                title="Filtros Avanzados"
+              >
+                <Filter className="w-5 h-5" />
+              </button>
+
+              <button 
+                onClick={() => { setShowSort(!showSort); setShowFilters(false); }}
+                className={`p-2.5 rounded-xl flex items-center justify-center transition-all ${showSort ? 'bg-indigo-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                title="Ordenar y Rango de Fechas"
+              >
+                <ArrowUpDown className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         </div>
+
+        {/* Sorting and Date Panel */}
+        {showSort && (
+          <div className="bg-indigo-50/50 p-5 rounded-2xl mb-6 border border-indigo-100 animate-in fade-in slide-in-from-top-4 relative z-10">
+            <div className="flex justify-between items-center mb-4">
+              <h4 className="text-sm font-black text-indigo-800 uppercase tracking-wider flex items-center gap-2">
+                <ArrowUpDown className="w-4 h-4" /> Ordenar y Rango de Fechas
+              </h4>
+              <button onClick={() => setShowSort(false)} className="text-xs font-bold text-gray-400 hover:text-red-500 flex items-center gap-1">
+                <X className="w-3 h-3" /> Cerrar
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Sort By Order */}
+              <div>
+                <label className="block text-xs font-bold text-gray-500 mb-1.5 ml-1">Orden de visualización</label>
+                <div className="flex bg-white p-1 rounded-xl border border-gray-200 h-[46px]">
+                  {[
+                    { id: 'latest', label: 'Mas Reciente' },
+                    { id: 'oldest', label: 'Mas Antiguo' }
+                  ].map(opt => (
+                    <button
+                      key={opt.id}
+                      onClick={() => handleFilterChange('sortBy', opt.id)}
+                      className={`flex-1 px-3 py-2 text-xs font-black rounded-lg transition-all ${filters.sortBy === opt.id ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Start Date */}
+              <div>
+                <label className="block text-xs font-bold text-gray-500 mb-1.5 ml-1">Desde (Fecha Inicio)</label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
+                    <Calendar className="h-4 w-4 text-indigo-500" />
+                  </div>
+                  <input 
+                    type={filters.startDate ? "date" : "text"}
+                    onFocus={(e) => (e.target.type = "date")}
+                    onBlur={(e) => { if (!e.target.value) e.target.type = "text"; }}
+                    placeholder="Seleccionar fecha..."
+                    value={filters.startDate}
+                    onChange={(e) => handleFilterChange('startDate', e.target.value)}
+                    className="w-full bg-white border border-gray-200 rounded-xl pl-11 pr-4 py-2.5 text-sm font-black text-gray-700 outline-none focus:border-indigo-500 transition-all hover:border-indigo-300 cursor-pointer h-[46px] placeholder:text-gray-300"
+                  />
+                </div>
+              </div>
+
+              {/* End Date */}
+              <div>
+                <label className="block text-xs font-bold text-gray-500 mb-1.5 ml-1">Hasta (Fecha Fin)</label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
+                    <Calendar className="h-4 w-4 text-indigo-500" />
+                  </div>
+                  <input 
+                    type={filters.endDate ? "date" : "text"}
+                    onFocus={(e) => (e.target.type = "date")}
+                    onBlur={(e) => { if (!e.target.value) e.target.type = "text"; }}
+                    placeholder="Seleccionar fecha..."
+                    value={filters.endDate}
+                    onChange={(e) => handleFilterChange('endDate', e.target.value)}
+                    className="w-full bg-white border border-gray-200 rounded-xl pl-11 pr-4 py-2.5 text-sm font-black text-gray-700 outline-none focus:border-indigo-500 transition-all hover:border-indigo-300 cursor-pointer h-[46px] placeholder:text-gray-300"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Advanced Filters Panel */}
         {showFilters && (
@@ -172,8 +290,17 @@ export default function AdminAdsTab({ searchQuery = '' }) {
             <div className="flex justify-between items-center mb-4">
               <h4 className="text-sm font-black text-gray-800 uppercase tracking-wider">Filtros Avanzados</h4>
               <button onClick={() => {
-                setFilters({ status: 'all', category: '', country: '', keyword: '' });
+                setFilters({ 
+                  status: 'all', 
+                  category: '', 
+                  country: '', 
+                  keyword: '',
+                  sortBy: 'latest',
+                  startDate: '',
+                  endDate: ''
+                });
                 setShowFilters(false);
+                setShowSort(false);
                 setOpenSelect(null);
               }} className="text-xs font-bold text-gray-400 hover:text-red-500 flex items-center gap-1">
                 <X className="w-3 h-3" /> Limpiar Todo
@@ -311,8 +438,8 @@ export default function AdminAdsTab({ searchQuery = '' }) {
             </div>
           )}
           {filteredAds.map(ad => (
-            <div key={ad.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100 gap-4 transition-all hover:bg-white hover:shadow-md">
-              <div className="flex items-center gap-4 overflow-hidden flex-1">
+            <div key={ad.id} className="flex flex-col sm:flex-row sm:items-start justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100 gap-4 transition-all hover:bg-white hover:shadow-md">
+              <div className="flex items-start gap-4 overflow-hidden flex-1">
                 <div 
                   onClick={() => navigate(`/perfil-producto?id=${ad.id}`)}
                   className="w-14 h-14 bg-blue-100/50 rounded-xl flex items-center justify-center shrink-0 overflow-hidden border border-blue-100 cursor-pointer hover:opacity-80 transition-opacity"
@@ -322,10 +449,12 @@ export default function AdminAdsTab({ searchQuery = '' }) {
                 <div className="flex flex-col min-w-0 flex-1">
                   <span 
                     onClick={() => navigate(`/perfil-producto?id=${ad.id}`)}
-                    className="font-black text-[15px] text-gray-800 line-clamp-1 cursor-pointer hover:text-blue-600 transition-colors"
+                    className="font-black text-[15px] text-gray-800 line-clamp-2 cursor-pointer hover:text-blue-600 transition-colors"
                   >{ad.name}</span>
-                  <span className="text-xs text-gray-500 font-bold line-clamp-1 mt-0.5">€ {ad.price} • Publicado por: <span className="text-gray-700">{ad.userName}</span></span>
-                  <div className="flex gap-2 mt-1.5 overflow-x-auto hide-scrollbar block">
+                  <div className="text-xs text-gray-500 font-bold mt-0.5">
+                    € {ad.price} • Publicado por: <span className="text-gray-700">{ad.userName}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2 mt-2">
                     <span className={`text-[10px] min-w-max font-black uppercase px-2 py-0.5 rounded-lg ${
                       ad.status === 'hidden' ? 'bg-gray-200 text-gray-600' : 'bg-green-100 text-green-600'
                     }`}>
@@ -350,41 +479,36 @@ export default function AdminAdsTab({ searchQuery = '' }) {
                       {formatCount(ad.likes)}
                     </span>
                     <span className="text-[10px] min-w-max font-bold text-gray-400 uppercase bg-transparent px-1 py-0.5 flex items-center">
-                      ID: {String(ad.id).substring(0,6)}...
+                      ID: {String(ad.id).substring(0,8)}...
                     </span>
                   </div>
                 </div>
               </div>
               
-              <div className="flex gap-2 shrink-0 sm:ml-2 justify-end">
+              <div className="flex gap-2 shrink-0 sm:ml-2 justify-center sm:justify-end">
                 <button 
                   onClick={() => navigate(`/perfil-producto?id=${ad.id}`)}
-                  className="p-2.5 bg-yellow-50 text-yellow-600 rounded-xl hover:bg-yellow-100 transition-colors shadow-sm flex items-center gap-2" 
+                  className="p-2.5 bg-yellow-50 text-yellow-600 rounded-xl hover:bg-yellow-100 transition-colors shadow-sm flex items-center justify-center" 
                   title="Ver Anuncio"
                 >
                   <ExternalLink className="w-4 h-4" />
-                  <span className="text-xs font-black sm:hidden">Ver</span>
                 </button>
                 {ad.status === 'hidden' ? (
-                  <button onClick={() => handleUpdateStatus(ad.id, 'active')} className="p-2.5 bg-blue-100 text-blue-600 rounded-xl hover:bg-blue-200 transition-colors shadow-sm flex items-center gap-2" title="Mostrar Anuncio (Hacer Público)">
+                  <button onClick={() => handleUpdateStatus(ad.id, 'active')} className="p-2.5 bg-blue-100 text-blue-600 rounded-xl hover:bg-blue-200 transition-colors shadow-sm flex items-center justify-center" title="Mostrar Anuncio (Hacer Público)">
                     <Eye className="w-4 h-4" />
-                    <span className="text-xs font-black sm:hidden">Mostrar</span>
                   </button>
                 ) : (
-                  <button onClick={() => handleUpdateStatus(ad.id, 'hidden')} className="p-2.5 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors shadow-sm flex items-center gap-2" title="Ocultar Anuncio (Privado)">
+                  <button onClick={() => handleUpdateStatus(ad.id, 'hidden')} className="p-2.5 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors shadow-sm flex items-center justify-center" title="Ocultar Anuncio (Privado)">
                     <EyeOff className="w-4 h-4" />
-                    <span className="text-xs font-black sm:hidden">Ocultar</span>
                   </button>
                 )}
                 
-                <button onClick={() => setInfoAd(ad)} className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-100 transition-colors shadow-sm flex items-center gap-2" title="ID de Producto">
+                <button onClick={() => setInfoAd(ad)} className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-100 transition-colors shadow-sm flex items-center justify-center" title="ID de Producto">
                   <Info className="w-4 h-4" />
-                  <span className="text-xs font-black sm:hidden">IDs</span>
                 </button>
                 
-                <button onClick={() => handleDelete(ad.id)} className="p-2.5 bg-red-100 text-red-600 rounded-xl hover:bg-red-200 transition-colors shadow-sm flex items-center gap-2" title="Eliminar Permanentemente">
+                <button onClick={() => handleDelete(ad.id)} className="p-2.5 bg-red-100 text-red-600 rounded-xl hover:bg-red-200 transition-colors shadow-sm flex items-center justify-center" title="Eliminar Permanentemente">
                   <Trash2 className="w-4 h-4" />
-                  <span className="text-xs font-black sm:hidden">Borrar</span>
                 </button>
               </div>
             </div>

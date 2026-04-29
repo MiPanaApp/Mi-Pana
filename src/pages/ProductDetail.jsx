@@ -286,7 +286,7 @@ export default function ProductDetail() {
             via: 'whatsapp'
          }).catch(err => console.warn('Error registrando interaccion de WA:', err));
       }
-      window.open(`https://wa.me/${product.whatsapp || '34600000000'}?text=Hola%20${product.userName || 'Pana'},%20vi%20tu%20anuncio`);
+      window.open(`https://wa.me/${product.whatsapp}?text=${encodeURIComponent(`Hola ${product.userName || 'Pana'}, vi tu anuncio "${product.name}" en Mi Pana y me interesa. ¿Está disponible?`)}`);
    };
 
    // Carousel tracking (unificado)
@@ -992,17 +992,18 @@ tlfno contacto: 672 593 950`}
                   )}
                </div>
 
-               {/* Botones de Acción integrados al final del flujo del contenido */}
-               <div className="flex gap-4 mt-10 mb-6">
-                  <button
-                     onClick={handleWhatsAppClick}
-                     className="flex-1 h-[56px] px-4 bg-gradient-to-br from-[#25D366] to-[#1DA851] rounded-2xl flex items-center justify-center gap-1.5 shadow-[0_8px_16px_rgba(37,211,102,0.4),inset_2px_4px_10px_rgba(255,255,255,0.4)] hover:-translate-y-1 transition-all outline-none"
-                  >
-                     <svg width="20" height="20" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-sm flex-shrink-0">
-                        <path d="M12.002 0C5.372 0 0 5.373 0 12.005C0 14.664 0.855 17.135 2.28 19.145L0.752 24.027L5.804 22.506C7.712 23.716 9.789 24.072 12.002 24.072C18.632 24.072 24 18.699 24 12.067C24 5.435 18.632 0 12.002 0ZM18.591 17.125C18.314 17.902 16.978 18.575 16.086 18.753C15.476 18.875 14.615 18.951 11.698 17.74C7.969 16.191 5.558 12.392 5.373 12.147C5.188 11.902 3.837 10.116 3.837 8.273C3.837 6.43 4.792 5.539 5.16 5.169C5.529 4.801 6.05 4.647 6.541 4.647C6.694 4.647 6.835 4.654 6.963 4.661C7.331 4.675 7.514 4.693 7.76 5.278C8.067 6.015 8.804 7.814 8.897 7.998C8.989 8.182 9.112 8.428 8.989 8.674C8.865 8.919 8.773 9.043 8.588 9.258C8.404 9.472 8.22 9.64 8.036 9.871C7.867 10.071 7.674 10.286 7.889 10.655C8.104 11.024 8.788 12.135 9.791 13.025C11.083 14.175 12.12 14.538 12.519 14.707C12.918 14.876 13.149 14.846 13.395 14.585C13.64 14.324 14.285 13.511 14.561 13.11C14.838 12.71 15.114 12.772 15.483 12.91C15.852 13.048 17.816 14.016 18.184 14.2C18.552 14.385 18.798 14.477 18.89 14.63C18.983 14.783 18.983 15.521 18.591 17.125Z" />
-                     </svg>
-                     <span className="text-white font-bold tracking-tight text-[15px] whitespace-nowrap">WhatsApp</span>
-                  </button>
+                <div className="flex gap-4 mt-10 mb-6">
+                  {product.whatsapp && (
+                     <button
+                        onClick={handleWhatsAppClick}
+                        className="flex-1 h-[56px] px-4 bg-gradient-to-br from-[#25D366] to-[#1DA851] rounded-2xl flex items-center justify-center gap-1.5 shadow-[0_8px_16px_rgba(37,211,102,0.4),inset_2px_4px_10px_rgba(255,255,255,0.4)] hover:-translate-y-1 transition-all outline-none"
+                     >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-sm flex-shrink-0">
+                           <path d="M12.002 0C5.372 0 0 5.373 0 12.005C0 14.664 0.855 17.135 2.28 19.145L0.752 24.027L5.804 22.506C7.712 23.716 9.789 24.072 12.002 24.072C18.632 24.072 24 18.699 24 12.067C24 5.435 18.632 0 12.002 0ZM18.591 17.125C18.314 17.902 16.978 18.575 16.086 18.753C15.476 18.875 14.615 18.951 11.698 17.74C7.969 16.191 5.558 12.392 5.373 12.147C5.188 11.902 3.837 10.116 3.837 8.273C3.837 6.43 4.792 5.539 5.16 5.169C5.529 4.801 6.05 4.647 6.541 4.647C6.694 4.647 6.835 4.654 6.963 4.661C7.331 4.675 7.514 4.693 7.76 5.278C8.067 6.015 8.804 7.814 8.897 7.998C8.989 8.182 9.112 8.428 8.989 8.674C8.865 8.919 8.773 9.043 8.588 9.258C8.404 9.472 8.22 9.64 8.036 9.871C7.867 10.071 7.674 10.286 7.889 10.655C8.104 11.024 8.788 12.135 9.791 13.025C11.083 14.175 12.12 14.538 12.519 14.707C12.918 14.876 13.149 14.846 13.395 14.585C13.64 14.324 14.285 13.511 14.561 13.11C14.838 12.71 15.114 12.772 15.483 12.91C15.852 13.048 17.816 14.016 18.184 14.2C18.552 14.385 18.798 14.477 18.89 14.63C18.983 14.783 18.983 15.521 18.591 17.125Z" />
+                        </svg>
+                        <span className="text-white font-bold tracking-tight text-[15px] whitespace-nowrap">WhatsApp</span>
+                     </button>
+                  )}
                   <button
                      onClick={handleStartChat}
                      disabled={startingChat || (product?.userId && user?.uid === product?.userId)}

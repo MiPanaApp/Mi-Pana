@@ -247,11 +247,11 @@ export default function Home() {
         const pL1 = normalizeL1(p.location?.level1 || p.state || '');
         const pCommunity = normalizeL1(p.location?.communityName || '');
         return pL1 === targetL1 ||
-               pCommunity === targetL1 ||
-               pL1.includes(targetL1) ||
-               targetL1.includes(pL1) ||
-               pCommunity.includes(targetL1) ||
-               targetL1.includes(pCommunity);
+          pCommunity === targetL1 ||
+          pL1.includes(targetL1) ||
+          targetL1.includes(pL1) ||
+          pCommunity.includes(targetL1) ||
+          targetL1.includes(pCommunity);
       });
     }
 
