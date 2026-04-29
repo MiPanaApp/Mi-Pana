@@ -373,6 +373,38 @@ export default function Home() {
     return result;
   }, [products, filters, activeCategory, sortBy, selectedCountry, userLocation]);
 
+  // Búsqueda extendida: resultados de otras comunidades del mismo país cuando no hay resultados locales
+  const extendedResults = useMemo(() => {
+    if (!filters.searchQuery) return [];
+    if (!filters.location?.level1) return [];
+    if (filteredProducts.length > 0) return [];
+
+    const q = normalizeText(filters.searchQuery);
+    const normalizeL1 = (text) => {
+      const norm = normalizeText(text || '');
+      return COMMUNITY_ALIASES[norm] || norm;
+    };
+    const targetL1 = normalizeL1(filters.location.level1);
+    const suspendedCountryIds = countries
+      .filter(c => c.status === 'suspended')
+      .map(c => c.id);
+
+    return products.filter(p => {
+      if (p.location?.country !== selectedCountry) return false;
+      const pL1 = normalizeL1(p.location?.level1 || p.state || '');
+      const pCommunity = normalizeL1(p.location?.communityName || '');
+      if (pL1 === targetL1 || pCommunity === targetL1) return false;
+      if (suspendedCountryIds.includes(p.location?.country)) return false;
+      if (p.status === 'hidden' || p.status === 'inactive') return false;
+      const matchesName = normalizeText(p.name || '').includes(q);
+      const matchesDesc = normalizeText(p.description || '').includes(q);
+      const matchesKeyword = Array.isArray(p.keywords) &&
+        p.keywords.some(k => normalizeText(k).includes(q));
+      return matchesName || matchesDesc || matchesKeyword;
+    });
+  }, [products, filters.searchQuery, filters.location?.level1,
+    filteredProducts.length, selectedCountry, countries]);
+
   // Fallback: Si no hay anuncios en la provincia, buscar en limítrofes
   useEffect(() => {
     const fetchNearby = async () => {
@@ -517,7 +549,7 @@ export default function Home() {
               </div>
             )}
 
-            {products.length > 0 && filteredProducts.length === 0 && (
+            {products.length > 0 && filteredProducts.length === 0 && extendedResults.length === 0 && (
               <div className="col-span-full py-8 text-center flex flex-col items-center justify-center p-6 mt-0">
                 <img
                   src={panaEnMecedora}
@@ -529,6 +561,24 @@ export default function Home() {
                 </h3>
 
               </div>
+            )}
+
+            {filteredProducts.length === 0 && extendedResults.length > 0 && (
+              <>
+                <div className="col-span-full mt-4 mb-2">
+                  <div className="bg-gradient-to-r from-[#FFB400]/10 to-transparent border-l-4 border-[#FFB400] rounded-r-2xl p-4">
+                    <h3 className="font-black text-[16px] text-[#1A1A3A] tracking-tight leading-tight mb-1">
+                      🔍 No hay panas en tu zona, pero mira esto...
+                    </h3>
+                    <p className="text-[13px] font-bold text-[#1A1A3A]/60">
+                      Encontramos {extendedResults.length} resultado{extendedResults.length !== 1 ? 's' : ''} en otras comunidades de tu país.
+                    </p>
+                  </div>
+                </div>
+                {extendedResults.map(prod => (
+                  <ProductCard key={prod.objectID || prod.id} product={prod} />
+                ))}
+              </>
             )}
           </div>
         )}
