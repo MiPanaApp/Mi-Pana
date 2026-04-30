@@ -7,6 +7,9 @@ import {
   IoPersonCircleOutline, IoPersonCircle,
   IoAddCircle
 } from 'react-icons/io5';
+import { useAuth } from '../../context/AuthContext';
+import IncompleteProfileModal from '../ui/IncompleteProfileModal';
+import { useState } from 'react';
 
 const NAV_ITEMS = [
   { 
@@ -50,10 +53,20 @@ const NAV_ITEMS = [
 export default function MobileNavBar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { userData, currentUser } = useAuth();
+  const [showIncompleteModal, setShowIncompleteModal] = useState(false);
+
+  const handleAnunciarClick = (path) => {
+    if (currentUser && userData?.profileComplete !== true) {
+      setShowIncompleteModal(true);
+    } else {
+      navigate(path);
+    }
+  };
 
   return (
     <nav className="fixed bottom-0 left-0 w-full z-50 md:hidden bg-[#E0E5EC]/80 backdrop-blur-md shadow-[0_-5px_20px_rgba(163,177,198,0.4)]">
-
+      <IncompleteProfileModal isOpen={showIncompleteModal} onClose={() => setShowIncompleteModal(false)} />
 
       <div
         className="flex justify-around items-center px-2 py-2"
@@ -68,7 +81,7 @@ export default function MobileNavBar() {
             return (
               <div key={item.id} className="relative -top-6 flex flex-col items-center pointer-events-auto">
                 <motion.button
-                  onClick={() => navigate(item.path)}
+                  onClick={() => handleAnunciarClick(item.path)}
                   whileTap={{ scale: 0.9 }}
                   className="w-16 h-16 rounded-full bg-[#E0E5EC] flex items-center justify-center shadow-[6px_6px_12px_rgba(163,177,198,0.7),-6px_-6px_12px_rgba(255,255,255,0.9)] active:shadow-[inset_4px_4px_8px_rgba(163,177,198,0.7),inset_-4px_-4px_8px_rgba(255,255,255,0.9)] border-4 border-[#E0E5EC] z-50 transition-all"
                 >

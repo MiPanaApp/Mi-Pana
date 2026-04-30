@@ -15,6 +15,7 @@ import { useCategoryStore } from '../../store/useCategoryStore';
 import { FiPlus, FiPlusCircle } from 'react-icons/fi';
 import { FcGoogle } from 'react-icons/fc';
 import { ChevronDown as LucideChevronDown } from 'lucide-react';
+import IncompleteProfileModal from '../ui/IncompleteProfileModal';
 
 const COUNTRY_INFO = {
   'ES': { flag: '🇪🇸', defaultRegion: 'Madrid' },
@@ -63,6 +64,7 @@ const Header = forwardRef((props, ref) => {
   const [isCountryOpen, setIsCountryOpen] = useState(false);
   const [isRegionOpen, setIsRegionOpen] = useState(false);
   const [isDesktopMenuOpen, setIsDesktopMenuOpen] = useState(false);
+  const [showIncompleteModal, setShowIncompleteModal] = useState(false);
   const countryRef = useRef(null);
   const regionRef = useRef(null);
   const desktopMenuRef = useRef(null);
@@ -137,6 +139,15 @@ const Header = forwardRef((props, ref) => {
     }
   };
 
+  const handleAnunciarClick = () => {
+    setIsDesktopMenuOpen(false);
+    if (user && userData?.profileComplete !== true) {
+      setShowIncompleteModal(true);
+    } else {
+      navigate('/anunciar');
+    }
+  };
+
   const handleRegionChange = async (newRegion) => {
     setRegion(newRegion);
     setFilters({
@@ -189,6 +200,7 @@ const Header = forwardRef((props, ref) => {
 
   return (
     <header ref={ref} className="fixed top-0 left-0 right-0 w-full z-50 overflow-visible">
+      <IncompleteProfileModal isOpen={showIncompleteModal} onClose={() => setShowIncompleteModal(false)} />
       {/* 1. TOP HEADER FIJO (Logo + Buscador) - Neumorphism */}
       <div className="bg-[#E0E5EC] pt-safe safe-area-pt shadow-[0_5px_15px_rgba(163,177,198,0.3)]">
         <div className="max-w-7xl mx-auto px-4 pt-3 pb-3">
@@ -358,7 +370,7 @@ const Header = forwardRef((props, ref) => {
                         <button onClick={() => { setIsDesktopMenuOpen(false); navigate('/favoritos'); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#E0E5EC] text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3),inset_-4px_-4px_8px_rgba(255,255,255,0.5)] hover:shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.7)] transition-all active:scale-95 group">
                           <LucideHeart className="w-5 h-5 text-[#D90429] group-hover:scale-110 transition-transform" /> Favoritos
                         </button>
-                        <button onClick={() => { setIsDesktopMenuOpen(false); navigate('/anunciar'); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#E0E5EC] text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3),inset_-4px_-4px_8px_rgba(255,255,255,0.5)] hover:shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.7)] transition-all active:scale-95 group">
+                        <button onClick={handleAnunciarClick} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#E0E5EC] text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3),inset_-4px_-4px_8px_rgba(255,255,255,0.5)] hover:shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.7)] transition-all active:scale-95 group">
                           <PlusCircle className="w-5 h-5 text-[#1A1A3A] group-hover:scale-110 transition-transform" /> Anunciar
                         </button>
                         <button onClick={() => { setIsDesktopMenuOpen(false); navigate('/mensajes'); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#E0E5EC] text-[#1A1A3A] font-bold shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3),inset_-4px_-4px_8px_rgba(255,255,255,0.5)] hover:shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.7)] transition-all active:scale-95 group">

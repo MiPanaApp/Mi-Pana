@@ -27,6 +27,7 @@ import AvatarCropper from '../components/auth/AvatarCropper';
 import { useLocationStore } from '../store/useLocationStore';
 import { getCountryNameFromCode, getCountryCodeFromName, LOCATION_DATA } from '../data/locations';
 import { usePushNotifications } from '../hooks/usePushNotifications';
+import IncompleteProfileModal from '../components/ui/IncompleteProfileModal';
 
 const functions = getFunctions(undefined, 'us-central1');
 
@@ -48,6 +49,7 @@ export default function Profile() {
   const [showNameModal, setShowNameModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showBirthDateModal, setShowBirthDateModal] = useState(false);
+  const [showIncompleteModal, setShowIncompleteModal] = useState(false);
   const [newBirthDate, setNewBirthDate] = useState('');
   const [newName, setNewName] = useState('');
   const [newLastName, setNewLastName] = useState('');
@@ -781,6 +783,7 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-[#E0E5EC] pb-32 md:pb-12 pt-[20px] px-6 font-sans">
+      <IncompleteProfileModal isOpen={showIncompleteModal} onClose={() => setShowIncompleteModal(false)} />
       <div className="w-full max-w-[1400px] mx-auto md:flex md:gap-8 lg:gap-12 items-start justify-center">
 
         {/* COLUMNA IZQUIERDA (Perfil) */}
@@ -848,7 +851,13 @@ export default function Profile() {
             </div>
           ) : (
             <button
-              onClick={() => navigate('/verificacion')}
+              onClick={() => {
+                if (currentUser && userData?.profileComplete !== true) {
+                  setShowIncompleteModal(true);
+                } else {
+                  navigate('/verificacion');
+                }
+              }}
               className="flex items-center gap-1.5 bg-[#1A1A3A] px-4 py-1.5 rounded-full mb-6 active:scale-95 transition-transform shadow-[0_4px_10px_rgba(0,0,0,0.1)] group hover:bg-[#2A2A4A]"
             >
               <Shield size={14} className="text-white group-hover:text-[#FFB400] transition-colors" />

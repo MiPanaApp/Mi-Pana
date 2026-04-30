@@ -7,11 +7,13 @@ import { FaXTwitter } from 'react-icons/fa6';
 import { IconPana } from './ui/IconPana';
 import { LegalData } from '../data/LegalData';
 import LegalDrawer from './LegalDrawer';
+import IncompleteProfileModal from './ui/IncompleteProfileModal';
 
 const Footer = ({ onContactClick }) => {
   const [legalDocs, setLegalDocs] = useState({ isOpen: false, title: '', content: '' });
   const navigate = useNavigate();
-  const { userData } = useAuth();
+  const { userData, currentUser } = useAuth();
+  const [showIncompleteModal, setShowIncompleteModal] = useState(false);
 
   const isVerified = userData?.verificationStatus === 'approved';
   const isPending = userData?.verificationStatus === 'pending';
@@ -25,6 +27,7 @@ const Footer = ({ onContactClick }) => {
 
   return (
     <footer className="relative z-10 w-full pt-16 pb-12 px-6 bg-white/50 backdrop-blur-sm mt-12 md:mt-0">
+      <IncompleteProfileModal isOpen={showIncompleteModal} onClose={() => setShowIncompleteModal(false)} />
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
           <div className="col-span-1 md:col-span-2 space-y-6">
@@ -152,7 +155,11 @@ const Footer = ({ onContactClick }) => {
                 <button 
                   onClick={() => {
                     if (!isVerified && !isPending) {
-                      navigate('/verificacion');
+                      if (currentUser && userData?.profileComplete !== true) {
+                        setShowIncompleteModal(true);
+                      } else {
+                        navigate('/verificacion');
+                      }
                     }
                   }} 
                   className={`flex items-center gap-2 transition-colors text-left text-nowrap ${
