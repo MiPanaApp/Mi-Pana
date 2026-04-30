@@ -1,14 +1,15 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { UserCircle2, X } from 'lucide-react';
+import { createPortal } from 'react-dom';
 
 export default function IncompleteProfileModal({ isOpen, onClose }) {
   const navigate = useNavigate();
 
-  return (
+  const modalContent = (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4" style={{ position: 'fixed' }}>
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -67,4 +68,6 @@ export default function IncompleteProfileModal({ isOpen, onClose }) {
       )}
     </AnimatePresence>
   );
+
+  return createPortal(modalContent, document.body);
 }
