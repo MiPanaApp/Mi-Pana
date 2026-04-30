@@ -341,10 +341,9 @@ export default function Profile() {
     const confettiColors = ['#FFB400', '#1A1A3A', '#D90429'];
 
     useEffect(() => {
-      // TEMP: Comentada la validación de sessionStorage para facilitar las pruebas
-      if (profileProgress === 100 /* && !sessionStorage.getItem('confetti_shown') */) {
+      if (profileProgress === 100 && !sessionStorage.getItem('confetti_shown')) {
         setShowConfetti(true);
-        // sessionStorage.setItem('confetti_shown', '1');
+        sessionStorage.setItem('confetti_shown', '1');
         setTimeout(() => setShowConfetti(false), 3000); // 3 segundos
       }
     }, [profileProgress]);
