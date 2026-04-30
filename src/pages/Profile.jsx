@@ -84,7 +84,14 @@ export default function Profile() {
     if (!userData) return 0;
     const hasSecondary = Boolean(userData.gender && userData.birthDate && userData.region);
     const hasAvatar = Boolean(userData.avatar || userAvatar);
-    return hasAvatar ? 100 : hasSecondary ? 66 : 33;
+    
+    let levelsCompleted = 1; // Base 33%
+    if (hasSecondary) levelsCompleted++;
+    if (hasAvatar) levelsCompleted++;
+
+    if (levelsCompleted === 3) return 100;
+    if (levelsCompleted === 2) return 66;
+    return 33;
   })();
 
   // Sync profileComplete en Firestore
