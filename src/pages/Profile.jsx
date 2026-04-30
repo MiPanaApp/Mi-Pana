@@ -4,7 +4,7 @@ import {
   ShieldCheck, Loader2, Camera, Lock, Info, 
   HelpCircle, Cookie, ShieldAlert, Instagram, Facebook, Youtube, Twitter, UserCircle2,
   Package, Edit2, Trash2, PlusCircle, ExternalLink, Eye, EyeOff, X, Calendar, Globe, MoreVertical, CheckCircle2,
-  Clock, Shield
+  Clock, Shield, Pencil
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -47,6 +47,8 @@ export default function Profile() {
   const [showSexModal, setShowSexModal] = useState(false);
   const [showNameModal, setShowNameModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showBirthDateModal, setShowBirthDateModal] = useState(false);
+  const [newBirthDate, setNewBirthDate] = useState('');
   const [newName, setNewName] = useState('');
   const [newLastName, setNewLastName] = useState('');
   const [pwdForm, setPwdForm] = useState({ current: '', next: '', confirm: '' });
@@ -78,13 +80,9 @@ export default function Profile() {
   // Calcular progreso del perfil (Progressive Profiling)
   const profileProgress = (() => {
     if (!userData) return 0;
-    const hasBasic = Boolean(userData.name && userData.lastName && userData.email && userData.country);
     const hasSecondary = Boolean(userData.gender && userData.birthDate && userData.region);
     const hasAvatar = Boolean(userData.avatar || userAvatar);
-    if (hasBasic && hasSecondary && hasAvatar) return 100;
-    if (hasBasic && hasSecondary) return 66;
-    if (hasBasic) return 33;
-    return 0;
+    return hasAvatar ? 100 : hasSecondary ? 66 : 33;
   })();
 
   // Sync profileComplete en Firestore
@@ -119,6 +117,21 @@ export default function Profile() {
     } catch (error) {
       console.error("Error al actualizar nombre:", error);
       alert('Hubo un error al actualizar tu nombre.');
+    }
+  };
+
+  const handleBirthDateSubmit = async (e) => {
+    e.preventDefault();
+    if (!newBirthDate) return;
+    try {
+      await updateDoc(doc(db, 'users', currentUser.uid), {
+        birthDate: newBirthDate,
+        updatedAt: new Date()
+      });
+      setShowBirthDateModal(false);
+    } catch (error) {
+      console.error("Error al actualizar fecha de nacimiento:", error);
+      alert('Hubo un error al actualizar tu fecha de nacimiento.');
     }
   };
 
@@ -445,10 +458,9 @@ export default function Profile() {
       {actionLabel && (
         <button 
           onClick={onAction}
-          className="ml-2 px-3 py-1.5 text-[10px] font-black uppercase rounded-lg bg-[#E0E5EC] text-[#0056B3] shadow-[3px_3px_6px_rgba(163,177,198,0.5),-3px_-3px_6px_rgba(255,255,255,0.9)] active:shadow-[inset_2px_2px_4px_rgba(163,177,198,0.5)] transition-all flex items-center gap-1"
+          className="ml-2 px-3 py-1.5 rounded-lg bg-[#E0E5EC] text-[#0056B3] shadow-[3px_3px_6px_rgba(163,177,198,0.5),-3px_-3px_6px_rgba(255,255,255,0.9)] active:shadow-[inset_2px_2px_4px_rgba(163,177,198,0.5)] transition-all flex items-center justify-center"
         >
-          {actionLabel === 'Editar' && <Edit2 size={10} />}
-          {actionLabel}
+          <Pencil size={14} />
         </button>
       )}
     </div>
@@ -831,6 +843,8 @@ export default function Profile() {
               icon={Calendar} 
               label="Fecha de Nacimiento" 
               value={userData?.birthDate} 
+              actionLabel="Editar"
+              onAction={() => { setNewBirthDate(userData?.birthDate || ''); setShowBirthDateModal(true); }}
             />
             <HeaderInfoItem 
               icon={User} 
@@ -1263,6 +1277,57 @@ export default function Profile() {
                     onChange={(e) => setNewLastName(e.target.value)}
                     className="w-full p-4 bg-[#E0E5EC] rounded-2xl shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.7)] text-[#1A1A3A] font-bold outline-none focus:ring-2 focus:ring-[#0056B3]/40 transition-all placeholder:text-[#1A1A3A]/30"
                     placeholder="Ej: Pérez"
+                  />
+                </div>
+                
+                <button 
+                  type="submit"
+                  className="w-full mt-2 py-4 rounded-full bg-[#1A1A3A] text-white font-black uppercase text-sm shadow-[0_10px_20px_rgba(26,26,58,0.3)] active:scale-95 transition-all"
+                >
+                  Guardar Cambios
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal Neumórfico para Fecha de Nacimiento */}
+      <AnimatePresence>
+        {showBirthDateModal && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4 overflow-hidden">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowBirthDateModal(false)}
+              className="absolute inset-0 bg-[#E0E5EC]/80 backdrop-blur-sm"
+            />
+            
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="w-full max-w-sm bg-[#E0E5EC] rounded-[2rem] p-6 shadow-[20px_20px_60px_#bebebe,-20px_-20px_60px_#ffffff] relative z-10 flex flex-col"
+            >
+              <button 
+                onClick={() => setShowBirthDateModal(false)}
+                className="absolute right-4 top-4 w-10 h-10 flex items-center justify-center rounded-full bg-[#E0E5EC] text-[#1A1A3A] hover:text-[#D90429] shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.8)] active:shadow-[inset_2px_2px_4px_rgba(163,177,198,0.4)] transition-all"
+              >
+                <X size={20} />
+              </button>
+              
+              <h2 className="text-xl font-black text-[#1A1A3A] mb-1 pl-1">Fecha de Nacimiento</h2>
+              <p className="text-xs font-bold text-[#8888AA] mb-5 pl-1">¿Cuándo cumples años?</p>
+              
+              <form onSubmit={handleBirthDateSubmit} className="space-y-4">
+                <div>
+                  <input
+                    type="date"
+                    value={newBirthDate}
+                    onChange={(e) => setNewBirthDate(e.target.value)}
+                    required
+                    className="w-full p-4 bg-[#E0E5EC] rounded-2xl shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.7)] text-[#1A1A3A] font-bold outline-none focus:ring-2 focus:ring-[#0056B3]/40 transition-all"
                   />
                 </div>
                 
