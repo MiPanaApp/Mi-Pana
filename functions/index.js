@@ -1388,3 +1388,197 @@ exports.onNewUserTrigger = onDocumentUpdated(
     });
   }
 );
+
+// ════════════════════════════════════════════════
+// Helper interno: envía push de recordatorio de perfil
+// ════════════════════════════════════════════════
+async function sendProfileReminderPush(userId, tokens, title, body) {
+  const messaging = getMessaging();
+  const result = await messaging.sendEachForMulticast({
+    tokens,
+    notification: { title, body },
+    data: { actionUrl: '/perfil', type: 'profile_reminder' },
+    android: {
+      priority: 'high',
+      notification: {
+        channelId: 'general',
+        priority: 'high',
+        sound: 'default',
+        title,
+        body,
+        ticker: 'Mi Pana',
+        clickAction: 'FLUTTER_NOTIFICATION_CLICK'
+      }
+    },
+    apns: {
+      headers: { 'apns-priority': '10' },
+      payload: { aps: { sound: 'default', badge: 1, alert: { title, body } } }
+    }
+  }).catch((err) => {
+    console.error('[ProfileReminder] Error push:', err.message);
+    return null;
+  });
+  if (result) await cleanupInvalidTokens(userId, tokens, result.responses);
+}
+
+// ════════════════════════════════════════════════
+// Helper interno: envía email de recordatorio de perfil vía Resend
+// ════════════════════════════════════════════════
+async function sendProfileReminderEmail(resend, email, displayName, subject, headline, bodyLines) {
+  const { emailTemplate, bodyText } = getTemplates();
+  const content = bodyText(headline, bodyLines);
+  const html = emailTemplate({
+    title: subject,
+    preheader: headline,
+    content,
+    ctaText: 'Completar mi perfil',
+    ctaUrl: 'https://mipana.net/perfil'
+  });
+  await resend.emails.send({
+    from: 'Mi Pana <hola@mipana.net>',
+    to: email,
+    subject,
+    html
+  }).catch((err) => console.error('[ProfileReminder] Error email:', err.message));
+}
+
+// ════════════════════════════════════════════════
+// FUNCIÓN: profileReminderFirst — 24 h tras el registro
+// Corre cada 6 horas. Ventana: usuarios creados entre 24 h y 30 h atrás.
+// ════════════════════════════════════════════════
+exports.profileReminderFirst = onSchedule(
+  { schedule: 'every 6 hours', region: 'us-central1', secrets: [RESEND_API_KEY] },
+  async () => {
+    const now = Date.now();
+    const windowStart = new Date(now - 30 * 60 * 60 * 1000); // hace 30 h
+    const windowEnd   = new Date(now - 24 * 60 * 60 * 1000); // hace 24 h
+
+    // Firestore no permite múltiples inequality en campos distintos, filtramos en cliente
+    const snap = await getDb().collection('users')
+      .where('profileComplete', '==', false)
+      .where('profileReminderFirstSent', '!=', true)
+      .limit(500)
+      .get();
+
+    if (snap.empty) {
+      console.log('[profileReminderFirst] Sin usuarios candidatos.');
+      return;
+    }
+
+    const { Resend } = require('resend');
+    const resend = new Resend(RESEND_API_KEY.value());
+    let sent = 0;
+
+    for (const userDoc of snap.docs) {
+      const user = userDoc.data();
+
+      // Filtro de ventana de tiempo en cliente
+      const createdAt = user.createdAt?.toDate?.() || new Date(user.createdAt);
+      if (isNaN(createdAt) || createdAt < windowStart || createdAt > windowEnd) continue;
+      if (user.profileReminderFirstSent === true) continue;
+
+      const displayName = user.name || user.displayName || user.email?.split('@')[0] || 'pana';
+      const pushTitle = '¡Casi listo, pana! 🎯';
+      const pushBody  = 'Completa tu perfil al 100% para desbloquear todas las funciones de Mi Pana';
+
+      const tokens = user.fcmTokens || [];
+      if (tokens.length) {
+        await sendProfileReminderPush(userDoc.id, tokens, pushTitle, pushBody);
+      }
+
+      if (user.email) {
+        await sendProfileReminderEmail(
+          resend, user.email, displayName,
+          '¡Casi listo, pana! Completa tu perfil 🎯',
+          `¡Hola, ${displayName}! Tu perfil está incompleto`,
+          [
+            `Notamos que aún no has terminado de configurar tu perfil en <strong>Mi Pana</strong>.`,
+            `Completar tu perfil te da acceso a todas las funciones: publicar anuncios, verificar tu identidad y generar más confianza en la comunidad.`,
+            `¡Solo te tomará un momento, pana!`
+          ]
+        );
+      }
+
+      await getDb().collection('users').doc(userDoc.id)
+        .update({ profileReminderFirstSent: true })
+        .catch((e) => console.error('[profileReminderFirst] Error update:', e.message));
+
+      sent++;
+    }
+
+    console.log(`✅ [profileReminderFirst] Enviados: ${sent}`);
+  }
+);
+
+// ════════════════════════════════════════════════
+// FUNCIÓN: profileReminderSecond — 30 días tras el registro
+// Corre una vez al día. Solo si ya recibió el primer recordatorio.
+// ════════════════════════════════════════════════
+exports.profileReminderSecond = onSchedule(
+  { schedule: 'every 24 hours', region: 'us-central1', secrets: [RESEND_API_KEY] },
+  async () => {
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+    const snap = await getDb().collection('users')
+      .where('profileComplete', '==', false)
+      .where('profileReminderFirstSent', '==', true)
+      .where('profileReminderSecondSent', '!=', true)
+      .limit(200)
+      .get()
+      .catch(() =>
+        getDb().collection('users')
+          .where('profileComplete', '==', false)
+          .where('profileReminderFirstSent', '==', true)
+          .limit(500)
+          .get()
+      );
+
+    if (snap.empty) {
+      console.log('[profileReminderSecond] Sin usuarios elegibles.');
+      return;
+    }
+
+    const { Resend } = require('resend');
+    const resend = new Resend(RESEND_API_KEY.value());
+    let sent = 0;
+
+    for (const userDoc of snap.docs) {
+      const user = userDoc.data();
+
+      // Filtro en cliente: createdAt anterior a 30 días y no enviado aún
+      const createdAt = user.createdAt?.toDate?.() || new Date(user.createdAt);
+      if (isNaN(createdAt) || createdAt > thirtyDaysAgo) continue;
+      if (user.profileReminderSecondSent === true) continue;
+
+      const displayName = user.name || user.displayName || user.email?.split('@')[0] || 'pana';
+      const pushTitle = '¡Te extrañamos, pana! 👋';
+      const pushBody  = 'Vuelve a Mi Pana y completa tu perfil. Te esperan miles de oportunidades.';
+
+      const tokens = user.fcmTokens || [];
+      if (tokens.length) {
+        await sendProfileReminderPush(userDoc.id, tokens, pushTitle, pushBody);
+      }
+
+      if (user.email) {
+        await sendProfileReminderEmail(
+          resend, user.email, displayName,
+          '¡Te extrañamos, pana! Vuelve a Mi Pana 👋',
+          `${displayName}, ¡tu comunidad te espera!`,
+          [
+            `Han pasado 30 días desde que te uniste a <strong>Mi Pana</strong> y tu perfil sigue incompleto.`,
+            `Completarlo te abre las puertas a publicar anuncios, verificar tu identidad y conectar con miles de venezolanos en el exterior.`,
+            `¡Es el momento, pana! Solo te tomará unos minutos y ya estarás listo al 100%.`
+          ]
+        );
+      }
+
+      await getDb().collection('users').doc(userDoc.id)
+        .update({ profileReminderSecondSent: true })
+        .catch((e) => console.error('[profileReminderSecond] Error update:', e.message));
+
+      sent++;
+    }
+
+    console.log(`✅ [profileReminderSecond] Enviados: ${sent}`);
+  }
+);
