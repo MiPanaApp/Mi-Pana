@@ -341,20 +341,28 @@ export default function Profile() {
     const confettiColors = ['#FFB400', '#1A1A3A', '#D90429'];
 
     useEffect(() => {
-      if (profileProgress === 100 && !sessionStorage.getItem('confetti_shown')) {
+      // TEMP: Comentada la validación de sessionStorage para facilitar las pruebas
+      if (profileProgress === 100 /* && !sessionStorage.getItem('confetti_shown') */) {
         setShowConfetti(true);
-        sessionStorage.setItem('confetti_shown', '1');
+        // sessionStorage.setItem('confetti_shown', '1');
         setTimeout(() => setShowConfetti(false), 3000); // 3 segundos
       }
-    }, []);
+    }, [profileProgress]);
 
-    const particles = Array.from({ length: 30 }, (_, i) => ({
-      id: i,
-      color: confettiColors[i % 3],
-      x: Math.random() * 100,
-      delay: Math.random() * 0.5,
-      size: Math.random() * 8 + 6,
-    }));
+    const particles = Array.from({ length: 40 }, (_, i) => {
+      const angle = (i / 40) * 360;
+      const distance = Math.random() * 60 + 20; // vw
+      const rad = (angle * Math.PI) / 180;
+      return {
+        id: i,
+        color: confettiColors[i % 3],
+        tx: Math.cos(rad) * distance,
+        ty: Math.sin(rad) * distance,
+        delay: Math.random() * 0.3,
+        size: Math.random() * 8 + 5,
+        rotate: Math.random() * 720,
+      };
+    });
 
     return (
       <div className="w-full px-1 mb-5 relative flex flex-col items-center">
@@ -409,30 +417,61 @@ export default function Profile() {
           {showConfetti && (
             <div className="fixed inset-0 z-[150] flex items-center justify-center pointer-events-none">
               {/* Confetti Particles */}
-              <div className="absolute inset-0 overflow-hidden">
+              <div className="fixed inset-0 overflow-hidden">
                 {particles.map((p) => (
                   <motion.div
                     key={p.id}
-                    initial={{ y: -50, x: `${p.x}vw`, opacity: 1, rotate: Math.random() * 360, scale: 1 }}
-                    animate={{ y: window.innerHeight, opacity: 0, rotate: Math.random() * 720, scale: 0.5 }}
-                    transition={{ duration: 2.8, delay: p.delay, ease: 'easeIn' }}
-                    className="absolute top-0 rounded-sm"
-                    style={{ width: p.size, height: p.size, backgroundColor: p.color, left: 0 }}
+                    initial={{ 
+                      x: 0, 
+                      y: 0, 
+                      opacity: 1, 
+                      rotate: 0, 
+                      scale: 1 
+                    }}
+                    animate={{ 
+                      x: `${p.tx}vw`, 
+                      y: `${p.ty}vh`, 
+                      opacity: 0, 
+                      rotate: p.rotate, 
+                      scale: 0 
+                    }}
+                    transition={{ 
+                      duration: 1.5, 
+                      delay: p.delay, 
+                      ease: 'easeOut' 
+                    }}
+                    className="absolute rounded-sm"
+                    style={{ 
+                      width: p.size, 
+                      height: p.size, 
+                      backgroundColor: p.color,
+                      top: '50%',
+                      left: '50%',
+                      marginTop: -p.size/2,
+                      marginLeft: -p.size/2,
+                    }}
                   />
                 ))}
               </div>
               
               {/* Pop-up Box */}
               <motion.div 
-                initial={{ scale: 0.8, opacity: 0, y: 20 }}
-                animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.8, opacity: 0, y: -20 }}
-                className="bg-white px-8 py-6 rounded-[24px] shadow-[0_20px_60px_rgba(0,0,0,0.15)] flex flex-col items-center border border-gray-100/50 z-10"
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.5, opacity: 0 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                className="relative z-10 flex items-center justify-center"
               >
-                <h3 className="text-[20px] font-black text-[#1A1A3A] text-center mb-1">
-                  Completado tu perfil
+                <h3 
+                  className="text-[28px] font-black text-[#1A1A3A] text-center"
+                  style={{
+                    WebkitTextStroke: '3px white',
+                    paintOrder: 'stroke fill',
+                    textShadow: '0 0 20px rgba(255,255,255,0.8)'
+                  }}
+                >
+                  ¡Perfil completado! 🎉
                 </h3>
-                <div className="w-12 h-1.5 bg-gradient-to-r from-[#FFB400] via-[#1A1A3A] to-[#D90429] mt-2 rounded-full" />
               </motion.div>
             </div>
           )}
