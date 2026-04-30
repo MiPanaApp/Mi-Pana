@@ -7,6 +7,7 @@ import { db, storage } from '../services/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { doc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { Camera, ShieldCheck, ArrowLeft, HourglassIcon, CheckCircle2, ChevronDown, Search, MessageCircle, Lock } from 'lucide-react';
+import IncompleteProfileModal from '../components/ui/IncompleteProfileModal';
 
 export default function Verification() {
   const { user: authUser, userData } = useAuth();
@@ -34,6 +35,7 @@ export default function Verification() {
   const [livenessStep, setLivenessStep] = useState('init'); // init | detecting | captured
   const [countdown, setCountdown] = useState(3);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false); // Nuevo state para el dropdown personalizado
+  const [showIncompleteModal, setShowIncompleteModal] = useState(false);
 
   const documentOptions = [
     { id: 'dni', label: 'DNI (España)' },
@@ -209,6 +211,7 @@ export default function Verification() {
 
   return (
     <div className="min-h-screen bg-[#F8F9FB] pb-32">
+      <IncompleteProfileModal isOpen={showIncompleteModal} onClose={() => setShowIncompleteModal(false)} />
       <div className="bg-white px-4 pt-12 pb-4 flex items-center justify-between sticky top-0 z-50 border-b border-gray-100 shadow-sm">
         <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-gray-800 active:scale-95 transition-transform rounded-full hover:bg-gray-50">
           <ArrowLeft size={24} strokeWidth={2.5} />
@@ -282,7 +285,16 @@ export default function Verification() {
               <p>Documentos seguros y encriptados. Solo los accede Mi Pana y nunca se comparten.</p>
             </div>
 
-            <button onClick={() => setCurrentStep(1)} className="w-full bg-[#1A1A3A] text-white font-black py-3.5 rounded-2xl shadow-xl hover:-translate-y-0.5 active:scale-95 transition-all">
+            <button 
+              onClick={() => {
+                if (userData?.profileComplete !== true) {
+                  setShowIncompleteModal(true);
+                } else {
+                  setCurrentStep(1);
+                }
+              }} 
+              className="w-full bg-[#1A1A3A] text-white font-black py-3.5 rounded-2xl shadow-xl hover:-translate-y-0.5 active:scale-95 transition-all"
+            >
               Comenzar verificación →
             </button>
           </div>

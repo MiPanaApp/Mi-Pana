@@ -23,6 +23,7 @@ import LegalDrawer from '../components/LegalDrawer';
 import { Capacitor } from '@capacitor/core';
 import { takePicture, pickMultipleImages } from '../utils/cameraUtils';
 import panaExito from '../assets/Pana_Billetes.png';
+import IncompleteProfileModal from '../components/ui/IncompleteProfileModal';
 
 // Mapeo: código del store -> clave de LOCATION_DATA
 const COUNTRY_TO_LOC = { ES: 'ES', CO: 'CO', US: 'US', CL: 'CL', PA: 'PA', PE: 'PE', EC: 'EC', DO: 'DO', AR: 'AR' };
@@ -89,6 +90,7 @@ export default function CreateListing() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [showIncompleteModal, setShowIncompleteModal] = useState(false);
   const [legalDocs, setLegalDocs] = useState({ isOpen: false, title: '', content: '' });
 
   const openLegal = (key) => {
@@ -430,6 +432,13 @@ export default function CreateListing() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validación de perfil completo
+    if (userData?.profileComplete !== true) {
+      setShowIncompleteModal(true);
+      return;
+    }
+
     if (!imageFile && !initialMainPhoto) {
       setError('Sube al menos la foto principal para tu anuncio.');
       return;
@@ -663,6 +672,7 @@ export default function CreateListing() {
 
   return (
     <div className="bg-[#E0E5EC] min-h-screen pb-32">
+      <IncompleteProfileModal isOpen={showIncompleteModal} onClose={() => setShowIncompleteModal(false)} />
       {/* Header Sticky */}
       <div className="sticky top-0 z-50 bg-[#E0E5EC]/80 backdrop-blur-xl px-4 pt-10 md:pt-4 pb-4 flex items-center shadow-sm">
         <button
