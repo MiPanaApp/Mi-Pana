@@ -75,18 +75,30 @@ export default function Profile() {
     userCountryCode = getCountryCodeFromName(userCountryCode);
   }
 
-  // Auto-marcar Perfil Completo para evitar notificaciones de 'Perfil incompleto'
+  // Calcular progreso del perfil (Progressive Profiling)
+  const profileProgress = (() => {
+    if (!userData) return 0;
+    const hasBasic = Boolean(userData.name && userData.lastName && userData.email && userData.country);
+    const hasSecondary = Boolean(userData.gender && userData.birthDate && userData.region);
+    const hasAvatar = Boolean(userData.avatar || userAvatar);
+    if (hasBasic && hasSecondary && hasAvatar) return 100;
+    if (hasBasic && hasSecondary) return 66;
+    if (hasBasic) return 33;
+    return 0;
+  })();
+
+  // Sync profileComplete en Firestore
   useEffect(() => {
-    if (userData && currentUser && !userData.profileComplete) {
-      const isComplete = Boolean(userData.name && userData.region && userData.country && userData.avatar);
-      if (isComplete) {
-        updateDoc(doc(db, 'users', currentUser.uid), {
-          profileComplete: true,
-          updatedAt: new Date()
-        }).catch(err => console.error('Error auto-marcando profileComplete:', err));
-      }
+    if (!userData || !currentUser) return;
+    const shouldBeComplete = profileProgress === 100;
+    if (shouldBeComplete && !userData.profileComplete) {
+      updateDoc(doc(db, 'users', currentUser.uid), { profileComplete: true, updatedAt: new Date() })
+        .catch(err => console.error('Error marcando profileComplete:', err));
+    } else if (!shouldBeComplete && userData.profileComplete) {
+      updateDoc(doc(db, 'users', currentUser.uid), { profileComplete: false, updatedAt: new Date() })
+        .catch(err => console.error('Error desmarcando profileComplete:', err));
     }
-  }, [userData, currentUser]);
+  }, [profileProgress, userData, currentUser]);
 
   const userCountryInfo = countries.find(c => c.id === userCountryCode);
   const countryDisplayName = userCountryInfo ? `${userCountryInfo.flag} ${userCountryInfo.name}` : getCountryNameFromCode(userCountryCode);
@@ -309,6 +321,112 @@ export default function Profile() {
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, [activeProductMenu]);
+
+  // Sub-componente: Barra de Progreso de Perfil (bandera Venezuela)
+  const ProfileProgressBar = () => {
+    const [showConfetti, setShowConfetti] = useState(false);
+    const confettiColors = ['#FFB400', '#1A1A3A', '#D90429'];
+
+    useEffect(() => {
+      if (profileProgress === 100 && !sessionStorage.getItem('confetti_shown')) {
+        setShowConfetti(true);
+        sessionStorage.setItem('confetti_shown', '1');
+        setTimeout(() => setShowConfetti(false), 3000); // 3 segundos
+      }
+    }, []);
+
+    const particles = Array.from({ length: 30 }, (_, i) => ({
+      id: i,
+      color: confettiColors[i % 3],
+      x: Math.random() * 100,
+      delay: Math.random() * 0.5,
+      size: Math.random() * 8 + 6,
+    }));
+
+    return (
+      <div className="w-full px-1 mb-5 relative flex flex-col items-center">
+        {/* Texto superior centrado */}
+        <div className="w-[70%] flex items-center justify-center mb-1.5 px-1">
+          <span className="text-[12px] font-bold text-[#1A1A3A] text-center">
+            Tu perfil está al <span className={profileProgress === 100 ? 'text-[#22a06b]' : 'text-[#FFB400]'}>{profileProgress}%</span> completo
+          </span>
+        </div>
+
+        {/* Barra tricolor */}
+        <div className="w-[70%] h-[9px] bg-[#D5D8E0] rounded-2xl overflow-hidden shadow-[inset_2px_2px_4px_rgba(180,180,210,0.5),inset_-2px_-2px_4px_rgba(255,255,255,0.8)] relative">
+          {/* Segmento 1: Amarillo */}
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: profileProgress >= 33 ? '33.33%' : `${profileProgress}%` }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
+            className="absolute left-0 top-0 h-full bg-[#FFB400] rounded-l-2xl"
+            style={{ borderRadius: profileProgress <= 33 ? '999px' : '999px 0 0 999px' }}
+          />
+          {/* Segmento 2: Azul */}
+          {profileProgress >= 33 && (
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: profileProgress >= 66 ? '33.33%' : `${profileProgress - 33}%` }}
+              transition={{ duration: 0.8, ease: 'easeOut', delay: 0.15 }}
+              className="absolute top-0 h-full bg-[#1A1A3A]"
+              style={{ left: '33.33%', borderRadius: profileProgress <= 66 ? '0 999px 999px 0' : '0' }}
+            />
+          )}
+          {/* Segmento 3: Rojo */}
+          {profileProgress >= 66 && (
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: profileProgress >= 100 ? '33.34%' : `${profileProgress - 66}%` }}
+              transition={{ duration: 0.8, ease: 'easeOut', delay: 0.3 }}
+              className="absolute top-0 h-full bg-[#D90429] rounded-r-2xl"
+              style={{ left: '66.66%' }}
+            />
+          )}
+        </div>
+
+        {/* Texto inferior si incompleto */}
+        {profileProgress < 100 && (
+          <p className="text-[10px] font-bold text-[#8888AA] mt-1.5 text-center">
+            Completa tu perfil para acceder a todas las funciones
+          </p>
+        )}
+
+        {/* Modal Popup Confeti al 100% */}
+        <AnimatePresence>
+          {showConfetti && (
+            <div className="fixed inset-0 z-[150] flex items-center justify-center pointer-events-none">
+              {/* Confetti Particles */}
+              <div className="absolute inset-0 overflow-hidden">
+                {particles.map((p) => (
+                  <motion.div
+                    key={p.id}
+                    initial={{ y: -50, x: `${p.x}vw`, opacity: 1, rotate: Math.random() * 360, scale: 1 }}
+                    animate={{ y: window.innerHeight, opacity: 0, rotate: Math.random() * 720, scale: 0.5 }}
+                    transition={{ duration: 2.8, delay: p.delay, ease: 'easeIn' }}
+                    className="absolute top-0 rounded-sm"
+                    style={{ width: p.size, height: p.size, backgroundColor: p.color, left: 0 }}
+                  />
+                ))}
+              </div>
+              
+              {/* Pop-up Box */}
+              <motion.div 
+                initial={{ scale: 0.8, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.8, opacity: 0, y: -20 }}
+                className="bg-white px-8 py-6 rounded-[24px] shadow-[0_20px_60px_rgba(0,0,0,0.15)] flex flex-col items-center border border-gray-100/50 z-10"
+              >
+                <h3 className="text-[20px] font-black text-[#1A1A3A] text-center mb-1">
+                  Completado tu perfil
+                </h3>
+                <div className="w-12 h-1.5 bg-gradient-to-r from-[#FFB400] via-[#1A1A3A] to-[#D90429] mt-2 rounded-full" />
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  };
 
   // Sub-componente para los items de la cabecera
   const HeaderInfoItem = ({ icon: Icon, label, value, actionLabel, onAction, isPassword }) => (
@@ -660,6 +778,9 @@ export default function Profile() {
             {isGoogleLogin && <FcGoogle size={18} className="translate-y-[1px]" title="Conectado con Google" />}
             <Edit2 size={16} className="text-[#1A1A3A]/40 transition-colors hover:text-[#0056B3] ml-1" />
           </h1>
+
+          {/* Barra de Progreso de Perfil */}
+          <ProfileProgressBar />
           
           {userData?.verificationStatus === 'approved' ? (
             <div className="flex items-center gap-[6px] bg-[#22a06b] px-[12px] py-[5px] rounded-full mb-6 max-w-fit cursor-help" title="Identidad confirmada">

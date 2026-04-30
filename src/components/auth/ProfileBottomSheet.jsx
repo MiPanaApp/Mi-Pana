@@ -244,8 +244,8 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
       <div className={`bs-sheet ${isOpen ? "open" : ""}`}>
         <div className="w-[44px] h-[5px] bg-[#E8E8F0] rounded-[3px] mx-auto mb-[12px] shadow-[inset_1px_1px_3px_rgba(180,180,210,0.5),inset_-1px_-1px_3px_rgba(255,255,255,0.9)]" />
         
-        <div className="mb-2">
-          <h2 className="text-[18px] font-black text-[#1A1A3A] flex items-center gap-2">
+        <div className="mb-4 text-center">
+          <h2 className="text-[18px] font-black text-[#1A1A3A] flex items-center justify-center gap-2">
             ¡Ya casi, pana! <PartyPopper size={20} className="text-[#FFB400]" />
           </h2>
           <p className="text-[12px] font-bold text-[#8888AA]">Completa tus datos para empezar</p>
