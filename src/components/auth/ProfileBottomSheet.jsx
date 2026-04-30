@@ -68,10 +68,7 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
     email: "",
     password: "",
     confirmPassword: "",
-    country: selectedCountry || "ES",
-    region: "",
-    birthDate: "",
-    gender: ""
+    country: selectedCountry || "ES"
   });
 
   useEffect(() => {
@@ -81,7 +78,7 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
 
   // Si cambia el país seleccionado en el store global ANTES de enviarse, lo reflejamos
   useEffect(() => {
-    if (selectedCountry && !formData.region) {
+    if (selectedCountry) {
       setFormData(prev => ({ ...prev, country: selectedCountry }));
     }
   }, [selectedCountry]);
@@ -135,11 +132,7 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
   };
 
   const handleSubmit = async () => {
-    if (!photoPreview) {
-      setErrorMsg("Por favor, sube una foto de perfil.");
-      return;
-    }
-    if (!formData.name || !formData.lastName || !formData.email || !formData.password || !formData.country || !formData.region || !formData.birthDate || !formData.gender) {
+    if (!formData.name || !formData.lastName || !formData.email || !formData.password || !formData.country) {
       setErrorMsg("Por favor, completa todos los campos del formulario.");
       return;
     }
@@ -179,33 +172,19 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
       // Actualizar displayName en Firebase Auth
       await updateProfile(user, { displayName: `${formData.name} ${formData.lastName}` });
 
-      // Subir avatar
-      let avatarUrl = "";
-      const uid = user.uid;
-      if (photoPreview) {
-        const storageRef = ref(storage, `avatars/${uid}/profile.jpg`);
-        await uploadString(storageRef, photoPreview, "data_url");
-        avatarUrl = await getDownloadURL(storageRef);
-        // Actualizar photoURL en Auth también
-        await updateProfile(user, { photoURL: avatarUrl });
-      }
-
       // Guardar datos completos en Firestore
+      const uid = user.uid;
       await setDoc(doc(db, "users", uid), {
         name: formData.name,
         lastName: formData.lastName,
         email: user.email, // ✅ Siempre usar el email de Firebase Auth, no el del formulario
         country: formData.country, // Guardamos CÓDIGO ISO (ej: ES, US)
-        region: formData.region,
-        // Inicializar memoria de país/región con la de residencia
+        // Inicializar memoria de país
         lastViewedCountry: formData.country,
-        lastViewedRegion: formData.region,
         lastViewedAt: new Date(),
-        birthDate: formData.birthDate,
-        gender: formData.gender,
-        avatar: avatarUrl,
         phone: user.phoneNumber || "",
         verificationLevel: 1,
+        profileComplete: false,
         updatedAt: new Date(),
       }, { merge: true });
 
@@ -216,7 +195,7 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
         if (!user?.email) {
           console.warn('[ProfileBottomSheet] No hay email de usuario, saltando verificación');
           onClose();
-          navigate("/onboarding");
+          navigate("/home");
           return;
         }
         const sendCode = httpsCallable(functions, 'sendVerificationCode');
@@ -227,9 +206,9 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
         setShowVerificationModal(true);
       } catch (e) {
         console.error('[ProfileBottomSheet] Error enviando código de verificación:', e);
-        // Si falla el email, igual cerramos y vamos a onboarding para no bloquear
+        // Si falla el email, igual cerramos y vamos a home para no bloquear
         onClose();
-        navigate("/onboarding");
+        navigate("/home");
       }
     } catch (err) {
       if (err.code) {
@@ -272,54 +251,8 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
           <p className="text-[12px] font-bold text-[#8888AA]">Completa tus datos para empezar</p>
         </div>
 
-        <div className="mb-2 text-center">
-          <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
-          
-          <div 
-            className="w-[84px] h-[84px] bg-[#E8E8F0] rounded-full mx-auto shadow-[6px_6px_14px_rgba(180,180,210,0.7),-6px_-6px_14px_rgba(255,255,255,0.95)] flex flex-col items-center justify-center cursor-pointer overflow-hidden mb-2 border-4 border-white"
-            onClick={() => setShowPhotoOptions(!showPhotoOptions)}
-          >
-            {photoPreview && !showCropper ? (
-              <img src={photoPreview} alt="Avatar" className="w-full h-full object-cover" />
-            ) : (
-              <div className="flex flex-col items-center text-[#1A1A3A] opacity-80">
-                <CameraIcon size={24} strokeWidth={2.5} />
-                <span className="text-[10px] mt-1 font-black">Subir foto</span>
-              </div>
-            )}
-          </div>
-
-          <div className={`flex flex-row gap-2 max-w-[280px] mx-auto transition-all duration-300 ${showPhotoOptions ? 'opacity-100 scale-100 h-auto mb-3' : 'opacity-0 scale-95 h-0 overflow-hidden'}`}>
-            <button 
-              onClick={() => { fileInputRef.current?.click(); setShowPhotoOptions(false); }} 
-              className="flex-1 bg-[#EDEDF5] shadow-[4px_4px_10px_rgba(180,180,210,0.5),-4px_-4px_10px_rgba(255,255,255,0.9)] rounded-[14px] py-2.5 text-[11px] font-bold text-[#1A1A3A] flex items-center justify-center gap-2 active:scale-95 transition-transform"
-            >
-              <ImageIcon size={14} /> Buscar archivo
-            </button>
-            <button 
-              onClick={() => { handleCamera(); setShowPhotoOptions(false); }} 
-              className="flex-1 bg-[#EDEDF5] shadow-[4px_4px_10px_rgba(180,180,210,0.5),-4px_-4px_10px_rgba(255,255,255,0.9)] rounded-[14px] py-2.5 text-[11px] font-bold text-[#1A1A3A] flex items-center justify-center gap-2 active:scale-95 transition-transform"
-            >
-              <CameraIcon size={14} /> Tomar foto
-            </button>
-          </div>
-          
-          {photoPreview && !showPhotoOptions && (
-            <button 
-              onClick={() => setShowCropper(!showCropper)} 
-              className="mt-1 text-[#2D2D5E] text-[11px] font-black underline flex items-center gap-1 mx-auto mb-2"
-            >
-              <Scissors size={13} /> Ajustar recorte
-            </button>
-          )}
-
-          {showCropper && photoPreview && (
-            <AvatarCropper 
-              image={photoPreview} 
-              onApply={handleCropApply} 
-              onCancel={() => setShowCropper(false)}
-            />
-          )}
+        <div className="mb-6 text-center">
+          {/* Foto de perfil removida para Progressive Profiling */}
         </div>
 
         <div className="space-y-[12px]">
@@ -382,11 +315,11 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
             </div>
           </div>
 
-          <div className="flex gap-3">
-            <div className="flex-1 relative">
+          <div className="mb-6">
+            <div className="relative">
               <label className="text-[11px] font-bold uppercase text-[#666688] block mb-[5px]">País</label>
                 <div 
-                  onClick={() => { setShowCountrySelect(!showCountrySelect); setShowRegionSelect(false); }}
+                  onClick={() => { setShowCountrySelect(!showCountrySelect); }}
                   className="w-full bg-[#E8E8F0] rounded-[14px] shadow-[inset_3px_3px_7px_rgba(180,180,210,0.5),inset_-3px_-3px_7px_rgba(255,255,255,0.9)] px-3 py-3 flex justify-between items-center cursor-pointer overflow-hidden border border-white/40"
                 >
                   <div className="flex items-center gap-2 truncate">
@@ -400,12 +333,12 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
                   <ChevronDown size={16} className={`text-[#8888AA] transition-transform flex-shrink-0 ${showCountrySelect ? 'rotate-180' : ''}`} />
                 </div>
               {showCountrySelect && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-[#EDEDF5] rounded-[18px] shadow-[6px_6px_20px_rgba(180,180,210,0.6),-6px_-6px_20px_rgba(255,255,255,0.9)] z-[250] max-h-[180px] overflow-y-auto p-2 scrollbar-hide border border-white/50 animate-[fadeIn_0.2s_ease-out]">
+                <div className="absolute bottom-full left-0 right-0 mb-2 bg-[#EDEDF5] rounded-[18px] shadow-[6px_6px_20px_rgba(180,180,210,0.6),-6px_-6px_20px_rgba(255,255,255,0.9)] z-[250] max-h-[180px] overflow-y-auto p-2 scrollbar-hide border border-white/50 animate-[fadeIn_0.2s_ease-out]">
                     {countries.map((c) => (
                       <div 
                         key={c.id}
                         onClick={() => { 
-                          setFormData({...formData, country: c.id, region: ""}); 
+                          setFormData({...formData, country: c.id}); 
                           setShowCountrySelect(false); 
                         }}
                         className={`px-4 py-2.5 hover:bg-[#E8E8F0] rounded-[12px] text-[13px] font-bold text-[#1A1A3A] flex items-center gap-3 cursor-pointer transition-colors ${formData.country === c.id ? 'bg-[#1A1A3A]/10' : ''}`}
@@ -414,115 +347,6 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
                         <span>{c.name}</span>
                       </div>
                     ))}
-                </div>
-              )}
-            </div>
-
-            <div className="flex-1 relative">
-              <label className="text-[11px] font-bold uppercase text-[#666688] block mb-[5px]">
-                {level1Label}
-              </label>
-              <div 
-                onClick={() => { if(selectedCountryData) setShowRegionSelect(!showRegionSelect); setShowCountrySelect(false); }}
-                className={`w-full bg-[#E8E8F0] rounded-[14px] shadow-[inset_3px_3px_7px_rgba(180,180,210,0.5),inset_-3px_-3px_7px_rgba(255,255,255,0.9)] px-3 py-3 flex justify-between items-center cursor-pointer border border-white/40 ${!selectedCountryData ? 'opacity-40' : ''}`}
-              >
-                <span className="text-[13px] font-bold text-[#1A1A3A] truncate">{formData.region || "Seleccionar"}</span>
-                <ChevronDown size={16} className={`text-[#8888AA] transition-transform flex-shrink-0 ${showRegionSelect ? 'rotate-180' : ''}`} />
-              </div>
-              {showRegionSelect && selectedCountryData && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-[#EDEDF5] rounded-[18px] shadow-[6px_6px_20px_rgba(180,180,210,0.6),-6px_-6px_20px_rgba(255,255,255,0.9)] z-[250] max-h-[180px] overflow-y-auto p-2 scrollbar-hide border border-white/50 animate-[fadeIn_0.2s_ease-out]">
-                  {countryRegionsArr.length === 0 ? (
-                    <div className="p-4 text-center text-xs text-gray-400">No hay regiones disponibles</div>
-                  ) : (
-                    countryRegionsArr.map((r) => (
-                      <div 
-                        key={r}
-                        onClick={() => { setFormData({...formData, region: r}); setShowRegionSelect(false); }}
-                        className="px-4 py-2.5 hover:bg-[#E8E8F0] rounded-[12px] text-[13px] font-bold text-[#1A1A3A] cursor-pointer"
-                      >
-                        {r}
-                      </div>
-                    ))
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="flex gap-4">
-            <div className="flex-1 relative">
-              <label className="text-[11px] font-bold uppercase text-[#666688] block mb-[5px]">Nacimiento</label>
-              <div 
-                onClick={() => { setShowDateSelect(!showDateSelect); setShowGenderSelect(false); setShowCountrySelect(false); setShowRegionSelect(false); }}
-                className="w-full bg-[#E8E8F0] rounded-[14px] shadow-[inset_3px_3px_7px_rgba(180,180,210,0.5),inset_-3px_-3px_7px_rgba(255,255,255,0.9)] px-3 py-3 flex justify-between items-center cursor-pointer border border-white/40"
-              >
-                <div className="flex items-center gap-2 truncate">
-                  <Calendar size={14} className="text-[#8888AA]" />
-                  <span className="text-[13px] font-bold text-[#1A1A3A] truncate">
-                    {formData.birthDate ? formData.birthDate.split('-').reverse().join('/') : "DD/MM/AAAA"}
-                  </span>
-                </div>
-                <ChevronDown size={16} className={`text-[#8888AA] transition-transform flex-shrink-0 ${showDateSelect ? 'rotate-180' : ''}`} />
-              </div>
-              
-              {showDateSelect && (
-                <div className="absolute bottom-full left-0 w-[240px] md:w-[280px] mb-2 bg-[#EDEDF5] rounded-[24px] shadow-[10px_10px_40px_rgba(163,177,198,0.8),-10px_-10px_40px_rgba(255,255,255,0.95)] z-[270] p-4 border border-white/50 animate-[fadeIn_0.2s_ease-out]">
-                  <div className="flex gap-2 justify-between mb-4">
-                    {/* Dia */}
-                    <div className="flex-1 bg-[#E8E8F0] shadow-[inset_2px_2px_5px_rgba(180,180,210,0.5),inset_-2px_-2px_5px_rgba(255,255,255,0.9)] rounded-[12px] h-[160px] overflow-y-auto scrollbar-hide py-2">
-                       {days.map(d => (
-                         <div key={d} onClick={() => setDateParts({...dateParts, day: d.toString()})} className={`text-center py-2 text-[13px] font-bold cursor-pointer transition-colors ${dateParts.day === d.toString() ? 'bg-[#1A1A3A] text-white shadow-md mx-2 rounded-[8px]' : 'text-[#8888AA] hover:text-[#1A1A3A]'}`}>
-                           {d.toString().padStart(2, '0')}
-                         </div>
-                       ))}
-                    </div>
-                    {/* Mes */}
-                    <div className="flex-1 bg-[#E8E8F0] shadow-[inset_2px_2px_5px_rgba(180,180,210,0.5),inset_-2px_-2px_5px_rgba(255,255,255,0.9)] rounded-[12px] h-[160px] overflow-y-auto scrollbar-hide py-2">
-                       {months.map(m => (
-                         <div key={m} onClick={() => setDateParts({...dateParts, month: m})} className={`text-center py-2 text-[13px] font-bold cursor-pointer transition-colors ${dateParts.month === m ? 'bg-[#1A1A3A] text-white shadow-md mx-2 rounded-[8px]' : 'text-[#8888AA] hover:text-[#1A1A3A]'}`}>
-                           {m}
-                         </div>
-                       ))}
-                    </div>
-                    {/* Año */}
-                    <div className="flex-1 bg-[#E8E8F0] shadow-[inset_2px_2px_5px_rgba(180,180,210,0.5),inset_-2px_-2px_5px_rgba(255,255,255,0.9)] rounded-[12px] h-[160px] overflow-y-auto scrollbar-hide py-2">
-                       {years.map(y => (
-                         <div key={y} onClick={() => setDateParts({...dateParts, year: y.toString()})} className={`text-center py-2 text-[13px] font-bold cursor-pointer transition-colors ${dateParts.year === y.toString() ? 'bg-[#1A1A3A] text-white shadow-md mx-2 rounded-[8px]' : 'text-[#8888AA] hover:text-[#1A1A3A]'}`}>
-                           {y}
-                         </div>
-                       ))}
-                    </div>
-                  </div>
-                  <button onClick={applyDate} type="button" className="w-full bg-[#1A1A3A] text-white font-black text-[13px] py-3 rounded-[14px] shadow-[4px_4px_10px_rgba(0,0,0,0.2)] active:shadow-[inset_2px_2px_5px_rgba(0,0,0,0.5)] transition-all">
-                    Confirmar fecha
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <div className="flex-1 relative">
-              <label className="text-[11px] font-bold uppercase text-[#666688] block mb-[5px]">Sexo</label>
-              <div 
-                onClick={() => { setShowGenderSelect(!showGenderSelect); setShowCountrySelect(false); setShowRegionSelect(false); }}
-                className="w-full bg-[#E8E8F0] rounded-[14px] shadow-[inset_3px_3px_7px_rgba(180,180,210,0.5),inset_-3px_-3px_7px_rgba(255,255,255,0.9)] px-3 py-3 flex justify-between items-center cursor-pointer border border-white/40"
-              >
-                <div className="flex items-center gap-2 truncate">
-                  <User size={14} className="text-[#8888AA]" />
-                  <span className="text-[13px] font-bold text-[#1A1A3A] truncate">{formData.gender || "Sexo"}</span>
-                </div>
-                <ChevronDown size={16} className={`text-[#8888AA] transition-transform flex-shrink-0 ${showGenderSelect ? 'rotate-180' : ''}`} />
-              </div>
-              {showGenderSelect && (
-                <div className="absolute top-0 right-0 left-0 -translate-y-full mb-2 bg-[#EDEDF5] rounded-[18px] shadow-[6px_6px_20px_rgba(180,180,210,0.6),-6px_-6px_20px_rgba(255,255,255,0.9)] z-[270] max-h-[180px] overflow-y-auto p-2 scrollbar-hide border border-white/50 animate-[fadeIn_0.2s_ease-out]">
-                  {['Hombre', 'Mujer', 'Otro'].map((g) => (
-                    <div 
-                      key={g}
-                      onClick={() => { setFormData({...formData, gender: g}); setShowGenderSelect(false); }}
-                      className="px-4 py-2.5 hover:bg-[#E8E8F0] rounded-[12px] text-[13px] font-bold text-[#1A1A3A] cursor-pointer"
-                    >
-                      {g}
-                    </div>
-                  ))}
                 </div>
               )}
             </div>
@@ -562,7 +386,7 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
         onVerified={() => {
           setShowVerificationModal(false);
           onClose();
-          navigate("/onboarding");
+          navigate("/home");
         }}
         onResend={async () => {
           if (!registeredUser) return;

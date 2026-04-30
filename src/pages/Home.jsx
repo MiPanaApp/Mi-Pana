@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Sliders, Meh, ArrowUpDown, Pin, Star, Clock, Euro, Search, Bell } from 'lucide-react';
+import { Sliders, Meh, ArrowUpDown, Pin, Star, Clock, Euro, Search, Bell, MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ProductCard from '../components/ProductCard';
 import FilterPanel from '../components/ui/FilterPanel';
@@ -565,14 +565,18 @@ export default function Home() {
 
             {filteredProducts.length === 0 && extendedResults.length > 0 && (
               <>
-                <div className="col-span-full mt-4 mb-2">
-                  <div className="bg-gradient-to-r from-[#FFB400]/10 to-transparent border-l-4 border-[#FFB400] rounded-r-2xl p-4">
-                    <h3 className="font-black text-[16px] text-[#1A1A3A] tracking-tight leading-tight mb-1">
-                      🔍 No hay panas en tu zona, pero mira esto...
-                    </h3>
-                    <p className="text-[13px] font-bold text-[#1A1A3A]/60">
-                      Encontramos {extendedResults.length} resultado{extendedResults.length !== 1 ? 's' : ''} en otras comunidades de tu país.
-                    </p>
+                <div className="col-span-full mt-2 mb-1">
+                  <div className="flex items-center gap-3 px-4 py-3 bg-[#E0E5EC] rounded-2xl shadow-[4px_4px_10px_rgba(163,177,198,0.4),-2px_-2px_6px_rgba(255,255,255,0.8)] border-l-4 border-[#FFB400]">
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#FFB400] to-[#FF9000] flex items-center justify-center flex-shrink-0 shadow-[2px_2px_6px_rgba(200,120,0,0.3)]">
+                      <MapPin size={15} className="text-white" strokeWidth={2.5} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-black text-[13px] text-[#1A1A3A] leading-tight">Sin resultados en tu zona</p>
+                      <p className="text-[11px] font-semibold text-[#1A1A3A]/50 leading-tight mt-0.5">Mostrando resultados de otras comunidades</p>
+                    </div>
+                    <span className="flex-shrink-0 bg-[#FFB400]/20 text-[#CC8800] text-[11px] font-black px-2.5 py-1 rounded-full">
+                      {extendedResults.length}
+                    </span>
                   </div>
                 </div>
                 {extendedResults.map(prod => (
