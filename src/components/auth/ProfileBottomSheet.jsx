@@ -151,23 +151,11 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
     setErrorMsg("");
 
     try {
-      let user = auth.currentUser;
-
-      // Si ya hay sesión (ej: Google), usamos ese usuario
-      // Si NO hay sesión, creamos una cuenta nueva con email/password
-      if (!user) {
-        const result = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
-        user = result.user;
-      } else {
-        // Usuario existente (Google) — actualizar email si es diferente
-        if (user.email !== formData.email) {
-          try {
-            await updateEmail(user, formData.email);
-          } catch (emailErr) {
-            console.warn("No se pudo actualizar el email:", emailErr.code);
-          }
-        }
-      }
+      // SIEMPRE crear cuenta nueva con email/password en el flujo de registro.
+      // No usar auth.currentUser aquí — si hay un admin u otro usuario autenticado
+      // en el mismo navegador, auth.currentUser devolvería ese usuario por error.
+      const result = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      const user = result.user;
 
       // Actualizar displayName en Firebase Auth
       await updateProfile(user, { displayName: `${formData.name} ${formData.lastName}` });
