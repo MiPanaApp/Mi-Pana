@@ -13,14 +13,18 @@ if (!getApps().length) {
 
 const db = getFirestore();
 
+// Detectar bots por User Agent O por ausencia de cabeceras de navegador real
 const BOT_AGENTS = [
   "whatsapp", "telegrambot", "facebookexternalhit",
   "twitterbot", "linkedinbot", "slackbot", "discordbot",
-  "googlebot", "bingbot"
+  "googlebot", "bingbot", "opengraph", "preview", "crawler",
+  "spider", "bot", "curl", "python", "axios", "fetch"
 ];
 
 function isBot(userAgent = "") {
-  return BOT_AGENTS.some(bot => userAgent.toLowerCase().includes(bot));
+  if (!userAgent) return true;
+  const ua = userAgent.toLowerCase();
+  return BOT_AGENTS.some(bot => ua.includes(bot));
 }
 
 export default async function handler(req, res) {
