@@ -233,10 +233,7 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
         <div className="w-[44px] h-[5px] bg-[#E8E8F0] rounded-[3px] mx-auto mb-[12px] shadow-[inset_1px_1px_3px_rgba(180,180,210,0.5),inset_-1px_-1px_3px_rgba(255,255,255,0.9)]" />
         
         <div className="mb-4 text-center">
-          <h2 className="text-[18px] font-black text-[#1A1A3A] flex items-center justify-center gap-2">
-            ¡Ya casi, pana! <PartyPopper size={20} className="text-[#FFB400]" />
-          </h2>
-          <p className="text-[12px] font-bold text-[#8888AA]">Completa tus datos para empezar</p>
+          <h2 className="text-2xl font-bold text-center text-[#1A1A3A]">Completa tus Datos</h2>
         </div>
 
         <div className="mb-6 text-center">
@@ -247,17 +244,17 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
           <div className="flex gap-4">
             <div className="flex-1">
               <label className="text-[11px] font-bold uppercase text-[#666688] block mb-[5px]">Nombres</label>
-              <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="Ej: Pedro" className="w-full px-4 py-3 bg-[#E8E8F0] rounded-[14px] outline-none border-none shadow-[inset_4px_4px_9px_rgba(180,180,210,0.55),inset_-4px_-4px_9px_rgba(255,255,255,0.9)] text-[14px] font-bold text-[#1A1A3A]" />
+              <input type="text" name="name" value={formData.name} onChange={handleChange} className="w-full px-4 py-3 bg-[#E8E8F0] rounded-[14px] outline-none border-none shadow-[inset_4px_4px_9px_rgba(180,180,210,0.55),inset_-4px_-4px_9px_rgba(255,255,255,0.9)] text-[14px] font-bold text-[#1A1A3A]" />
             </div>
             <div className="flex-1">
               <label className="text-[11px] font-bold uppercase text-[#666688] block mb-[5px]">Apellidos</label>
-              <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="Ej: Pérez" className="w-full px-4 py-3 bg-[#E8E8F0] rounded-[14px] outline-none border-none shadow-[inset_4px_4px_9px_rgba(180,180,210,0.55),inset_-4px_-4px_9px_rgba(255,255,255,0.9)] text-[14px] font-bold text-[#1A1A3A]" />
+              <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} className="w-full px-4 py-3 bg-[#E8E8F0] rounded-[14px] outline-none border-none shadow-[inset_4px_4px_9px_rgba(180,180,210,0.55),inset_-4px_-4px_9px_rgba(255,255,255,0.9)] text-[14px] font-bold text-[#1A1A3A]" />
             </div>
           </div>
 
           <div>
             <label className="text-[11px] font-bold uppercase text-[#666688] block mb-[5px]">Correo Electrónico</label>
-            <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="ejemplo@mipana.com" className="w-full px-4 py-3 bg-[#E8E8F0] rounded-[14px] outline-none border-none shadow-[inset_4px_4px_9px_rgba(180,180,210,0.55),inset_-4px_-4px_9px_rgba(255,255,255,0.9)] text-[14px] font-bold text-[#1A1A3A]" />
+            <input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full px-4 py-3 bg-[#E8E8F0] rounded-[14px] outline-none border-none shadow-[inset_4px_4px_9px_rgba(180,180,210,0.55),inset_-4px_-4px_9px_rgba(255,255,255,0.9)] text-[14px] font-bold text-[#1A1A3A]" />
           </div>
 
           <div className="flex gap-4">
@@ -352,7 +349,7 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
             onClick={handleSubmit} 
             className="w-full mt-3 bg-gradient-to-r from-[#FFB400] to-[#FF9000] rounded-[20px] py-[14px] font-black text-[15px] text-white shadow-[5px_5px_14px_rgba(200,120,0,0.35),-2px_-2px_8px_rgba(255,220,100,0.2)] flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.98] transition-all"
           >
-            ¡Listo! Entrar a Mi Pana <Rocket size={20} />
+            Listo
           </button>
           
           <p className="text-[10px] font-bold text-[#555577] text-center mt-2 mb-2">
