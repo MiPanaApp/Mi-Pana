@@ -44,13 +44,13 @@ export default async function handler(req, res) {
 
     const product = snap.data();
 
-    const title = product.title || "Producto en Mi Pana";
+    const title = product.name || "Producto en Mi Pana";
     const description = product.description
       ? product.description.slice(0, 120) + (product.description.length > 120 ? "..." : "")
       : "Encuentra servicios y productos de la comunidad venezolana.";
     const price = product.price ? `${product.price}€` : "";
     const location = product.location?.municipality || product.location?.level2 || product.location?.level1 || "";
-    const image = (product.images && product.images[0]) || "https://mipana.net/og-image.png";
+    const image = product.image || "https://mipana.net/og-image.png";
     const url = `https://mipana.net/perfil-producto?id=${id}`;
     const fullDescription = [price, location, description].filter(Boolean).join(" · ");
 
