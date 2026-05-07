@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Send, Smile, X, CornerUpLeft, Check, CheckCheck, Star, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Send, Smile, X, CornerUpLeft, Check, CheckCheck, Star, ExternalLink, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import EmojiPicker from 'emoji-picker-react';
 import { useAuthStore } from '../store/useAuthStore';
@@ -143,6 +143,7 @@ export default function Chat() {
   const [replyTo, setReplyTo] = useState(null);
   const [showEmoji, setShowEmoji] = useState(false);
   const [otherIsTyping, setOtherIsTyping] = useState(false);
+  const [otherVerified, setOtherVerified] = useState(false);
   const [loading, setLoading] = useState(true);
   
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -176,6 +177,13 @@ export default function Chat() {
       setConversation(conv);
       const otherId = conv.participants?.find(p => p !== user.uid);
       setOtherIsTyping(conv.typing?.[otherId] || false);
+
+      // Obtener estado de verificación del otro usuario
+      if (otherId) {
+        getDoc(doc(db, 'users', otherId)).then(snap => {
+          setOtherVerified(snap.exists() ? (snap.data().verified === true) : false);
+        }).catch(() => setOtherVerified(false));
+      }
     });
     return () => unsub();
   }, [conversationId, user]);
@@ -273,7 +281,12 @@ export default function Chat() {
             className="flex-1 min-w-0 cursor-pointer active:opacity-70 transition-opacity group"
             title="Ver producto"
           >
-            <p className="font-black text-base leading-tight truncate">{otherName || '...'}</p>
+            <div className="flex items-center gap-1.5">
+              <p className="font-black text-base leading-tight truncate">{otherName || '...'}</p>
+              {otherVerified && (
+                <ShieldCheck className="w-4 h-4 text-[#00C97A] flex-shrink-0" strokeWidth={2.5} title="Pana Verificado" />
+              )}
+            </div>
             <div className="flex items-center mt-0.5 overflow-hidden gap-1">
               <p className="text-[11px] text-[#FFC200] font-bold truncate group-hover:underline decoration-1 underline-offset-2">
                 {conversation?.productName || '...'}
