@@ -1087,9 +1087,12 @@ export default function Profile() {
                 </button>
                 <button 
                   onClick={() => {
-                    if (userData?.verificationStatus !== 'approved' && userData?.verificationStatus !== 'pending') {
-                      navigate('/verificacion');
+                    if (userData?.verificationStatus === 'approved' || userData?.verificationStatus === 'pending') return;
+                    if (!userData?.profileComplete) {
+                      setShowIncompleteModal(true);
+                      return;
                     }
+                    navigate('/verificacion');
                   }}
                   className={`flex items-center justify-between w-full p-3 text-sm font-bold rounded-xl transition-colors ${
                     userData?.verificationStatus === 'approved' || userData?.verificationStatus === 'pending'
