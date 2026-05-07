@@ -1411,6 +1411,7 @@ tlfno contacto: 672 593 950`}
                userName: product.userName,
                sellerAvatar: product.sellerAvatar,
                sellerEmail: product.sellerEmail,
+               verified: product.verified || product.userVerified || false,
                rating: product.sellerRating,
                reviewCount: product.sellerReviewCount,
                createdAt: product.sellerCreatedAt,
