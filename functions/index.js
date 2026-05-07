@@ -1,6 +1,6 @@
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { onRequest, onCall, HttpsError } = require("firebase-functions/v2/https");
-const { onDocumentCreated, onDocumentUpdated, onDocumentWritten } = require("firebase-functions/v2/firestore");
+const { onDocumentCreated, onDocumentUpdated, onDocumentWritten, onDocumentDeleted } = require("firebase-functions/v2/firestore");
 const { defineSecret } = require("firebase-functions/params");
 const RESEND_API_KEY = defineSecret("RESEND_API_KEY");
 
@@ -1618,5 +1618,280 @@ exports.profileReminderSecond = onSchedule(
     }
 
     console.log(`✅ [profileReminderSecond] Enviados: ${sent}`);
+  }
+);
+
+// ════════════════════════════════════════════════
+// PUSH 2 — Notificar al dueño cuando alguien da ❤️ a su anuncio
+// ════════════════════════════════════════════════
+exports.onProductLiked = onDocumentUpdated(
+  { document: "products/{productId}" },
+  async (event) => {
+    const before = event.data.before.data();
+    const after = event.data.after.data();
+    const productId = event.params.productId;
+
+    // Solo disparar cuando likes incrementa
+    if ((after.likes || 0) <= (before.likes || 0)) return;
+
+    const ownerId = after.userId;
+    if (!ownerId) return;
+
+    const ownerSnap = await getDb().collection('users').doc(ownerId).get();
+    if (!ownerSnap.exists) return;
+
+    const tokens = ownerSnap.data()?.fcmTokens || [];
+    if (!tokens.length) return;
+
+    const productName = after.name || 'tu anuncio';
+    const likesCount = after.likes || 1;
+
+    const messaging = getMessaging();
+    try {
+      const result = await messaging.sendEachForMulticast({
+        tokens,
+        notification: {
+          title: '❤️ ¡A alguien le gustó tu anuncio!',
+          body: `"${productName.substring(0, 50)}" tiene ${likesCount} ${likesCount === 1 ? 'favorito' : 'favoritos'}`,
+        },
+        data: {
+          actionUrl: `/perfil-producto?id=${productId}`,
+          type: 'product_liked',
+          productId
+        },
+        android: {
+          priority: 'high',
+          notification: {
+            channelId: 'general',
+            sound: 'default',
+            tag: `liked_${productId}`,
+          }
+        },
+        apns: {
+          headers: { 'apns-priority': '10' },
+          payload: {
+            aps: {
+              sound: 'default',
+              badge: 1,
+              alert: {
+                title: '❤️ ¡A alguien le gustó tu anuncio!',
+                subtitle: 'Mi Pana',
+                body: `"${productName.substring(0, 50)}" tiene ${likesCount} ${likesCount === 1 ? 'favorito' : 'favoritos'}`
+              }
+            }
+          }
+        }
+      });
+      console.log(`[onProductLiked] ✅ Éxitos: ${result.successCount}, Fallos: ${result.failureCount}`);
+      await cleanupInvalidTokens(ownerId, tokens, result.responses);
+    } catch (err) {
+      console.error('[onProductLiked] ❌ Error:', err.message);
+    }
+  }
+);
+
+// ════════════════════════════════════════════════
+// PUSH 3 — Notificar al dueño cuando su anuncio supera hitos de vistas
+// ════════════════════════════════════════════════
+exports.onProductViews = onDocumentUpdated(
+  { document: "products/{productId}" },
+  async (event) => {
+    const before = event.data.before.data();
+    const after = event.data.after.data();
+    const productId = event.params.productId;
+
+    const VIEW_MILESTONES = [50, 100, 250, 500, 1000];
+    const beforeViews = before.views || 0;
+    const afterViews = after.views || 0;
+
+    // Detectar si cruzó algún hito
+    const crossedMilestone = VIEW_MILESTONES.find(
+      m => beforeViews < m && afterViews >= m
+    );
+    if (!crossedMilestone) return;
+
+    const ownerId = after.userId;
+    if (!ownerId) return;
+
+    const ownerSnap = await getDb().collection('users').doc(ownerId).get();
+    if (!ownerSnap.exists) return;
+
+    const tokens = ownerSnap.data()?.fcmTokens || [];
+    if (!tokens.length) return;
+
+    const productName = after.name || 'Tu anuncio';
+    const messaging = getMessaging();
+
+    try {
+      const result = await messaging.sendEachForMulticast({
+        tokens,
+        notification: {
+          title: `👁️ ¡${crossedMilestone} personas vieron tu anuncio!`,
+          body: `"${productName.substring(0, 50)}" está generando interés. ¡Sigue así, pana!`,
+        },
+        data: {
+          actionUrl: `/perfil-producto?id=${productId}`,
+          type: 'product_views',
+          productId
+        },
+        android: {
+          priority: 'normal',
+          notification: {
+            channelId: 'general',
+            sound: 'default',
+            tag: `views_${productId}_${crossedMilestone}`,
+          }
+        },
+        apns: {
+          headers: { 'apns-priority': '5' },
+          payload: {
+            aps: {
+              sound: 'default',
+              alert: {
+                title: `👁️ ¡${crossedMilestone} personas vieron tu anuncio!`,
+                subtitle: 'Mi Pana',
+                body: `"${productName.substring(0, 50)}" está generando interés. ¡Sigue así, pana!`
+              }
+            }
+          }
+        }
+      });
+      console.log(`[onProductViews] ✅ Hito ${crossedMilestone} - Éxitos: ${result.successCount}`);
+      await cleanupInvalidTokens(ownerId, tokens, result.responses);
+    } catch (err) {
+      console.error('[onProductViews] ❌ Error:', err.message);
+    }
+  }
+);
+
+// ════════════════════════════════════════════════
+// PUSH 4 — Notificar resultado de verificación de identidad
+// ════════════════════════════════════════════════
+exports.onVerificationUpdated = onDocumentUpdated(
+  { document: "verifications/{uid}" },
+  async (event) => {
+    const before = event.data.before.data();
+    const after = event.data.after.data();
+    const uid = event.params.uid;
+
+    // Solo disparar cuando status cambia a approved o rejected
+    if (before.status === after.status) return;
+    if (!['approved', 'rejected'].includes(after.status)) return;
+
+    const userSnap = await getDb().collection('users').doc(uid).get();
+    if (!userSnap.exists) return;
+
+    const tokens = userSnap.data()?.fcmTokens || [];
+    if (!tokens.length) return;
+
+    const isApproved = after.status === 'approved';
+    const title = isApproved
+      ? '✅ ¡Eres Pana Verificado!'
+      : '❌ Verificación no aprobada';
+    const body = isApproved
+      ? 'Tu identidad fue verificada. Ya tienes el badge en tu perfil y anuncios.'
+      : `Tu verificación fue rechazada. Motivo: ${after.rejectionReason || 'Ver detalles en la app'}`;
+
+    const messaging = getMessaging();
+    try {
+      const result = await messaging.sendEachForMulticast({
+        tokens,
+        notification: { title, body },
+        data: {
+          actionUrl: '/perfil',
+          type: 'verification_result',
+          status: after.status
+        },
+        android: {
+          priority: 'high',
+          notification: {
+            channelId: 'general',
+            sound: 'default',
+            tag: `verification_${uid}`,
+          }
+        },
+        apns: {
+          headers: { 'apns-priority': '10' },
+          payload: {
+            aps: {
+              sound: 'default',
+              badge: 1,
+              alert: {
+                title,
+                subtitle: 'Mi Pana',
+                body
+              }
+            }
+          }
+        }
+      });
+      console.log(`[onVerificationUpdated] ✅ ${after.status} - Éxitos: ${result.successCount}`);
+      await cleanupInvalidTokens(uid, tokens, result.responses);
+    } catch (err) {
+      console.error('[onVerificationUpdated] ❌ Error:', err.message);
+    }
+  }
+);
+
+// ════════════════════════════════════════════════
+// PUSH 5 — Notificar al dueño cuando su anuncio es eliminado por admin
+// ════════════════════════════════════════════════
+exports.onProductDeleted = onDocumentDeleted(
+  { document: "products/{productId}" },
+  async (event) => {
+    const product = event.data.data();
+    const productId = event.params.productId;
+
+    const ownerId = product?.userId;
+    if (!ownerId) return;
+
+    const ownerSnap = await getDb().collection('users').doc(ownerId).get();
+    if (!ownerSnap.exists) return;
+
+    const tokens = ownerSnap.data()?.fcmTokens || [];
+    if (!tokens.length) return;
+
+    const productName = product?.name || 'Tu anuncio';
+    const messaging = getMessaging();
+
+    try {
+      const result = await messaging.sendEachForMulticast({
+        tokens,
+        notification: {
+          title: '🗑️ Tu anuncio fue eliminado',
+          body: `"${productName.substring(0, 50)}" fue eliminado por el equipo de Mi Pana.`,
+        },
+        data: {
+          actionUrl: '/perfil',
+          type: 'product_deleted',
+          productId
+        },
+        android: {
+          priority: 'high',
+          notification: {
+            channelId: 'general',
+            sound: 'default',
+          }
+        },
+        apns: {
+          headers: { 'apns-priority': '10' },
+          payload: {
+            aps: {
+              sound: 'default',
+              badge: 1,
+              alert: {
+                title: '🗑️ Tu anuncio fue eliminado',
+                subtitle: 'Mi Pana',
+                body: `"${productName.substring(0, 50)}" fue eliminado por el equipo de Mi Pana.`
+              }
+            }
+          }
+        }
+      });
+      console.log(`[onProductDeleted] ✅ Éxitos: ${result.successCount}`);
+      await cleanupInvalidTokens(ownerId, tokens, result.responses);
+    } catch (err) {
+      console.error('[onProductDeleted] ❌ Error:', err.message);
+    }
   }
 );
