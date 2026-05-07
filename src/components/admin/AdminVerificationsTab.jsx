@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, doc, getDoc, updateDoc, serverTimestamp, orderBy, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, updateDoc, serverTimestamp, orderBy, limit, writeBatch } from 'firebase/firestore';
 import { getStorage, ref, deleteObject } from 'firebase/storage';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db, auth } from '../../services/firebase';
@@ -80,6 +80,25 @@ export default function AdminVerificationsTab() {
         verificationStatus: 'approved',
         verifiedAt: serverTimestamp()
       });
+
+      // Actualizar verified:true en todos los productos del usuario
+      try {
+        const productsQuery = query(
+          collection(db, 'products'),
+          where('userId', '==', verificationId)
+        );
+        const productsSnap = await getDocs(productsQuery);
+        if (!productsSnap.empty) {
+          const batch = writeBatch(db);
+          productsSnap.forEach((productDoc) => {
+            batch.update(productDoc.ref, { verified: true });
+          });
+          await batch.commit();
+          console.log(`✅ ${productsSnap.size} productos actualizados con verified:true`);
+        }
+      } catch (err) {
+        console.warn("Error al actualizar productos del usuario verificado:", err);
+      }
 
       // Enviar email de aprobación
       const functions = getFunctions(undefined, 'us-central1');
