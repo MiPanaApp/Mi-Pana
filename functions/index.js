@@ -194,68 +194,105 @@ exports.onNewMessage = onDocumentCreated(
     const message = event.data.data()
     const convId = event.params.convId
 
+    console.log(`[onNewMessage] Nuevo mensaje en conversación ${convId}`)
+
     // Obtener la conversación para saber el receptor
     const convSnap = await getDb()
       .collection('conversations').doc(convId).get()
-    if (!convSnap.exists) return
+    if (!convSnap.exists) {
+      console.log('[onNewMessage] Conversación no encontrada')
+      return
+    }
 
     const conv = convSnap.data()
     const recipientId = conv.participants
       .find(p => p !== message.senderId)
-    if (!recipientId) return
+    if (!recipientId) {
+      console.log('[onNewMessage] No se encontró receptor')
+      return
+    }
+
+    console.log(`[onNewMessage] Receptor: ${recipientId}, Emisor: ${message.senderId}`)
 
     // Obtener tokens del receptor
     const userSnap = await getDb()
       .collection('users').doc(recipientId).get()
-    if (!userSnap.exists) return
+    if (!userSnap.exists) {
+      console.log('[onNewMessage] Usuario receptor no encontrado')
+      return
+    }
 
     const tokens = userSnap.data()?.fcmTokens || []
-    if (!tokens.length) return
+    if (!tokens.length) {
+      console.log('[onNewMessage] Usuario no tiene tokens FCM')
+      return
+    }
+
+    console.log(`[onNewMessage] Enviando a ${tokens.length} dispositivos`)
+
+    // Obtener nombre del remitente
+    const senderSnap = await getDb()
+      .collection('users').doc(message.senderId).get()
+    const senderName = senderSnap.exists
+      ? (senderSnap.data().name || 'Pana')
+      : 'Pana'
+
+    const notifTitle = senderName
+    const notifBody = message.text?.substring(0, 100) || '📎 Archivo adjunto'
 
     const messaging = getMessaging()
 
-    // Enviar a todos los dispositivos del usuario
-    const result = await messaging.sendEachForMulticast({
-      tokens,
-      notification: {
-        title: conv.productName || 'Nuevo mensaje',
-        body: message.text?.substring(0, 100) || 'Archivo adjunto',
-      },
-      data: {
-        actionUrl: `/chat?id=${convId}`,
-        type: 'new_message',
-        convId
-      },
-      android: {
-        priority: 'high',
+    try {
+      const result = await messaging.sendEachForMulticast({
+        tokens,
         notification: {
-          channelId: 'messages',
-          priority: 'high',
-          sound: 'default',
-          title: conv.productName || 'Nuevo mensaje',
-          body: message.text?.substring(0, 100) || 'Archivo adjunto',
-          ticker: 'Nuevo mensaje en Mi Pana',
-          tag: convId,
-          clickAction: 'FLUTTER_NOTIFICATION_CLICK'
-        }
-      },
-      apns: {
-        headers: {
-          'apns-priority': '10'
+          title: notifTitle,
+          body: notifBody,
         },
-        payload: {
-          aps: {
+        data: {
+          actionUrl: `/chat?id=${convId}`,
+          type: 'new_message',
+          convId
+        },
+        android: {
+          priority: 'high',
+          notification: {
+            channelId: 'messages',
+            priority: 'high',
             sound: 'default',
-            badge: 1,
-            alert: {
-              title: conv.productName || 'Nuevo mensaje',
-              body: message.text?.substring(0, 100) || 'Archivo adjunto'
+            title: notifTitle,
+            body: notifBody,
+            tag: convId,
+          }
+        },
+        apns: {
+          headers: { 'apns-priority': '10' },
+          payload: {
+            aps: {
+              sound: 'default',
+              badge: 1,
+              alert: {
+                title: notifTitle,
+                body: notifBody
+              }
             }
           }
         }
+      })
+
+      console.log(`[onNewMessage] ✅ Enviado. Éxitos: ${result.successCount}, Fallos: ${result.failureCount}`)
+      if (result.failureCount > 0) {
+        result.responses.forEach((resp, i) => {
+          if (!resp.success) {
+            console.error(`[onNewMessage] ❌ Token ${i} falló:`, resp.error?.code)
+          }
+        })
       }
-    })
-    await cleanupInvalidTokens(recipientId, tokens, result.responses)
+
+      await cleanupInvalidTokens(recipientId, tokens, result.responses)
+    } catch (err) {
+      console.error('[onNewMessage] ❌ Error enviando notificación:', err.message)
+    }
   }
 )
 
