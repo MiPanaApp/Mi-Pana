@@ -1895,3 +1895,318 @@ exports.onProductDeleted = onDocumentDeleted(
     }
   }
 );
+
+// ════════════════════════════════════════════════
+// PUSH 6 — Motivar a publicar primer anuncio (3 días sin anuncios)
+// ════════════════════════════════════════════════
+exports.pushFirstListing = onSchedule(
+  { schedule: 'every 24 hours', region: 'us-central1' },
+  async () => {
+    const now = new Date();
+    const threeDaysAgo = new Date(now - 3 * 24 * 60 * 60 * 1000);
+    const fourDaysAgo = new Date(now - 4 * 24 * 60 * 60 * 1000);
+
+    const usersSnap = await getDb().collection('users')
+      .where('profileComplete', '==', true)
+      .where('pushFirstListingSent', '==', false)
+      .get();
+
+    let sent = 0;
+    for (const userDoc of usersSnap.docs) {
+      const user = userDoc.data();
+
+      // Solo usuarios registrados hace entre 3 y 4 días
+      const createdAt = user.createdAt?.toDate?.() || new Date(user.createdAt);
+      if (isNaN(createdAt) || createdAt > threeDaysAgo || createdAt < fourDaysAgo) continue;
+
+      // Verificar que no tenga anuncios
+      const productsSnap = await getDb().collection('products')
+        .where('userId', '==', userDoc.id)
+        .limit(1)
+        .get();
+      if (!productsSnap.empty) continue;
+
+      const tokens = user.fcmTokens || [];
+      if (!tokens.length) continue;
+
+      const displayName = user.name || 'Pana';
+      const messaging = getMessaging();
+
+      try {
+        const result = await messaging.sendEachForMulticast({
+          tokens,
+          notification: {
+            title: `¡${displayName}, publica tu primer anuncio!`,
+            body: 'Miles de panas están buscando lo que tú ofreces. ¡Es gratis y tarda 2 minutos!',
+          },
+          data: { actionUrl: '/crear-anuncio', type: 'push_first_listing' },
+          android: { priority: 'normal', notification: { channelId: 'general', sound: 'default' } },
+          apns: {
+            headers: { 'apns-priority': '5' },
+            payload: { aps: { sound: 'default', alert: {
+              title: `¡${displayName}, publica tu primer anuncio!`,
+              subtitle: 'Mi Pana',
+              body: 'Miles de panas están buscando lo que tú ofreces. ¡Es gratis y tarda 2 minutos!'
+            }}}
+          }
+        });
+        await cleanupInvalidTokens(userDoc.id, tokens, result.responses);
+        await getDb().collection('users').doc(userDoc.id)
+          .update({ pushFirstListingSent: true });
+        sent++;
+      } catch (err) {
+        console.error('[pushFirstListing] ❌ Error:', err.message);
+      }
+    }
+    console.log(`✅ [pushFirstListing] Enviados: ${sent}`);
+  }
+);
+
+// ════════════════════════════════════════════════
+// PUSH 7 — Recordatorio semanal a usuarios sin anuncios
+// ════════════════════════════════════════════════
+exports.pushWeeklyListing = onSchedule(
+  { schedule: 'every 168 hours', region: 'us-central1' },
+  async () => {
+    const now = new Date();
+    const sevenDaysAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
+
+    const usersSnap = await getDb().collection('users')
+      .where('profileComplete', '==', true)
+      .get();
+
+    let sent = 0;
+    for (const userDoc of usersSnap.docs) {
+      const user = userDoc.data();
+
+      // Solo usuarios registrados hace más de 7 días
+      const createdAt = user.createdAt?.toDate?.() || new Date(user.createdAt);
+      if (isNaN(createdAt) || createdAt > sevenDaysAgo) continue;
+
+      // No enviar si ya se mandó esta semana
+      const lastSent = user.pushWeeklyListingLastSent?.toDate?.() || null;
+      if (lastSent && (now - lastSent) < 6 * 24 * 60 * 60 * 1000) continue;
+
+      // Verificar que no tenga anuncios
+      const productsSnap = await getDb().collection('products')
+        .where('userId', '==', userDoc.id)
+        .limit(1)
+        .get();
+      if (!productsSnap.empty) continue;
+
+      const tokens = user.fcmTokens || [];
+      if (!tokens.length) continue;
+
+      const messages = [
+        '¿Ofreces algún servicio? ¡Publícalo gratis en Mi Pana y llega a miles de venezolanos!',
+        '¿Tienes algo que vender o un talento que compartir? ¡La comunidad te espera!',
+        '¡Cada día más panas buscan servicios como el tuyo! Publica tu anuncio gratis hoy.',
+      ];
+      const body = messages[Math.floor(Math.random() * messages.length)];
+      const messaging = getMessaging();
+
+      try {
+        const result = await messaging.sendEachForMulticast({
+          tokens,
+          notification: { title: '📢 ¿Tienes algo que ofrecer?', body },
+          data: { actionUrl: '/crear-anuncio', type: 'push_weekly_listing' },
+          android: { priority: 'normal', notification: { channelId: 'general', sound: 'default' } },
+          apns: {
+            headers: { 'apns-priority': '5' },
+            payload: { aps: { sound: 'default', alert: {
+              title: '📢 ¿Tienes algo que ofrecer?',
+              subtitle: 'Mi Pana',
+              body
+            }}}
+          }
+        });
+        await cleanupInvalidTokens(userDoc.id, tokens, result.responses);
+        await getDb().collection('users').doc(userDoc.id)
+          .update({ pushWeeklyListingLastSent: new Date() });
+        sent++;
+      } catch (err) {
+        console.error('[pushWeeklyListing] ❌ Error:', err.message);
+      }
+    }
+    console.log(`✅ [pushWeeklyListing] Enviados: ${sent}`);
+  }
+);
+
+// ════════════════════════════════════════════════
+// PUSH 8 — Invitar a un amigo (quincenal)
+// ════════════════════════════════════════════════
+exports.pushReferral = onSchedule(
+  { schedule: 'every 336 hours', region: 'us-central1' },
+  async () => {
+    const now = new Date();
+
+    const usersSnap = await getDb().collection('users')
+      .where('profileComplete', '==', true)
+      .get();
+
+    let sent = 0;
+    for (const userDoc of usersSnap.docs) {
+      const user = userDoc.data();
+
+      // No enviar si ya se mandó en los últimos 13 días
+      const lastSent = user.pushReferralLastSent?.toDate?.() || null;
+      if (lastSent && (now - lastSent) < 13 * 24 * 60 * 60 * 1000) continue;
+
+      const tokens = user.fcmTokens || [];
+      if (!tokens.length) continue;
+
+      const displayName = user.name || 'Pana';
+      const messaging = getMessaging();
+
+      try {
+        const result = await messaging.sendEachForMulticast({
+          tokens,
+          notification: {
+            title: '👥 ¡Invita a tus panas!',
+            body: `${displayName}, comparte Mi Pana con tus amigos venezolanos. ¡Juntos la comunidad crece más fuerte!`,
+          },
+          data: { actionUrl: '/home', type: 'push_referral' },
+          android: { priority: 'normal', notification: { channelId: 'general', sound: 'default' } },
+          apns: {
+            headers: { 'apns-priority': '5' },
+            payload: { aps: { sound: 'default', alert: {
+              title: '👥 ¡Invita a tus panas!',
+              subtitle: 'Mi Pana',
+              body: `${displayName}, comparte Mi Pana con tus amigos venezolanos. ¡Juntos la comunidad crece más fuerte!`
+            }}}
+          }
+        });
+        await cleanupInvalidTokens(userDoc.id, tokens, result.responses);
+        await getDb().collection('users').doc(userDoc.id)
+          .update({ pushReferralLastSent: new Date() });
+        sent++;
+      } catch (err) {
+        console.error('[pushReferral] ❌ Error:', err.message);
+      }
+    }
+    console.log(`✅ [pushReferral] Enviados: ${sent}`);
+  }
+);
+
+// ════════════════════════════════════════════════
+// PUSH 9 — Reactivación usuarios inactivos +30 días
+// ════════════════════════════════════════════════
+exports.pushReactivation = onSchedule(
+  { schedule: 'every 168 hours', region: 'us-central1' },
+  async () => {
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000);
+
+    const usersSnap = await getDb().collection('users')
+      .where('lastSeenAt', '<=', thirtyDaysAgo)
+      .get();
+
+    let sent = 0;
+    for (const userDoc of usersSnap.docs) {
+      const user = userDoc.data();
+
+      // No enviar si ya se mandó en los últimos 29 días
+      const lastSent = user.pushReactivationLastSent?.toDate?.() || null;
+      if (lastSent && (now - lastSent) < 29 * 24 * 60 * 60 * 1000) continue;
+
+      const tokens = user.fcmTokens || [];
+      if (!tokens.length) continue;
+
+      const displayName = user.name || 'Pana';
+      const messages = [
+        `¡Te echamos de menos, ${displayName}! Hay nuevos anuncios esperándote en Mi Pana.`,
+        `${displayName}, tu comunidad venezolana te espera. ¡Vuelve a Mi Pana!`,
+        `¡Pana, han pasado 30 días! Descubre qué hay de nuevo en Mi Pana.`,
+      ];
+      const body = messages[Math.floor(Math.random() * messages.length)];
+      const messaging = getMessaging();
+
+      try {
+        const result = await messaging.sendEachForMulticast({
+          tokens,
+          notification: { title: '🌟 ¡Tu comunidad te extraña!', body },
+          data: { actionUrl: '/home', type: 'push_reactivation' },
+          android: { priority: 'normal', notification: { channelId: 'general', sound: 'default' } },
+          apns: {
+            headers: { 'apns-priority': '5' },
+            payload: { aps: { sound: 'default', alert: {
+              title: '🌟 ¡Tu comunidad te extraña!',
+              subtitle: 'Mi Pana',
+              body
+            }}}
+          }
+        });
+        await cleanupInvalidTokens(userDoc.id, tokens, result.responses);
+        await getDb().collection('users').doc(userDoc.id)
+          .update({ pushReactivationLastSent: new Date() });
+        sent++;
+      } catch (err) {
+        console.error('[pushReactivation] ❌ Error:', err.message);
+      }
+    }
+    console.log(`✅ [pushReactivation] Enviados: ${sent}`);
+  }
+);
+
+// ════════════════════════════════════════════════
+// PUSH 10 — Anuncio cumple 1 mes publicado
+// ════════════════════════════════════════════════
+exports.pushListingAnniversary = onSchedule(
+  { schedule: 'every 24 hours', region: 'us-central1' },
+  async () => {
+    const now = new Date();
+    const monthAgo = new Date(now - 30 * 24 * 60 * 60 * 1000);
+    const monthAgoPlusOne = new Date(now - 31 * 24 * 60 * 60 * 1000);
+
+    const productsSnap = await getDb().collection('products')
+      .where('createdAt', '<=', monthAgo)
+      .where('createdAt', '>=', monthAgoPlusOne)
+      .get();
+
+    let sent = 0;
+    for (const productDoc of productsSnap.docs) {
+      const product = productDoc.data();
+      const ownerId = product.userId;
+      if (!ownerId) continue;
+
+      const ownerSnap = await getDb().collection('users').doc(ownerId).get();
+      if (!ownerSnap.exists) continue;
+
+      const tokens = ownerSnap.data()?.fcmTokens || [];
+      if (!tokens.length) continue;
+
+      const productName = product.name || 'Tu anuncio';
+      const views = product.views || 0;
+      const messaging = getMessaging();
+
+      try {
+        const result = await messaging.sendEachForMulticast({
+          tokens,
+          notification: {
+            title: '🎉 ¡Tu anuncio cumple 1 mes!',
+            body: `"${productName.substring(0, 40)}" lleva 1 mes en Mi Pana con ${views} visitas. ¡Renuévalo para seguir destacando!`,
+          },
+          data: {
+            actionUrl: `/perfil-producto?id=${productDoc.id}`,
+            type: 'push_listing_anniversary',
+            productId: productDoc.id
+          },
+          android: { priority: 'normal', notification: { channelId: 'general', sound: 'default' } },
+          apns: {
+            headers: { 'apns-priority': '5' },
+            payload: { aps: { sound: 'default', alert: {
+              title: '🎉 ¡Tu anuncio cumple 1 mes!',
+              subtitle: 'Mi Pana',
+              body: `"${productName.substring(0, 40)}" lleva 1 mes en Mi Pana con ${views} visitas. ¡Renuévalo para seguir destacando!`
+            }}}
+          }
+        });
+        await cleanupInvalidTokens(ownerId, tokens, result.responses);
+        sent++;
+      } catch (err) {
+        console.error('[pushListingAnniversary] ❌ Error:', err.message);
+      }
+    }
+    console.log(`✅ [pushListingAnniversary] Enviados: ${sent}`);
+  }
+);
