@@ -273,6 +273,7 @@ exports.onNewMessage = onDocumentCreated(
               badge: 1,
               alert: {
                 title: notifTitle,
+                subtitle: 'Mi Pana',
                 body: notifBody
               }
             }
