@@ -101,8 +101,6 @@ export default function Profile() {
     if (shouldBeComplete && !userData.profileComplete) {
       updateDoc(doc(db, 'users', currentUser.uid), { profileComplete: true, updatedAt: new Date() })
         .catch(err => console.error('Error marcando profileComplete:', err));
-      // Disparar confeti justo cuando se confirma el 100%
-      sessionStorage.removeItem('confetti_shown');
     } else if (!shouldBeComplete && userData.profileComplete) {
       updateDoc(doc(db, 'users', currentUser.uid), { profileComplete: false, updatedAt: new Date() })
         .catch(err => console.error('Error desmarcando profileComplete:', err));
@@ -352,16 +350,18 @@ export default function Profile() {
     const confettiColors = ['#FFB400', '#1A1A3A', '#D90429'];
 
     useEffect(() => {
-      if (profileProgress === 100 && !sessionStorage.getItem('confetti_shown')) {
-        // Pequeño delay para asegurar que el usuario ve la barra al 100% primero
+      if (profileProgress === 100 && userData && !userData.confettiShown) {
         const timer = setTimeout(() => {
           setShowConfetti(true);
-          sessionStorage.setItem('confetti_shown', '1');
+          updateDoc(doc(db, 'users', currentUser.uid), {
+            confettiShown: true,
+            updatedAt: new Date()
+          }).catch(err => console.error('Error guardando confettiShown:', err));
           setTimeout(() => setShowConfetti(false), 3500);
         }, 600);
         return () => clearTimeout(timer);
       }
-    }, [profileProgress]);
+    }, [profileProgress, userData]);
 
     const particles = Array.from({ length: 40 }, (_, i) => {
       const angle = (i / 40) * 360;
