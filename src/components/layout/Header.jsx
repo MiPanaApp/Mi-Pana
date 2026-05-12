@@ -113,7 +113,7 @@ const Header = forwardRef((props, ref) => {
   const handleCountryChange = async (countryCode, defaultRegion) => {
     setCountry(countryCode);
     setRegion(defaultRegion);
-    setFilters({ location: { level1: defaultRegion, level2: defaultRegion, level3: '' } });
+    setFilters({ location: { level1: '', level2: defaultRegion, level3: '' } });
     setIsCountryOpen(false);
 
     if (user?.uid && import.meta.env.VITE_AUTH_BYPASS !== 'true') {
