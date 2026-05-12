@@ -56,6 +56,8 @@ export default function AdminDashboard() {
   const [rawProducts, setRawProducts] = useState([]);
   const [growthWeeks, setGrowthWeeks] = useState(8);
   const [isGrowthSelectOpen, setIsGrowthSelectOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const testEmail = async () => {
     setEmailTestLoading(true);
@@ -105,130 +107,122 @@ export default function AdminDashboard() {
     }
   }, [activeTab]);
 
-  useEffect(() => {
-    async function fetchStats() {
-      try {
-        const usersColl = collection(db, "users");
-        const productsColl = collection(db, "products");
-        const categoriesColl = collection(db, "categories");
+  const fetchStats = async () => {
+    setIsRefreshing(true);
+    try {
+      const usersColl = collection(db, "users");
+      const productsColl = collection(db, "products");
+      const categoriesColl = collection(db, "categories");
 
-        const [usersSnap, productsSnap, categoriesSnap] = await Promise.all([
-          getDocs(usersColl),
-          getDocs(productsColl),
-          getDocs(categoriesColl)
-        ]);
+      const [usersSnap, productsSnap, categoriesSnap] = await Promise.all([
+        getDocs(usersColl),
+        getDocs(productsColl),
+        getDocs(categoriesColl)
+      ]);
 
-        const productsList = productsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        const usersList = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        
-        // Mapeo de categorías: prioriza 'label', luego 'name', para compatibilidad
-        // con el nuevo sistema unificado (AdminCategoriesTab guarda label + name)
-        const catNamesMap = {};
-        const knownCategoryValues = new Set(); // Set de labels/names conocidos
-        categoriesSnap.docs.forEach(doc => {
-          const data = doc.data();
-          // label es el campo principal; name es el alias de compatibilidad
-          const displayName = data.label || data.name || data.title || null;
-          if (!displayName) return;
+      const productsList = productsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const usersList = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      const catNamesMap = {};
+      const knownCategoryValues = new Set();
+      categoriesSnap.docs.forEach(doc => {
+        const data = doc.data();
+        const displayName = data.label || data.name || data.title || null;
+        if (!displayName) return;
+        catNamesMap[doc.id] = displayName;
+        catNamesMap[String(doc.id)] = displayName;
+        catNamesMap[displayName] = displayName;
+        if (data.name) catNamesMap[data.name] = displayName;
+        if (data.label) catNamesMap[data.label] = displayName;
+        if (data.id) catNamesMap[String(data.id)] = displayName;
+        if (data.value) catNamesMap[String(data.value)] = displayName;
+        knownCategoryValues.add(displayName);
+      });
 
-          // Mapeamos por ID del documento
-          catNamesMap[doc.id] = displayName;
-          catNamesMap[String(doc.id)] = displayName;
-          // Mapeamos por el propio label/name (en caso de que el producto guarde ese string)
-          catNamesMap[displayName] = displayName;
-          if (data.name) catNamesMap[data.name] = displayName;
-          if (data.label) catNamesMap[data.label] = displayName;
-          // Retrocompatibilidad: IDs y otros valores legacy
-          if (data.id) catNamesMap[String(data.id)] = displayName;
-          if (data.value) catNamesMap[String(data.value)] = displayName;
-          knownCategoryValues.add(displayName);
-        });
+      const totals = productsList.reduce((acc, p) => ({
+        views: acc.views + (p.views || 0),
+        likes: acc.likes + (p.likes || 0)
+      }), { views: 0, likes: 0 });
 
-        const totals = productsList.reduce((acc, p) => ({
-          views: acc.views + (p.views || 0),
-          likes: acc.likes + (p.likes || 0)
-        }), { views: 0, likes: 0 });
+      setTotalViews(totals.views);
+      setTotalLikes(totals.likes);
 
-        setTotalViews(totals.views);
-        setTotalLikes(totals.likes);
+      const topViewedData = [...productsList]
+        .sort((a, b) => (b.views || 0) - (a.views || 0))
+        .slice(0, 5);
+      setTopViewed(topViewedData);
 
-        const topViewedData = [...productsList]
-           .sort((a, b) => (b.views || 0) - (a.views || 0))
-           .slice(0, 5);
-        setTopViewed(topViewedData);
+      const catCountMap = {};
+      productsList.forEach(data => {
+        const rawCat = data.category;
+        let catName;
+        if (!rawCat) {
+          catName = 'Sin categoría';
+        } else if (catNamesMap[rawCat]) {
+          catName = catNamesMap[rawCat];
+        } else if (catNamesMap[String(rawCat)]) {
+          catName = catNamesMap[String(rawCat)];
+        } else if (!isNaN(rawCat)) {
+          catName = 'Sin categoría';
+        } else {
+          catName = rawCat;
+        }
+        catCountMap[catName] = (catCountMap[catName] || 0) + 1;
+      });
 
-        // TOP CATEGORIES: resuelve label desde el mapa; si es número o ID desconocido → "Sin categoría"
-        const catCountMap = {};
-        productsList.forEach(data => {
-          const rawCat = data.category;
-          let catName;
-          if (!rawCat) {
-            catName = 'Sin categoría';
-          } else if (catNamesMap[rawCat]) {
-            catName = catNamesMap[rawCat];
-          } else if (catNamesMap[String(rawCat)]) {
-            catName = catNamesMap[String(rawCat)];
-          } else if (!isNaN(rawCat)) {
-            // Era un índice numérico legacy
-            catName = 'Sin categoría';
-          } else {
-            // String no reconocido: usarlo tal cual (producto viejo con nombre directo)
-            catName = rawCat;
-          }
-          catCountMap[catName] = (catCountMap[catName] || 0) + 1;
-        });
+      const catData = Object.keys(catCountMap).map(name => ({
+        name,
+        value: catCountMap[name]
+      })).sort((a, b) => b.value - a.value).slice(0, 10);
 
-        const catData = Object.keys(catCountMap).map(name => ({
-          name,
-          value: catCountMap[name]
-        })).sort((a, b) => b.value - a.value).slice(0, 10);
+      setRawUsers(usersList);
+      setRawProducts(productsList);
 
-        // CRECIMIENTO EVOLUTIVO (Extrae a Raw para filtro posterior)
-        setRawUsers(usersList);
-        setRawProducts(productsList);
+      const COUNTRY_FLAGS = {
+        'ES': { name: 'España', flag: '🇪🇸' },
+        'US': { name: 'Estados', flag: '🇺🇸' },
+        'CO': { name: 'Colombia', flag: '🇨🇴' },
+        'EC': { name: 'Ecuador', flag: '🇪🇨' },
+        'PA': { name: 'Panamá', flag: '🇵🇦' },
+        'PE': { name: 'Perú', flag: '🇵🇪' },
+        'DO': { name: 'Rep. Dom', flag: '🇩🇴' },
+        'CL': { name: 'Chile', flag: '🇨🇱' },
+        'AR': { name: 'Argentina', flag: '🇦🇷' },
+        'MX': { name: 'México', flag: '🇲🇽' }
+      };
+      const countryMap = {};
+      usersList.forEach(u => {
+        if (u.country && COUNTRY_FLAGS[u.country]) {
+          const code = u.country;
+          countryMap[code] = (countryMap[code] || 0) + 1;
+        }
+      });
+      const geoData = Object.keys(countryMap).map(k => ({ 
+        id: k, 
+        name: COUNTRY_FLAGS[k].name,
+        flag: COUNTRY_FLAGS[k].flag,
+        value: countryMap[k] 
+      })).sort((a, b) => b.value - a.value).slice(0, 5);
 
-        // MAPA GEOGRAFICO: USUARIOS POR PAIS (BANDERAS)
-        const COUNTRY_FLAGS = {
-          'ES': { name: 'España', flag: '🇪🇸' },
-          'US': { name: 'Estados', flag: '🇺🇸' },
-          'CO': { name: 'Colombia', flag: '🇨🇴' },
-          'EC': { name: 'Ecuador', flag: '🇪🇨' },
-          'PA': { name: 'Panamá', flag: '🇵🇦' },
-          'PE': { name: 'Perú', flag: '🇵🇪' },
-          'DO': { name: 'Rep. Dom', flag: '🇩🇴' },
-          'CL': { name: 'Chile', flag: '🇨🇱' },
-          'AR': { name: 'Argentina', flag: '🇦🇷' },
-          'MX': { name: 'México', flag: '🇲🇽' }
-        };
-        const countryMap = {};
-        usersList.forEach(u => {
-          if (u.country && COUNTRY_FLAGS[u.country]) {
-            const code = u.country;
-            countryMap[code] = (countryMap[code] || 0) + 1;
-          }
-        });
-        const geoData = Object.keys(countryMap).map(k => ({ 
-          id: k, 
-          name: COUNTRY_FLAGS[k].name,
-          flag: COUNTRY_FLAGS[k].flag,
-          value: countryMap[k] 
-        })).sort((a, b) => b.value - a.value).slice(0, 5);
-
-        setStats(prev => ({
-          ...prev,
-          totalUsers: usersList.length,
-          totalProducts: productsList.length,
-          categories: catData.length > 0 ? catData : [{ name: 'Sin datos', value: 1 }],
-          geo: geoData
-        }));
-        setLoading(false);
-      } catch (err) {
-        console.error("Error fetching stats:", err);
-        setLoading(false);
-      }
+      setStats(prev => ({
+        ...prev,
+        totalUsers: usersList.length,
+        totalProducts: productsList.length,
+        categories: catData.length > 0 ? catData : [{ name: 'Sin datos', value: 1 }],
+        geo: geoData
+      }));
+      setLoading(false);
+    } catch (err) {
+      console.error("Error fetching stats:", err);
+      setLoading(false);
+    } finally {
+      setIsRefreshing(false);
     }
+  };
+
+  useEffect(() => {
     fetchStats();
-  }, []);
+  }, [refreshKey]);
 
   // Efecto dinámico para recalcular el chart de Crecimiento si cambian las semanas
   useEffect(() => {
@@ -402,27 +396,37 @@ export default function AdminDashboard() {
         {activeTab === 'overview' && (
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 pb-44 lg:pb-6">
 
-            {/* Metrics compactas */}
-            <div className="xl:col-span-12 grid grid-cols-2 md:grid-cols-4 gap-4">
-              {metrics.map((m, idx) => (
-                <div key={m.id} className="bg-white p-4 rounded-[2rem] shadow-[8px_8px_16px_#ebebeb,-4px_-4px_12px_#ffffff] border border-white/60 flex flex-col justify-center min-h-[110px]">
-                  <div className="mb-1">
-                    <span className="text-gray-400 text-[10px] font-black uppercase tracking-widest">{m.label}</span>
+            {/* Metrics compactas + botón Refresh */}
+            <div className="xl:col-span-12 flex items-center justify-between gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 flex-1">
+                {metrics.map((m, idx) => (
+                  <div key={m.id} className="bg-white p-4 rounded-[2rem] shadow-[8px_8px_16px_#ebebeb,-4px_-4px_12px_#ffffff] border border-white/60 flex flex-col justify-center min-h-[110px]">
+                    <div className="mb-1">
+                      <span className="text-gray-400 text-[10px] font-black uppercase tracking-widest">{m.label}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl font-extrabold text-[#1A1A3A] flex items-center gap-1.5 shrink-0">
+                        {idx === 0 && <Users className="w-5 h-5 text-purple-500 shrink-0" />}
+                        {idx === 1 && <ShoppingBag className="w-5 h-5 text-yellow-500 shrink-0" />}
+                        {idx === 2 && <Eye className="w-5 h-5 text-blue-500 shrink-0" />}
+                        {idx === 3 && <Heart className="w-5 h-5 text-red-500 shrink-0" fill="currentColor" />}
+                        <span>{loading ? "..." : m.val}</span>
+                      </span>
+                      <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md shrink-0 border ${m.trend === 'acumulado' ? 'bg-yellow-50 text-yellow-700 border-yellow-100' : (m.isPositive ? 'bg-green-50 text-green-500 border-green-100' : 'bg-red-50 text-red-500 border-red-100')}`}>
+                        {m.trend}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl font-extrabold text-[#1A1A3A] flex items-center gap-1.5 shrink-0">
-                      {idx === 0 && <Users className="w-5 h-5 text-purple-500 shrink-0" />}
-                      {idx === 1 && <ShoppingBag className="w-5 h-5 text-yellow-500 shrink-0" />}
-                      {idx === 2 && <Eye className="w-5 h-5 text-blue-500 shrink-0" />}
-                      {idx === 3 && <Heart className="w-5 h-5 text-red-500 shrink-0" fill="currentColor" />}
-                      <span>{loading ? "..." : m.val}</span>
-                    </span>
-                    <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md shrink-0 border ${m.trend === 'acumulado' ? 'bg-yellow-50 text-yellow-700 border-yellow-100' : (m.isPositive ? 'bg-green-50 text-green-500 border-green-100' : 'bg-red-50 text-red-500 border-red-100')}`}>
-                      {m.trend}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
+              <button
+                onClick={() => setRefreshKey(k => k + 1)}
+                disabled={isRefreshing}
+                title="Actualizar datos"
+                className="w-12 h-12 bg-white rounded-2xl shadow-[8px_8px_16px_#ebebeb,-4px_-4px_12px_#ffffff] border border-white/60 flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50 active:scale-95 transition-all disabled:opacity-50 shrink-0 self-start mt-0"
+              >
+                <Activity className={`w-5 h-5 ${isRefreshing ? 'animate-spin text-blue-500' : ''}`} />
+              </button>
             </div>
 
             {/* 🧪 Panel de Test de Emails */}

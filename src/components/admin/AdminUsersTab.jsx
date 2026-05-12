@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { collection, onSnapshot, doc, updateDoc, deleteDoc, getDocs, query, where, writeBatch } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../../services/firebase';
-
-import { Users, Ban, Trash2, CheckCircle, Filter, Info, X, Phone, Mail, Globe, User, Shield, Calendar, Copy, AlertTriangle } from 'lucide-react';
+import { useLocationStore } from '../../store/useLocationStore';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Users, Ban, Trash2, CheckCircle, Filter, Info, X, Phone, Mail, Globe, User, Shield, Calendar, Copy, AlertTriangle, ChevronDown, Check } from 'lucide-react';
 
 const functions = getFunctions(undefined, 'us-central1');
 
@@ -13,6 +14,12 @@ export default function AdminUsersTab({ searchQuery = '' }) {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedUser, setSelectedUser] = useState(null);
+
+  const { countries } = useLocationStore();
+  const [filterCountry, setFilterCountry] = useState('');
+  const [filterRegion, setFilterRegion] = useState('');
+  const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
+  const [regionDropdownOpen, setRegionDropdownOpen] = useState(false);
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'users'), (snap) => {
@@ -122,34 +129,181 @@ Esta acción borrará:
     const searchStr = (u.name + ' ' + u.lastName + ' ' + u.displayName + ' ' + u.email).toLowerCase();
     const matchesSearch = searchStr.includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || (statusFilter === 'suspended' ? u.status === 'suspended' : u.status !== 'suspended');
-    return matchesSearch && matchesStatus;
+    const matchesCountry = !filterCountry || u.country === filterCountry;
+    const matchesRegion = !filterRegion || (u.region || '').toLowerCase() === filterRegion.toLowerCase();
+    return matchesSearch && matchesStatus && matchesCountry && matchesRegion;
   }).sort((a, b) => {
     const timeA = a.createdAt?.seconds || 0;
     const timeB = b.createdAt?.seconds || 0;
     return timeB - timeA;
   });
 
+  // Regiones disponibles para el país seleccionado
+  const availableRegions = filterCountry
+    ? [...new Set(
+        users
+          .filter(u => u.country === filterCountry && u.region)
+          .map(u => u.region)
+      )].sort()
+    : [];
+
+  // País seleccionado (objeto completo)
+  const selectedCountryObj = countries.find(c => c.id === filterCountry);
+
   return (
     <div className="w-full max-w-5xl mx-auto">
       <div className="bg-white p-6 md:p-8 rounded-[2rem] shadow-[0_15px_40px_rgba(0,0,0,0.04)] h-full mb-6 border border-gray-50">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <div>
-          <h3 className="font-black text-2xl text-gray-800">Usuarios Registrados</h3>
-          <p className="text-sm font-bold text-gray-400 mt-1">Sincronizado en tiempo real ({filteredUsers.length})</p>
+      <div className="flex flex-col gap-4 mb-6">
+        {/* Fila 1: Título + filtros de estado */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h3 className="font-black text-2xl text-gray-800">Usuarios Registrados</h3>
+            <p className="text-sm font-bold text-gray-400 mt-1">
+              Sincronizado en tiempo real (<span className="text-[#D90429]">{filteredUsers.length}</span>)
+            </p>
+          </div>
+          <div className="flex bg-gray-50 p-1.5 rounded-xl border border-gray-100 flex-shrink-0">
+            <button
+              onClick={() => setStatusFilter('all')}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${statusFilter === 'all' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+            >Todos</button>
+            <button
+              onClick={() => setStatusFilter('active')}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${statusFilter === 'active' ? 'bg-white text-green-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+            >Activos</button>
+            <button
+              onClick={() => setStatusFilter('suspended')}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${statusFilter === 'suspended' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+            >Suspendidos</button>
+          </div>
         </div>
-        <div className="flex bg-gray-50 p-1.5 rounded-xl border border-gray-100 flex-shrink-0">
-          <button 
-            onClick={() => setStatusFilter('all')} 
-            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${statusFilter === 'all' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-          >Todos</button>
-          <button 
-            onClick={() => setStatusFilter('active')} 
-            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${statusFilter === 'active' ? 'bg-white text-green-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-          >Activos</button>
-          <button 
-            onClick={() => setStatusFilter('suspended')} 
-            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${statusFilter === 'suspended' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-          >Suspendidos</button>
+
+        {/* Fila 2: Filtros de ubicación */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          {/* Dropdown País */}
+          <div className="relative flex-1">
+            <button
+              onClick={() => { setCountryDropdownOpen(!countryDropdownOpen); setRegionDropdownOpen(false); }}
+              className="w-full bg-[#F4F7FE] text-gray-700 px-4 py-3 rounded-2xl text-sm font-bold flex items-center justify-between outline-none focus:ring-2 focus:ring-[#FFD700]/50 transition-all"
+            >
+              <span className="flex items-center gap-2">
+                {selectedCountryObj ? (
+                  <><span className="text-lg leading-none">{selectedCountryObj.flag}</span><span>{selectedCountryObj.name}</span></>
+                ) : (
+                  <span className="text-gray-400 font-bold">Todos los países</span>
+                )}
+              </span>
+              <div className="flex items-center gap-1">
+                {filterCountry && (
+                  <span
+                    onClick={(e) => { e.stopPropagation(); setFilterCountry(''); setFilterRegion(''); }}
+                    className="w-4 h-4 bg-gray-300 hover:bg-gray-400 rounded-full flex items-center justify-center cursor-pointer text-white text-[10px] font-black leading-none"
+                  >×</span>
+                )}
+                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${countryDropdownOpen ? 'rotate-180' : ''}`} />
+              </div>
+            </button>
+            <AnimatePresence>
+              {countryDropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setCountryDropdownOpen(false)} />
+                  <motion.div
+                    initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 4, scale: 1 }}
+                    exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute top-full left-0 right-0 bg-white border border-gray-100 rounded-2xl shadow-2xl z-50 overflow-hidden"
+                  >
+                    <div className="max-h-64 overflow-y-auto">
+                      <button
+                        onClick={() => { setFilterCountry(''); setFilterRegion(''); setCountryDropdownOpen(false); }}
+                        className={`w-full text-left px-4 py-2.5 text-sm font-bold hover:bg-gray-50 flex items-center justify-between ${!filterCountry ? 'bg-blue-50 text-blue-600' : 'text-gray-500'}`}
+                      >
+                        Todos los países
+                        {!filterCountry && <Check size={14} className="text-blue-600" />}
+                      </button>
+                      {countries.filter(c => c.status === 'active').map(c => (
+                        <button
+                          key={c.id}
+                          onClick={() => { setFilterCountry(c.id); setFilterRegion(''); setCountryDropdownOpen(false); }}
+                          className={`w-full text-left px-4 py-2.5 text-sm font-bold hover:bg-gray-50 flex items-center justify-between ${filterCountry === c.id ? 'bg-blue-50 text-blue-600' : 'text-gray-700'}`}
+                        >
+                          <span className="flex items-center gap-2">
+                            <span className="text-lg leading-none">{c.flag}</span>
+                            <span>{c.name}</span>
+                          </span>
+                          {filterCountry === c.id && <Check size={14} className="text-blue-600" />}
+                        </button>
+                      ))}
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Dropdown Región/Nivel 1 */}
+          <div className="relative flex-1">
+            <button
+              onClick={() => { if (filterCountry) { setRegionDropdownOpen(!regionDropdownOpen); setCountryDropdownOpen(false); } }}
+              className={`w-full bg-[#F4F7FE] text-gray-700 px-4 py-3 rounded-2xl text-sm font-bold flex items-center justify-between outline-none transition-all ${!filterCountry ? 'opacity-40 cursor-not-allowed' : 'focus:ring-2 focus:ring-[#FFD700]/50'}`}
+            >
+              <span className={filterRegion ? 'text-gray-700 font-bold' : 'text-gray-400 font-bold'}>
+                {filterRegion || (filterCountry ? (selectedCountryObj?.config?.level1 || 'Región') : 'Selecciona un país primero')}
+              </span>
+              <div className="flex items-center gap-1">
+                {filterRegion && (
+                  <span
+                    onClick={(e) => { e.stopPropagation(); setFilterRegion(''); }}
+                    className="w-4 h-4 bg-gray-300 hover:bg-gray-400 rounded-full flex items-center justify-center cursor-pointer text-white text-[10px] font-black leading-none"
+                  >×</span>
+                )}
+                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${regionDropdownOpen ? 'rotate-180' : ''}`} />
+              </div>
+            </button>
+            <AnimatePresence>
+              {regionDropdownOpen && filterCountry && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setRegionDropdownOpen(false)} />
+                  <motion.div
+                    initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 4, scale: 1 }}
+                    exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute top-full left-0 right-0 bg-white border border-gray-100 rounded-2xl shadow-2xl z-50 overflow-hidden"
+                  >
+                    <div className="max-h-64 overflow-y-auto">
+                      {availableRegions.length === 0 ? (
+                        <div className="px-4 py-4 text-center text-xs font-bold text-gray-400 uppercase italic">
+                          Sin regiones registradas
+                        </div>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => { setFilterRegion(''); setRegionDropdownOpen(false); }}
+                            className={`w-full text-left px-4 py-2.5 text-sm font-bold hover:bg-gray-50 flex items-center justify-between ${!filterRegion ? 'bg-blue-50 text-blue-600' : 'text-gray-500'}`}
+                          >
+                            Todas las regiones
+                            {!filterRegion && <Check size={14} className="text-blue-600" />}
+                          </button>
+                          {availableRegions.map(region => (
+                            <button
+                              key={region}
+                              onClick={() => { setFilterRegion(region); setRegionDropdownOpen(false); }}
+                              className={`w-full text-left px-4 py-2.5 text-sm font-bold hover:bg-gray-50 flex items-center justify-between ${filterRegion === region ? 'bg-blue-50 text-blue-600' : 'text-gray-700'}`}
+                            >
+                              {region}
+                              {filterRegion === region && <Check size={14} className="text-blue-600" />}
+                            </button>
+                          ))}
+                        </>
+                      )}
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
       <div className="space-y-3 overflow-y-auto max-h-[60vh] pr-2 custom-scrollbar">
