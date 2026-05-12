@@ -104,7 +104,7 @@ export default function Home() {
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  const PAGE_SIZE = 20;
+  const PAGE_SIZE = 50;
 
   useEffect(() => {
     const fetchProducts = async () => {
