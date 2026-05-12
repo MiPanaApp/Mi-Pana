@@ -4,7 +4,7 @@ import { useStore } from '../../store/useStore';
 import {
   Users, ShoppingBag, MessageSquare, Star, ShieldCheck, Heart,
   Home, BarChart2, Layers, Activity, Search, Bell, Settings, LogOut, ArrowLeft, Eye, Globe, CheckCircle, CalendarClock,
-  Flame, FlaskConical, Image as LucideImage, Zap, Mail, Trash2, ChevronDown, Check
+  Flame, FlaskConical, Image as LucideImage, Zap, Mail, Trash2, ChevronDown, Check, RefreshCw
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -372,6 +372,14 @@ export default function AdminDashboard() {
             <div>
               <div className="flex items-center gap-3">
                 <h1 className="text-3xl font-black text-gray-800 tracking-tight">Panel Mi Pana</h1>
+                {/* Botón Refresh (Solo Móvil - al lado de "Pana") */}
+                <button
+                  onClick={() => setRefreshKey(k => k + 1)}
+                  disabled={isRefreshing}
+                  className="md:hidden w-8 h-8 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center justify-center text-gray-400 active:scale-95 transition-all disabled:opacity-50"
+                >
+                  <RefreshCw size={16} className={isRefreshing ? 'animate-spin text-blue-500' : ''} />
+                </button>
               </div>
               <p className="text-sm font-bold text-gray-400">Gestión centralizada de la comunidad</p>
             </div>
@@ -390,43 +398,41 @@ export default function AdminDashboard() {
                 />
               </div>
             )}
+            <button
+              onClick={() => setRefreshKey(k => k + 1)}
+              disabled={isRefreshing}
+              title="Actualizar datos"
+              className="hidden md:flex w-12 h-12 bg-white rounded-2xl shadow-sm border border-gray-100 items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50 active:scale-95 transition-all disabled:opacity-50 shrink-0"
+            >
+              <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin text-blue-500' : ''}`} />
+            </button>
           </div>
         </div>
 
         {activeTab === 'overview' && (
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 pb-44 lg:pb-6">
 
-            {/* Metrics compactas + botón Refresh */}
-            <div className="xl:col-span-12 flex items-center justify-between gap-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 flex-1">
-                {metrics.map((m, idx) => (
-                  <div key={m.id} className="bg-white p-4 rounded-[2rem] shadow-[8px_8px_16px_#ebebeb,-4px_-4px_12px_#ffffff] border border-white/60 flex flex-col justify-center min-h-[110px]">
-                    <div className="mb-1">
-                      <span className="text-gray-400 text-[10px] font-black uppercase tracking-widest">{m.label}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xl font-extrabold text-[#1A1A3A] flex items-center gap-1.5 shrink-0">
-                        {idx === 0 && <Users className="w-5 h-5 text-purple-500 shrink-0" />}
-                        {idx === 1 && <ShoppingBag className="w-5 h-5 text-yellow-500 shrink-0" />}
-                        {idx === 2 && <Eye className="w-5 h-5 text-blue-500 shrink-0" />}
-                        {idx === 3 && <Heart className="w-5 h-5 text-red-500 shrink-0" fill="currentColor" />}
-                        <span>{loading ? "..." : m.val}</span>
-                      </span>
-                      <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md shrink-0 border ${m.trend === 'acumulado' ? 'bg-yellow-50 text-yellow-700 border-yellow-100' : (m.isPositive ? 'bg-green-50 text-green-500 border-green-100' : 'bg-red-50 text-red-500 border-red-100')}`}>
-                        {m.trend}
-                      </span>
-                    </div>
+            {/* Metrics compactas */}
+            <div className="xl:col-span-12 grid grid-cols-2 md:grid-cols-4 gap-4">
+              {metrics.map((m, idx) => (
+                <div key={m.id} className="bg-white p-4 rounded-[2rem] shadow-[8px_8px_16px_#ebebeb,-4px_-4px_12px_#ffffff] border border-white/60 flex flex-col justify-center min-h-[110px]">
+                  <div className="mb-1">
+                    <span className="text-gray-400 text-[10px] font-black uppercase tracking-widest">{m.label}</span>
                   </div>
-                ))}
-              </div>
-              <button
-                onClick={() => setRefreshKey(k => k + 1)}
-                disabled={isRefreshing}
-                title="Actualizar datos"
-                className="w-12 h-12 bg-white rounded-2xl shadow-[8px_8px_16px_#ebebeb,-4px_-4px_12px_#ffffff] border border-white/60 flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50 active:scale-95 transition-all disabled:opacity-50 shrink-0 self-start mt-0"
-              >
-                <Activity className={`w-5 h-5 ${isRefreshing ? 'animate-spin text-blue-500' : ''}`} />
-              </button>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl font-extrabold text-[#1A1A3A] flex items-center gap-1.5 shrink-0">
+                      {idx === 0 && <Users className="w-5 h-5 text-purple-500 shrink-0" />}
+                      {idx === 1 && <ShoppingBag className="w-5 h-5 text-yellow-500 shrink-0" />}
+                      {idx === 2 && <Eye className="w-5 h-5 text-blue-500 shrink-0" />}
+                      {idx === 3 && <Heart className="w-5 h-5 text-red-500 shrink-0" fill="currentColor" />}
+                      <span>{loading ? "..." : m.val}</span>
+                    </span>
+                    <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md shrink-0 border ${m.trend === 'acumulado' ? 'bg-yellow-50 text-yellow-700 border-yellow-100' : (m.isPositive ? 'bg-green-50 text-green-500 border-green-100' : 'bg-red-50 text-red-500 border-red-100')}`}>
+                      {m.trend}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
 
             {/* 🧪 Panel de Test de Emails */}
