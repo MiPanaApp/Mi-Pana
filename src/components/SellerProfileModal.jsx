@@ -125,30 +125,19 @@ export default function SellerProfileModal({ isOpen, onClose, seller, productLoc
               </div>
 
               {/* Grid 2 Columnas */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-white/70 rounded-[1.8rem] p-3 shadow-sm border border-white/50 text-center flex flex-col items-center justify-center">
-                   <p className="font-bold text-[8px] text-[#1A1A3A]/40 uppercase tracking-[0.2em] mb-1">Edad</p>
-                   <p className="font-black text-[13px] text-[#1A1A3A]">{age ? `${age} años` : '--'}</p>
-                </div>
-                <div className="bg-white/70 rounded-[1.8rem] p-3 shadow-sm border border-white/50 text-center flex flex-col items-center justify-center">
-                   <p className="font-bold text-[8px] text-[#1A1A3A]/40 uppercase tracking-[0.2em] mb-1">Sexo</p>
-                   <p className="font-black text-[13px] text-[#1A1A3A] capitalize line-clamp-1">{sellerDetails.sex || '--'}</p>
-                </div>
-              </div>
+        <div className="flex justify-center">
+          <div className="bg-white/70 rounded-[1.8rem] px-8 py-3 shadow-sm border border-white/50 text-center flex flex-col items-center justify-center">
+            <p className="font-bold text-[8px] text-[#1A1A3A]/40 uppercase tracking-[0.2em] mb-1">Edad</p>
+            <p className="font-black text-[13px] text-[#1A1A3A]">{age ? `${age} años` : '--'}</p>
+          </div>
+        </div>
 
-              {/* Stats Footer */}
-              <div className="grid grid-cols-2 gap-3 pt-2">
-                <div className="flex flex-col items-center">
-                  <p className="text-lg font-black text-[#1A1A3A] leading-none mb-0.5">{sellerStats.activeAds}</p>
-                  <p className="text-[8px] font-bold text-[#1A1A3A]/40 uppercase tracking-widest">Anuncios</p>
-                </div>
-                <div className="flex flex-col items-center">
-                  <p className="text-[12px] font-black text-[#1A1A3A] uppercase leading-none mb-0.5">
-                    {getMemberSince(sellerDetails.createdAt)}
-                  </p>
-                  <p className="text-[8px] font-bold text-[#1A1A3A]/40 uppercase tracking-widest text-center">Miembro</p>
-                </div>
-              </div>
+        <div className="flex justify-center pt-2">
+          <div className="flex flex-col items-center">
+            <p className="text-lg font-black text-[#1A1A3A] leading-none mb-0.5">{sellerStats.activeAds}</p>
+            <p className="text-[8px] font-bold text-[#1A1A3A]/40 uppercase tracking-widest">Anuncios</p>
+          </div>
+        </div>
 
             </div>
           </motion.div>
