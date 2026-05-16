@@ -253,11 +253,17 @@ export default function AdminDashboard() {
 
     setStats(prev => ({ ...prev, growth: growthData }));
 
-    // Calcular Tendencias Reales (esta semana vs la anterior)
-    const uThis = rawUsers.filter(u => getWeeksAgo(u.createdAt) === 0).length;
-    const uLast = rawUsers.filter(u => getWeeksAgo(u.createdAt) === 1).length;
-    const pThis = rawProducts.filter(p => getWeeksAgo(p.createdAt) === 0).length;
-    const pLast = rawProducts.filter(p => getWeeksAgo(p.createdAt) === 1).length;
+    // Calcular Tendencias Reales (este mes vs el anterior)
+    const getMonthsAgo = (dateStr) => {
+      const date = new Date(dateStr?.seconds ? dateStr.seconds * 1000 : dateStr);
+      if (isNaN(date)) return 99;
+      const now = new Date();
+      return (now.getFullYear() - date.getFullYear()) * 12 + (now.getMonth() - date.getMonth());
+    };
+    const uThis = rawUsers.filter(u => getMonthsAgo(u.createdAt) === 0).length;
+    const uLast = rawUsers.filter(u => getMonthsAgo(u.createdAt) === 1).length;
+    const pThis = rawProducts.filter(p => getMonthsAgo(p.createdAt) === 0).length;
+    const pLast = rawProducts.filter(p => getMonthsAgo(p.createdAt) === 1).length;
 
     const calcTrend = (curr, prev) => {
       if (prev === 0) return curr > 0 ? { val: '+100%', pos: true } : { val: '0%', pos: true };
