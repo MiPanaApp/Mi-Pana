@@ -553,7 +553,7 @@ export default function AdminDashboard() {
                               className="absolute top-0 left-0 h-full"
                               style={{ backgroundColor: COLORS[idx % COLORS.length], opacity: 0.8 }}
                             ></motion.div>
-                            <span className="relative z-10 px-4 font-bold text-gray-800 line-clamp-1 drop-shadow-sm truncate">{cat.name}</span>
+                            <span className="absolute inset-0 flex items-center px-4 font-bold text-gray-800 line-clamp-1 truncate z-10">{cat.name}</span>
                           </div>
                           <span className="text-sm font-black text-[#1A1A3A] w-8 text-right">{cat.value}</span>
                         </div>
@@ -579,7 +579,7 @@ export default function AdminDashboard() {
                               className="absolute top-0 left-0 h-full"
                               style={{ backgroundColor: COLORS[(idx + 2) % COLORS.length], opacity: 0.8 }}
                             ></motion.div>
-                            <span className="relative z-10 px-4 font-bold text-gray-800 flex items-center gap-2 drop-shadow-sm truncate">
+                            <span className="absolute inset-0 flex items-center px-4 font-bold text-gray-800 truncate z-10 gap-2">
                               <span className="text-lg">{country.flag}</span> {country.name}
                             </span>
                           </div>
