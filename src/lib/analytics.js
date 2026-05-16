@@ -35,6 +35,10 @@ export async function decrementLikes(productId) {
   try {
     if (!productId) return;
     const ref = doc(db, 'products', String(productId))
+    const snap = await getDoc(ref)
+    if (!snap.exists()) return;
+    const currentLikes = snap.data().likes || 0;
+    if (currentLikes <= 0) return;
     await updateDoc(ref, { likes: increment(-1) })
   } catch (error) {
     console.warn('Error decrementando likes:', error)

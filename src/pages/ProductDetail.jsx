@@ -300,18 +300,19 @@ export default function ProductDetail() {
 
    const timeAgo = useTimeAgo(product?.createdAt);
 
+   const [isLikeProcessing, setIsLikeProcessing] = useState(false);
+
    const handleToggleFavorite = async () => {
-      if (!product) return;
+      if (!product || isLikeProcessing) return;
+      setIsLikeProcessing(true);
       const wasLiked = isFavorite;
       // Actualiza estado global (Local)
       toggleFavorite(product.id);
-      
       // Actualiza cuenta en UI optimísticamente
       setProduct(prev => ({ 
          ...prev, 
-         likes: wasLiked ? Math.max(0, (prev.likes || 1) - 1) : (prev.likes || 0) + 1 
+         likes: wasLiked ? Math.max(0, (prev.likes || 0) - 1) : (prev.likes || 0) + 1 
       }));
-
       // Sincroniza con Firestore (Server)
       try {
          if (wasLiked) {
@@ -321,6 +322,8 @@ export default function ProductDetail() {
          }
       } catch (e) {
          console.error('Error sincronizando like:', e);
+      } finally {
+         setIsLikeProcessing(false);
       }
    };
 
