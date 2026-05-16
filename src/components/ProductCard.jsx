@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
 import { getBadge, BADGE_STYLES } from '../utils/badgeUtils';
+import { getCurrencySymbol } from '../utils/currency';
 
 export default function ProductCard({ product }) {
   const navigate = useNavigate();
@@ -50,7 +51,7 @@ export default function ProductCard({ product }) {
               <>
                 <span className="text-lg">{Math.floor(parseFloat(product.price) || 0)}</span>
                 <span className="text-[10px]">,{((parseFloat(product.price) || 0) % 1).toFixed(2).split('.')[1]}</span>
-                <span className="text-[10px] ml-0.5">€</span>
+                <span className="text-[10px] ml-0.5">{getCurrencySymbol(product.location?.country)}</span>
               </>
             )}
           </div>

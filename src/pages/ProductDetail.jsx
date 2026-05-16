@@ -14,6 +14,7 @@ import { registerInteraction, getProductReviews } from '../lib/reviews';
 import { registerView, incrementLikes, decrementLikes } from '../lib/analytics';
 import panaLengua from '../assets/pana_lengua.png';
 import { getBadge, BADGE_STYLES } from '../utils/badgeUtils';
+import { getCurrencySymbol } from '../utils/currency';
 import SellerProfileModal from '../components/SellerProfileModal';
 
 
@@ -216,7 +217,7 @@ export default function ProductDetail() {
          : (product.location || 'España');
 
       // Volvemos al formato con precio y ubicación que el usuario prefiere
-      const priceTag = product.price === 'Consultar' ? 'Consultar' : `${product.price}€`;
+      const priceTag = product.price === 'Consultar' ? 'Consultar' : `${product.price}${getCurrencySymbol(product.location?.country)}`;
       const shareText = `🤝 ¡Mira lo que encontré en Mi Pana!\n\n📦 ${product.name}\n💰 ${priceTag}\n📍 ${locationName}\n\n👉 ${shareUrl}`;
 
       if (navigator.share) {
@@ -821,7 +822,7 @@ tlfno contacto: 672 593 950`}
                               <span className="text-xl md:text-2xl font-black">
                                  ,{((parseFloat(product.price) || 0) % 1).toFixed(2).split('.')[1]}
                               </span>
-                              <span className="text-xl md:text-2xl font-black ml-0.5">€</span>
+                              <span className="text-xl md:text-2xl font-black ml-0.5">{getCurrencySymbol(product.location?.country)}</span>
                            </>
                         )}
                      </div>

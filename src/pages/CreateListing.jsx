@@ -24,6 +24,7 @@ import { Capacitor } from '@capacitor/core';
 import { takePicture, pickMultipleImages } from '../utils/cameraUtils';
 import panaExito from '../assets/Pana_Billetes.png';
 import IncompleteProfileModal from '../components/ui/IncompleteProfileModal';
+import { getCurrencySymbol, getCurrency } from '../utils/currency';
 
 // Mapeo: código del store -> clave de LOCATION_DATA
 const COUNTRY_TO_LOC = { ES: 'ES', CO: 'CO', US: 'US', CL: 'CL', PA: 'PA', PE: 'PE', EC: 'EC', DO: 'DO', AR: 'AR' };
@@ -523,6 +524,7 @@ export default function CreateListing() {
         const updateData = {
           name: form.title,
           price: form.price,
+          currency: getCurrency(selectedCountry).code,
           category: form.category,
           whatsapp: `${selectedPrefix.code}${form.whatsapp.replace(/\s+/g, '')}`,
           description: form.description,
@@ -561,6 +563,7 @@ export default function CreateListing() {
         const newProduct = {
           name: form.title,
           price: form.price,
+          currency: getCurrency(selectedCountry).code,
           category: form.category,
           whatsapp: `${selectedPrefix.code}${form.whatsapp.replace(/\s+/g, '')}`,
           description: form.description,
@@ -977,7 +980,7 @@ export default function CreateListing() {
             </div>
 
             <div className="flex-col gap-2 w-[120px] flex">
-              <span className="text-sm font-bold text-[#1A1A3A]/70 ml-2">Precio (€) <span className="text-red-500">*</span></span>
+              <span className="text-sm font-bold text-[#1A1A3A]/70 ml-2">Precio ({getCurrencySymbol(selectedCountry)}) <span className="text-red-500">*</span></span>
               {isConsultarCategory(form.category) ? (
                 <div className="w-full h-14 flex items-center justify-center bg-[#E0E5EC] rounded-2xl shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] text-[#1A1A3A]/40 font-bold text-sm tracking-tight transition-all">
                   Consultar
