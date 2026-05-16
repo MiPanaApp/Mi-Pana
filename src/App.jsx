@@ -6,6 +6,7 @@ import { useCategoryStore } from './store/useCategoryStore';
 import { useLocationStore } from './store/useLocationStore';
 import NotificationPermissionModal from './components/ui/NotificationPermissionModal';
 import CookieConsentBanner from './components/CookieConsentBanner';
+import PWAInstallModal from './components/PWAInstallModal';
 import { useNotificationPrompt } from './hooks/useNotificationPrompt';
 import { usePushNotifications } from './hooks/usePushNotifications';
 import { applyAllConsents } from './services/analyticsConsent';
@@ -157,6 +158,7 @@ function AppOverlays({ user }) {
           <CookieConsentBanner key="cookie-banner" />
         }
       </AnimatePresence>
+      <PWAInstallModal />
       <CustomDialog />
     </>
   );
