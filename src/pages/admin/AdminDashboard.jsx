@@ -54,8 +54,7 @@ export default function AdminDashboard() {
   const [emailTestLoading, setEmailTestLoading] = useState(false);
   const [rawUsers, setRawUsers] = useState([]);
   const [rawProducts, setRawProducts] = useState([]);
-  const [growthWeeks, setGrowthWeeks] = useState(8);
-  const [isGrowthSelectOpen, setIsGrowthSelectOpen] = useState(false);
+  const [growthMonths, setGrowthMonths] = useState(6);
   const [refreshKey, setRefreshKey] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -224,34 +223,48 @@ export default function AdminDashboard() {
     fetchStats();
   }, [refreshKey]);
 
-  // Efecto dinámico para recalcular el chart de Crecimiento si cambian las semanas
+  // Efecto dinámico para recalcular la tabla de Crecimiento si cambian los meses
   useEffect(() => {
     if (!rawUsers.length && !rawProducts.length) return;
 
-    const getWeeksAgo = (dateStr) => {
+    const MONTH_NAMES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+    const getMonthKey = (dateStr) => {
       const date = new Date(dateStr?.seconds ? dateStr.seconds * 1000 : dateStr);
-      if (isNaN(date)) return 99;
-      const diffTime = Math.abs(new Date() - date);
-      return Math.floor(diffTime / (1000 * 60 * 60 * 24 * 7));
+      if (isNaN(date)) return null;
+      return `${date.getFullYear()}-${date.getMonth()}`;
     };
 
-    const growthData = Array.from({ length: growthWeeks }, (_, i) => ({
-      name: `Sem -${(growthWeeks - 1) - i}`,
-      users: 0,
-      ads: 0
-    }));
+    const now = new Date();
+    const monthData = Array.from({ length: growthMonths }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - (growthMonths - 1 - i), 1);
+      return {
+        key: `${d.getFullYear()}-${d.getMonth()}`,
+        name: `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`,
+        users: 0,
+        ads: 0,
+        views: 0,
+        likes: 0,
+      };
+    });
 
     rawUsers.forEach(u => {
-      const w = getWeeksAgo(u.createdAt);
-      if (w < growthWeeks) growthData[(growthWeeks - 1) - w].users += 1;
+      const key = getMonthKey(u.createdAt);
+      const row = monthData.find(m => m.key === key);
+      if (row) row.users += 1;
     });
 
     rawProducts.forEach(p => {
-      const w = getWeeksAgo(p.createdAt);
-      if (w < growthWeeks) growthData[(growthWeeks - 1) - w].ads += 1;
+      const key = getMonthKey(p.createdAt);
+      const row = monthData.find(m => m.key === key);
+      if (row) {
+        row.ads += 1;
+        row.views += p.views || 0;
+        row.likes += p.likes || 0;
+      }
     });
 
-    setStats(prev => ({ ...prev, growth: growthData }));
+    setStats(prev => ({ ...prev, growth: monthData }));
 
     // Calcular Tendencias Reales (este mes vs el anterior)
     const getMonthsAgo = (dateStr) => {
@@ -282,7 +295,7 @@ export default function AdminDashboard() {
       userTrend,
       productTrend
     }));
-  }, [growthWeeks, rawUsers, rawProducts]);
+  }, [growthMonths, rawUsers, rawProducts]);
 
   const formatCount = (n) => {
     if (!n) return '0';
@@ -475,68 +488,80 @@ export default function AdminDashboard() {
 
             {/* Gráficos Principales y Widgets */}
             <div className="xl:col-span-12 space-y-6">
-              <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-50">
-                <div className="flex justify-between items-center mb-8">
-                  <h3 className="text-gray-800 font-black text-lg flex items-center gap-2"><Activity size={18} className="text-blue-500"/> Crecimiento de la Red</h3>
-                  
-                  {/* Custom Select Premium */}
-                  <div className="relative">
-                    <button 
-                      onClick={() => setIsGrowthSelectOpen(!isGrowthSelectOpen)}
-                      className="bg-gray-50 border border-gray-100 py-2.5 px-4 rounded-2xl flex items-center gap-3 shadow-sm hover:shadow-md transition-all active:scale-95"
-                    >
-                      <span className="text-xs font-bold text-[#1A1A3A]">Últimas {growthWeeks} semanas</span>
-                      <ChevronDown size={14} className={`text-gray-400 transition-transform duration-300 ${isGrowthSelectOpen ? 'rotate-180' : ''}`} />
-                    </button>
-
-                    <AnimatePresence>
-                      {isGrowthSelectOpen && (
-                        <>
-                          <div className="fixed inset-0 z-40" onClick={() => setIsGrowthSelectOpen(false)}></div>
-                          <motion.div 
-                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                            className="absolute right-0 mt-2 w-48 bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl shadow-2xl z-50 overflow-hidden"
-                          >
-                            {[4, 8, 12, 24].map((range) => (
-                              <button
-                                key={range}
-                                onClick={() => {
-                                  setGrowthWeeks(range);
-                                  setIsGrowthSelectOpen(false);
-                                }}
-                                className="w-full px-5 py-3.5 text-left text-xs font-bold flex items-center justify-between hover:bg-white transition-colors border-b border-gray-50 last:border-0 text-[#1A1A3A]"
-                              >
-                                Últimas {range} semanas
-                                {growthWeeks === range && <Check size={14} className="text-blue-500" />}
-                              </button>
-                            ))}
-                          </motion.div>
-                        </>
-                      )}
-                    </AnimatePresence>
+              <div className="bg-white p-6 md:p-8 rounded-[2.5rem] shadow-sm border border-gray-50">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
+                  <h3 className="text-gray-800 font-black text-lg flex items-center gap-2">
+                    <Activity size={18} className="text-blue-500"/> Crecimiento de la Red
+                  </h3>
+                  <div className="flex bg-gray-50 p-1 rounded-xl border border-gray-100 gap-1">
+                    {[3, 6, 12].map(n => (
+                      <button
+                        key={n}
+                        onClick={() => setGrowthMonths(n)}
+                        className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${growthMonths === n ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                      >
+                        {n} meses
+                      </button>
+                    ))}
                   </div>
                 </div>
-                <div className="h-72 min-h-[300px] w-full min-w-0 flex items-center justify-center">
-                  <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300}>
-                    <AreaChart data={stats.growth || []}>
-                      <defs>
-                        <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0}/>
-                        </linearGradient>
-                        <linearGradient id="colorAds" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#FFD700" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#FFD700" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#A3A8B8', fontSize: 10, fontWeight: 700 }} />
-                      <Tooltip cursor={{ stroke: '#F4F7FE', strokeWidth: 2 }} contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }} />
-                      <Area type="monotone" dataKey="users" name="Nuevos Usuarios" stroke="#8B5CF6" strokeWidth={3} fillOpacity={1} fill="url(#colorUsers)" />
-                      <Area type="monotone" dataKey="ads" name="Nuevos Anuncios" stroke="#FFB400" strokeWidth={3} fillOpacity={1} fill="url(#colorAds)" />
-                    </AreaChart>
-                  </ResponsiveContainer>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-100">
+                        <th className="text-left py-3 px-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Mes</th>
+                        <th className="text-right py-3 px-4 text-[10px] font-black uppercase tracking-widest text-purple-400">Usuarios</th>
+                        <th className="text-right py-3 px-4 text-[10px] font-black uppercase tracking-widest text-yellow-500">Anuncios</th>
+                        <th className="text-right py-3 px-4 text-[10px] font-black uppercase tracking-widest text-blue-400">Vistas</th>
+                        <th className="text-right py-3 px-4 text-[10px] font-black uppercase tracking-widest text-red-400">Likes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(stats.growth || []).map((row, idx) => {
+                        const isCurrentMonth = idx === (stats.growth?.length ?? 0) - 1;
+                        return (
+                          <tr
+                            key={row.key}
+                            className={`border-b border-gray-50 transition-colors ${isCurrentMonth ? 'bg-blue-50/50' : 'hover:bg-gray-50'}`}
+                          >
+                            <td className="py-3 px-4 font-black text-[#1A1A3A] text-sm flex items-center gap-2">
+                              {isCurrentMonth && <span className="w-1.5 h-1.5 bg-blue-500 rounded-full inline-block"></span>}
+                              {row.name}
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              <span className="font-black text-purple-600 bg-purple-50 px-2 py-0.5 rounded-lg text-xs">{row.users}</span>
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              <span className="font-black text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded-lg text-xs">{row.ads}</span>
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              <span className="font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg text-xs">{row.views}</span>
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              <span className="font-black text-red-500 bg-red-50 px-2 py-0.5 rounded-lg text-xs">{row.likes}</span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                    <tfoot>
+                      <tr className="border-t-2 border-gray-100 bg-gray-50/50">
+                        <td className="py-3 px-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Total</td>
+                        <td className="py-3 px-4 text-right">
+                          <span className="font-black text-purple-600 text-xs">{(stats.growth || []).reduce((s, r) => s + r.users, 0)}</span>
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <span className="font-black text-yellow-600 text-xs">{(stats.growth || []).reduce((s, r) => s + r.ads, 0)}</span>
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <span className="font-black text-blue-600 text-xs">{(stats.growth || []).reduce((s, r) => s + r.views, 0)}</span>
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <span className="font-black text-red-500 text-xs">{(stats.growth || []).reduce((s, r) => s + r.likes, 0)}</span>
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
                 </div>
               </div>
 
