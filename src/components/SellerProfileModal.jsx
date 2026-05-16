@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, MapPin, Calendar, User, Star, Package, ShieldCheck } from 'lucide-react';
+import { X, MapPin, Calendar, User, Star, Package, ShieldCheck, BadgeCheck } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { db } from '../services/firebase';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
@@ -113,31 +113,66 @@ export default function SellerProfileModal({ isOpen, onClose, seller, productLoc
             {/* Content compactado */}
             <div className="p-5 space-y-3">
               
-              {/* Localidad */}
-              <div className="bg-white/70 rounded-[1.8rem] p-3 shadow-sm border border-white/50 text-center">
-                <p className="font-bold text-[8px] text-[#1A1A3A]/40 uppercase tracking-[0.2em] mb-0.5">Localidad</p>
-                <p className="font-black text-[13px] text-[#1A1A3A] truncate">
-                  {productLocation?.level2 || productLocation?.level1 || 'Ubicación...'}
-                </p>
-                <p className="text-[9px] font-bold text-[#1A1A3A]/50 uppercase tracking-tighter">
-                  {productLocation?.level1}, {productLocation?.country || 'ES'}
-                </p>
+              {/* Localidad + Edad en 2 columnas */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-white/70 rounded-[1.8rem] p-3 shadow-sm border border-white/50 text-center">
+                  <p className="font-bold text-[8px] text-[#1A1A3A]/40 uppercase tracking-[0.2em] mb-0.5">Localidad</p>
+                  <p className="font-black text-[13px] text-[#1A1A3A] truncate">
+                    {productLocation?.level2 || productLocation?.level1 || '--'}
+                  </p>
+                  <p className="text-[9px] font-bold text-[#1A1A3A]/50 uppercase tracking-tighter truncate">
+                    {productLocation?.level1}, {productLocation?.country || 'ES'}
+                  </p>
+                </div>
+                <div className="bg-white/70 rounded-[1.8rem] p-3 shadow-sm border border-white/50 text-center flex flex-col items-center justify-center">
+                  <p className="font-bold text-[8px] text-[#1A1A3A]/40 uppercase tracking-[0.2em] mb-1">Edad</p>
+                  <p className="font-black text-[13px] text-[#1A1A3A]">{age ? `${age} años` : '--'}</p>
+                </div>
               </div>
 
-              {/* Grid 2 Columnas */}
-        <div className="flex justify-center">
-          <div className="bg-white/70 rounded-[1.8rem] px-8 py-3 shadow-sm border border-white/50 text-center flex flex-col items-center justify-center">
-            <p className="font-bold text-[8px] text-[#1A1A3A]/40 uppercase tracking-[0.2em] mb-1">Edad</p>
-            <p className="font-black text-[13px] text-[#1A1A3A]">{age ? `${age} años` : '--'}</p>
-          </div>
-        </div>
+              <div className="flex justify-center pt-2">
+                <div className="flex flex-col items-center">
+                  <p className="text-lg font-black text-[#1A1A3A] leading-none mb-0.5">{sellerStats.activeAds}</p>
+                  <p className="text-[8px] font-bold text-[#1A1A3A]/40 uppercase tracking-widest">Anuncios</p>
+                </div>
+              </div>
 
-        <div className="flex justify-center pt-2">
-          <div className="flex flex-col items-center">
-            <p className="text-lg font-black text-[#1A1A3A] leading-none mb-0.5">{sellerStats.activeAds}</p>
-            <p className="text-[8px] font-bold text-[#1A1A3A]/40 uppercase tracking-widest">Anuncios</p>
-          </div>
-        </div>
+              {/* Banner Verificación - solo para usuarios verificados */}
+              {(seller.verified || seller.userVerified) && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3, duration: 0.4, ease: 'easeOut' }}
+                  className="relative overflow-hidden rounded-[1.8rem] bg-[#00C97A] p-4 shadow-md"
+                >
+                  {/* Pulso de fondo */}
+                  <motion.div
+                    animate={{ scale: [1, 1.15, 1], opacity: [0.15, 0.25, 0.15] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                    className="absolute inset-0 bg-white rounded-[1.8rem]"
+                  />
+                  {/* Efecto shine/metal */}
+                  <motion.div
+                    initial={{ x: '-100%', skewX: '-15deg' }}
+                    animate={{ x: '300%' }}
+                    transition={{ duration: 1.8, repeat: Infinity, repeatDelay: 2.5, ease: 'easeInOut' }}
+                    className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-white/40 to-transparent z-10 pointer-events-none"
+                  />
+                  <div className="relative z-10 flex items-start gap-3">
+                    <div className="shrink-0 bg-white/20 rounded-2xl p-2 mt-0.5">
+                      <BadgeCheck size={20} className="text-white" />
+                    </div>
+                    <div>
+                      <p className="text-white font-black text-[11px] uppercase tracking-widest mb-1">
+                        Pana Verificado ✓
+                      </p>
+                      <p className="text-white/90 font-bold text-[10px] leading-snug">
+                        Identidad confirmada por nuestro equipo. Este usuario es una persona real y su documentación legal ha sido validada en nuestra plataforma.
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
 
             </div>
           </motion.div>
