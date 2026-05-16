@@ -302,6 +302,33 @@ export const LOCATION_DATA = {
       'Tierra del Fuego': { 'Ushuaia': [], 'Río Grande': [] },
       'Tucumán': { 'San Miguel de Tucumán': [], 'Tafí Viejo': [] }
     }
+  },
+  PT: {
+    level1Label: 'Distrito / Região',
+    level2Label: 'Concelho / Município',
+    labels: { level1: 'Distrito / Região', level2: 'Concelho / Município', level3: 'Freguesia' },
+    data: {
+      'Aveiro': { 'Aveiro': [], 'Águeda': [], 'Espinho': [], 'Oliveira de Azeméis': [], 'Santa Maria da Feira': [], 'São João da Madeira': [] },
+      'Beja': { 'Beja': [], 'Moura': [], 'Serpa': [] },
+      'Braga': { 'Braga': [], 'Guimarães': [], 'Barcelos': [], 'Famalicão': [], 'Póvoa de Lanhoso': [] },
+      'Bragança': { 'Bragança': [], 'Chaves': [], 'Mirandela': [] },
+      'Castelo Branco': { 'Castelo Branco': [], 'Covilhã': [], 'Fundão': [] },
+      'Coimbra': { 'Coimbra': [], 'Figueira da Foz': [], 'Lousã': [], 'Pombal': [] },
+      'Évora': { 'Évora': [], 'Estremoz': [], 'Montemor-o-Novo': [] },
+      'Faro': { 'Faro': [], 'Albufeira': [], 'Lagos': [], 'Loulé': [], 'Olhão': [], 'Portimão': [], 'Tavira': [] },
+      'Guarda': { 'Guarda': [], 'Seia': [], 'Trancoso': [] },
+      'Leiria': { 'Leiria': [], 'Caldas da Rainha': [], 'Marinha Grande': [], 'Nazaré': [], 'Peniche': [] },
+      'Lisboa': { 'Lisboa': ['Alfama', 'Belém', 'Chiado', 'Mouraria', 'Parque das Nações'], 'Amadora': [], 'Cascais': [], 'Loures': [], 'Odivelas': [], 'Oeiras': [], 'Setúbal': [], 'Sintra': [], 'Vila Franca de Xira': [] },
+      'Portalegre': { 'Portalegre': [], 'Elvas': [], 'Ponte de Sor': [] },
+      'Porto': { 'Porto': ['Bonfim', 'Campanhã', 'Cedofeita', 'Lordelo do Ouro', 'Massarelos'], 'Gaia': [], 'Gondomar': [], 'Maia': [], 'Matosinhos': [], 'Valongo': [] },
+      'Santarém': { 'Santarém': [], 'Abrantes': [], 'Tomar': [], 'Torres Novas': [] },
+      'Setúbal': { 'Setúbal': [], 'Almada': [], 'Barreiro': [], 'Moita': [], 'Montijo': [], 'Palmela': [], 'Seixal': [] },
+      'Viana do Castelo': { 'Viana do Castelo': [], 'Ponte de Lima': [] },
+      'Vila Real': { 'Vila Real': [], 'Chaves': [], 'Peso da Régua': [] },
+      'Viseu': { 'Viseu': [], 'Lamego': [], 'Tondela': [] },
+      'Açores': { 'Ponta Delgada': [], 'Angra do Heroísmo': [], 'Horta': [] },
+      'Madeira': { 'Funchal': [], 'Câmara de Lobos': [], 'Santa Cruz': [] }
+    }
   }
 };
 
@@ -315,6 +342,7 @@ export const COUNTRIES_CONFIG = {
   '🇩🇴 Rep. Dominicana': { level1Name: 'Provincia', code: 'DO' },
   '🇨🇱 Chile': { level1Name: 'Región', code: 'CL' },
   '🇦🇷 Argentina': { level1Name: 'Provincia', code: 'AR' },
+  '🇵🇹 Portugal': { level1Name: 'Distrito / Região', code: 'PT' },
 };
 
 export const getCountryNameFromCode = (code) => {
