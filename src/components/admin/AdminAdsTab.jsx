@@ -28,6 +28,7 @@ export default function AdminAdsTab({ searchQuery = '' }) {
     status: 'all',
     category: '',
     country: '',
+    level1: '',
     keyword: '',
     sortBy: 'latest',
     startDate: '',
@@ -36,7 +37,7 @@ export default function AdminAdsTab({ searchQuery = '' }) {
   const [showSort, setShowSort] = useState(false);
 
   // Controls custom dropdowns
-  const [openSelect, setOpenSelect] = useState(null); // 'category' | 'country' | null
+  const [openSelect, setOpenSelect] = useState(null); // 'category' | 'country' | 'level1' | null
 
   // States for Info Modal
   const [infoAd, setInfoAd] = useState(null);
@@ -75,7 +76,11 @@ export default function AdminAdsTab({ searchQuery = '' }) {
   };
 
   const handleFilterChange = (key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    if (key === 'country') {
+      setFilters(prev => ({ ...prev, country: value, level1: '' }));
+    } else {
+      setFilters(prev => ({ ...prev, [key]: value }));
+    }
   };
 
   const handleCopy = (text) => {
@@ -92,6 +97,24 @@ export default function AdminAdsTab({ searchQuery = '' }) {
   };
 
   if (loading) return <div className="p-8 text-center text-gray-500 font-bold">Cargando anuncios...</div>;
+
+  // Nivel 1 disponible para el país seleccionado (derivado de anuncios reales)
+  const availableLevel1 = filters.country
+    ? [...new Set(
+        ads
+          .filter(ad => {
+            const adCountry = ad.location?.country || ad.location || '';
+            return adCountry === filters.country;
+          })
+          .map(ad =>
+            ad.location?.communityName ||
+            ad.location?.community ||
+            ad.location?.level1 ||
+            ''
+          )
+          .filter(Boolean)
+      )].sort()
+    : [];
 
   const filteredAds = ads.filter((ad) => {
     const searchString = (ad.name + ' ' + ad.userName + ' ' + (ad.description || '')).toLowerCase();
@@ -130,6 +153,17 @@ export default function AdminAdsTab({ searchQuery = '' }) {
       } else {
          if (adCountry !== filters.country) return false;
       }
+    }
+
+    // Level 1 Filter
+    if (filters.level1) {
+      const adLevel1 = (
+        ad.location?.communityName ||
+        ad.location?.community ||
+        ad.location?.level1 ||
+        ''
+      ).toLowerCase().trim();
+      if (adLevel1 !== filters.level1.toLowerCase().trim()) return false;
     }
 
     // Date Range Filter
@@ -294,6 +328,7 @@ export default function AdminAdsTab({ searchQuery = '' }) {
                   status: 'all', 
                   category: '', 
                   country: '', 
+                  level1: '',
                   keyword: '',
                   sortBy: 'latest',
                   startDate: '',
@@ -307,13 +342,13 @@ export default function AdminAdsTab({ searchQuery = '' }) {
               </button>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
               {/* Custom Category Select */}
               <div className="relative">
                 <label className="block text-xs font-bold text-gray-500 mb-1.5 ml-1">Categoría</label>
                 <div 
                   onClick={() => setOpenSelect(openSelect === 'category' ? null : 'category')}
-                  className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 flex items-center justify-between cursor-pointer hover:border-gray-300 transition-colors"
+                  className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 flex items-center justify-between cursor-pointer hover:border-gray-300 transition-colors h-[46px]"
                 >
                   <span className="text-sm font-bold text-gray-700 select-none flex items-center gap-2">
                     {filters.category ? (
@@ -351,12 +386,12 @@ export default function AdminAdsTab({ searchQuery = '' }) {
                 )}
               </div>
               
-              {/* Custom Country / Nivel 1 Select */}
+              {/* Dropdown País */}
               <div className="relative">
                 <label className="block text-xs font-bold text-gray-500 mb-1.5 ml-1">País / Región</label>
                 <div 
                   onClick={() => setOpenSelect(openSelect === 'country' ? null : 'country')}
-                  className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 flex items-center justify-between cursor-pointer hover:border-gray-300 transition-colors"
+                  className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 flex items-center justify-between cursor-pointer hover:border-gray-300 transition-colors h-[46px]"
                 >
                   <span className="text-sm font-bold text-gray-700 select-none flex items-center gap-2">
                     {filters.country && countryData[filters.country] ? (
@@ -370,7 +405,7 @@ export default function AdminAdsTab({ searchQuery = '' }) {
                         </div>
                         {countryData[filters.country].name}
                       </>
-                    ) : filters.country ? filters.country : 'Todos los países'}
+                    ) : 'Todos los países'}
                   </span>
                   <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${openSelect === 'country' ? 'rotate-180' : ''}`} />
                 </div>
@@ -398,6 +433,67 @@ export default function AdminAdsTab({ searchQuery = '' }) {
                         <span className="text-sm font-bold text-gray-700">{data.name}</span>
                       </button>
                     ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Dropdown Nivel 1 */}
+              <div className="relative">
+                <label className="block text-xs font-bold text-gray-500 mb-1.5 ml-1">
+                  {filters.country === 'ES' ? 'Comunidad Autónoma' :
+                   filters.country === 'CO' ? 'Departamento' :
+                   filters.country === 'US' ? 'Estado' :
+                   filters.country === 'AR' ? 'Provincia' :
+                   filters.country === 'CL' ? 'Región' :
+                   filters.country === 'PE' ? 'Departamento' :
+                   filters.country === 'EC' ? 'Provincia' :
+                   filters.country === 'PA' ? 'Provincia' :
+                   filters.country === 'DO' ? 'Provincia' :
+                   'Nivel Administrativo'}
+                </label>
+                <div 
+                  onClick={() => { if (filters.country) setOpenSelect(openSelect === 'level1' ? null : 'level1'); }}
+                  className={`w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 flex items-center justify-between h-[46px] transition-colors ${filters.country ? 'cursor-pointer hover:border-gray-300' : 'opacity-40 cursor-not-allowed'}`}
+                >
+                  <span className="text-sm font-bold text-gray-700 select-none truncate">
+                    {filters.level1 || (filters.country ? 'Todas las zonas' : 'Selecciona un país')}
+                  </span>
+                  <div className="flex items-center gap-1 shrink-0">
+                    {filters.level1 && (
+                      <span
+                        onClick={(e) => { e.stopPropagation(); handleFilterChange('level1', ''); }}
+                        className="w-4 h-4 bg-gray-300 hover:bg-gray-400 rounded-full flex items-center justify-center cursor-pointer text-white text-[10px] font-black leading-none"
+                      >×</span>
+                    )}
+                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${openSelect === 'level1' ? 'rotate-180' : ''}`} />
+                  </div>
+                </div>
+                {openSelect === 'level1' && filters.country && (
+                  <div className="absolute top-full mt-2 left-0 right-0 bg-white border border-gray-100 rounded-xl shadow-xl z-50 max-h-56 overflow-y-auto py-2 custom-scrollbar animate-in fade-in slide-in-from-top-1">
+                    {availableLevel1.length === 0 ? (
+                      <div className="px-4 py-4 text-center text-xs font-bold text-gray-400 uppercase italic">
+                        Sin zonas registradas
+                      </div>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => { handleFilterChange('level1', ''); setOpenSelect(null); }}
+                          className="w-full px-4 py-3 text-left text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          Todas las zonas
+                        </button>
+                        {availableLevel1.map(zone => (
+                          <button
+                            key={zone}
+                            onClick={() => { handleFilterChange('level1', zone); setOpenSelect(null); }}
+                            className={`w-full px-4 py-3 text-left text-sm font-bold hover:bg-gray-50 transition-colors flex items-center justify-between ${filters.level1 === zone ? 'text-blue-600 bg-blue-50' : 'text-gray-700'}`}
+                          >
+                            {zone}
+                            {filters.level1 === zone && <Check className="w-4 h-4 text-blue-600" />}
+                          </button>
+                        ))}
+                      </>
+                    )}
                   </div>
                 )}
               </div>
