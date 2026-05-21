@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import * as XLSX from 'xlsx';
 import { collection, onSnapshot, doc, updateDoc, deleteDoc, getDocs, query, where, writeBatch } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../../services/firebase';
@@ -14,6 +15,46 @@ export default function AdminUsersTab({ searchQuery = '' }) {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedUser, setSelectedUser] = useState(null);
+
+  const exportToExcel = () => {
+    const rows = filteredUsers.map(u => {
+      const createdAt = u.createdAt?.seconds
+        ? new Date(u.createdAt.seconds * 1000).toLocaleDateString('es-ES', {
+            day: '2-digit', month: '2-digit', year: 'numeric'
+          })
+        : 'Sin fecha';
+
+      const countryObj = countries.find(c => c.id === u.country);
+      const countryName = countryObj ? `${countryObj.flag} ${countryObj.name}` : (u.country || 'No especificado');
+
+      return {
+        'Nombre': u.name || u.displayName || 'Sin nombre',
+        'Apellido': u.lastName || '',
+        'Email': u.email || '',
+        'Teléfono': u.phone || '',
+        'País': countryName,
+        'Región': u.region || '',
+        'Estado': u.status === 'suspended' ? 'Suspendido' : 'Activo',
+        'Método de acceso': u.provider || (u.photoURL?.includes('googleusercontent') ? 'Google' : 'Email'),
+        'Fecha de registro': createdAt,
+      };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Usuarios Mi Pana');
+
+    const colWidths = Object.keys(rows[0] || {}).map(key => ({
+      wch: Math.max(key.length, ...rows.map(r => String(r[key] || '').length)) + 2
+    }));
+    worksheet['!cols'] = colWidths;
+
+    const fecha = new Date().toLocaleDateString('es-ES', {
+      day: '2-digit', month: '2-digit', year: 'numeric'
+    }).replace(/\//g, '-');
+
+    XLSX.writeFile(workbook, `MiPana_Usuarios_${fecha}.xlsx`);
+  };
 
   const { countries } = useLocationStore();
   const [filterCountry, setFilterCountry] = useState('');
@@ -172,11 +213,28 @@ Esta acción borrará:
       <div className="flex flex-col gap-4 mb-6">
         {/* Fila 1: Título + filtros de estado */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h3 className="font-black text-2xl text-gray-800">Usuarios Registrados</h3>
-            <p className="text-sm font-bold text-gray-400 mt-1">
-              Sincronizado en tiempo real (<span className="text-[#D90429]">{filteredUsers.length}</span>)
-            </p>
+          <div className="flex items-start justify-between w-full md:w-auto gap-4">
+            <div>
+              <h3 className="font-black text-2xl text-gray-800">Usuarios Registrados</h3>
+              <p className="text-sm font-bold text-gray-400 mt-1">
+                Sincronizado en tiempo real (<span className="text-[#D90429]">{filteredUsers.length}</span>)
+              </p>
+            </div>
+            <button
+              onClick={exportToExcel}
+              disabled={filteredUsers.length === 0}
+              className="shrink-0 flex items-center gap-2 px-4 py-2.5 bg-[#1A7A4A] hover:bg-[#155f39] text-white font-black text-xs rounded-2xl shadow-sm active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              title="Exportar usuarios visibles a Excel"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+              Exportar Excel
+            </button>
           </div>
           <div className="flex bg-gray-50 p-1.5 rounded-xl border border-gray-100 flex-shrink-0">
             <button
