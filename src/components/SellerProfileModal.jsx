@@ -94,7 +94,7 @@ export default function SellerProfileModal({ isOpen, onClose, seller, productLoc
                   />
                 </div>
                 {(seller.verified || seller.userVerified) && (
-                  <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-[7px] shadow-md">
+                  <div className="absolute -bottom-1 -right-1 bg-white rounded-full w-9 h-9 flex items-center justify-center shadow-md">
                     <VerifiedBadge size="md" />
                   </div>
                 )}
