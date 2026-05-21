@@ -63,6 +63,7 @@ export default function Home() {
     activeCategory,
     filters,
     setFilters,
+    resetFilters,
     sortBy,
     setSortBy,
     setIsFilterOpen,
@@ -116,6 +117,7 @@ export default function Home() {
         const q = query(
           productsRef,
           where('location.country', '==', selectedCountry),
+          orderBy('createdAt', 'desc'),
           limit(PAGE_SIZE)
         );
         const snap = await getDocs(q);
@@ -140,6 +142,11 @@ export default function Home() {
     fetchProducts();
   }, [selectedCountry]); // Re-fetch cuando cambia el país
 
+  // Resetear filtros al cambiar de país
+  useEffect(() => {
+    resetFilters();
+  }, [selectedCountry]);
+
   const loadMore = async () => {
     if (!lastDoc || loadingMore || !hasMore) return;
     setLoadingMore(true);
@@ -148,6 +155,7 @@ export default function Home() {
       const q = query(
         productsRef,
         where('location.country', '==', selectedCountry),
+        orderBy('createdAt', 'desc'),
         startAfter(lastDoc),
         limit(PAGE_SIZE)
       );
@@ -506,9 +514,24 @@ export default function Home() {
 
             <button
               onClick={() => setIsFilterOpen(true)}
-              className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#EDEDF5] flex-shrink-0 shadow-[3px_3px_7px_rgba(180,180,210,0.65),-3px_-3px_7px_rgba(255,255,255,0.85)] active:scale-95 transition-all text-[#1A1A3A]"
+              className="relative w-9 h-9 rounded-xl flex items-center justify-center bg-[#EDEDF5] flex-shrink-0 shadow-[3px_3px_7px_rgba(180,180,210,0.65),-3px_-3px_7px_rgba(255,255,255,0.85)] active:scale-95 transition-all text-[#1A1A3A]"
             >
               <Sliders size={15} />
+              {(() => {
+                const activeCount = [
+                  filters.location?.level1,
+                  filters.location?.level2,
+                  filters.searchQuery,
+                  filters.onlyVerified,
+                  filters.price?.min,
+                  filters.price?.max,
+                ].filter(Boolean).length;
+                return activeCount > 0 ? (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#D90429] text-white text-[9px] font-black rounded-full flex items-center justify-center">
+                    {activeCount}
+                  </span>
+                ) : null;
+              })()}
             </button>
 
             <button

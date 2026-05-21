@@ -38,6 +38,16 @@ export const useStore = create(
       setFilters: (newFilters) => set((state) => ({ 
         filters: { ...state.filters, ...newFilters } 
       })),
+      resetFilters: () => set({
+        filters: {
+          price: { min: '', max: '' },
+          onlyVerified: false,
+          location: { level1: '', level2: '', level3: '' },
+          searchQuery: '',
+        },
+        activeCategory: 'Todas',
+        sortBy: 'relevance',
+      }),
       setSearchQuery: (query) => set((state) => ({
         filters: { ...state.filters, searchQuery: query }
       })),
