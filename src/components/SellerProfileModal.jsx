@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, MapPin, Calendar, User, Star, Package, ShieldCheck, BadgeCheck } from 'lucide-react';
+import VerifiedBadge from './VerifiedBadge';
 import { useState, useEffect } from 'react';
 import { db } from '../services/firebase';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
@@ -93,8 +94,8 @@ export default function SellerProfileModal({ isOpen, onClose, seller, productLoc
                   />
                 </div>
                 {(seller.verified || seller.userVerified) && (
-                  <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-1.5 shadow-md">
-                    <ShieldCheck size={16} className="text-[#00C97A] fill-[#00C97A]/10" />
+                  <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-[7px] shadow-md">
+                    <VerifiedBadge size="md" />
                   </div>
                 )}
               </div>

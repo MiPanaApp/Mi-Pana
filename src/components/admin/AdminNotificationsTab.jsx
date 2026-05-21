@@ -119,9 +119,9 @@ export default function AdminNotificationsTab() {
   const visibleHistory = filteredHistory.slice(0, visibleCount);
 
   return (
-    <div className="bg-white px-3 py-6 md:p-8 rounded-[2.5rem] shadow-sm border border-gray-50 flex flex-col xl:flex-row gap-6 min-h-[500px]">
+    <div className="bg-white px-3 py-6 md:p-8 rounded-[2.5rem] shadow-sm border border-gray-50 flex flex-col xl:flex-row gap-6 xl:min-h-[500px]">
       {/* Formulario de Envío */}
-      <div className="flex-1 flex flex-col px-1 md:px-0">
+      <div className="xl:flex-1 flex flex-col px-1 md:px-0">
         <div className="mb-6">
           <h2 className="text-2xl font-black text-gray-800 flex items-center gap-2">
             <Bell className="w-6 h-6 text-[#FFD700]" /> Notificaciones Push
@@ -129,7 +129,7 @@ export default function AdminNotificationsTab() {
           <p className="text-gray-400 font-bold text-sm mt-1">Crea y envía notificaciones en tiempo real</p>
         </div>
 
-        <div className="space-y-5 flex-1">
+        <div className="space-y-5 xl:flex-1">
           {/* Título y País Compactados */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="relative">
@@ -218,7 +218,7 @@ export default function AdminNotificationsTab() {
         <button
           onClick={sendNotification}
           disabled={!notifTitle || !notifBody || sending}
-          className="w-full bg-[#FFD700] text-black font-black p-4 rounded-2xl shadow-[0_10px_20px_rgba(255,215,0,0.2)] hover:bg-[#FFE033] active:scale-95 transition-all flex justify-center items-center gap-2 mt-6 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+          className="w-full bg-[#FFD700] text-black font-black p-4 rounded-2xl shadow-[0_10px_20px_rgba(255,215,0,0.2)] hover:bg-[#FFE033] active:scale-95 transition-all flex justify-center items-center gap-2 mt-4 md:mt-6 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
           {sending ? (
             <Loader2 className="w-5 h-5 animate-spin" />
@@ -231,7 +231,7 @@ export default function AdminNotificationsTab() {
       </div>
 
       {/* Historial Compactado */}
-      <div className="flex-1 bg-[#F4F7FE] px-3 py-5 lg:p-6 rounded-[2rem] border border-gray-100 flex flex-col min-h-[550px] relative h-full">
+      <div className="flex-1 bg-[#F4F7FE] px-3 py-5 lg:p-6 rounded-[2rem] border border-gray-100 flex flex-col min-h-[400px] xl:min-h-[550px] relative h-full">
         
         <div className="flex justify-between items-center mb-4 relative z-20">
           <div>

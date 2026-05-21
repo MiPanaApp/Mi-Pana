@@ -509,11 +509,11 @@ export default function AdminDashboard() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-gray-100">
-                        <th className="text-left py-3 px-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Mes</th>
-                        <th className="text-right py-3 px-4 text-[10px] font-black uppercase tracking-widest text-purple-400">Usuarios</th>
-                        <th className="text-right py-3 px-4 text-[10px] font-black uppercase tracking-widest text-yellow-500">Anuncios</th>
-                        <th className="text-right py-3 px-4 text-[10px] font-black uppercase tracking-widest text-blue-400">Vistas</th>
-                        <th className="text-right py-3 px-4 text-[10px] font-black uppercase tracking-widest text-red-400">Likes</th>
+                        <th className="text-center py-3 px-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Mes</th>
+                        <th className="text-center py-3 px-4 text-[10px] font-black uppercase tracking-widest text-purple-400">Usuarios</th>
+                        <th className="text-center py-3 px-4 text-[10px] font-black uppercase tracking-widest text-yellow-500">Anuncios</th>
+                        <th className="text-center py-3 px-4 text-[10px] font-black uppercase tracking-widest text-blue-400">Vistas</th>
+                        <th className="text-center py-3 px-4 text-[10px] font-black uppercase tracking-widest text-red-400">Likes</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -524,20 +524,22 @@ export default function AdminDashboard() {
                             key={row.key}
                             className={`border-b border-gray-50 transition-colors ${isCurrentMonth ? 'bg-blue-50/50' : 'hover:bg-gray-50'}`}
                           >
-                            <td className="py-3 px-4 font-black text-[#1A1A3A] text-sm flex items-center gap-2">
-                              {isCurrentMonth && <span className="w-1.5 h-1.5 bg-blue-500 rounded-full inline-block"></span>}
-                              {row.name}
+                            <td className="py-3 px-4 font-black text-[#1A1A3A] text-sm text-center">
+                              <div className="flex items-center justify-center gap-2">
+                                {isCurrentMonth && <span className="w-1.5 h-1.5 bg-blue-500 rounded-full inline-block"></span>}
+                                {row.name}
+                              </div>
                             </td>
-                            <td className="py-3 px-4 text-right">
+                            <td className="py-3 px-4 text-center">
                               <span className="font-black text-purple-600 bg-purple-50 px-2 py-0.5 rounded-lg text-xs">{row.users}</span>
                             </td>
-                            <td className="py-3 px-4 text-right">
+                            <td className="py-3 px-4 text-center">
                               <span className="font-black text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded-lg text-xs">{row.ads}</span>
                             </td>
-                            <td className="py-3 px-4 text-right">
+                            <td className="py-3 px-4 text-center">
                               <span className="font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg text-xs">{row.views}</span>
                             </td>
-                            <td className="py-3 px-4 text-right">
+                            <td className="py-3 px-4 text-center">
                               <span className="font-black text-red-500 bg-red-50 px-2 py-0.5 rounded-lg text-xs">{row.likes}</span>
                             </td>
                           </tr>
@@ -546,17 +548,17 @@ export default function AdminDashboard() {
                     </tbody>
                     <tfoot>
                       <tr className="border-t-2 border-gray-100 bg-gray-50/50">
-                        <td className="py-3 px-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Total</td>
-                        <td className="py-3 px-4 text-right">
+                        <td className="py-3 px-4 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">Total</td>
+                        <td className="py-3 px-4 text-center">
                           <span className="font-black text-purple-600 text-xs">{(stats.growth || []).reduce((s, r) => s + r.users, 0)}</span>
                         </td>
-                        <td className="py-3 px-4 text-right">
+                        <td className="py-3 px-4 text-center">
                           <span className="font-black text-yellow-600 text-xs">{(stats.growth || []).reduce((s, r) => s + r.ads, 0)}</span>
                         </td>
-                        <td className="py-3 px-4 text-right">
+                        <td className="py-3 px-4 text-center">
                           <span className="font-black text-blue-600 text-xs">{(stats.growth || []).reduce((s, r) => s + r.views, 0)}</span>
                         </td>
-                        <td className="py-3 px-4 text-right">
+                        <td className="py-3 px-4 text-center">
                           <span className="font-black text-red-500 text-xs">{(stats.growth || []).reduce((s, r) => s + r.likes, 0)}</span>
                         </td>
                       </tr>

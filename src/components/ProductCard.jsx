@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
 import { getBadge, BADGE_STYLES } from '../utils/badgeUtils';
 import { getCurrencySymbol } from '../utils/currency';
+import VerifiedBadge from './VerifiedBadge';
 
 export default function ProductCard({ product }) {
   const navigate = useNavigate();
@@ -76,11 +77,9 @@ export default function ProductCard({ product }) {
             </div>
           )}
         </div>
-        <h3 className="font-bold text-gray-700 text-xs line-clamp-2 mb-0.5">
-          {product.name}
-          {product.userVerified && (
-            <ShieldCheck size={14} className="inline ml-1 text-[#00C97A] -mt-0.5" title="Pana Verificado" />
-          )}
+        <h3 className="font-bold text-gray-700 text-xs line-clamp-2 mb-0.5 flex items-start gap-[4px]">
+          <span className="line-clamp-2">{product.name}</span>
+          {product.userVerified && <VerifiedBadge size="sm" />}
         </h3>
         <div className="mt-auto flex flex-col gap-0.5">
           <div className="flex items-center gap-1 text-[#1A1A3A]/70 font-semibold">

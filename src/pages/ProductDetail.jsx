@@ -16,6 +16,7 @@ import panaLengua from '../assets/pana_lengua.png';
 import { getBadge, BADGE_STYLES } from '../utils/badgeUtils';
 import { getCurrencySymbol } from '../utils/currency';
 import SellerProfileModal from '../components/SellerProfileModal';
+import VerifiedBadge from '../components/VerifiedBadge';
 
 
 export function SkeletonProductDetail() {
@@ -752,9 +753,9 @@ tlfno contacto: 672 593 950`}
                          />
                       </div>
                       <div className="flex flex-col justify-center">
-                        <div className="flex items-center gap-1.5 pt-0.5">
+                        <div className="flex items-center gap-[4px] pt-0.5">
                            <span className="font-bold text-lg text-[#1A1A3A] truncate max-w-[140px] md:max-w-[180px] lg:max-w-[220px]">{product.userName || "Pana Local"}</span>
-                           {(product.userVerified || product.verified) && <ShieldCheck className="w-5 h-5 text-[#00C97A] stroke-[2px] transition-transform hover:scale-110 cursor-help" title="Pana Verificado" />}
+                           {(product.userVerified || product.verified) && <VerifiedBadge size="md" />}
                         </div>
                         <p className="text-sm text-[#1A1A3A]/60 font-medium">Ver perfil</p>
                       </div>
