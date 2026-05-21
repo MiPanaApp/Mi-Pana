@@ -4,7 +4,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../../services/firebase';
 import { useLocationStore } from '../../store/useLocationStore';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Ban, Trash2, CheckCircle, Filter, Info, X, Phone, Mail, Globe, User, Shield, Calendar, Copy, AlertTriangle, ChevronDown, Check } from 'lucide-react';
+import { Users, Ban, Trash2, CheckCircle, Filter, Info, X, Phone, Mail, Globe, User, Shield, Calendar, Copy, AlertTriangle, ChevronDown, Check, ArrowUpDown } from 'lucide-react';
 
 const functions = getFunctions(undefined, 'us-central1');
 
@@ -20,6 +20,8 @@ export default function AdminUsersTab({ searchQuery = '' }) {
   const [filterRegion, setFilterRegion] = useState('');
   const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
   const [regionDropdownOpen, setRegionDropdownOpen] = useState(false);
+  const [sortOrder, setSortOrder] = useState('newest');
+  const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'users'), (snap) => {
@@ -133,9 +135,23 @@ Esta acción borrará:
     const matchesRegion = !filterRegion || (u.region || '').toLowerCase() === filterRegion.toLowerCase();
     return matchesSearch && matchesStatus && matchesCountry && matchesRegion;
   }).sort((a, b) => {
-    const timeA = a.createdAt?.seconds || 0;
-    const timeB = b.createdAt?.seconds || 0;
-    return timeB - timeA;
+    if (sortOrder === 'newest') {
+      return (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0);
+    }
+    if (sortOrder === 'oldest') {
+      return (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0);
+    }
+    if (sortOrder === 'az') {
+      const nameA = (a.name || a.displayName || '').toLowerCase();
+      const nameB = (b.name || b.displayName || '').toLowerCase();
+      return nameA.localeCompare(nameB);
+    }
+    if (sortOrder === 'za') {
+      const nameA = (a.name || a.displayName || '').toLowerCase();
+      const nameB = (b.name || b.displayName || '').toLowerCase();
+      return nameB.localeCompare(nameA);
+    }
+    return 0;
   });
 
   // Regiones disponibles para el país seleccionado
@@ -178,8 +194,56 @@ Esta acción borrará:
           </div>
         </div>
 
-        {/* Fila 2: Filtros de ubicación */}
+        {/* Fila 2: Filtros de ubicación + Ordenación */}
         <div className="flex flex-col sm:flex-row gap-3">
+
+          {/* Dropdown Ordenar */}
+          <div className="relative sm:w-48 flex-shrink-0">
+            <button
+              onClick={() => { setSortDropdownOpen(!sortDropdownOpen); setCountryDropdownOpen(false); setRegionDropdownOpen(false); }}
+              className="w-full bg-[#F4F7FE] text-gray-700 px-4 py-3 rounded-2xl text-sm font-bold flex items-center justify-between outline-none focus:ring-2 focus:ring-[#FFD700]/50 transition-all"
+            >
+              <span className="flex items-center gap-2">
+                <ArrowUpDown className="w-4 h-4 text-gray-400 shrink-0" />
+                <span className="truncate">
+                  {sortOrder === 'newest' ? 'Más reciente' :
+                   sortOrder === 'oldest' ? 'Más antiguo' :
+                   sortOrder === 'az' ? 'A → Z' : 'Z → A'}
+                </span>
+              </span>
+              <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${sortDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+            <AnimatePresence>
+              {sortDropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setSortDropdownOpen(false)} />
+                  <motion.div
+                    initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 4, scale: 1 }}
+                    exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute top-full left-0 right-0 bg-white border border-gray-100 rounded-2xl shadow-2xl z-50 overflow-hidden"
+                  >
+                    {[
+                      { id: 'newest', label: 'Más reciente' },
+                      { id: 'oldest', label: 'Más antiguo' },
+                      { id: 'az', label: 'A → Z' },
+                      { id: 'za', label: 'Z → A' },
+                    ].map(opt => (
+                      <button
+                        key={opt.id}
+                        onClick={() => { setSortOrder(opt.id); setSortDropdownOpen(false); }}
+                        className={`w-full text-left px-4 py-2.5 text-sm font-bold hover:bg-gray-50 flex items-center justify-between transition-colors ${sortOrder === opt.id ? 'bg-blue-50 text-blue-600' : 'text-gray-700'}`}
+                      >
+                        {opt.label}
+                        {sortOrder === opt.id && <Check size={14} className="text-blue-600" />}
+                      </button>
+                    ))}
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
           {/* Dropdown País */}
           <div className="relative flex-1">
             <button
