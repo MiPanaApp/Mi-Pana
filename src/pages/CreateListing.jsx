@@ -27,7 +27,7 @@ import IncompleteProfileModal from '../components/ui/IncompleteProfileModal';
 import { getCurrencySymbol, getCurrency } from '../utils/currency';
 
 // Mapeo: código del store -> clave de LOCATION_DATA
-const COUNTRY_TO_LOC = { ES: 'ES', CO: 'CO', US: 'US', CL: 'CL', PA: 'PA', PE: 'PE', EC: 'EC', DO: 'DO', AR: 'AR' };
+const COUNTRY_TO_LOC = { ES: 'ES', CO: 'CO', US: 'US', CL: 'CL', PA: 'PA', PE: 'PE', EC: 'EC', DO: 'DO', AR: 'AR', PT: 'PT' };
 
 
 const COUNTRY_CODES = [
@@ -40,6 +40,7 @@ const COUNTRY_CODES = [
   { code: '+593', iso: 'EC', name: 'Ecuador' },
   { code: '+1', iso: 'DO', name: 'Rep. Dom.' },
   { code: '+54', iso: 'AR', name: 'Argentina' },
+  { code: '+351', iso: 'PT', name: 'Portugal' },
 ];
 
 const functions = getFunctions(undefined, 'us-central1');
