@@ -4,21 +4,11 @@ import { collection, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/fire
 import { db } from '../../services/firebase';
 import { ShoppingBag, Trash2, EyeOff, Eye, Filter, Search, X, Info, Copy, Check, ChevronDown, ExternalLink, ArrowUpDown, Calendar } from 'lucide-react';
 import { CATEGORIES } from '../../data/categories';
-
-const countryData = {
-  ES: { name: 'España' },
-  US: { name: 'Estados Unidos' },
-  CO: { name: 'Colombia' },
-  EC: { name: 'Ecuador' },
-  PA: { name: 'Panamá' },
-  PE: { name: 'Perú' },
-  DO: { name: 'República Dominicana' },
-  CL: { name: 'Chile' },
-  AR: { name: 'Argentina' }
-};
+import { useLocationStore } from '../../store/useLocationStore';
 
 export default function AdminAdsTab({ searchQuery = '' }) {
   const navigate = useNavigate();
+  const { countries } = useLocationStore();
   const [ads, setAds] = useState([]);
   const [loading, setLoading] = useState(true);
   
@@ -145,7 +135,7 @@ export default function AdminAdsTab({ searchQuery = '' }) {
       
       // Since filters.country uses the short code (ES, US...), we need to match it
       // if adCountry is 'ES' it matches 'ES'. If adCountry is 'España', we match name.
-      const selectedObj = countryData[filters.country];
+      const selectedObj = countries.find(c => c.id === filters.country);
       if (selectedObj) {
          if (adCountry !== filters.country && adCountry !== selectedObj.name) {
              return false;
@@ -394,7 +384,7 @@ export default function AdminAdsTab({ searchQuery = '' }) {
                   className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 flex items-center justify-between cursor-pointer hover:border-gray-300 transition-colors h-[46px]"
                 >
                   <span className="text-sm font-bold text-gray-700 select-none flex items-center gap-2">
-                    {filters.country && countryData[filters.country] ? (
+                    {filters.country && countries.find(c => c.id === filters.country) ? (
                       <>
                         <div className="w-5 h-5 rounded-full overflow-hidden border border-gray-200 bg-gray-50 flex-shrink-0 relative">
                           <img 
@@ -403,7 +393,7 @@ export default function AdminAdsTab({ searchQuery = '' }) {
                             className="w-full h-full object-cover absolute inset-0" 
                           />
                         </div>
-                        {countryData[filters.country].name}
+                        {countries.find(c => c.id === filters.country)?.name}
                       </>
                     ) : 'Todos los países'}
                   </span>
@@ -417,20 +407,20 @@ export default function AdminAdsTab({ searchQuery = '' }) {
                     >
                       Todos los países
                     </button>
-                    {Object.entries(countryData).map(([code, data]) => (
+                    {countries.filter(c => c.status === 'active').map(c => (
                       <button 
-                        key={code}
-                        onClick={() => { handleFilterChange('country', code); setOpenSelect(null); }}
+                        key={c.id}
+                        onClick={() => { handleFilterChange('country', c.id); setOpenSelect(null); }}
                         className="w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-gray-50 transition-colors"
                       >
                         <div className="w-6 h-6 rounded-full overflow-hidden border border-gray-200 bg-gray-50 flex-shrink-0 relative">
                           <img 
-                            src={`https://flagcdn.com/w80/${code.toLowerCase()}.png`} 
-                            alt={code}
+                            src={`https://flagcdn.com/w80/${c.id.toLowerCase()}.png`} 
+                            alt={c.id}
                             className="w-full h-full object-cover absolute inset-0" 
                           />
                         </div>
-                        <span className="text-sm font-bold text-gray-700">{data.name}</span>
+                        <span className="text-sm font-bold text-gray-700">{c.name}</span>
                       </button>
                     ))}
                   </div>
