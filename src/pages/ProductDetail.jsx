@@ -585,7 +585,7 @@ export default function ProductDetail() {
                      <ChevronLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" />
                      <span className="text-[15px] tracking-wide">Volver</span>
                   </button>
-                  <div className="flex md:hidden items-center gap-5">
+                  <div className="flex lg:hidden items-center gap-5">
                      <button onClick={handleShare} className="text-[#1A1A3A] hover:opacity-70 transition-all active:scale-95 relative">
                         {copied ? (
                            <span className="text-[11px] font-black text-[#00C97A] absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap">
@@ -764,9 +764,9 @@ tlfno contacto: 672 593 950`}
 
                   {/* Indicador de Ubicación (Dinamico) */}
                   <div className="flex items-center gap-4 pr-1">
-                     <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-br from-[#FFC200] to-[#FFAA00] shadow-[0_4px_10px_rgba(255,180,0,0.3)] group transition-all hover:scale-105 active:scale-95">
-                        <MapPin className="w-3.5 h-3.5 text-[#1A1A3A]" />
-                        <span className="text-[12px] font-bold text-[#1A1A3A] uppercase tracking-wider">
+                     <div className="flex items-center gap-1.5 px-2.5 py-1 md:px-2 md:py-0.5 lg:px-3 lg:py-1.5 rounded-full bg-gradient-to-br from-[#FFC200] to-[#FFAA00] shadow-[0_4px_10px_rgba(255,180,0,0.3)] group transition-all hover:scale-105 active:scale-95">
+                        <MapPin className="w-3 h-3 md:w-3 md:h-3 lg:w-3.5 lg:h-3.5 text-[#1A1A3A]" />
+                        <span className="text-[10px] md:text-[10px] lg:text-[12px] font-bold text-[#1A1A3A] uppercase tracking-wider">
                            {typeof product.location === 'object'
                               ? (product.location.level2 || product.location.level1 || 'Madrid')
                               : (product.location || "Madrid")
@@ -775,7 +775,7 @@ tlfno contacto: 672 593 950`}
                      </div>
 
                      {/* Botones de Acción: Solo Desktop (sin fondos, alineados con el nombre) */}
-                     <div className="hidden md:flex items-center gap-5 pr-1">
+                     <div className="hidden lg:flex items-center gap-5 pr-1">
                         <button onClick={handleShare} className="text-[#1A1A3A] hover:opacity-70 transition-all active:scale-95 relative">
                            {copied ? (
                               <span className="text-[11px] font-black text-[#00C97A] absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap">
