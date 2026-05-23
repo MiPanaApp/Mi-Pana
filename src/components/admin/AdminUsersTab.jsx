@@ -5,7 +5,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../../services/firebase';
 import { useLocationStore } from '../../store/useLocationStore';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Ban, Trash2, CheckCircle, Filter, Info, X, Phone, Mail, Globe, User, Shield, Calendar, Copy, AlertTriangle, ChevronDown, Check, ArrowUpDown } from 'lucide-react';
+import { Users, Ban, Trash2, CheckCircle, Filter, Info, X, Phone, Mail, Globe, User, Shield, Calendar, Copy, AlertTriangle, ChevronDown, Check, ArrowUpDown, Search } from 'lucide-react';
 
 const functions = getFunctions(undefined, 'us-central1');
 
@@ -63,6 +63,8 @@ export default function AdminUsersTab({ searchQuery = '' }) {
   const [regionDropdownOpen, setRegionDropdownOpen] = useState(false);
   const [sortOrder, setSortOrder] = useState('newest');
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
+  const [localSearch, setLocalSearch] = useState('');
+  const [searchType, setSearchType] = useState('all'); // 'name' | 'email' | 'all'
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'users'), (snap) => {
@@ -169,8 +171,15 @@ Esta acción borrará:
   if (loading) return <div className="p-8 text-center text-gray-500 font-bold">Cargando usuarios...</div>;
 
   const filteredUsers = users.filter((u) => {
-    const searchStr = (u.name + ' ' + u.lastName + ' ' + u.displayName + ' ' + u.email).toLowerCase();
-    const matchesSearch = searchStr.includes(searchQuery.toLowerCase());
+    const q = (localSearch || searchQuery).toLowerCase().trim();
+    let matchesSearch = true;
+    if (q) {
+      const nameStr = (u.name + ' ' + u.lastName + ' ' + u.displayName).toLowerCase();
+      const emailStr = (u.email || '').toLowerCase();
+      if (searchType === 'name') matchesSearch = nameStr.includes(q);
+      else if (searchType === 'email') matchesSearch = emailStr.includes(q);
+      else matchesSearch = nameStr.includes(q) || emailStr.includes(q);
+    }
     const matchesStatus = statusFilter === 'all' || (statusFilter === 'suspended' ? u.status === 'suspended' : u.status !== 'suspended');
     const matchesCountry = !filterCountry || u.country === filterCountry;
     const matchesRegion = !filterRegion || (u.region || '').toLowerCase() === filterRegion.toLowerCase();
@@ -210,15 +219,21 @@ Esta acción borrará:
   return (
     <div className="w-full max-w-5xl mx-auto">
       <div className="bg-white p-6 md:p-8 rounded-[2rem] shadow-[0_15px_40px_rgba(0,0,0,0.04)] h-full mb-6 border border-gray-50">
-      <div className="flex flex-col gap-4 mb-6">
-        {/* Fila 1: Título + filtros de estado */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div className="flex items-start justify-between w-full md:w-auto gap-4">
-            <div>
-              <h3 className="font-black text-2xl text-gray-800">Usuarios Registrados</h3>
-              <p className="text-sm font-bold text-gray-400 mt-1">
-                Sincronizado en tiempo real (<span className="text-[#D90429]">{filteredUsers.length}</span>)
-              </p>
+      <div className="flex flex-col gap-3 mb-6">
+
+        {/* Fila 1: Título + Exportar + Pills estado */}
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="font-black text-2xl text-gray-800">Usuarios Registrados</h3>
+            <p className="text-sm font-bold text-gray-400 mt-0.5">
+              Sincronizado en tiempo real (<span className="text-[#D90429]">{filteredUsers.length}</span>)
+            </p>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex bg-gray-50 p-1.5 rounded-xl border border-gray-100">
+              <button onClick={() => setStatusFilter('all')} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${statusFilter === 'all' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>Todos</button>
+              <button onClick={() => setStatusFilter('active')} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${statusFilter === 'active' ? 'bg-white text-green-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>Activos</button>
+              <button onClick={() => setStatusFilter('suspended')} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${statusFilter === 'suspended' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>Suspendidos</button>
             </div>
             <button
               onClick={exportToExcel}
@@ -236,24 +251,38 @@ Esta acción borrará:
               Exportar Excel
             </button>
           </div>
-          <div className="flex bg-gray-50 p-1.5 rounded-xl border border-gray-100 flex-shrink-0">
-            <button
-              onClick={() => setStatusFilter('all')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${statusFilter === 'all' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-            >Todos</button>
-            <button
-              onClick={() => setStatusFilter('active')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${statusFilter === 'active' ? 'bg-white text-green-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-            >Activos</button>
-            <button
-              onClick={() => setStatusFilter('suspended')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${statusFilter === 'suspended' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-            >Suspendidos</button>
+        </div>
+
+        {/* Barra de búsqueda con toggle Nombre/Email/Ambos */}
+        <div className="flex items-center gap-2 bg-[#F4F7FE] rounded-2xl px-4 py-2.5">
+          <Search className="w-4 h-4 text-gray-400 shrink-0" />
+          <input
+            type="text"
+            value={localSearch}
+            onChange={(e) => setLocalSearch(e.target.value)}
+            placeholder={searchType === 'email' ? 'Buscar por correo...' : searchType === 'name' ? 'Buscar por nombre...' : 'Buscar usuario...'}
+            className="flex-1 bg-transparent border-none outline-none text-sm font-bold text-gray-700 placeholder:font-medium placeholder:text-gray-400 min-w-0"
+          />
+          {localSearch && (
+            <button onClick={() => setLocalSearch('')} className="text-gray-400 hover:text-gray-600 shrink-0">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+          <div className="flex bg-white rounded-xl p-0.5 gap-0.5 shrink-0 shadow-sm">
+            {[{ id: 'all', label: 'Todos' }, { id: 'name', label: 'Nombre' }, { id: 'email', label: 'Email' }].map(opt => (
+              <button
+                key={opt.id}
+                onClick={() => setSearchType(opt.id)}
+                className={`px-2.5 py-1 text-[10px] font-black rounded-lg transition-colors ${searchType === opt.id ? 'bg-[#1A1A3A] text-[#FFB400]' : 'text-gray-400 hover:text-gray-600'}`}
+              >
+                {opt.label}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Fila 2: Filtros de ubicación + Ordenación */}
-        <div className="flex flex-col sm:flex-row gap-3">
+        {/* Fila de dropdowns: Ordenar + País + Región */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
 
           {/* Dropdown Ordenar */}
           <div className="relative sm:w-48 flex-shrink-0">
@@ -427,6 +456,37 @@ Esta acción borrará:
             </AnimatePresence>
           </div>
         </div>
+
+        {/* Tags de filtros activos */}
+        {(filterCountry || filterRegion || localSearch) && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Filtros:</span>
+            {filterCountry && (
+              <span className="flex items-center gap-1 bg-blue-50 text-blue-600 text-[11px] font-black px-2.5 py-1 rounded-xl">
+                {selectedCountryObj?.flag} {selectedCountryObj?.name}
+                <button onClick={() => { setFilterCountry(''); setFilterRegion(''); }} className="hover:text-blue-800 ml-0.5">×</button>
+              </span>
+            )}
+            {filterRegion && (
+              <span className="flex items-center gap-1 bg-blue-50 text-blue-600 text-[11px] font-black px-2.5 py-1 rounded-xl">
+                📍 {filterRegion}
+                <button onClick={() => setFilterRegion('')} className="hover:text-blue-800 ml-0.5">×</button>
+              </span>
+            )}
+            {localSearch && (
+              <span className="flex items-center gap-1 bg-blue-50 text-blue-600 text-[11px] font-black px-2.5 py-1 rounded-xl">
+                🔍 "{localSearch}"
+                <button onClick={() => setLocalSearch('')} className="hover:text-blue-800 ml-0.5">×</button>
+              </span>
+            )}
+            <button
+              onClick={() => { setFilterCountry(''); setFilterRegion(''); setLocalSearch(''); setStatusFilter('all'); setSortOrder('newest'); }}
+              className="text-[10px] font-black text-gray-400 hover:text-red-500 transition-colors"
+            >
+              Limpiar todo
+            </button>
+          </div>
+        )}
       </div>
       <div className="space-y-3 overflow-y-auto max-h-[60vh] pr-2 custom-scrollbar">
         {filteredUsers.length === 0 && (
