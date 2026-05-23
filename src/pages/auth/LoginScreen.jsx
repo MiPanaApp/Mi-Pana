@@ -166,7 +166,7 @@ export default function LoginScreen() {
       <div className="absolute top-[-100px] left-[-50px] w-[300px] h-[300px] rounded-[60%_40%_70%_40%] bg-[#FFB400] opacity-20 blur-xl" />
       <div className="absolute bottom-[-100px] right-[-50px] w-[250px] h-[250px] rounded-[40%_60%_50%_70%] bg-[#1A1A3A] opacity-10 blur-xl" />
       
-      <div className="relative z-10 flex flex-col items-center min-h-screen px-6 pt-[52px]">
+      <div className={`relative z-10 flex flex-col items-center min-h-screen px-6 ${Capacitor.isNativePlatform() ? 'justify-center py-8' : 'pt-[52px]'}`}>
         
         <div className="mb-[24px] text-center">
           <img src={logoFull} alt="miPana" style={{ height: "220px", objectFit: "contain" }} className="mx-auto" />
