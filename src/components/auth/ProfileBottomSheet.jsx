@@ -183,7 +183,7 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
         if (!user?.email) {
           console.warn('[ProfileBottomSheet] No hay email de usuario, saltando verificación');
           onClose();
-          navigate("/home");
+          navigate("/onboarding");
           return;
         }
         const sendCode = httpsCallable(functions, 'sendVerificationCode');
@@ -194,9 +194,9 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
         setShowVerificationModal(true);
       } catch (e) {
         console.error('[ProfileBottomSheet] Error enviando código de verificación:', e);
-        // Si falla el email, igual cerramos y vamos a home para no bloquear
+        // Si falla el email, igual cerramos y vamos a onboarding
         onClose();
-        navigate("/home");
+        navigate("/onboarding");
       }
     } catch (err) {
       if (err.code) {
@@ -371,7 +371,7 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
         onVerified={() => {
           setShowVerificationModal(false);
           onClose();
-          navigate("/home");
+          navigate("/onboarding");
         }}
         onResend={async () => {
           if (!registeredUser) return;
