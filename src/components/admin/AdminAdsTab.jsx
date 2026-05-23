@@ -208,7 +208,7 @@ export default function AdminAdsTab({ searchQuery = '' }) {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <div>
             <h3 className="font-black text-2xl text-gray-800">Gestión de Anuncios</h3>
-            <p className="text-sm font-bold text-gray-400 mt-1">Total resultados: {filteredAds.length}</p>
+            <p className="text-sm font-bold text-gray-400 mt-1">Total resultados: <span className="text-[#D90429]">{filteredAds.length}</span></p>
           </div>
           
           <div className="flex items-center gap-3 w-full md:w-auto overflow-x-auto hide-scrollbar">
