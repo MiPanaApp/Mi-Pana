@@ -18,7 +18,7 @@ export default function SplashScreen() {
         const fetchPrefs = useAuthStore.getState().fetchUserPreferences;
         const { hasPrefs } = await fetchPrefs(user.uid);
         
-        if (hasPrefs || hasChosenCountry) {
+        if (hasPrefs) {
           navigate('/home');
         } else {
           navigate('/onboarding');
