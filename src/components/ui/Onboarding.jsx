@@ -41,10 +41,10 @@ export default function Onboarding() {
     const user = useAuthStore.getState().user;
     if (user && user.uid && import.meta.env.VITE_AUTH_BYPASS !== 'true') {
       try {
-        // Obtenemos una capital por defecto si existe o la primera región (no implementado dinámicamente aquí para no romper locations.js)
         await updateDoc(doc(db, 'users', user.uid), {
           lastViewedCountry: countryInfo?.name || localCountry,
-          lastViewedAt: serverTimestamp()
+          lastViewedAt: serverTimestamp(),
+          hasCompletedOnboarding: true,
         });
       } catch (err) {
         console.error("Error saving location pref:", err);

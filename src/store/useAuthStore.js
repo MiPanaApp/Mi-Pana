@@ -244,9 +244,13 @@ export const useAuthStore = create((set, get) => ({
           const countryCode = getCountryCodeFromName(countryName);
           setSelectedCountry(countryCode);
           setSelectedRegion(regionName || '');
-          setHasChosenCountry(true);
           
-          // Also update filters to match exactly what is being selected
+          // Solo marcar hasChosenCountry si el usuario completó el onboarding
+          // Un usuario nuevo tiene país (del registro) pero NO hasCompletedOnboarding
+          if (data.hasCompletedOnboarding) {
+            setHasChosenCountry(true);
+          }
+          
           setFilters({ 
             location: { 
               level1: regionName || '', 
@@ -255,7 +259,8 @@ export const useAuthStore = create((set, get) => ({
             } 
           });
           
-          return { hasPrefs: true };
+          // hasPrefs es true solo si completó el onboarding
+          return { hasPrefs: data.hasCompletedOnboarding === true };
         }
       }
       return { hasPrefs: false };
