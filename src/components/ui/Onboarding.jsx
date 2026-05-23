@@ -15,7 +15,7 @@ export default function Onboarding() {
   const [suspendedCountry, setSuspendedCountry] = useState(null);
   
   const navigate = useNavigate();
-  const { setCountry, setFilters, setHasChosenCountry } = useStore();
+  const { setCountry, setFilters, setHasChosenCountry, setRegion } = useStore();
   const { getActiveCountries, init, loading } = useLocationStore();
   const countries = getActiveCountries();
   
@@ -37,6 +37,8 @@ export default function Onboarding() {
     
     setCountry(localCountry);
     setHasChosenCountry(true);
+    setRegion('');
+    setFilters({ location: { level1: '', level2: '', level3: '' } });
     
     const user = useAuthStore.getState().user;
     if (user && user.uid && import.meta.env.VITE_AUTH_BYPASS !== 'true') {
