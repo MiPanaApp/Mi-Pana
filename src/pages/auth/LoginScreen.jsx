@@ -176,7 +176,7 @@ export default function LoginScreen() {
         <form onSubmit={handleEmailLogin} className="clay-card-auth w-full max-w-sm">
           {/* BOTÓN GOOGLE ARRIBA DEL TODO - Solo PWA web, no APK nativa */}
           {/* Google Auth - funciona en PWA y APK nativa via @capgo/capacitor-social-login */}
-          {<button 
+          <button 
             type="button" 
             onClick={handleGoogleSignIn} 
             disabled={loading}
