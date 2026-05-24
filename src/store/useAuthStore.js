@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { Capacitor } from '@capacitor/core';
+import { SocialLogin } from '@capgo/capacitor-social-login';
 import { 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword,
@@ -126,34 +128,27 @@ export const useAuthStore = create((set, get) => ({
 
   // Login con Google (usando Popup, más fiable en localhost y web)
   loginWithGoogle: async () => {
-    if (isBypass) {
-      set({ user: BYPASS_USER, loading: false });
-      return { success: true, isNewUser: false };
-    }
-    set({ loading: true, error: null });
-    try {
+    if (Capacitor.isNativePlatform()) {
+      // APK nativa: usar @capgo/capacitor-social-login
+      await SocialLogin.initialize({
+        google: {
+          webClientId: '637946158184-ms3gfnpvnffb5tp4iv2iih2sb85r32io.apps.googleusercontent.com',
+        }
+      });
+      const response = await SocialLogin.login({
+        provider: 'google',
+        options: {}
+      });
+      const idToken = response.result?.idToken || response.result?.authentication?.idToken;
+      if (!idToken) throw new Error('No se obtuvo token de Google');
+      const { GoogleAuthProvider, signInWithCredential } = await import('firebase/auth');
+      const credential = GoogleAuthProvider.credential(idToken);
+      const result = await signInWithCredential(auth, credential);
+      return { result };
+    } else {
+      // PWA web: usar signInWithPopup
       const result = await signInWithPopup(auth, googleProvider);
-      const user = result.user;
-
-      await setDoc(
-        doc(db, 'users', user.uid),
-        {
-          email: user.email,
-          displayName: user.displayName,
-          photoURL: user.photoURL,
-          provider: 'google',
-          notificationsEnabled: false,
-          profileComplete: false,
-          updatedAt: serverTimestamp(),
-        },
-        { merge: true }
-      );
-
-      set({ user, loading: false });
-      return { success: true, result };
-    } catch (err) {
-      set({ error: err.message, loading: false });
-      throw err;
+      return { result };
     }
   },
 

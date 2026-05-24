@@ -175,8 +175,8 @@ export default function LoginScreen() {
 
         <form onSubmit={handleEmailLogin} className="clay-card-auth w-full max-w-sm">
           {/* BOTÓN GOOGLE ARRIBA DEL TODO - Solo PWA web, no APK nativa */}
-          {/* TODO: Activar en APK cuando @codetrix-studio/capacitor-google-auth soporte Capacitor 8 */}
-          {!Capacitor.isNativePlatform() && <button 
+          {/* Google Auth - funciona en PWA y APK nativa via @capgo/capacitor-social-login */}
+          {<button 
             type="button" 
             onClick={handleGoogleSignIn} 
             disabled={loading}
@@ -189,17 +189,15 @@ export default function LoginScreen() {
               <path fillRule="evenodd" clipRule="evenodd" d="M12.0001 4.77273C13.7619 4.77273 15.3382 5.37818 16.5819 6.56727L20.0237 3.12545C17.9619 1.19455 15.2346 0 12.0001 0C7.28195 0 3.23467 2.68364 1.26013 6.60545L5.27464 9.72C6.22373 6.88364 8.87464 4.77273 12.0001 4.77273Z" fill="#EA4335"/>
             </svg>
             Continuar con Google
-          </button>}
+          </button>
 
 
-          {/* DIVIDER - Solo visible en PWA web */}
-          {!Capacitor.isNativePlatform() && (
+          {/* DIVIDER */}
           <div className="flex items-center gap-3 mb-6 opacity-60">
             <div className="h-[1px] flex-1 bg-[#b4b4d2]" />
             <span className="text-[12px] font-bold text-[#1a1a3a]">O continúa con</span>
             <div className="h-[1px] flex-1 bg-[#b4b4d2]" />
           </div>
-          )}
 
           <div className="mb-4 relative">
             <div className="relative">
