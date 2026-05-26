@@ -80,8 +80,38 @@ export function usePushNotifications() {
 
         setPermission('granted')
 
-        // El Token de FCM/APNs se registrará vía Listener asíncrono
-        await PushNotifications.register()
+        // Registrar listeners ANTES de llamar register()
+        await PushNotifications.removeAllListeners();
+
+        await PushNotifications.addListener('registration', async (token) => {
+          console.log('[PushNotifications] Token nativo obtenido:', token.value);
+          if (auth.currentUser && token.value !== fcmToken) {
+            await setDoc(doc(db, 'users', auth.currentUser.uid), {
+              fcmTokens: arrayUnion(token.value),
+              fcmTokenUpdatedAt: serverTimestamp(),
+              notificationsEnabled: true
+            }, { merge: true });
+            setFcmToken(token.value);
+            console.log('[PushNotifications] ✅ Token nativo guardado en Firestore');
+          }
+        });
+
+        await PushNotifications.addListener('registrationError', (error) => {
+          console.error('[PushNotifications] Error de registro nativo:', error);
+        });
+
+        await PushNotifications.addListener('pushNotificationReceived', (notification) => {
+          console.log('[PushNotifications] Mensaje nativo recibido:', notification);
+          setForegroundMessage({
+            notification: {
+              title: notification.title,
+              body: notification.body
+            }
+          });
+        });
+
+        // Ahora sí llamar register() con listeners ya activos
+        await PushNotifications.register();
         return { status: 'granted', token: 'native_pending' }
       } catch (error) {
         console.error('[PushNotifications] ❌ Error en requestPermission Nativo:', error)
