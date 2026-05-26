@@ -353,9 +353,9 @@ export default function Profile() {
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
     if (permission === 'granted') return;
-    if (!user) return;
+    if (!currentUser) return;
     requestPermission();
-  }, [user?.uid]);
+  }, [currentUser?.uid]);
 
   // Sub-componente: Barra de Progreso de Perfil (bandera Venezuela)
   const ProfileProgressBar = () => {
@@ -954,10 +954,10 @@ export default function Profile() {
               onAction={async () => {
                 if (Capacitor.isNativePlatform() && permission === 'granted') {
                   // Desactivar: eliminar token de Firestore
-                  if (user?.uid) {
+                  if (currentUser?.uid) {
                     const { getFirestore, doc: _doc, updateDoc: _updateDoc } = await import('firebase/firestore');
                     const { getApp } = await import('firebase/app');
-                    await _updateDoc(_doc(getFirestore(getApp()), 'users', user.uid), {
+                    await _updateDoc(_doc(getFirestore(getApp()), 'users', currentUser.uid), {
                       notificationsEnabled: false,
                       fcmTokens: []
                     });
