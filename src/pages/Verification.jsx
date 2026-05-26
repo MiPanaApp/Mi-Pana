@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useAuthStore } from '../store/useAuthStore';
 import { db, storage } from '../services/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { doc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import { Camera, ShieldCheck, ArrowLeft, HourglassIcon, CheckCircle2, ChevronDown, Search, MessageCircle, Lock } from 'lucide-react';
 import IncompleteProfileModal from '../components/ui/IncompleteProfileModal';
 
@@ -158,6 +158,21 @@ export default function Verification() {
       alert('Error de autenticación. Por favor recarga la página e inténtalo de nuevo.');
       return;
     }
+
+    // Verificar límite de intentos
+    const userSnap = await getDoc(doc(db, 'users', uid));
+    if (userSnap.exists()) {
+      const userData = userSnap.data();
+      const attempts = userData.verificationAttempts || 0;
+      if (attempts >= 3) {
+        alert('Has alcanzado el límite máximo de 3 intentos de verificación. No puedes enviar más solicitudes.');
+        return;
+      }
+      if (userData.verificationStatus === 'rejected_final') {
+        alert('Tu solicitud de verificación ha sido rechazada definitivamente. Por favor contacta con soporte.');
+        return;
+      }
+    }
     if (!selfieCapture) {
       alert('La selfie no fue capturada correctamente. Toca "Repetir" e inténtalo de nuevo.');
       return;
@@ -247,6 +262,21 @@ export default function Verification() {
               <ShieldCheck className="text-[#00C97A] shrink-0" size={22} />
             </h2>
             <p className="text-[13px] md:text-[15px] text-[#1A1A3A]/60 font-bold mb-4">La verificación te da credibilidad y aumenta tus posibilidades de cerrar tratos.</p>
+
+            {userData?.verificationAttemptsLeft > 0 && (
+              <div className="mb-4 p-3 bg-amber-50 border border-amber-100 rounded-2xl text-left">
+                <p className="text-sm font-bold text-orange-500">
+                  Te quedan {userData.verificationAttemptsLeft} intento{userData.verificationAttemptsLeft !== 1 ? 's' : ''} disponible{userData.verificationAttemptsLeft !== 1 ? 's' : ''}.
+                </p>
+              </div>
+            )}
+            {userData?.verificationAttemptsLeft === 0 && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-2xl text-left">
+                <p className="text-sm font-bold text-red-500">
+                  Has agotado todos tus intentos de verificación.
+                </p>
+              </div>
+            )}
             
             <div className="space-y-1.5 mb-4">
               <div className="bg-white p-3 rounded-2xl border border-gray-100 flex gap-3 items-center shadow-sm">
@@ -287,13 +317,18 @@ export default function Verification() {
 
             <button 
               onClick={() => {
+                if (userData?.verificationAttemptsLeft === 0 || userData?.verificationStatus === 'rejected_final') {
+                  alert('Has alcanzado el límite máximo de 3 intentos de verificación. No puedes enviar más solicitudes.');
+                  return;
+                }
                 if (userData?.profileComplete !== true) {
                   setShowIncompleteModal(true);
                 } else {
                   setCurrentStep(1);
                 }
               }} 
-              className="w-full bg-[#1A1A3A] text-white font-black py-3.5 rounded-2xl shadow-xl hover:-translate-y-0.5 active:scale-95 transition-all"
+              disabled={userData?.verificationAttemptsLeft === 0 || userData?.verificationStatus === 'rejected_final'}
+              className="w-full bg-[#1A1A3A] text-white font-black py-3.5 rounded-2xl shadow-xl hover:-translate-y-0.5 active:scale-95 transition-all disabled:opacity-50"
             >
               Comenzar verificación →
             </button>

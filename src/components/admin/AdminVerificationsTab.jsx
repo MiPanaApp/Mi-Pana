@@ -147,9 +147,17 @@ export default function AdminVerificationsTab() {
         console.warn("Error al borrar fotos tras rechazar:", err);
       }
 
+      // Obtener intentos actuales y sumar 1
+      const userSnap = await getDoc(doc(db, 'users', verificationId));
+      const currentAttempts = userSnap.exists() ? (userSnap.data().verificationAttempts || 0) : 0;
+      const newAttempts = currentAttempts + 1;
+      const attemptsLeft = 3 - newAttempts;
+
       await updateDoc(doc(db, 'users', verificationId), {
         verified: false,
-        verificationStatus: 'rejected'
+        verificationStatus: newAttempts >= 3 ? 'rejected_final' : 'rejected',
+        verificationAttempts: newAttempts,
+        verificationAttemptsLeft: attemptsLeft >= 0 ? attemptsLeft : 0,
       });
 
       const functions = getFunctions(undefined, 'us-central1');
