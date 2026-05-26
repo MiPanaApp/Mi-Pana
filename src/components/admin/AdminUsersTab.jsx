@@ -511,6 +511,12 @@ Esta acción borrará:
                   <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md ${u.status === 'suspended' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
                     {u.status === 'suspended' ? 'Suspendido' : 'Activo'}
                   </span>
+                  {u.verified && (
+                    <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md bg-[#00C97A]/10 text-[#00C97A] flex items-center gap-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      Verificado
+                    </span>
+                  )}
                   
                   {(() => {
                     const provider = u.provider || (u.photoURL?.includes('googleusercontent') ? 'google' : 'email');
@@ -641,6 +647,26 @@ Esta acción borrará:
                   <h5 className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1">Detalles del Perfil</h5>
                   
                   <div className="grid grid-cols-2 gap-4">
+                    {/* Estado de Verificación */}
+                    <div className={`p-4 rounded-2xl border flex items-center gap-3 ${selectedUser.verified ? 'bg-[#00C97A]/10 border-[#00C97A]/20' : 'bg-gray-50 border-gray-100'}`}>
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${selectedUser.verified ? 'bg-[#00C97A]/20' : 'bg-gray-100'}`}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={selectedUser.verified ? '#00C97A' : '#9ca3af'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V7L12 2z"/>
+                          <polyline points="9 12 11 14 15 10"/>
+                        </svg>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-black uppercase text-gray-400">Pana Verificado</span>
+                        <span className={`text-sm font-black ${selectedUser.verified ? 'text-[#00C97A]' : 'text-gray-400'}`}>
+                          {selectedUser.verified ? '✓ Verificado' : 'No verificado'}
+                        </span>
+                        {selectedUser.verificationAttempts > 0 && (
+                          <span className="text-[10px] font-bold text-gray-400">
+                            Intentos: {selectedUser.verificationAttempts || 0}/3
+                          </span>
+                        )}
+                      </div>
+                    </div>
                     <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex flex-col gap-1">
                       <div className="flex items-center gap-2 mb-1">
                         <Globe className="w-4 h-4 text-orange-500" />
