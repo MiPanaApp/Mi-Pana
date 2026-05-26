@@ -1,5 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
+import { Share } from '@capacitor/share';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronDown, Share2, Heart, ShieldCheck, MessageCircle, AlertCircle, Star, MapPin, Flag, X } from 'lucide-react';
 import { db } from '../services/firebase';
@@ -220,6 +222,23 @@ export default function ProductDetail() {
       // Volvemos al formato con precio y ubicación que el usuario prefiere
       const priceTag = product.price === 'Consultar' ? 'Consultar' : `${product.price}${getCurrencySymbol(product.location?.country)}`;
       const shareText = `🤝 ¡Mira lo que encontré en Mi Pana!\n\n📦 ${product.name}\n💰 ${priceTag}\n📍 ${locationName}\n\n👉 ${shareUrl}`;
+
+      // APK nativa: usar @capacitor/share
+      if (Capacitor.isNativePlatform()) {
+        try {
+          await Share.share({
+            title: product.name,
+            text: shareText,
+            url: shareUrl,
+            dialogTitle: '¡Comparte este anuncio!'
+          });
+        } catch (e) {
+          if (e?.message !== 'Share canceled') {
+            console.error('Error compartiendo nativo:', e);
+          }
+        }
+        return;
+      }
 
       if (navigator.share) {
          try {
