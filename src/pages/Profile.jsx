@@ -16,6 +16,7 @@ import { db, storage, auth } from '../services/firebase';
 import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { FcGoogle } from 'react-icons/fc';
+import { Capacitor } from '@capacitor/core';
 
 import { FaInstagram, FaFacebookF, FaYoutube, FaTiktok } from 'react-icons/fa';
 import { FaXTwitter } from 'react-icons/fa6';
@@ -51,6 +52,9 @@ export default function Profile() {
   const [showBirthDateModal, setShowBirthDateModal] = useState(false);
   const [showIncompleteModal, setShowIncompleteModal] = useState(false);
   const [newBirthDate, setNewBirthDate] = useState('');
+  const [birthDay, setBirthDay] = useState('01');
+  const [birthMonth, setBirthMonth] = useState('01');
+  const [birthYear, setBirthYear] = useState('1990');
   const [newName, setNewName] = useState('');
   const [newLastName, setNewLastName] = useState('');
   const [pwdForm, setPwdForm] = useState({ current: '', next: '', confirm: '' });
@@ -131,10 +135,11 @@ export default function Profile() {
 
   const handleBirthDateSubmit = async (e) => {
     e.preventDefault();
-    if (!newBirthDate) return;
+    const composed = `${birthYear}-${birthMonth.padStart(2,'0')}-${birthDay.padStart(2,'0')}`;
+    if (!composed) return;
     try {
       await updateDoc(doc(db, 'users', currentUser.uid), {
-        birthDate: newBirthDate,
+        birthDate: composed,
         updatedAt: new Date()
       });
       setShowBirthDateModal(false);
@@ -344,6 +349,14 @@ export default function Profile() {
     return () => document.removeEventListener('click', handleClickOutside);
   }, [activeProductMenu]);
 
+  // Auto-activar notificaciones push en APK nativa
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    if (permission === 'granted') return;
+    if (!user) return;
+    requestPermission();
+  }, [user?.uid]);
+
   // Sub-componente: Barra de Progreso de Perfil (bandera Venezuela)
   const ProfileProgressBar = () => {
     const [showConfetti, setShowConfetti] = useState(false);
@@ -363,17 +376,19 @@ export default function Profile() {
       }
     }, [profileProgress, userData]);
 
-    const particles = Array.from({ length: 40 }, (_, i) => {
-      const angle = (i / 40) * 360;
-      const distance = Math.random() * 60 + 20; // vw
+    const screenW = window.innerWidth || 390;
+    const screenH = window.innerHeight || 844;
+    const particles = Array.from({ length: 60 }, (_, i) => {
+      const angle = (i / 60) * 360;
+      const distance = Math.random() * 0.45 + 0.15;
       const rad = (angle * Math.PI) / 180;
       return {
         id: i,
         color: confettiColors[i % 3],
-        tx: Math.cos(rad) * distance,
-        ty: Math.sin(rad) * distance,
-        delay: Math.random() * 0.3,
-        size: Math.random() * 8 + 5,
+        tx: Math.cos(rad) * distance * screenW,
+        ty: Math.sin(rad) * distance * screenH,
+        delay: Math.random() * 0.4,
+        size: Math.random() * 10 + 6,
         rotate: Math.random() * 720,
       };
     });
@@ -443,8 +458,8 @@ export default function Profile() {
                       scale: 1 
                     }}
                     animate={{ 
-                      x: `${p.tx}vw`, 
-                      y: `${p.ty}vh`, 
+                      x: p.tx, 
+                      y: p.ty, 
                       opacity: 0, 
                       rotate: p.rotate, 
                       scale: 0 
@@ -528,7 +543,7 @@ export default function Profile() {
   }
 
   const renderAdsContent = (isDesktop = false) => (
-    <div className={`space-y-6 ${isDesktop ? "grid grid-cols-2 gap-5 space-y-0 items-start" : ""}`}>
+    <div className={`space-y-6 ${isDesktop ? "flex flex-col gap-5 space-y-0" : ""}`}>
       {/* Categoría: ACTIVOS */}
       <div className={isDesktop ? "bg-white/25 rounded-[28px] p-5 border border-white/60 shadow-[inset_1px_1px_4px_rgba(163,177,198,0.2)]" : ""}>
         <div className={`flex items-center justify-between ${isDesktop ? "mb-3 pb-3 border-b border-white/50" : "mb-4"}`}>
@@ -542,17 +557,17 @@ export default function Profile() {
             </span>
           )}
         </div>
-        <div className={`${isDesktop ? "space-y-2.5 max-h-[520px] overflow-y-auto pr-1 custom-scrollbar scroll-smooth" : "space-y-4"}`}>
+        <div className={`${isDesktop ? "space-y-2.5 max-h-[280px] overflow-y-auto pr-1 custom-scrollbar scroll-smooth" : "space-y-4"}`}>
           {activeProducts.length === 0 ? (
             <p className="text-[11px] text-gray-400 italic">{isDesktop ? <span className="block text-center py-8 opacity-40">No tienes anuncios activos.</span> : 'No tienes anuncios activos.'}</p>
           ) : (
             activeProducts.map(product => (
-              <div key={product.id} className={`bg-[#E0E5EC] shadow-[4px_4px_8px_#b8b9be,-4px_-4px_8px_#ffffff] flex items-center gap-3 transition-transform hover:scale-[1.01] ${isDesktop ? 'p-3 rounded-2xl' : 'p-3.5 md:p-5 rounded-[1.5rem] md:rounded-[2rem] flex-col sm:flex-row'}`}>
+              <div key={product.id} className={`bg-[#E0E5EC] shadow-[4px_4px_8px_#b8b9be,-4px_-4px_8px_#ffffff] flex items-center gap-3 transition-transform hover:scale-[1.01] ${isDesktop ? 'p-3.5 rounded-2xl flex-row' : 'p-3.5 md:p-5 rounded-[1.5rem] md:rounded-[2rem] flex-col sm:flex-row'}`}>
                 <div className={isDesktop ? 'contents' : 'flex items-start gap-4 w-full'}>
                   <img 
                     src={product.image || product.images?.[0] || 'https://via.placeholder.com/150'} 
                     alt={product.name}
-                    className={`rounded-xl object-cover bg-white shadow-sm flex-shrink-0 ${isDesktop ? 'w-12 h-12' : 'w-14 h-14 md:w-16 md:h-16'}`}
+                    className={`rounded-xl object-cover bg-white shadow-sm flex-shrink-0 ${isDesktop ? 'w-14 h-14' : 'w-14 h-14 md:w-16 md:h-16'}`}
                   />
                   <div className="flex flex-col min-w-0 flex-1">
                     <div className={`flex gap-2 ${isDesktop ? 'items-center justify-between' : 'justify-between items-start'}`}>
@@ -672,7 +687,7 @@ export default function Profile() {
             </span>
           )}
         </div>
-        <div className={`${isDesktop ? "space-y-2.5 max-h-[520px] overflow-y-auto pr-1 custom-scrollbar scroll-smooth" : "space-y-4"}`}>
+        <div className={`${isDesktop ? "space-y-2.5 max-h-[280px] overflow-y-auto pr-1 custom-scrollbar scroll-smooth" : "space-y-4"}`}>
           {inactiveProducts.length === 0 ? (
             <p className="text-[11px] text-gray-400 italic">No tienes anuncios suspendidos.</p>
           ) : (
@@ -904,7 +919,14 @@ export default function Profile() {
               label="Fecha de Nacimiento" 
               value={userData?.birthDate} 
               actionLabel="Editar"
-              onAction={() => { setNewBirthDate(userData?.birthDate || ''); setShowBirthDateModal(true); }}
+              onAction={() => { 
+                const date = userData?.birthDate || '1990-01-01';
+                const [y, m, d] = date.split('-');
+                setBirthYear(y || '1990');
+                setBirthMonth((m || '01').padStart(2,'0'));
+                setBirthDay((d || '01').padStart(2,'0'));
+                setShowBirthDateModal(true);
+              }}
             />
             <HeaderInfoItem 
               icon={User} 
@@ -924,8 +946,25 @@ export default function Profile() {
               icon={Bell} 
               label="Notificaciones Push" 
               value={permission === 'granted' ? 'Activadas y Listas' : 'Desactivadas'} 
-              actionLabel={permission === 'granted' ? null : "Activar"} 
+              actionLabel={
+                Capacitor.isNativePlatform()
+                  ? (permission === 'granted' ? 'Desactivar' : 'Activar')
+                  : (permission === 'granted' ? null : 'Activar')
+              } 
               onAction={async () => {
+                if (Capacitor.isNativePlatform() && permission === 'granted') {
+                  // Desactivar: eliminar token de Firestore
+                  if (user?.uid) {
+                    const { getFirestore, doc: _doc, updateDoc: _updateDoc } = await import('firebase/firestore');
+                    const { getApp } = await import('firebase/app');
+                    await _updateDoc(_doc(getFirestore(getApp()), 'users', user.uid), {
+                      notificationsEnabled: false,
+                      fcmTokens: []
+                    });
+                    alert('Notificaciones desactivadas.');
+                  }
+                  return;
+                }
                 const token = await requestPermission();
                 if (token) alert('¡Notificaciones activadas exitosamente!');
                 else alert('Por favor, permite el acceso a notificaciones en tu navegador/dispositivo.');
@@ -1384,16 +1423,67 @@ export default function Profile() {
               <p className="text-xs font-bold text-[#8888AA] mb-5 pl-1">¿Cuándo cumples años?</p>
               
               <form onSubmit={handleBirthDateSubmit} className="space-y-4">
-                <div>
-                  <input
-                    type="date"
-                    value={newBirthDate}
-                    onChange={(e) => setNewBirthDate(e.target.value)}
-                    required
-                    className="w-full p-4 bg-[#E0E5EC] rounded-2xl shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.7)] text-[#1A1A3A] font-bold outline-none focus:ring-2 focus:ring-[#0056B3]/40 transition-all"
-                  />
+                {/* Selector custom 3 columnas: Día / Mes / Año */}
+                <div className="flex gap-3">
+                  {/* DÍA */}
+                  <div className="flex-1 flex flex-col items-center gap-1">
+                    <span className="text-[10px] font-black uppercase text-[#8888AA] tracking-widest">Día</span>
+                    <div className="w-full rounded-2xl bg-[#E0E5EC] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.7)] overflow-hidden">
+                      <select
+                        value={birthDay}
+                        onChange={e => setBirthDay(e.target.value)}
+                        className="w-full bg-transparent text-center text-[#1A1A3A] font-black text-base py-4 px-1 outline-none appearance-none cursor-pointer"
+                        style={{ WebkitAppearance: 'none' }}
+                      >
+                        {Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0')).map(d => (
+                          <option key={d} value={d}>{d}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* MES */}
+                  <div className="flex-[1.4] flex flex-col items-center gap-1">
+                    <span className="text-[10px] font-black uppercase text-[#8888AA] tracking-widest">Mes</span>
+                    <div className="w-full rounded-2xl bg-[#E0E5EC] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.7)] overflow-hidden">
+                      <select
+                        value={birthMonth}
+                        onChange={e => setBirthMonth(e.target.value)}
+                        className="w-full bg-transparent text-center text-[#1A1A3A] font-black text-base py-4 px-1 outline-none appearance-none cursor-pointer"
+                        style={{ WebkitAppearance: 'none' }}
+                      >
+                        {[
+                          ['01','Enero'],['02','Febrero'],['03','Marzo'],['04','Abril'],
+                          ['05','Mayo'],['06','Junio'],['07','Julio'],['08','Agosto'],
+                          ['09','Septiembre'],['10','Octubre'],['11','Noviembre'],['12','Diciembre']
+                        ].map(([val, label]) => (
+                          <option key={val} value={val}>{label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* AÑO */}
+                  <div className="flex-[1.2] flex flex-col items-center gap-1">
+                    <span className="text-[10px] font-black uppercase text-[#8888AA] tracking-widest">Año</span>
+                    <div className="w-full rounded-2xl bg-[#E0E5EC] shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.7)] overflow-hidden">
+                      <select
+                        value={birthYear}
+                        onChange={e => setBirthYear(e.target.value)}
+                        className="w-full bg-transparent text-center text-[#1A1A3A] font-black text-base py-4 px-1 outline-none appearance-none cursor-pointer"
+                        style={{ WebkitAppearance: 'none' }}
+                      >
+                        {Array.from(
+                          { length: new Date().getFullYear() - 1920 - 17 },
+                          (_, i) => String(new Date().getFullYear() - 18 - i)
+                        ).map(y => (
+                          <option key={y} value={y}>{y}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
                 </div>
-                
+
                 <button 
                   type="submit"
                   className="w-full mt-2 py-4 rounded-full bg-[#1A1A3A] text-white font-black uppercase text-sm shadow-[0_10px_20px_rgba(26,26,58,0.3)] active:scale-95 transition-all"
