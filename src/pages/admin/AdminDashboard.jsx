@@ -212,23 +212,31 @@ export default function AdminDashboard() {
       })).sort((a, b) => b.value - a.value).slice(0, 5);
 
       // Cargar interacciones
-      const interactionsSnap = await getDocs(collection(db, 'interactions'));
-      const interactionsList = interactionsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-      const totalInteractions = interactionsList.length;
-      const chatInteractions = interactionsList.filter(i => i.via === 'chat').length;
-      const waInteractions = interactionsList.filter(i => i.via === 'whatsapp').length;
-      const productContactMap = {};
-      interactionsList.forEach(i => {
-        if (i.productId) {
-          if (!productContactMap[i.productId]) {
-            productContactMap[i.productId] = { name: i.productName || i.productId, count: 0 };
+      let totalInteractions = 0;
+      let chatInteractions = 0;
+      let waInteractions = 0;
+      let topContacted = [];
+      try {
+        const interactionsSnap = await getDocs(collection(db, 'interactions'));
+        const interactionsList = interactionsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        totalInteractions = interactionsList.length;
+        chatInteractions = interactionsList.filter(i => i.via === 'chat').length;
+        waInteractions = interactionsList.filter(i => i.via === 'whatsapp').length;
+        const productContactMap = {};
+        interactionsList.forEach(i => {
+          if (i.productId) {
+            if (!productContactMap[i.productId]) {
+              productContactMap[i.productId] = { name: i.productName || i.productId, count: 0 };
+            }
+            productContactMap[i.productId].count++;
           }
-          productContactMap[i.productId].count++;
-        }
-      });
-      const topContacted = Object.values(productContactMap)
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 5);
+        });
+        topContacted = Object.values(productContactMap)
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 5);
+      } catch (interactionsError) {
+        console.warn('[AdminDashboard] interactions sin permisos, continuando:', interactionsError.message);
+      }
 
       setStats(prev => ({
         ...prev,
