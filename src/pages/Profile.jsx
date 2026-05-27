@@ -9,6 +9,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useAuthStore } from '../store/useAuthStore';
+import { useDialogStore } from '../store/useDialogStore';
 import { useNavigate } from 'react-router-dom';
 import { ref, getDownloadURL } from 'firebase/storage';
 import { doc, setDoc, collection, query, where, onSnapshot, deleteDoc, updateDoc } from 'firebase/firestore';
@@ -37,6 +38,7 @@ export default function Profile() {
   const { userData, currentUser, userAvatar, logout, isAdmin } = useAuth();
   const { permission, requestPermission } = usePushNotifications();
   const storeUser = useAuthStore((s) => s.user); // Fuente de verdad del UID real
+  const { showAlert } = useDialogStore();
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -68,6 +70,10 @@ export default function Profile() {
   const [photoPreview, setPhotoPreview] = useState(null);
 
   const [legalDocs, setLegalDocs] = useState({ isOpen: false, title: '', content: '' });
+
+  const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   const { countries, getCountryConfig, init: initLocations } = useLocationStore();
 
@@ -279,6 +285,22 @@ export default function Profile() {
       navigate('/login');
     } catch (error) {
       console.error("Error al cerrar sesión:", error);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText.toUpperCase() !== 'ELIMINAR') return;
+    setIsDeletingAccount(true);
+    try {
+      const deleteUser = httpsCallable(functions, 'deleteUserData');
+      await deleteUser({ uid: currentUser.uid });
+      await logout();
+    } catch (error) {
+      console.error('Error eliminando cuenta:', error);
+      showAlert('Hubo un error al eliminar tu cuenta. Por favor contacta con soporte.', 'Error');
+    } finally {
+      setIsDeletingAccount(false);
+      setShowDeleteAccountModal(false);
     }
   };
 
@@ -1264,6 +1286,13 @@ export default function Profile() {
           ))}
         </div>
 
+        {/* Delete Account Button */}
+        <button
+          onClick={() => { setDeleteConfirmText(''); setShowDeleteAccountModal(true); }}
+          className="w-full flex items-center justify-center gap-3 py-4 px-6 mb-3 bg-[#E0E5EC] text-[#D90429]/60 font-bold text-sm rounded-3xl shadow-[4px_4px_8px_rgba(163,177,198,0.4),-4px_-4px_8px_rgba(255,255,255,0.8)] active:shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4)] transition-all border border-white/40 hover:text-[#D90429]"
+        >
+          <Trash2 size={18} /> Eliminar mi Cuenta
+        </button>
         {/* Logout Button */}
         <button 
           onClick={handleLogout}
@@ -1641,7 +1670,80 @@ export default function Profile() {
             </motion.div>
           </div>
         )}
+        {/* Modal Eliminar Cuenta */}
+      <AnimatePresence>
+        {showDeleteAccountModal && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4 overflow-hidden">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => !isDeletingAccount && setShowDeleteAccountModal(false)}
+              className="absolute inset-0 bg-[#E0E5EC]/80 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="w-full max-w-sm bg-[#E0E5EC] rounded-[2rem] p-6 shadow-[20px_20px_60px_#bebebe,-20px_-20px_60px_#ffffff] relative z-10 flex flex-col"
+            >
+              {/* Header */}
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-[#D90429]/10 flex items-center justify-center shrink-0">
+                  <Trash2 size={22} className="text-[#D90429]" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-black text-[#1A1A3A]">Eliminar mi Cuenta</h2>
+                  <p className="text-xs font-bold text-[#8888AA]">Esta acción es permanente e irreversible</p>
+                </div>
+              </div>
+
+              {/* Info */}
+              <div className="bg-[#D90429]/5 border border-[#D90429]/20 rounded-2xl p-4 mb-4 space-y-1.5">
+                <p className="text-xs font-black text-[#D90429] uppercase tracking-widest mb-2">Se eliminará permanentemente:</p>
+                <p className="text-xs font-bold text-[#1A1A3A]/70 flex items-center gap-2"><span>👤</span> Tu perfil y datos personales</p>
+                <p className="text-xs font-bold text-[#1A1A3A]/70 flex items-center gap-2"><span>📦</span> Todos tus anuncios publicados</p>
+                <p className="text-xs font-bold text-[#1A1A3A]/70 flex items-center gap-2"><span>💬</span> Tus conversaciones y mensajes</p>
+                <p className="text-xs font-bold text-[#1A1A3A]/70 flex items-center gap-2"><span>🖼️</span> Tus fotos e imágenes</p>
+                <p className="text-xs font-bold text-[#1A1A3A]/70 flex items-center gap-2"><span>⭐</span> Tus valoraciones e interacciones</p>
+              </div>
+
+              {/* Confirmación */}
+              <p className="text-xs font-bold text-[#8888AA] mb-2">Escribe <span className="font-black text-[#D90429]">ELIMINAR</span> para confirmar:</p>
+              <input
+                type="text"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="Escribe ELIMINAR"
+                className="w-full p-4 bg-[#E0E5EC] rounded-2xl shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4),inset_-4px_-4px_8px_rgba(255,255,255,0.7)] text-[#1A1A3A] font-bold outline-none mb-4 text-sm"
+              />
+
+              {/* Botones */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteAccountModal(false)}
+                  disabled={isDeletingAccount}
+                  className="flex-1 py-3.5 rounded-2xl bg-[#E0E5EC] text-[#1A1A3A] font-black text-sm shadow-[4px_4px_8px_rgba(163,177,198,0.5),-4px_-4px_8px_rgba(255,255,255,0.8)] active:shadow-[inset_4px_4px_8px_rgba(163,177,198,0.4)] transition-all disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleDeleteAccount}
+                  disabled={deleteConfirmText.toUpperCase() !== 'ELIMINAR' || isDeletingAccount}
+                  className="flex-1 py-3.5 rounded-2xl bg-[#D90429] text-white font-black text-sm shadow-[0_8px_20px_rgba(217,4,41,0.3)] active:scale-95 transition-all disabled:opacity-40 flex items-center justify-center gap-2"
+                >
+                  {isDeletingAccount ? (
+                    <><Loader2 size={16} className="animate-spin" /> Eliminando...</>
+                  ) : (
+                    <><Trash2 size={16} /> Confirmar</>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
       </AnimatePresence>
+    </AnimatePresence>
 
       <LegalDrawer 
         isOpen={legalDocs.isOpen} 

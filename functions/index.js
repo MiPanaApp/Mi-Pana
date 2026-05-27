@@ -2148,6 +2148,79 @@ exports.pushReactivation = onSchedule(
   }
 );
 
+exports.deleteUserData = onCall(
+  { region: "us-central1" },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Debes estar autenticado.");
+    }
+
+    const { getFirestore, FieldValue } = require("firebase-admin/firestore");
+    const { getAuth } = require("firebase-admin/auth");
+    const { getStorage } = require("firebase-admin/storage");
+
+    const uid = request.auth.uid;
+    const db = getFirestore();
+    const batch = db.batch();
+
+    try {
+      // 1. Eliminar anuncios del usuario
+      const productsSnap = await db.collection("products")
+        .where("userId", "==", uid).get();
+      productsSnap.docs.forEach(d => batch.delete(d.ref));
+
+      // 2. Eliminar interacciones como comprador o vendedor
+      const buyerSnap = await db.collection("interactions")
+        .where("buyerId", "==", uid).get();
+      buyerSnap.docs.forEach(d => batch.delete(d.ref));
+
+      const sellerSnap = await db.collection("interactions")
+        .where("sellerId", "==", uid).get();
+      sellerSnap.docs.forEach(d => batch.delete(d.ref));
+
+      // 3. Eliminar verificación
+      batch.delete(db.collection("verifications").doc(uid));
+
+      // 4. Eliminar documento de usuario
+      batch.delete(db.collection("users").doc(uid));
+
+      // 5. Commit del batch
+      await batch.commit();
+
+      // 6. Eliminar conversaciones donde es participante
+      const convsSnap = await db.collection("conversations")
+        .where("participants", "array-contains", uid).get();
+      for (const conv of convsSnap.docs) {
+        const msgsSnap = await conv.ref.collection("messages").get();
+        const msgBatch = db.batch();
+        msgsSnap.docs.forEach(m => msgBatch.delete(m.ref));
+        await msgBatch.commit();
+        await conv.ref.delete();
+      }
+
+      // 7. Eliminar imágenes de Storage
+      try {
+        const bucket = getStorage().bucket();
+        await bucket.deleteFiles({ prefix: `avatars/${uid}/` });
+        await bucket.deleteFiles({ prefix: `products/${uid}/` });
+        await bucket.deleteFiles({ prefix: `verifications/${uid}/` });
+      } catch (storageErr) {
+        console.warn("Error limpiando Storage:", storageErr.message);
+      }
+
+      // 8. Eliminar cuenta de Firebase Auth
+      await getAuth().deleteUser(uid);
+
+      console.log(`✅ Cuenta eliminada correctamente: ${uid}`);
+      return { success: true };
+
+    } catch (error) {
+      console.error(`❌ Error eliminando cuenta ${uid}:`, error.message);
+      throw new HttpsError("internal", error.message);
+    }
+  }
+);
+
 // ════════════════════════════════════════════════
 // PUSH 10 — Anuncio cumple 1 mes publicado
 // ════════════════════════════════════════════════

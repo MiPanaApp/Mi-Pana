@@ -20,7 +20,7 @@ import {
   updateProfile 
 } from "firebase/auth";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { translateFirebaseError } from "../../utils/authErrors";
 
@@ -174,6 +174,7 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
         verificationLevel: 1,
         profileComplete: false,
         updatedAt: new Date(),
+        createdAt: serverTimestamp(),
       }, { merge: true });
 
       setRegisteredUser(user);

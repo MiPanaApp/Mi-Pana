@@ -14,9 +14,10 @@ export const BADGE_STYLES = {
 
 // Umbrales configurables
 const THRESHOLDS = {
-  topRating:      4.5,   // rating mínimo para ser TOP
-  popularSearches: 5,    // searchCount mínimo para ser TOP BUSCADO ✅
-  newDays:         15,   // días desde creación para ser NUEVO (reducido de 30 a 15)
+  topRating:       4.0,  // rating mínimo para ser TOP
+  topMinReviews:   3,    // mínimo de reseñas para ser TOP
+  popularSearches: 5,    // searchCount mínimo para ser POPULAR
+  newDays:         15,   // días desde creación para ser NUEVO
 };
 
 function getMillis(dateObj) {
@@ -38,7 +39,13 @@ function getMillis(dateObj) {
 export function getBadge(product) {
   if (!product) return null;
 
-  // 1️⃣ NUEVO — publicado hace ≤ 30 días
+  // TOP tiene máxima prioridad — calidad siempre gana
+  if (
+    (product.rating || 0) >= THRESHOLDS.topRating &&
+    (product.reviewCount || 0) >= THRESHOLDS.topMinReviews
+  ) return 'TOP';
+
+  // NUEVO — publicado hace ≤ 15 días
   if (product.createdAt) {
     const ms = getMillis(product.createdAt);
     if (ms > 0) {
@@ -47,11 +54,8 @@ export function getBadge(product) {
     }
   }
 
-  // 2️⃣ POPULAR — tiene searchCount >= 5 (datos reales de búsquedas)
+  // POPULAR — tiene searchCount >= 5
   if ((product.searchCount || 0) >= THRESHOLDS.popularSearches) return 'POPULAR';
-
-  // 3️⃣ TOP — tiene rating >= 4.5
-  if ((product.rating || 0) >= THRESHOLDS.topRating) return 'TOP';
 
   return null;
 }

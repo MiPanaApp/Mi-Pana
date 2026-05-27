@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
+import { useLocationStore } from '../../store/useLocationStore';
+import { getCountryCodeFromName } from '../../data/locations';
 import {
   Users, ShoppingBag, MessageSquare, Star, ShieldCheck, Heart,
   Home, BarChart2, Layers, Activity, Search, Bell, Settings, LogOut, ArrowLeft, Eye, Globe, CheckCircle, CalendarClock,
@@ -57,6 +59,7 @@ export default function AdminDashboard() {
   const [growthMonths, setGrowthMonths] = useState(6);
   const [refreshKey, setRefreshKey] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const { countries } = useLocationStore();
 
   const testEmail = async () => {
     setEmailTestLoading(true);
@@ -177,22 +180,27 @@ export default function AdminDashboard() {
       setRawUsers(usersList);
       setRawProducts(productsList);
 
-      const COUNTRY_FLAGS = {
-        'ES': { name: 'España', flag: '🇪🇸' },
-        'US': { name: 'Estados', flag: '🇺🇸' },
-        'CO': { name: 'Colombia', flag: '🇨🇴' },
-        'EC': { name: 'Ecuador', flag: '🇪🇨' },
-        'PA': { name: 'Panamá', flag: '🇵🇦' },
-        'PE': { name: 'Perú', flag: '🇵🇪' },
-        'DO': { name: 'Rep. Dom', flag: '🇩🇴' },
-        'CL': { name: 'Chile', flag: '🇨🇱' },
-        'AR': { name: 'Argentina', flag: '🇦🇷' },
-        'MX': { name: 'México', flag: '🇲🇽' }
-      };
+      // COUNTRY_FLAGS dinámico desde Firestore via useLocationStore
+      const COUNTRY_FLAGS = {};
+      countries.forEach(c => {
+        if (c.id && c.name && c.flag) {
+          COUNTRY_FLAGS[c.id] = { name: c.name, flag: c.flag };
+        }
+      });
       const countryMap = {};
       usersList.forEach(u => {
-        if (u.country && COUNTRY_FLAGS[u.country]) {
-          const code = u.country;
+        // Intentar obtener el código ISO desde el nombre del país
+        // u.country puede ser nombre ("España") o código ("ES")
+        let code = u.country;
+        if (code && !COUNTRY_FLAGS[code]) {
+          // Si no es un código válido, intentar convertir desde nombre
+          code = getCountryCodeFromName(code);
+        }
+        // También intentar con lastViewedCountry como fallback
+        if (!code && u.lastViewedCountry) {
+          code = getCountryCodeFromName(u.lastViewedCountry);
+        }
+        if (code && COUNTRY_FLAGS[code]) {
           countryMap[code] = (countryMap[code] || 0) + 1;
         }
       });
@@ -203,12 +211,37 @@ export default function AdminDashboard() {
         value: countryMap[k] 
       })).sort((a, b) => b.value - a.value).slice(0, 5);
 
+      // Cargar interacciones
+      const interactionsSnap = await getDocs(collection(db, 'interactions'));
+      const interactionsList = interactionsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const totalInteractions = interactionsList.length;
+      const chatInteractions = interactionsList.filter(i => i.via === 'chat').length;
+      const waInteractions = interactionsList.filter(i => i.via === 'whatsapp').length;
+      const productContactMap = {};
+      interactionsList.forEach(i => {
+        if (i.productId) {
+          if (!productContactMap[i.productId]) {
+            productContactMap[i.productId] = { name: i.productName || i.productId, count: 0 };
+          }
+          productContactMap[i.productId].count++;
+        }
+      });
+      const topContacted = Object.values(productContactMap)
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+
       setStats(prev => ({
         ...prev,
         totalUsers: usersList.length,
         totalProducts: productsList.length,
         categories: catData.length > 0 ? catData : [{ name: 'Sin datos', value: 1 }],
-        geo: geoData
+        geo: geoData,
+        interactions: {
+          total: totalInteractions,
+          chat: chatInteractions,
+          whatsapp: waInteractions,
+          topContacted,
+        },
       }));
       setLoading(false);
     } catch (err) {
@@ -453,6 +486,64 @@ export default function AdminDashboard() {
                 </div>
               ))}
             </div>
+
+            {/* Interacciones entre Panas */}
+            {stats.interactions && (
+              <div className="xl:col-span-12 grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Tarjeta Total */}
+                <div className="bg-white p-4 rounded-[2rem] shadow-[8px_8px_16px_#ebebeb,-4px_-4px_12px_#ffffff] border border-white/60 flex flex-col justify-center min-h-[110px]">
+                  <div className="mb-1 flex items-center gap-1.5">
+                    <span className="text-lg">🤝</span>
+                    <span className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Interacciones Totales</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl font-extrabold text-[#1A1A3A]">{loading ? "..." : stats.interactions.total}</span>
+                    <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md shrink-0 border bg-yellow-50 text-yellow-700 border-yellow-100">acumulado</span>
+                  </div>
+                </div>
+                {/* Tarjeta WhatsApp */}
+                <div className="bg-white p-4 rounded-[2rem] shadow-[8px_8px_16px_#ebebeb,-4px_-4px_12px_#ffffff] border border-white/60 flex flex-col justify-center min-h-[110px]">
+                  <div className="mb-1 flex items-center gap-1.5">
+                    <span className="text-lg">💬</span>
+                    <span className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Via WhatsApp</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl font-extrabold text-[#25D366]">{loading ? "..." : stats.interactions.whatsapp}</span>
+                    <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md shrink-0 border bg-yellow-50 text-yellow-700 border-yellow-100">acumulado</span>
+                  </div>
+                </div>
+                {/* Tarjeta Chat Pana */}
+                <div className="bg-white p-4 rounded-[2rem] shadow-[8px_8px_16px_#ebebeb,-4px_-4px_12px_#ffffff] border border-white/60 flex flex-col justify-center min-h-[110px]">
+                  <div className="mb-1 flex items-center gap-1.5">
+                    <span className="text-lg">💙</span>
+                    <span className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Via Chat Pana</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl font-extrabold text-[#FF6B00]">{loading ? "..." : stats.interactions.chat}</span>
+                    <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md shrink-0 border bg-yellow-50 text-yellow-700 border-yellow-100">acumulado</span>
+                  </div>
+                </div>
+                {/* Top anuncios contactados */}
+                {stats.interactions.topContacted.length > 0 && (
+                  <div className="md:col-span-3 bg-white p-5 rounded-[2rem] shadow-[8px_8px_16px_#ebebeb,-4px_-4px_12px_#ffffff] border border-white/60">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3 flex items-center gap-1.5">
+                      <span>🏆</span> Top Anuncios Más Contactados
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {stats.interactions.topContacted.map((p, i) => (
+                        <div key={i} className="flex items-center justify-between px-4 py-2.5 bg-gray-50 rounded-2xl border border-gray-100">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-[10px] font-black text-gray-300 w-4">#{i+1}</span>
+                            <span className="text-sm font-bold text-[#1A1A3A] truncate">{p.name}</span>
+                          </div>
+                          <span className="text-sm font-black text-[#0056B3] ml-2 shrink-0">{p.count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* 🧪 Panel de Test de Emails */}
             <div className="xl:col-span-12 bg-white py-4 px-6 rounded-[2rem] shadow-sm border border-gray-50">

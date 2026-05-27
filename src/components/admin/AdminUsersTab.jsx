@@ -598,6 +598,11 @@ Esta acción borrará:
                     <p className="text-xs font-bold opacity-80 font-mono bg-black/10 px-2 py-0.5 rounded-md truncate max-w-[150px]" title={selectedUser.id}>
                       ID: {selectedUser.id}
                     </p>
+                    {selectedUser.createdAt?.seconds && (
+                      <p className="text-xs font-bold opacity-90 bg-black/10 px-2 py-0.5 rounded-md mt-1">
+                        📅 Registrado: {new Date(selectedUser.createdAt.seconds * 1000).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}
+                      </p>
+                    )}
                     <button 
                       onClick={() => {
                         navigator.clipboard.writeText(selectedUser.id);

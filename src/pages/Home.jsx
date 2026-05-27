@@ -36,7 +36,6 @@ const COMMUNITY_ALIASES = {
   'comunidad valenciana': 'comunidad valenciana',
   'catalunya': 'cataluna',
   'cataluna': 'cataluna',
-  'cataluna': 'cataluna',
   'illes balears': 'islas baleares',
   'islas baleares': 'islas baleares',
   'euskadi': 'pais vasco',
