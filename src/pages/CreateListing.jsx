@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Camera, ImagePlus, ChevronLeft, CheckCircle2, Loader2, X, MapPin } from 'lucide-react';
+import { Camera, ImagePlus, ChevronLeft, CheckCircle2, Loader2, X, MapPin, AlertTriangle } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useAuth } from '../context/AuthContext';
 import { useStore } from '../store/useStore';
@@ -676,6 +676,31 @@ export default function CreateListing() {
 
   return (
     <div className="bg-[#E0E5EC] min-h-screen pb-32">
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center px-6 pointer-events-none"
+          >
+            <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-sm w-full pointer-events-auto border border-[#D90429]/20">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-[#D90429]/10 rounded-2xl flex items-center justify-center shrink-0">
+                  <AlertTriangle size={20} className="text-[#D90429]" />
+                </div>
+                <p className="text-[#D90429] font-black text-sm leading-snug">{error}</p>
+              </div>
+              <button
+                onClick={() => setError('')}
+                className="w-full h-11 bg-[#1A1A3A] text-white rounded-2xl font-black text-sm"
+              >
+                Entendido
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <IncompleteProfileModal isOpen={showIncompleteModal} onClose={() => setShowIncompleteModal(false)} />
       {/* Header Sticky */}
       <div className="sticky top-0 z-50 bg-[#E0E5EC]/80 backdrop-blur-xl px-4 pt-10 md:pt-4 pb-4 flex items-center shadow-sm">
@@ -690,19 +715,7 @@ export default function CreateListing() {
 
       <div className="max-w-md mx-auto px-5 mt-6">
 
-        {/* Error Message */}
-        <AnimatePresence>
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="mb-6 p-4 bg-[#D90429]/10 rounded-2xl text-[#D90429] text-sm font-bold shadow-inner"
-            >
-              ⚠️ {error}
-            </motion.div>
-          )}
-        </AnimatePresence>
+
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
 
@@ -1290,7 +1303,6 @@ export default function CreateListing() {
           </div>
 
           <div className="h-6" />
-
           {/* BOTON SUBMIT */}
           <motion.button
             whileHover={{ scale: 1.02 }}
