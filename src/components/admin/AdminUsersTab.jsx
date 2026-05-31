@@ -594,25 +594,28 @@ Esta acción borrará:
                   <h4 className="text-2xl font-bold leading-tight break-words">
                     {selectedUser.name || selectedUser.displayName || 'Sin nombre'} {selectedUser.lastName || ''}
                   </h4>
-                  <div className="flex items-center gap-2 mt-1">
-                    <p className="text-xs font-bold opacity-80 font-mono bg-black/10 px-2 py-0.5 rounded-md truncate max-w-[150px]" title={selectedUser.id}>
-                      ID: {selectedUser.id}
-                    </p>
+                  <div className="flex flex-col gap-1 mt-1">
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-bold opacity-80 font-mono bg-black/10 px-2 py-0.5 rounded-md truncate max-w-[150px]" title={selectedUser.id}>
+                        ID: {selectedUser.id}
+                      </p>
+                      <button 
+                        onClick={() => {
+                          navigator.clipboard.writeText(selectedUser.id);
+                          alert('ID Copiado!');
+                        }} 
+                        className="p-1.5 bg-black/10 hover:bg-black/20 rounded-md transition-colors text-black/70 hover:text-black shrink-0"
+                        title="Copiar ID"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                     {selectedUser.createdAt?.seconds && (
-                      <p className="text-xs font-bold opacity-90 bg-black/10 px-2 py-0.5 rounded-md mt-1">
-                        📅 Registrado: {new Date(selectedUser.createdAt.seconds * 1000).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}
+                      <p className="text-xs font-bold opacity-75 bg-black/10 px-2 py-0.5 rounded-md flex items-center gap-1.5 w-fit">
+                        <Calendar size={16} strokeWidth={2} />
+                        Registrado: {new Date(selectedUser.createdAt.seconds * 1000).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, ' / ')}
                       </p>
                     )}
-                    <button 
-                      onClick={() => {
-                        navigator.clipboard.writeText(selectedUser.id);
-                        alert('ID Copiado!');
-                      }} 
-                      className="p-1.5 bg-black/10 hover:bg-black/20 rounded-md transition-colors text-black/70 hover:text-black shrink-0"
-                      title="Copiar ID"
-                    >
-                      <Copy className="w-3.5 h-3.5" />
-                    </button>
                   </div>
                 </div>
               </div>
