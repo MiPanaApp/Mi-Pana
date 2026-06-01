@@ -36,6 +36,11 @@ workflows:
             <string>app-store</string>
             <key>teamID</key>
             <string>7CU9XD65G5</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>com.antigravity.mipana</key>
+              <string>Mi Pana App Store</string>
+            </dict>
             <key>uploadBitcode</key>
             <false/>
             <key>uploadSymbols</key>
