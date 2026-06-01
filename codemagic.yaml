@@ -19,9 +19,6 @@ workflows:
         script: npm run build
       - name: Capacitor sync
         script: npx cap sync ios
-      - name: Set Swift tools version
-        script: |
-          find ios/App -name "Package.swift" -exec sed -i '' 's/swift-tools-version: 5.9/swift-tools-version: 5.9/g' {} \;
       - name: Build iOS
         script: |
           xcode-project build-ipa \
@@ -30,10 +27,3 @@ workflows:
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
-    publishing:
-      app_store_connect:
-        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
-        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
-        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
-        submit_to_testf
-
