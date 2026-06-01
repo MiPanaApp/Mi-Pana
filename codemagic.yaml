@@ -8,7 +8,7 @@ workflows:
         distribution_type: app_store
         bundle_identifier: com.antigravity.mipana
       vars:
-        XCODE_WORKSPACE: "ios/App/App.xcworkspace"
+        XCODE_WORKSPACE: "ios/App/App.xcodeproj"
         XCODE_SCHEME: "App"
         CM_CERTIFICATE: MiPana_Distribution
         CM_PROVISIONING_PROFILE: MiPana_AppStore_Profile
@@ -24,7 +24,7 @@ workflows:
       - name: Build iOS
         script: |
           xcode-project build-ipa \
-            --workspace "$XCODE_WORKSPACE" \
+            --project "$XCODE_WORKSPACE" \
             --scheme "$XCODE_SCHEME"
     artifacts:
       - build/ios/ipa/*.ipa
