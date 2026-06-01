@@ -8,7 +8,7 @@ workflows:
         distribution_type: app_store
         bundle_identifier: com.antigravity.mipana
       vars:
-        XCODE_WORKSPACE: "ios/App/App.xcodeproj"
+        XCODE_PROJECT: "ios/App/App.xcodeproj"
         XCODE_SCHEME: "App"
         CM_CERTIFICATE: MiPana_Distribution
         CM_PROVISIONING_PROFILE: MiPana_AppStore_Profile
@@ -21,11 +21,30 @@ workflows:
         script: npm run build
       - name: Capacitor sync
         script: npx cap sync ios
+      - name: Create export options
+        script: |
+          cat > /Users/builder/export_options.plist << 'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store</string>
+            <key>teamID</key>
+            <string>7CU9XD65G5</string>
+            <key>uploadBitcode</key>
+            <false/>
+            <key>uploadSymbols</key>
+            <true/>
+          </dict>
+          </plist>
+          PLIST
       - name: Build iOS
         script: |
           xcode-project build-ipa \
-            --project "$XCODE_WORKSPACE" \
-            --scheme "$XCODE_SCHEME"
+            --project "$XCODE_PROJECT" \
+            --scheme "$XCODE_SCHEME" \
+            --export-options-plist /Users/builder/export_options.plist
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
