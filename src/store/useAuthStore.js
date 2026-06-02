@@ -133,6 +133,7 @@ export const useAuthStore = create((set, get) => ({
       await SocialLogin.initialize({
         google: {
           webClientId: '637946158184-ms3gfnpvnffb5tp4iv2iih2sb85r32io.apps.googleusercontent.com',
+          iOSClientId: '637946158184-uk1n4pqrsaimud93lilbslk24j6fbgrg.apps.googleusercontent.com',
         }
       });
       const response = await SocialLogin.login({
