@@ -6,6 +6,11 @@
   "server": {
     "androidScheme": "https"
   },
+  "ios": {
+    "contentInset": "automatic",
+    "scrollEnabled": false,
+    "limitsNavigationsToAppBoundDomains": true
+  },
   "plugins": {
     "SplashScreen": {
       "launchShowDuration": 0,
