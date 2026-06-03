@@ -23,10 +23,6 @@ workflows:
         script: npm run build
       - name: Capacitor sync
         script: npx cap sync ios
-      - name: Install CocoaPods
-        script: |
-          cd ios/App
-          pod install
       - name: Set up code signing
         script: |
           xcode-project use-profiles \
