@@ -14,7 +14,9 @@
   "plugins": {
     "SplashScreen": {
       "launchShowDuration": 0,
-      "launchAutoHide": true
+      "backgroundColor": "#FFB400",
+      "showSpinner": false,
+      "androidScaleType": "CENTER_CROP"
     },
     "PushNotifications": {
       "presentationOptions": ["badge", "sound", "alert"]
