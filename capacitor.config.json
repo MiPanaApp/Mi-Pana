@@ -4,9 +4,7 @@
   "webDir": "dist",
   "bundledWebRuntime": false,
   "server": {
-    "androidScheme": "https",
-    "iosScheme": "capacitor",
-    "hostname": "app"
+    "androidScheme": "https"
   },
   "plugins": {
     "SplashScreen": {
