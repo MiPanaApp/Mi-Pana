@@ -14,4 +14,10 @@ end
 
 target 'App' do
   capacitor_pods
+  pod 'FirebaseCore'
+  pod 'FirebaseAuth'
+  pod 'FirebaseFirestore'
+  pod 'FirebaseMessaging'
+  pod 'FirebaseStorage'
+  pod 'FirebaseAnalytics'
 end
