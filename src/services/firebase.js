@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, FacebookAuthProvider, RecaptchaVerifier, signInWithPhoneNumber, signInWithPopup, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, signOut } from 'firebase/auth';
-import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
+import { getAuth, initializeAuth, indexedDBLocalPersistence, GoogleAuthProvider, FacebookAuthProvider, RecaptchaVerifier, signInWithPhoneNumber, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, signOut } from 'firebase/auth';
+import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, persistentSingleTabManager } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getAnalytics, isSupported } from 'firebase/analytics';
 
@@ -17,24 +17,32 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
+const isNative = import.meta.env.VITE_CAPACITOR === 'true';
+
 // Initialize services
-export const auth = getAuth(app);
+export const auth = isNative
+  ? initializeAuth(app, { persistence: [indexedDBLocalPersistence] })
+  : getAuth(app);
 // Initialize Firestore con caché local persistente (IndexedDB)
 // Reduce lecturas facturables y habilita uso offline en PWA/Android/iOS
 export const db = initializeFirestore(app, {
   localCache: persistentLocalCache({
-    tabManager: persistentMultipleTabManager()
+    tabManager: isNative
+      ? persistentSingleTabManager()
+      : persistentMultipleTabManager()
   })
 });
 export const storage = getStorage(app);
-export const googleProvider = new GoogleAuthProvider();
-googleProvider.setCustomParameters({
-  prompt: 'select_account'
-});
+export const googleProvider = isNative ? null : new GoogleAuthProvider();
+if (googleProvider) {
+  googleProvider.setCustomParameters({ prompt: 'select_account' });
+}
 
-export const facebookProvider = new FacebookAuthProvider();
-facebookProvider.addScope('email');
-facebookProvider.addScope('public_profile');
+export const facebookProvider = isNative ? null : new FacebookAuthProvider();
+if (facebookProvider) {
+  facebookProvider.addScope('email');
+  facebookProvider.addScope('public_profile');
+}
 
 // Inicializar Analytics solo si es soportado y hay appId
 let analytics = null;

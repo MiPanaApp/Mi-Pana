@@ -4,7 +4,6 @@ import { SocialLogin } from '@capgo/capacitor-social-login';
 import { 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword,
-  signInWithPopup,
   signOut,
   onAuthStateChanged,
   updateProfile,
@@ -147,7 +146,8 @@ export const useAuthStore = create((set, get) => ({
       const result = await signInWithCredential(auth, credential);
       return { result };
     } else {
-      // PWA web: usar signInWithPopup
+      // PWA web: usar signInWithPopup (import dinámico para no cargar gapi en nativo)
+      const { signInWithPopup } = await import('firebase/auth');
       const result = await signInWithPopup(auth, googleProvider);
       return { result };
     }
@@ -157,6 +157,7 @@ export const useAuthStore = create((set, get) => ({
     set({ loading: true, error: null });
     try {
       const { facebookProvider } = await import('../services/firebase');
+      const { signInWithPopup } = await import('firebase/auth');
       const result = await signInWithPopup(auth, facebookProvider);
       const user = result.user;
 

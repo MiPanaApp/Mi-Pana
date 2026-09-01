@@ -3,12 +3,15 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
+const isNativeBuild = process.env.VITE_CAPACITOR === 'true'
+
 export default defineConfig({
   base: './',
   plugins: [
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      disable: isNativeBuild,
       workbox: {
         maximumFileSizeToCacheInBytes: 5000000, // Aumentado a 5MB para evitar error en build de Vercel
       },
