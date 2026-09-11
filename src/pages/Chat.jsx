@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Send, Smile, X, CornerUpLeft, Check, CheckCheck, Star, ExternalLink, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Send, Smile, X, CornerUpLeft, Check, CheckCheck, Star, ExternalLink, ShieldCheck, Ban } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import EmojiPicker from 'emoji-picker-react';
 import { useAuthStore } from '../store/useAuthStore';
@@ -11,7 +11,7 @@ import {
   markMessagesAsRead,
   setTyping,
 } from '../lib/chat';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, addDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { getCategoryIcon } from '../data/categories';
 import { FiPlus } from 'react-icons/fi';
@@ -137,6 +137,50 @@ export default function Chat() {
     }
   };
 
+  const handleBlockUser = async () => {
+    if (!otherId || !user?.uid) return;
+    setIsBlocking(true);
+    try {
+      await updateDoc(doc(db, 'users', user.uid), {
+        blockedUsers: arrayUnion(otherId)
+      });
+
+      await addDoc(collection(db, 'reports'), {
+        productId: conversation?.productId || null,
+        productName: 'Bloqueo de usuario (sin anuncio asociado)',
+        sellerId: otherId,
+        sellerName: otherName || 'Usuario bloqueado',
+        reporterId: user.uid,
+        reporterName: user?.displayName || 'Anónimo',
+        reporterEmail: user?.email || 'No disponible',
+        reasons: ['Usuario bloqueado desde el chat'],
+        createdAt: new Date(),
+        status: 'pending',
+      });
+
+      setBlockSuccess(true);
+    } catch (error) {
+      console.error("Error bloqueando usuario:", error);
+      setIsBlocking(false);
+    }
+  };
+
+  const handleUnblockFromChat = async () => {
+    if (!otherId || !user?.uid) return;
+    setIsUnblocking(true);
+    try {
+      await updateDoc(doc(db, 'users', user.uid), {
+        blockedUsers: arrayRemove(otherId)
+      });
+      setIsChatBlocked(false);
+      setIsBlockedByMe(false);
+    } catch (error) {
+      console.error("Error desbloqueando usuario:", error);
+    } finally {
+      setIsUnblocking(false);
+    }
+  };
+
   const [messages, setMessages] = useState([]);
   const [conversation, setConversation] = useState(null);
   const [inputText, setInputText] = useState('');
@@ -148,6 +192,13 @@ export default function Chat() {
   
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewStatus, setReviewStatus] = useState({ can: false, interactionId: null });
+  const [isBlocking, setIsBlocking] = useState(false);
+  const [showBlockModal, setShowBlockModal] = useState(false);
+  const [blockSuccess, setBlockSuccess] = useState(false);
+  const [isChatBlocked, setIsChatBlocked] = useState(false);
+  const [checkingBlockStatus, setCheckingBlockStatus] = useState(true);
+  const [isBlockedByMe, setIsBlockedByMe] = useState(false);
+  const [isUnblocking, setIsUnblocking] = useState(false);
 
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -212,6 +263,7 @@ export default function Chat() {
 
   // ─── Enviar mensaje ──────────────────────────────────────────────────────────
   const handleSend = async () => {
+    if (isChatBlocked) return;
     const text = inputText.trim();
     if (!text) return;
     setInputText('');
@@ -247,6 +299,33 @@ export default function Chat() {
   const otherId = conversation?.participants?.find(p => p !== user?.uid);
   const otherName = isMeSeller ? (conversation?.buyerName || 'Comprador') : (conversation?.sellerName || 'Vendedor');
   const otherAvatar = isMeSeller ? conversation?.buyerAvatar : conversation?.sellerAvatar;
+
+  // ─── Verificar estado de bloqueo ────────────────────────────────────────────
+  useEffect(() => {
+    const checkBlockStatus = async () => {
+      if (!user?.uid || !otherId) {
+        setCheckingBlockStatus(false);
+        return;
+      }
+      try {
+        const [myDoc, otherDoc] = await Promise.all([
+          getDoc(doc(db, 'users', user.uid)),
+          getDoc(doc(db, 'users', otherId)),
+        ]);
+        const myBlockedList = myDoc.exists() ? (myDoc.data().blockedUsers || []) : [];
+        const otherBlockedList = otherDoc.exists() ? (otherDoc.data().blockedUsers || []) : [];
+        const blockedByMe = myBlockedList.includes(otherId);
+        const blockedByOther = otherBlockedList.includes(user.uid);
+        setIsChatBlocked(blockedByMe || blockedByOther);
+        setIsBlockedByMe(blockedByMe);
+      } catch (error) {
+        console.error("Error verificando estado de bloqueo:", error);
+      } finally {
+        setCheckingBlockStatus(false);
+      }
+    };
+    checkBlockStatus();
+  }, [user?.uid, otherId]);
 
   return (
     <div className="h-screen bg-[#D1D9E6] flex justify-center overflow-hidden">
@@ -303,20 +382,30 @@ export default function Chat() {
                 <span className="text-[11px] text-[#FFC200] font-bold italic animate-pulse whitespace-nowrap hidden sm:inline">escribiendo...</span>
               )}
 
-              <div 
-                onClick={goToProduct}
-                className="w-14 h-14 rounded-2xl overflow-hidden shadow-[0_4px_10px_rgba(0,0,0,0.3)] border-2 border-white/10 bg-white/5 flex-shrink-0 cursor-pointer active:scale-95 transition-all hover:border-[#FFC200]/50"
-                title="Ver producto"
-              >
-                <img 
-                  src={conversation?.productImage || 'https://images.unsplash.com/photo-1599566150163-29194dcaad36'} 
-                  className="w-full h-full object-cover" 
-                  alt="Producto"
-                  onError={(e) => {
-                    e.target.src = 'https://images.unsplash.com/photo-1599566150163-29194dcaad36';
-                  }}
-                />
-              </div>
+              {!checkingBlockStatus && (
+                isChatBlocked ? (
+                  isBlockedByMe && (
+                    <button
+                      onClick={handleUnblockFromChat}
+                      disabled={isUnblocking}
+                      className="flex items-center gap-1 text-[11px] text-[#4FC3F7] font-semibold flex-shrink-0 hover:opacity-70 transition-opacity disabled:opacity-40"
+                      title="Desbloquear a este usuario"
+                    >
+                      <Ban size={12} strokeWidth={2.5} />
+                      {isUnblocking ? '...' : 'Desbloquear'}
+                    </button>
+                  )
+                ) : (
+                  <button
+                    onClick={() => setShowBlockModal(true)}
+                    className="flex items-center gap-1 text-[11px] text-[#4FC3F7] font-semibold flex-shrink-0 hover:opacity-70 transition-opacity"
+                    title="Bloquear a este usuario"
+                  >
+                    <Ban size={12} strokeWidth={2.5} />
+                    Bloquear
+                  </button>
+                )
+              )}
             </div>
         </div>
 
@@ -460,6 +549,13 @@ export default function Chat() {
 
         {/* ── Input Area ── */}
         <div className="bg-[#E0E5EC]/80 backdrop-blur-md border-t border-[#d0d8e4] px-3 pt-3 pb-[30px] md:pb-6 flex-shrink-0 flex justify-center">
+          {isChatBlocked && !checkingBlockStatus ? (
+            <div className="w-full max-w-3xl text-center py-2">
+              <p className="text-[13px] font-bold text-[#1A1A3A]/50">
+                Esta conversación ya no está disponible.
+              </p>
+            </div>
+          ) : (
           <div className="flex items-center gap-2 w-full max-w-3xl">
             {/* Emoji button */}
             <button
@@ -497,6 +593,7 @@ export default function Chat() {
               <Send size={16} className={inputText.trim() ? 'ml-0.5' : ''} />
             </motion.button>
           </div>
+          )}
         </div>
         
         {/* ── Modal de Valoración ── */}
@@ -514,6 +611,74 @@ export default function Chat() {
              setReviewStatus({ can: false, interactionId: null });
            }}
         />
+
+        {/* ── Modal de Bloqueo de Usuario ── */}
+        <AnimatePresence>
+          {showBlockModal && (
+            <div className="fixed inset-0 z-[130] flex items-center justify-center px-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => { if (!isBlocking) { setShowBlockModal(false); setBlockSuccess(false); } }}
+                className="absolute inset-0 bg-[#E0E5EC]/80 backdrop-blur-sm"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative w-full max-w-sm bg-[#E0E5EC] rounded-3xl p-6 flex flex-col shadow-[12px_12px_24px_rgba(163,177,198,0.7),-12px_-12px_24px_rgba(255,255,255,0.9)] border border-white/60"
+              >
+                {!blockSuccess ? (
+                  <>
+                    <h3 className="text-xl font-black text-[#1A1A3A] mb-3 text-center leading-tight">
+                      ¿Bloquear a este usuario?
+                    </h3>
+                    <p className="text-[13px] text-[#1A1A3A]/60 font-medium text-center mb-6 leading-relaxed">
+                      No podrás ver sus mensajes ni sus anuncios, y no podrá contactarte de nuevo.
+                    </p>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => setShowBlockModal(false)}
+                        disabled={isBlocking}
+                        className="flex-1 py-3 rounded-2xl bg-white text-[#1A1A3A] font-bold border border-[#1A1A3A]/10 disabled:opacity-50"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={handleBlockUser}
+                        disabled={isBlocking}
+                        className="flex-1 py-3 rounded-2xl bg-[#D90429] text-white font-black shadow-[4px_4px_10px_rgba(217,4,41,0.3)] disabled:opacity-50 flex items-center justify-center"
+                      >
+                        {isBlocking ? (
+                          <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        ) : (
+                          "Bloquear"
+                        )}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="py-6 flex flex-col items-center text-center">
+                    <div className="w-16 h-16 bg-[#25D366]/10 rounded-full flex items-center justify-center mb-4">
+                      <ShieldCheck className="w-8 h-8 text-[#25D366]" />
+                    </div>
+                    <h3 className="text-lg font-black text-[#1A1A3A] mb-2">Usuario bloqueado</h3>
+                    <p className="text-[13px] text-[#1A1A3A]/60 font-medium mb-6">
+                      Ya no verás su contenido en Mi Pana.
+                    </p>
+                    <button
+                      onClick={() => navigate('/mensajes')}
+                      className="w-full py-3 rounded-2xl bg-gradient-to-r from-[#FFB400] to-[#FF9000] text-white font-black"
+                    >
+                      Entendido
+                    </button>
+                  </div>
+                )}
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

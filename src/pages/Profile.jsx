@@ -4,7 +4,7 @@ import {
   ShieldCheck, Loader2, Camera, Lock, Info, 
   HelpCircle, Cookie, ShieldAlert, Instagram, Facebook, Youtube, Twitter, UserCircle2,
   Package, Edit2, Trash2, PlusCircle, ExternalLink, Eye, EyeOff, X, Calendar, Globe, MoreVertical, CheckCircle2,
-  Clock, Shield, Pencil
+  Clock, Shield, Pencil, Ban
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -12,7 +12,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { useDialogStore } from '../store/useDialogStore';
 import { useNavigate } from 'react-router-dom';
 import { ref, getDownloadURL } from 'firebase/storage';
-import { doc, setDoc, collection, query, where, onSnapshot, deleteDoc, updateDoc } from 'firebase/firestore';
+import { doc, setDoc, collection, query, where, onSnapshot, deleteDoc, updateDoc, arrayRemove, getDoc, getDocs } from 'firebase/firestore';
 import { db, storage, auth } from '../services/firebase';
 import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { getFunctions, httpsCallable } from 'firebase/functions';
@@ -74,6 +74,9 @@ export default function Profile() {
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [blockedUsersList, setBlockedUsersList] = useState([]);
+  const [loadingBlocked, setLoadingBlocked] = useState(false);
+  const [unblockingId, setUnblockingId] = useState(null);
 
   const { countries, getCountryConfig, init: initLocations } = useLocationStore();
 
@@ -360,6 +363,41 @@ export default function Profile() {
     setActiveProductMenu(activeProductMenu === id ? null : id);
   };
 
+  const loadBlockedUsers = async () => {
+    if (!currentUser?.uid) return;
+    setLoadingBlocked(true);
+    try {
+      const myDoc = await getDoc(doc(db, 'users', currentUser.uid));
+      const blockedIds = myDoc.exists() ? (myDoc.data().blockedUsers || []) : [];
+      const profiles = await Promise.all(
+        blockedIds.map(async (id) => {
+          const snap = await getDoc(doc(db, 'users', id));
+          return snap.exists() ? { id, ...snap.data() } : { id, displayName: 'Usuario eliminado' };
+        })
+      );
+      setBlockedUsersList(profiles);
+    } catch (error) {
+      console.error("Error cargando usuarios bloqueados:", error);
+    } finally {
+      setLoadingBlocked(false);
+    }
+  };
+
+  const handleUnblock = async (targetId) => {
+    if (!currentUser?.uid) return;
+    setUnblockingId(targetId);
+    try {
+      await updateDoc(doc(db, 'users', currentUser.uid), {
+        blockedUsers: arrayRemove(targetId)
+      });
+      setBlockedUsersList(prev => prev.filter(u => u.id !== targetId));
+    } catch (error) {
+      console.error("Error desbloqueando usuario:", error);
+    } finally {
+      setUnblockingId(null);
+    }
+  };
+
   // Close menus on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -377,6 +415,12 @@ export default function Profile() {
     if (permission === 'granted') return;
     if (!currentUser) return;
     requestPermission();
+  }, [currentUser?.uid]);
+
+  useEffect(() => {
+    if (currentUser?.uid) {
+      loadBlockedUsers();
+    }
   }, [currentUser?.uid]);
 
   // Sub-componente: Barra de Progreso de Perfil (bandera Venezuela)
@@ -563,6 +607,43 @@ export default function Profile() {
   } else if (currentUser?.displayName) {
     displayName = currentUser.displayName;
   }
+
+  const renderBlockedUsersContent = () => (
+    <>
+      {loadingBlocked ? (
+        <div className="flex justify-center py-6">
+          <div className="w-6 h-6 border-2 border-[#1A1A3A]/20 border-t-[#1A1A3A] rounded-full animate-spin" />
+        </div>
+      ) : blockedUsersList.length === 0 ? (
+        <p className="text-center text-sm font-bold text-[#555577] py-4">No tienes usuarios bloqueados.</p>
+      ) : (
+        blockedUsersList.map((u) => (
+          <div key={u.id} className="flex items-center justify-between gap-3 p-3 hover:bg-white/50 rounded-xl transition-colors">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-9 h-9 rounded-full overflow-hidden bg-[#1A1A3A]/10 flex-shrink-0">
+                {u.avatar ? (
+                  <img src={u.avatar} className="w-full h-full object-cover" alt="" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-xs font-black text-[#1A1A3A]/40">
+                    {u.displayName?.[0]?.toUpperCase() || '?'}
+                  </div>
+                )}
+              </div>
+              <span className="text-sm font-bold text-[#1A1A3A] truncate">{u.displayName || 'Usuario'}</span>
+            </div>
+            <button
+              onClick={() => handleUnblock(u.id)}
+              disabled={unblockingId === u.id}
+              className="flex items-center gap-1 text-[11px] text-[#4FC3F7] font-semibold flex-shrink-0 hover:opacity-70 transition-opacity disabled:opacity-40"
+            >
+              <Ban size={12} strokeWidth={2.5} />
+              {unblockingId === u.id ? '...' : 'Desbloquear'}
+            </button>
+          </div>
+        ))
+      )}
+    </>
+  );
 
   const renderAdsContent = (isDesktop = false) => (
     <div className={`space-y-6 ${isDesktop ? "flex flex-col gap-5 space-y-0" : ""}`}>
@@ -1182,6 +1263,24 @@ export default function Profile() {
 
         <div className="group">
           <button 
+            onClick={() => {
+              toggleMenu('bloqueados');
+              if (openMenu !== 'bloqueados') loadBlockedUsers();
+            }}
+            className="w-full flex items-center justify-between p-5 bg-[#E0E5EC] rounded-2xl shadow-[6px_6px_12px_#b8b9be,-6px_-6px_12px_#ffffff] text-[#1A1A3A] font-bold active:scale-[0.98] transition-all"
+          >
+            <span>Usuarios Bloqueados</span>
+            <ChevronDown size={20} className={`transition-transform duration-300 ${openMenu === 'bloqueados' ? 'rotate-180' : ''}`} />
+          </button>
+          {openMenu === 'bloqueados' && (
+            <div className="mt-2 mx-2 p-2 bg-white/30 rounded-2xl shadow-[inset_4px_4px_8px_rgba(163,177,198,0.3)] flex flex-col gap-1">
+              {renderBlockedUsersContent()}
+            </div>
+          )}
+        </div>
+
+        <div className="group">
+          <button 
             onClick={() => toggleMenu('soporte')}
             className="w-full flex items-center justify-between p-5 bg-[#E0E5EC] rounded-2xl shadow-[6px_6px_12px_#b8b9be,-6px_-6px_12px_#ffffff] text-[#1A1A3A] font-bold active:scale-[0.98] transition-all"
           >
@@ -1304,15 +1403,25 @@ export default function Profile() {
       </div>
 
       {/* COLUMNA DERECHA: DASHBOARD DESKTOP */}
-      <div className="hidden md:flex flex-col flex-1 w-full min-w-0 bg-[#E0E5EC] rounded-[40px] p-8 lg:p-10 shadow-[20px_20px_60px_#bebebe,-20px_-20px_60px_#ffffff]">
-        <h2 className="text-xl lg:text-2xl font-black text-[#1A1A3A] mb-8 pb-4 border-b border-white/50 flex flex-col gap-1">
-          Dashboard de Anuncios
-          <span className="text-[11px] lg:text-[13px] font-bold text-gray-400 uppercase tracking-widest">
-            Gestión y Rendimiento
-          </span>
-        </h2>
-        
-        {renderAdsContent(true)}
+      <div className="hidden md:flex flex-col flex-1 w-full min-w-0 gap-8">
+        <div className="bg-[#E0E5EC] rounded-[40px] p-8 lg:p-10 shadow-[20px_20px_60px_#bebebe,-20px_-20px_60px_#ffffff]">
+          <h2 className="text-xl lg:text-2xl font-black text-[#1A1A3A] mb-8 pb-4 border-b border-white/50 flex flex-col gap-1">
+            Dashboard de Anuncios
+            <span className="text-[11px] lg:text-[13px] font-bold text-gray-400 uppercase tracking-widest">
+              Gestión y Rendimiento
+            </span>
+          </h2>
+
+          {renderAdsContent(true)}
+        </div>
+
+        <div className="bg-[#E0E5EC] rounded-[40px] p-8 lg:p-10 shadow-[20px_20px_60px_#bebebe,-20px_-20px_60px_#ffffff]">
+          <h2 className="text-xl lg:text-2xl font-black text-[#1A1A3A] mb-8 pb-4 border-b border-white/50 flex flex-col gap-1">
+            Usuarios Bloqueados
+          </h2>
+
+          {renderBlockedUsersContent()}
+        </div>
       </div>
 
     </div>
