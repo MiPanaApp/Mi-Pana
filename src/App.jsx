@@ -40,6 +40,7 @@ import Verification from './pages/Verification';
 // Public Legal Pages
 import PrivacyPage from './pages/PrivacyPage';
 import CookiesPage from './pages/CookiesPage';
+import SupportPage from './pages/SupportPage';
 
 import CustomDialog from './components/ui/CustomDialog';
 
@@ -94,6 +95,7 @@ function App() {
         {/* Public Legal Pages */}
         <Route path="/privacidad" element={<PrivacyPage />} />
         <Route path="/cookies" element={<CookiesPage />} />
+        <Route path="/soporte" element={<SupportPage />} />
 
         {/* Main Application with Header and Footer */}
         <Route element={<Layout />}>
