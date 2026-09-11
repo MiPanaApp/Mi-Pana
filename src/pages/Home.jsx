@@ -10,6 +10,7 @@ import { useStore } from '../store/useStore';
 import { useLocationStore } from '../store/useLocationStore';
 import { collection, getDocs, query, doc, updateDoc, increment, orderBy, limit, startAfter, where } from 'firebase/firestore';
 import { db } from '../services/firebase';
+import { useAuthStore } from '../store/useAuthStore';
 import { normalizeText } from '../utils/textUtils';
 import emptyHammock from '../assets/empty_hammock.png';
 import panaEnMecedora from '../assets/pana_en_mecedora.png';
@@ -73,6 +74,9 @@ export default function Home() {
     userLocation,
     setUserLocation
   } = useStore();
+
+  const { user } = useAuthStore();
+  const [blockedUserIds, setBlockedUserIds] = useState([]);
   const { countries } = useLocationStore();
   const sortRef = useRef(null);
   const { categoryId } = useParams();
@@ -226,6 +230,23 @@ export default function Home() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isSortOpen, setIsSortOpen]);
 
+  useEffect(() => {
+    const loadBlocked = async () => {
+      if (!user?.uid) {
+        setBlockedUserIds([]);
+        return;
+      }
+      try {
+        const { doc: docRef, getDoc } = await import('firebase/firestore');
+        const snap = await getDoc(docRef(db, 'users', user.uid));
+        setBlockedUserIds(snap.exists() ? (snap.data().blockedUsers || []) : []);
+      } catch (error) {
+        console.error("Error cargando usuarios bloqueados en Home:", error);
+      }
+    };
+    loadBlocked();
+  }, [user?.uid]);
+
   const filteredProducts = useMemo(() => {
     let result = [...products];
 
@@ -241,6 +262,11 @@ export default function Home() {
     result = result.filter(p =>
       !suspendedCountryIds.includes(p.location?.country)
     );
+
+    // Excluir productos de usuarios bloqueados por el usuario actual
+    if (blockedUserIds.length > 0) {
+      result = result.filter(p => !blockedUserIds.includes(p.userId));
+    }
 
     // Filtros de Ubicación Estrictos
     const normalizeL1 = (text) => {
@@ -378,7 +404,7 @@ export default function Home() {
     }
 
     return result;
-  }, [products, filters, activeCategory, sortBy, selectedCountry, userLocation]);
+  }, [products, filters, activeCategory, sortBy, selectedCountry, userLocation, blockedUserIds]);
 
   // Búsqueda extendida: resultados de otras comunidades del mismo país cuando no hay resultados locales
   const extendedResults = useMemo(() => {
