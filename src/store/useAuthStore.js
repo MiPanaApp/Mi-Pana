@@ -153,6 +153,32 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
+  // Login con Apple (mismo patrón que Google: nativo via capacitor-social-login, web via popup)
+  loginWithApple: async () => {
+    if (Capacitor.isNativePlatform()) {
+      // APK/IPA nativa: usar @capgo/capacitor-social-login
+      const response = await SocialLogin.login({
+        provider: 'apple',
+        options: {}
+      });
+      const idToken = response.result?.idToken || response.result?.authentication?.idToken;
+      if (!idToken) throw new Error('No se obtuvo token de Apple');
+      const { OAuthProvider, signInWithCredential } = await import('firebase/auth');
+      const provider = new OAuthProvider('apple.com');
+      const credential = provider.credential({ idToken });
+      const result = await signInWithCredential(auth, credential);
+      return { result };
+    } else {
+      // PWA web: usar signInWithPopup con OAuthProvider
+      const { OAuthProvider, signInWithPopup } = await import('firebase/auth');
+      const provider = new OAuthProvider('apple.com');
+      provider.addScope('email');
+      provider.addScope('name');
+      const result = await signInWithPopup(auth, provider);
+      return { result };
+    }
+  },
+
   loginWithFacebook: async () => {
     set({ loading: true, error: null });
     try {
