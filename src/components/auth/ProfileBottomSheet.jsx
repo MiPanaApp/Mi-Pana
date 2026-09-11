@@ -132,6 +132,11 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
   };
 
   const handleSubmit = async () => {
+    if (!acceptedTerms) {
+      setErrorMsg("Debes aceptar las condiciones de contratación y la política de privacidad para continuar.");
+      return;
+    }
+
     if (!formData.name || !formData.lastName || !formData.email || !formData.password || !formData.country) {
       setErrorMsg("Por favor, completa todos los campos del formulario.");
       return;
@@ -214,6 +219,7 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
   const [showDateSelect, setShowDateSelect] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [dateParts, setDateParts] = useState({ day: "1", month: "Ene", year: "2000" });
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const days = Array.from({ length: 31 }, (_, i) => i + 1);
   const months = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
@@ -346,16 +352,25 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
             </div>
           )}
 
+          <label className="flex items-start gap-3 mt-3 mb-2 px-1 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={acceptedTerms}
+              onChange={(e) => setAcceptedTerms(e.target.checked)}
+              className="mt-0.5 w-5 h-5 accent-[#1A1A3A] shrink-0 cursor-pointer"
+            />
+            <span className="text-[11px] font-bold text-[#555577] leading-snug">
+              He leído y acepto las <span onClick={(e) => { e.preventDefault(); handleOpenLegal('terms'); }} className="underline text-[#1A1A3A]">condiciones de contratación</span> y la <span onClick={(e) => { e.preventDefault(); handleOpenLegal('privacy'); }} className="underline text-[#1A1A3A]">política de privacidad</span>, y entiendo que no se tolera contenido ni comportamiento abusivo en la plataforma.
+            </span>
+          </label>
+
           <button 
             onClick={handleSubmit} 
-            className="w-full mt-3 bg-gradient-to-r from-[#FFB400] to-[#FF9000] rounded-[20px] py-[14px] font-black text-[15px] text-white shadow-[5px_5px_14px_rgba(200,120,0,0.35),-2px_-2px_8px_rgba(255,220,100,0.2)] flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.98] transition-all"
+            disabled={!acceptedTerms}
+            className="w-full mt-1 bg-gradient-to-r from-[#FFB400] to-[#FF9000] rounded-[20px] py-[14px] font-black text-[15px] text-white shadow-[5px_5px_14px_rgba(200,120,0,0.35),-2px_-2px_8px_rgba(255,220,100,0.2)] flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:brightness-100"
           >
             Listo
           </button>
-          
-          <p className="text-[10px] font-bold text-[#555577] text-center mt-2 mb-2">
-            Al registrarte aceptas nuestras <span onClick={() => handleOpenLegal('terms')} className="underline cursor-pointer text-[#1A1A3A]">condiciones de contratación</span> y <span onClick={() => handleOpenLegal('privacy')} className="underline cursor-pointer text-[#1A1A3A]">política de privacidad</span>
-          </p>
         </div>
       </div>
 
