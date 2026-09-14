@@ -242,6 +242,14 @@ export const useAuthStore = create((set, get) => ({
       console.warn('[Logout] No se pudo limpiar el token FCM:', e.message)
     }
 
+    if (Capacitor.isNativePlatform()) {
+      try {
+        await SocialLogin.logout({ provider: 'google' });
+      } catch (e) {
+        console.warn('[Logout] No se pudo cerrar sesión nativa de Google:', e.message)
+      }
+    }
+
     await signOut(auth);
     set({ user: null });
     // Reset global store (favorites, etc.)
