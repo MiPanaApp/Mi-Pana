@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:native": "VITE_CAPACITOR=true vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "backfill:verified": "node scripts/backfill-verified-products.js"
