@@ -307,7 +307,12 @@ export default function ProductDetail() {
             via: 'whatsapp'
          }).catch(err => console.warn('Error registrando interaccion de WA:', err));
       }
-      window.open(`https://wa.me/${product.whatsapp}?text=${encodeURIComponent(`Hola ${product.userName || 'Pana'}, vi tu anuncio "${product.name}" en Mi Pana y me interesa. ¿Está disponible?`)}`);
+      const waUrl = `https://wa.me/${product.whatsapp}?text=${encodeURIComponent(`Hola ${product.userName || 'Pana'}, vi tu anuncio "${product.name}" en Mi Pana y me interesa. ¿Está disponible?`)}`;
+      if (Capacitor.isNativePlatform()) {
+         window.location.href = waUrl;
+      } else {
+         window.open(waUrl);
+      }
    };
 
    // Carousel tracking (unificado)
