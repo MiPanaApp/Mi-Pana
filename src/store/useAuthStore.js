@@ -217,9 +217,10 @@ export const useAuthStore = create((set, get) => ({
     }
 
     // Limpiar el token FCM del dispositivo actual antes de cerrar sesión
+    // (solo aplica a web/PWA — en nativo las push notifications usan @capacitor/push-notifications, no Service Worker)
     try {
       const currentUser = auth.currentUser
-      if (currentUser && 'serviceWorker' in navigator) {
+      if (currentUser && !Capacitor.isNativePlatform() && 'serviceWorker' in navigator) {
         const registration = await navigator.serviceWorker.ready
         if (registration?.pushManager) {
           const { getMessaging, getToken } = await import('firebase/messaging')
