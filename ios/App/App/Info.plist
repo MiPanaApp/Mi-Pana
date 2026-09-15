@@ -52,6 +52,8 @@
         <string>Mi Pana necesita acceso a la cámara para tomar fotos de tus productos</string>
         <key>NSPhotoLibraryUsageDescription</key>
         <string>Mi Pana necesita acceso a tus fotos para seleccionar imágenes de tus productos</string>
+        <key>NSPhotoLibraryAddUsageDescription</key>
+        <string>Mi Pana necesita guardar fotos en tu galería al tomar imágenes de tus productos</string>
         <key>NSLocationWhenInUseUsageDescription</key>
         <string>Mi Pana usa tu ubicación para mostrar anuncios cercanos a ti</string>
         <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
