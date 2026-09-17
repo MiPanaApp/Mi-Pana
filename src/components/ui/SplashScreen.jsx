@@ -12,7 +12,12 @@ export default function SplashScreen() {
   useEffect(() => {
     const timer = setTimeout(async () => {
       if (!user) {
-        navigate('/login');
+        // Modo invitado: navegar sin cuenta. Usamos la preferencia local de país.
+        if (hasChosenCountry) {
+          navigate('/home');
+        } else {
+          navigate('/onboarding');
+        }
       } else {
         // Antes de decidir dónde ir, intentamos recuperar las preferencias de Firestore
         const fetchPrefs = useAuthStore.getState().fetchUserPreferences;
