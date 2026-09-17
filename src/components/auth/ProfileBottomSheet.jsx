@@ -137,7 +137,7 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
       return;
     }
 
-    if (!formData.name || !formData.lastName || !formData.email || !formData.password || !formData.country) {
+    if (!formData.name || !formData.lastName || !formData.email || !formData.password) {
       setErrorMsg("Por favor, completa todos los campos del formulario.");
       return;
     }
@@ -309,7 +309,7 @@ export default function ProfileBottomSheet({ isOpen, onClose, authUser }) {
 
           <div className="mb-6">
             <div className="relative">
-              <label className="text-[11px] font-bold uppercase text-[#666688] block mb-[5px]">País</label>
+              <label className="text-[11px] font-bold uppercase text-[#666688] block mb-[5px]">País (opcional)</label>
                 <div 
                   onClick={() => { setShowCountrySelect(!showCountrySelect); }}
                   className="w-full bg-[#E8E8F0] rounded-[14px] shadow-[inset_3px_3px_7px_rgba(180,180,210,0.5),inset_-3px_-3px_7px_rgba(255,255,255,0.9)] px-3 py-3 flex justify-between items-center cursor-pointer overflow-hidden border border-white/40"
